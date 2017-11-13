@@ -1,0 +1,332 @@
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++                                                          +
++                                                          +
++         To Vax Or Not To Vax: The VMS Question           +
++                                                          +
++                 Written by Digital-demon                 +
++                                                          +
++                  a Modernz Publication                   +
++                (C)opyright May 2, 1990                   +
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+    (* THIS PHILE IS FOR INFORMATIONAL PURPOSES ONLY  *)
+
+
+
+
+     You may be wondering why I decided to write this...Well the first reason is that I had a term paper due, so I did it on the VMS operating system.  But while researching it I noticed that there are almost no tutorials on this system for the hackers out there that want to get started.  I find that pretty amazing since the number of VAX/VMS systems out there are enormous.  I could give you hundred of numbers for you to try this info out on, but I won't insult your ability.  But if you have a serious lack of ability in finding these systems, you can get in touch with me at 
+
+MATRIX BBS  (908) 905-6691    My home base
+or
+The CHURCH of RODNEY   (908) 830-7786    NUP:godisdead
+or on any of the numerous board cross country that I am on.            
+
+
+
+     But if you are totally lacking ability, then VAX/VMS is not the type of system to start on.  Try UNIX, there are numerous text philes on it, and they are rather easy to get into.   Okay...on to the phile
+
+
+-----------------------------------------------------------
+
+     The question of the day is actually how does a VAX/VMS systems manipulate the file structures.  Well first we need a little background on the computer and the operating system.  
+     Both the VMS, Virtual Memory System, operating system and the VAX, Virtual Access eXtension, computer were designed, produced, and marketed by DEC, Digital Equipment Corporation.  VAX utilizes a front-end systems, usually a VAX/VMS operating system, provided by DEC, or a UNIX operating system developed by Bell Laboratories.  DEC provides a complete description of all VAX/VMS commands in the DCL Command Language Summary, if it is available.
+     The VAX/VMS system, which I will now use the VAX systems or the VMS system interchangeable for simplicity sake, takes advantage of spatial locality by paging in 
+clusters of continuous pages.  Each page is referenced by demand, while other pages in the set are prepaged, utilizing the system of anticipatory paging.  This reduces the amount of time people must wait for their results to come from the computer.
+     The VAX/VMS systems also utilizes time slices to appear as if operating on multiple tasks at the same time.  these slices are so small as not to be noticeable by a human being.  Of course it still leaves enough time for the computer to process and switch to another program to process.  The time slices given to a specific process are based on priorities.  These priorities range from 0-31 with 31 the best priority and 0 being the worst.  The top priority of 31 is only assigned to the highest real-time processes.  Normal processes range from 0-15, and the real-time range from 16-31.  All real-time priorities remain at a constant, throughout their operation.  They continue until preempted by a equal or high priority.  The other processes include: interactive processes and batch processes.  These processes have a fixed base priority, but receive dynamic priority adjustments due to I/O or CPU-bound processes.
+     With that background on it we can get into the files themselves.  After physically linking to the computer with your terminal you initiate interaction, usually by depressing <CR>, that's carriage return or the enter button, once or twice until prompted with "username:".  After entering a valid username it will prompt for a password.  Your password will not be echoed as you type.  You will normally see a system message upon successfully logging in. The dollar sign ($) is the default prompt once logged in.  And you will also be prompted with how many new electronic mail messages you have in your account.
+
+
+     VAX/VMS systems have the following default accounts:
+
+
+
+ACCOUNT NAME                DEFAULT PASSWORD
+---------------------------------------------
+System                       manager
+                             operator
+field                        service
+                             test
+default                      user
+                             default
+systest                      uetp
+                             systest
+news                         news
+test                         test
+games                        games
+demo                         demo
+decnet                       decnet
+guest                        guest
+VAX                          VAX
+VMS                          VMS
+network                      network
+decmail                      decmail
+host                         host
+
+
+     Once you have correctly logged in you have the option of using $help <command> to look for the parameters to a specific command if you forget.  Note that the $ is the prompt, you should not type it in.  If you aren't sure of the command name, just hit $help and you will get the listing of whatever is available for use.  The help feature is a regular command on all VAM/VMS systems, but the information contained within is system dependant and may have been modified by your system manager or operator, therefore it may not be as helpful as it could be, or it may be overly helpful.
+     The VMS employs a file specification in the form of:
+ device:[directory] filename.type;version
+     The device is the storage device within the computer where the file resides, and a system may have multiple devices.  The directory is the name of the catalog of names.  The filename is the string of 1 to 9 characters indicating the file.  The type is an extension to the name.  the version is the number of times the file has been modified.
+     Luckily the VMS system has defaults for most of those variables.  If you leave out the version, the system will default to the most recent number, the largest number of that file.  If you leave out the device it will default to the system's mass storage device that is currently in use.  And the directory defaults to the current directory.  So the majority of the time, filename.type is all that is necessary, and when working with some languages it is actually only necessary to state the filename, as they have their own type defaults.
+     The DCL (DEC command language) command format uses this format:
+            $  print file1.lis,file2.lis/copies=2 <CR>
+            |   |      |      |    |    |  |   ||  |  
+system prompt   |      |      |    |    |  |   ||  |
+                |      |      |    |    |  |   ||  |
+         commands      |      |    |    |  |   ||  |
+                       |      |    |    |  |   ||  |
+            list element      |    |    |  |   ||  |
+                              |    |    |  |   ||  |
+         list element separator    |    |  |   ||  |
+                                   |    |  |   ||  |
+                        list element    |  |   ||  |
+                                        |  |   ||  |
+                      qualifier delimiter  |   ||  |
+                                           |   ||  |
+                        positional qualifier   ||  |
+                                               ||  |
+                      qualifier value delimiter |  |
+                                                |  |
+                                  qualifier value  |
+                                                   |
+                           command string terminator
+
+    Remember to use the help function is you have any problems remembering a qualifier or parameter.  The help files are set up for specifically that purpose.  It is a lot easier than on personal computers when you forget a parameter you have to look up in a book that is a couple of hundred pages long, and you normally send 5 minutes finding the book itself.  This way, the help is right at your finger tips.             The VMS operating systems protects its files by employing a UIC, user identification code.  And each file is defined with protection for 4 different categories.  The first category is the file owner, listed as owner.  The second category is the group that the owner belongs to.  Since the UIC is set up in format (group number, user number), then the if the owner has a UIC of (049,002), then the users in the group number 49 are in the same group as the owner of the file.  This category is listed as group.  The third category is for those with special privileges, the system users, and it is listed as systems.  The fourth category is for all users, and is listed as world.
+     Each of those four categories will have from 0 to 4 privilege levels for each file.  And those privilege levels are (R)ead, (W)rite, (E)xecute, and (D)elete.  To show what protection is currently on files, type $dir/protection.  This will give you the normal directory, will an additional 
+column showing what it is currently set for.  To change protection on a sinlge file or set of files type $set protection filename.type /protection=(group=RW).  What I typed there will set it to allow all group members to read and write.  If you wish to change the default setting on all your files from now on so that the systems operators can do everything to your file, and you can as well, plus other emembers of your group can read and execute, or run your files, type this:
+$set -
+-$ protection=(system=RWED,owner=RWED,Group=RE,world) 
+  /default
+
+(Note that the /default is part of the same command, it just won't fit on the same line unless you are in 132 column mode.  Remember the ($) is the prompt, do not type it.) 
+
+     Now that I told you all about the command structure and the file protection, I bet you are asking what can I do with it.  I don't even know how to make a text file yet.  So The next step is to explain how to make the text file.
+     On a typical VAX computer there may be several different text editors from which to choose from.  EDT is the standard editor provided by Digital Equipment Corp. and available on any VMS systems.
+     The EDT utilizes two modes of text editing.  That of the line-editing, which handles the text in a line by line fashion.  And the full-screen editing mode, which allows the editing of whole screens at one times.
+     When EDT is executed the name of the file must be given.  The text file will be created if it does not already exit.  And if the file already exists, then it will be stored in the EDT "buffer" and only the contents of the buffer are changed until the EX ,exit and save, command is implemented.  At which time the buffer becomes a new version of the file.  In the editor the (*) is the prompt.
+EDT commands for line editing mode
+Action                     Command
+enter editor               EDIT/EDT filename  <CR>
+Insert text                *I <CR> (inserts before line
+                                    pointer)
+                           *^Z    (to end inserting)
+
+Leave editor:
+save changes               *EX <CR>
+discard changes            *QUIT <CR>
+
+Pointer or cursor move:
+Beginning of buffer        *%BE <CR>
+End of buffer              *%E <CR>
+Down 1 line                *<CR>
+down n lines               *+n <CR>
+up 1 line                  *-1 <CR>
+up n lines                 *-n <CR>
+Display:
+buffer                     *%WH <CR>
+n lines                    *T.#n <CR>
+Delete:
+current line               *D <CR>
+forward n lines            *D.#n <CR>
+move lines                 *MOVE Ln1:Ln2 to Ln3
+find string                *"string" <CR>
+substitute string          *S/old/new/ <CR>
+read/write second file:
+read into buffer          *INC fn2 <CR>
+write buffer to file      *WR fn2 <CR>
+on-line help              * HELP command  <CR>
+
+     To utilize the full-screen editor you have to know what some of the keys on the vt100 terminal are and what they do, as well as where they correspond to an IBM keyboard if you are using it as a terminal.  The keyboards vary slightly from terminal to terminal but should be similar to this:
+
+-----------------------------------------
+|  GOLD    |  Help   | Fndnxt  | Del L  |
+|          |         |         |        |
+|          |         |  Find   | Und L  |
+-----------------------------------------
+| Page    7| sect   8| append 9| del w  |
+|          |         |         |        |
+| command  |  fill   | replace | und w  |
+-----------------------------------------
+| advance 4| backup 5| cut    6| del c  |
+|          |         |         |        |
+| bottom   |  top    | paste   | und c  |
+-----------------------------------------
+| word    1|  EOL   2| char   3| ENTER  |
+|          |         |         |        |
+| chngcas e| del EOL | specins |        |
+-------------------------------|        |
+|        LINE       0| select  |  SUBS  |
+|                    |         |        |
+|      OPEN LINE     | reset   |        |
+-----------------------------------------
+
+
+     In the IBM enhanced keypad the DEL C (delete character) is represented by the PAUSE key.  You can move in any direction through the text by using the arrow keys.  On the VAX terminal keyboard the first word is the key itself, and the bottom word/action is what occurs when the GOLD key is hit before it.
+Keypad command              Function
+GOLD - (num lock)           Lets you use the lower
+                            (alternate) functions of the
+                            editing keys.  Press the GOLD
+                            key, then the key you wish to
+                            use.
+ADVANCE - (4)               Sets the direction.
+APPEND - (9)                Deletes the select range from
+                            the current buffer.
+SHIFT/BACKSPACE            Moves to the beginning of the
+                           current line.         
+BACKSPACE                  Deletes the character preceding
+                           the cursor.
+BACKUP - (5)               Sets the direction backwards.
+BOTTOM - (GOLD 4)          Moves the cursor to the bottom of
+                           the text buffer.
+CHAR - (3)                 Moves the cursor one character in
+                           the current direction.
+CHNGCASE - (GOLD 1)        Changes the case of the text.
+COMMAND - (GOLD 7)         Jumps you to line-mode. 
+CUT - (6)                  Moves range from buffer to PASTE
+                           buffer.
+DEL EOL - (GOLD 2)         Deletes to end of line.
+DEL L - (-)                Deletes from current position to
+                           end of line.
+DEL W - (+)                Deletes from cursor to beginning
+                           of next word.
+EOL - (2)                  Moves forward or backword to end
+                           of nearest line.
+FILL - (GOLD 8)            Performs a word fill on the
+                           specified range.
+FIND - (GOLD *)            Searches for specified text or
+                           string.
+FNDNXT - (*)               Searches for next occurance of
+                           search string.             
+HELP - (/)                 Online help on commands.
+OPEN LINE - (GOLD 0)       Inserts line terminator.  Breaks
+                           current line into two parts.
+PAGE - (7)                 Moves the cursor to the top of
+                           the next page or to the top of a
+                           text.
+PASTE - (GOLD 6)           Inserts the contents of the PASTE
+                           buffer directly at the left of
+                           the cursor.  It also copies text
+                           within the buffer.
+REPLACE - (GOLD 9)         Replaces selected text with that
+                           which is in the PASTE buffer.
+RESET - (GOLD .)           Cancels the effect of the GOLD
+                           key if hit by mistake.
+SUBS - (GOLD ENTER)        Substitutes  the search string
+                           with the contents of the PASTE
+                           buffer. 
+TAB                        Moves the text to the right.
+UND C - (GOLD PAUSE)       Inserts the contents of the
+                           delete character buffer to the
+                           left of the cursor.
+UND L - (GOLD -)           Inserts the contents of the
+                           delete line buffer directly to
+                           the left of the cursor.
+WORD - (1)                 Moves the cursor to the next word
+                           in the current direction.
+
+     After you have started creating your own text files, there is a vast set of other commands you can utilize.  The equivalent of a .bat file on the MS-DOS systems, is the .com file on the VAX system.  The difference is that to execute them, a @ must be issued before the filename.
+     The most common .com file within the VAX system is the login.com which is what is loaded as soon as you log in, it executes exactly as an autoexec.bat would on a MS-DOS system.  
+     Within the .com structure you can use it to compile other programs.  If you wish to use the .com file for several files but do not wish to edit the program each time, a programmer can utilize the 8 dummy variables that are defined.  They are P1 through P8, and an example of their use follows in this program called mlr.com:
+$ on error then exit
+$ macro/list 'P1' + maclib/lib
+$ link       'P1' + sublib/lib
+$ run        'P1'
+
+     If I typed $@mlr filename, then the filename would replace all the 'P1' in the mlr.com for that specific run.  Obviously this is a very useful fact to know.  Other useful commands for the newcomer to know are:
+
+OPERATION                  COMMAND
+
+Delete a file                   
+                           DELETE fn.type;version
+DELETE all but n recent version 
+                           PURGE/K=n fn.type
+APPEND fn1 to end of fn2        
+                           APPEND fn1.type fn2.type
+CREATE a library              
+                           LIBRARY/CREATE/type libname fn
+edit a file
+                           EDIT/EDT fn.type
+copy file fn1 to fn2
+                           COPY fn1.type fn2.type
+Rename file fn1 to fn2     
+                           RENAME fn1.type fn2.type
+Display file at terminal 
+                           TYPE fn.type
+Queue a file for printing 
+                           PRINT/QUEUE=site fn.type
+Establish default dir to name
+                           SET DEFAULT [name]
+Create subdir sub in dir name
+                           CREATE/DIRECTORY [name.sub]
+Display default dir name
+                           SHOW DEFAULT
+Display files in dir name
+                           DIRECTORY [name]
+Delete subdirectory .sub for dir name (must be empty)
+                          DELETE [name]sub.DIR  
+Display default protection for file creation
+                          SHOW PROTECTION
+Display terminal characteristics
+                          SHOW TERMINAL
+Display current users
+                          SHOW USERS
+Display current time
+                          SHOW TIME
+Display files queued for printing
+                          SHOW QUEUE=site
+Change password
+                          SET PASSWORD
+Tell VMS you are using a VT100 terminal
+                          SET TERMINAL/DEVICE=VT100
+Tell VMS you are on a unknown terminal
+                          SET TEMINAL/DEVICE=UNKNOWN
+
+
+Process control          FUNCTION
+CTRL-C                   cancel
+CNTRL-Y                  Interrupt
+CNTRL-Z                  end of file. or exit
+CNTRL-S                  suspend terminal until cntrl-q hit
+CNTRL-Q                  restart terminal output
+CNTRL-U                  discard current input line
+CNTRl-X                  discards current line and deletes
+                         data in type ahead buffer.
+
+     Now if you are still confused by anything contained within this text or on the VAX system itself, your best bet is to have a good long conversation with your systems manager if that person is available and ask for some help.  (This is of course only if you are at a school or work with such.  otherwise find whoever is the best hacker in the area, they may know something about VAX/VMS.)  Luckily there isn't too much an inexperienced person can do to crash the system by accident.  That is because of the privilege structure of the accounts and without the following privileges any attempt to corrupt the system files will be noted on the system manager or operator's terminal, as they are flagged files. (Unfortunately for us hackers.  VAX/VMS is a very nasty system as it is set up to allow the system operator to flag any file, account, or proccess without warning, so that use or modification of such item will result in a message to his/her screen.)
+	The privileges necessary to do harm to the systems are:
+CMKRNL
+CMEXEC	These privileges enable a user to execute
+          arbitrary routines with KERNEL and EXECUTIVE
+          access mode.  These privileges are needed when one
+          is in need to access kernel structures directly.
+          CMKRNL is the most powerful privilege available.
+
+SYSPRV    A process which holds this privilege can access
+          objects via the system protection.  A process
+          holding this privilege has the same access rights
+          as the process running under system UIC. 
+
+SHARE     This allows a process to assign channels to
+          nonshareable devices which already have channels
+          assigned to them.  This can be used to prevent
+          terminal hang-ups and assign channels to system
+          mailboxes.   
+ 
+      Pray to find an account with those structure, but it is unlikely that they will exist long once you find an account with them unless you know what you are doing on the system.  As usual and especially so for this operating system, the only way to get good at it is to experience the hacking for yourself.
+	There are quiet a few ways to hide from a show users from within the system.  On of the ways is to set up your account with a process name of delete characters so that it goes back over and deletes the spot where your name would be.  This works well for anoyone within the system from terminals in the area, but anyone else calling in by modem may see your account as the terminal will type back over itself, at 2400 or so baud it is visible that is what is happening, however it is normally safe since a system manager would be at a station and not calling in.  Unfortunately this way will not hide you from show system.  Fiddle around and see if you can find your own ways to hide. 
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++                                                          +
++       END OF DEMON'S text  call (908) 905-6691           +
++                     MATRIX BBS                           +
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+
+
+

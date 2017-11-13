@@ -1,0 +1,616 @@
+
+
+
+
+
+
+
+
+                             GSBug is Your Friend
+                           (a quick intro to GSBug)
+                                    v.1.2
+                               by:  Tim Swihart
+
+
+
+So, you just got GSBug installed for the first time and don't have a clue how
+to use it.  Sure, you could call APDA (1-800-282-2732) and order the complete
+package (part #A0037LL/A, price $30), but you're not sure if GSBug will really
+help you find those nasty bugs in the Apple IIGS software you're developing.
+Well, from the next paragraph until the end of this file, I'll present a quick
+introduction to some of the reasons why GSBug is a "MUST HAVE" tool for all
+IIGS developers.  It doesn't matter what language you program in, or which
+environment you use, GSBug is the key to tracking down and exterminating those
+nasty bugs that make your software look shabby.
+
+The version of GSBug that APDA currently stocks is older than the version found
+on the disk containing this tutorial.  So why buy APDA's version?  To get the
+full manual - it's well worth the thirty bucks they're asking!
+
+
+Installation:
+
+Before we can really get into it, you need to install GSBug and the
+GSBug.Templates file and reboot your IIGS.  If you only have one computer,
+then print this file and continue reading from the printout.  GSBug is an INIT
+with the file name "GSBug.INIT" - install it by copying this file into your
+boot disk's SYSTEM/SYSTEM.SETUP folder.  Copy the "GSBug.Templates" file into
+the same folder.
+
+Over the course of time, the name used for the GSBug init file has changed
+slightly.  To be certain you don't accidently install two (or more) copies
+of GSBug, carefully examine the contents of your boot disk's
+System/System.Setup folder.  If you see more than one file with a name
+similar to "GSBug.init" (such as "debug.init" or "GSBug1.5B11init") then
+take out all but the most recent one.  Having more than one copy of GSBug
+installed tends to cause problems (such as crashes during booting).
+
+
+Care & Feeding of GSBug:
+
+Now that everything is installed, reboot your computer.  No need to launch any
+particular application just yet, I have to explain the various parts of
+GSBug's screen and I want to cover a few basic GSBug commands before we go bug
+hunting.  I'll assume you're running the Finder right now, but it really
+doesn't matter a whole lot what application is running, as long as it is a
+16-bit application (i.e.:  a true IIGS desktop application).
+
+You can pop into GSBug at any time (assuming interrupts aren't disabled) by
+pressing OPEN APPLE-OPTION-CONTROL-ESC  (if you're having troubles remembering
+all of those keys at once, just think of it as the same keys that you use to
+get to the built-in control panel plus the OPTION key).  You'll be presented
+with a rather busy-looking 80-column text screen.  (there's a screen dump
+right below this paragraph - I told you it was busy-looking screen)
+
+
+------ cut here to start the screen dump ------
+
+KEY BRK  DebugD  K/PC   B   D    S    A    X    Y    M   Q   L  P  nvmxdizc e d
+00  o d   9500  FD/688D FD 2500 1FE0 0000 4D95 0044  0C  BE  1  03 00000011 0 0
+
+1FF2:60  00/0000:  BE '>'  00/0000-00-00
+1FF1:43  00/0000:  BE '>'  00/0000-00-00
+1FF0:FE  00/0000:  BE '>'  00/0000-00-00
+1FEF:01  00/0000:  BE '>'  00/0000-00-00
+1FEE:37  00/0000:  BE '>'  00/0000-00-00
+1FED:0C  00/0000:  BE '>'  00/0000-00-00
+1FEC:00  00/0000:  BE '>'  00/0000-00-00
+1FEB:4D  00/0000:  BE '>'  00/0000-00-00
+1FEA:7A  00/0000:  BE '>'  00/0000-00-00
+1FE9:C0  00/0000:  BE '>'
+1FE8:00  00/0000:  BE '>'  E1/0000.000F-T
+1FE7:2C  00/0000:  BE '>'  00/0000.0000-?
+1FE6:00  00/0000:  BE '>'  00/0000.0000-?
+1FE5:E0  00/0000:  BE '>'  00/0000.0000-?
+1FE4:6A  00/0000:  BE '>'  00/0000.0000-?
+1FE3:B4  00/0000:  BE '>'  00/0000.0000-?
+1FE2:62  00/0000:  BE '>'  00/0000.0000-?
+1FE1:DA  00/0000:  BE '>'  00/0000.0000-?
+1FE0:FD  00/0000:  BE '>'  00/0000.0000-?
+
+:GSBug V1.5b9 w/Glue Support -(C)1986-90 Apple Computer,Inc.
+
+------ cut here to end the screen dump ------
+
+
+Top Two Lines:
+
+The first two lines of the screen show the contents of various registers.  The
+top line of the screen starts off with "KEY  BRK  DebugD" - those are headings
+for the items in the second line of the screen.  The meanings of those
+headings (and the items under them) are:
+
+Heading     Meaning
+-------     -------------------------------------------
+KEY         Modifiers used to separate debugger keys from application keys
+BRK         (beyond the scope of this quick intro - see the manual)
+
+DebugD      Debugger's direct page (1K in size) - in bank $00
+K/PC        K=program bank, PC=program counter 
+
+B           app's data bank
+D           current direct page in bank zero 
+
+S           current stack pointer
+A           accumulator's value
+
+X           X register's value
+Y           Y register's value
+
+M           machine state register's value
+Q           quagmire register's value
+
+L           Language card bank
+P           processor-status register's value
+
+nvmxdizc    bits that make up "P" (n=negative, c=carry, etc)
+e           emulation mode flag
+d           disassembly mode flag (0=recognize SEP & REP during "L"isting)
+
+
+If you want more information on a specific register's meaning then look it up
+in the IIGS Hardware reference manual, the GSBug manual, or any good book that
+covers the IIGS's internal hardware.  Any of these register's values can be
+changed - we'll show how to do that in a few paragraphs or so...
+
+
+The Left-Hand Side:
+
+The next major area of the screen is the 4-digit column of numbers running
+down the far left side.  There is a colon on each line after the fourth
+digit, and then there is a column (two digits wide) of numbers.  All of these
+numbers are in hex and this area is the stack.  The four digit column, the
+colons, and the two digit column are collectively known as the "stack
+subdisplay area" - remember that, there's a test at the end of this file.
+The column on the left of the colon is the address of the stack and the
+column on the right (the two digit column) are the values on the stack.
+The bottom-most four digit stack address is the "top" of the stack (i.e.:
+if your app pushes anything on the stack, that's the address it would wind
+up at).  As you step through your application (we'll show how in a minute,
+patience...) the stack will scroll upwards as things are pushed onto it and
+downwards as things are pulled off of it.
+
+
+The Not-So-Left-Hand Side:
+
+The next major area should be a column of "00/0000:  BE '>'" known as the
+"RAM subdisplay area".  This area is used to display any 19 memory locations
+that you want to keep an eye on.  The value at each of those locations is
+shown in hex (that's what the "BE" means - location 00/0000 contains hex "BE"
+when I wrote this) and in ASCII (the ASCII version is between the single quote
+marks, i.e.:  the "'>'").  It is possible to have this subdisplay show a
+two-byte or a three-byte value instead of the one-byte value.  You lose the
+ASCII display if you opt for the 2 or 3 byte values.
+
+After I finish explaining the rest of the screen, I'll come back and describe
+how to change these 19 "windows on memory" to look at what you want to
+monitor.
+
+
+The Center Part:
+
+The next major area of the screen is the 9 lines of "00/0000-00-00", better
+known as the "Breakpoint subdisplay" (they're on the top half of the screen).
+GSBug lets you set up to 17 breakpoints in your program (not counting BRK
+instructions you imbed in your program yourself).  Curious about how you set
+17 break points when there are only 9 lines in this section?  Did I mention
+that APDA stocks the manual (which has full details)? <grin>  Seriously, you
+can "extend" the breakpoint subdisplay by shrinking the section under it
+(which we haven't described yet).  For the purposes of this quick intro, I'm
+not going to show how to do this (you need some kind of reason to get the
+manual).  I'll just describe this area and later show how to set up to 9 break
+points.
+
+The "00/0000" part of the breakpoint subdisplay is obviously an address - in
+fact, it's the address you want to break on.  The next part "-00-" is the
+trigger value.  GSBug is smart enough to count how many times an address has
+been executed and break on a certain number (i.e.:  put a "03" here and GSBug
+will break the third time that address is executed).  The last part of this
+area is the running count - this is how GSBug lets you know how many times
+that area has been executed (rather than leave you wondering, it tells you and
+you can be ready for the break).  You set the address and trigger portions and
+GSBug sets the count portion.
+
+
+The Bottom Part of the Center Part:
+
+The bottom half of the center of the screen is known as the "Memory
+Protection Subdisplay" and starts off with "E1/0000.000F-T".  This area can
+be expanded (or shrunk) by trading lines of this area for lines of the one
+above it (the "Breakpoint subdisplay").  If you want to know how to do this,
+read the manual from APDA, it's big (roughly 150 pages) and I'm not
+retyping all of it here!  <grin>
+
+The "E1/0000.000F" is the address range starting at E1/0000 and ending at
+E1/000F.  The "T" at the end means that this range of memory is protected from
+code tracing.  If you're tracing through your code and it jumps (JSR's, JSL's,
+whatever) into this range of memory, then the code in this range will NOT be
+traced - it will be executed at full speed instead.
+
+There are two other options for code protection ("W" and "H").  They are
+beyond the scope of this quick tutorial (I'm only trying to cover the
+basics here).
+
+
+Where You Type Commands:
+
+The bottom line on the screen is the command line subdisplay (catchy name,
+eh?).  When you first enter GSBug, this line will contain the copyright
+message and version number for GSBug (unless you've used the DebugStr or
+SetMileStone "tool" calls to change this string).  As soon as you press a
+key, the copyright message vanishes and your keypress shows up next to the
+blinking cursor.  This is where you'll type various commands to make GSBug
+help you get the kinks out of your software.
+
+
+What's the Big Blank Spot For?:
+
+The big blank area towards the far right of the screen is officially known as
+the "disassembly subdisplay" (it's one of the big reasons you're using GSBug -
+even if you don't know it yet).  As you single-step through your software,
+trace through it, or just list areas of memory this area will show you the
+disassembled version of your program.  One of the really slick things about
+this area is that it's smart enough to know about the names of GS/OS calls and
+Toolbox calls - so you see things like "_CheckUpdate" instead of "JSL E10000".
+That makes if VERY easy to line up pieces of your source with the disassembly
+if you're working in a high-level language.  It also makes it a LOT easier to
+see what you're doing!
+
+GSBug also knows about the alternate Toolbox entry point (E10004) and will
+display those as tool calls also.  The leading underscore ("_") lets you know
+that GSBug is substituting the tool's name for you.  If the tool call is being
+made through "glue", then the underscore is preceded by an asterisk ("*").
+
+If you've ever used the built in "monitor" (I'm not talking about your RGB
+monitor, I'm talking about the disassembler that's been built into Apple II's
+for a LONGGGGGGG time now), then you'll be able to quickly figure out that
+the left-most part of the disassembly subdisplay is the address, the inside
+columns are the hex bytes making up the code about to be disassembled, and the
+right-most part is the disassembled version of your software.
+
+
+Your First GSBug Command:
+
+OK, you now know what all of the various areas of this rather busy-looking
+screen are for, so let's get down to business!  The first thing to do is press
+the "L" key (upper or lower case work the same these days) and then press
+RETURN.  This will fill the disassembly subdisplay with 19 lines of
+disassembled code (which 19 lines were disassembled really doesn't matter).
+Study it until you can tell at a glance which parts are the address, which
+parts are the hex bytes, and which parts are the disassembled code.
+
+Type "L" and press RETURN again - you get the next 19 lines of memory (see,
+I told you it was a lot like the built-in monitor).
+
+Now, let's do something a tad more useful...  Press the "S" key and RETURN
+(you just told GSBug to start single-stepping through your application).  Be
+careful what keys you press while in the single step mode - lots of
+weird-looking things can happen (they're all normal, but if you don't expect
+them you can get confused).  For now, ONLY press the keys this tutorial tells
+you to.  If you can't wait and just HAVE to bang on all of the various keys,
+then go ahead - reboot once you've totally confused yourself, pop back into
+GSBug and catch up with the rest of the folks reading this.
+
+To tell GSBug to execute the highlighted instruction, press the SPACE BAR one
+time.  Heck, press it several times so that you get a bunch of lines of
+disassembled code on the screen.  Notice that the code scrolls up and the
+"highlighted" area stays in the same place?  Notice it's kind of close to the
+bottom of the screen?  Later I'll tell you how to move it up higher.
+
+Press the ESC key.  That takes you out of single-step and returns you to the
+command line.  Press "S" and RETURN again to restart single stepping.  Notice
+that the lines ABOVE the highlighted area have been erased?  Remember that -
+if you halt single-stepping and need some piece of info above the highlighted
+area, then write it down because it'll be wiped out when you restart
+single-stepping (or when you do any of a bunch of different things).  If you
+have your printer connected to slot 1, then you can print GSBug's screen using
+the "P" command (press "P" and RETURN - be sure you're NOT single-stepping
+when you do this, "P" only prints from the command line).
+
+
+Lock a Tractor Beam onto Them...:
+
+Want an easy way to have the computer step through source for you without
+having to bang again and again on the SPACE BAR?  Start single-stepping
+("S" and RETURN), then press RETURN again.  VRRRROOOOMMMMMM!  Can't read all
+the stuff flying by?  No sweat, press SPACE BAR and you'll be back to
+single-stepping.  Pressing the RETURN key a second time kicked GSBug into
+"Trace" mode.
+
+Trace actually has two speeds, the default is fast (we like to test
+developers' speed reading skills).  To kick TRACE into low gear, press the
+left arrow key.  If you're in single-step mode, then you won't see the speed
+change (after all, it affects TRACE, not SINGLE-STEP), but fear not brave
+developer, the speed change has been made.  Press RETURN again (to be sure
+you're in TRACE mode) and press the left arrow key (if you didn't a few lines
+ago) to kick TRACE into low gear.  Want to get back into high gear?  Press the
+right arrow key (sneaky, eh?).
+
+
+RED ALERT!:
+
+Do _NOT_ press the down arrow key while TRACING or single-stepping (unless
+you know what you're doing).  The down arrow key tells GSBug to SKIP the
+highlighted instruction!  This is a great way to step over BRK instructions,
+but it's not a real smart thing to do at random while TRACING through an
+application (randomly skipping an instruction generally results in a crash).
+
+
+Move That Line Up:
+
+If you want to raise the highlighted line within the disassembly subdisplay,
+then press ESC (to get back to the command line) and type "SET"  (don't type
+the quotes, ok?) and press RETURN.  The up and down arrows now control the
+vertical position of the highlighted bar within the disassembly subdisplay.
+Position the bar where you want it and press ESC.  That position will be
+remembered until the next time you move it or until you reboot (then it goes
+back to the default position).  The manual for GSBug tells you how to save
+this new position to a configuration file (it also tells you that pressing the
+left and right arrow will move the stack subdisplay up and down, and that
+pressing a number less than eight will change the slot used to print the
+screen).
+
+
+Reaching the Breaking Point:
+
+Alright, time for some fancy stuff!  The next couple of sections will assume
+you were running the IIGS Finder when you popped into GSBug (other apps will
+work just fine, but why be difficult?).  GSBug will let you break on any tool
+call (or calls) that you specify, so let's set a few tool breaks and learn how
+to use this feature.
+
+From GSBug's command line (press ESC if you're still stepping or tracing),
+type "settbrk _sysbeep" and press RETURN.  If GSBug beeps at you instead of
+accepting this line, then you didn't type it right (there are two t's in
+"settbrk" and don't type the quotes).  Type "settbrk #090E" and press RETURN.
+You just added two tool calls to GSBug's list of tools to break on.  The first
+one was added by naming the tool to break on ("_sysbeep") and the second one
+was added by specifying the tool's number ("#090E").  This lets you set tool
+breaks regardless of whether you know the tool's name or number.
+
+Type "showbrks" and press RETURN to see the complete list of tool breaks that
+GSBug has been told about.  Notice that the left hand side of the screen now
+implies that you can set breaks on GS/OS calls?  That's because you can!
+GS/OS breaks have to be set by number (not by name).
+
+All we've done so far is make a list of tools for GSBug to break on.  We
+haven't actually told GSBug to break on them, that requires a separate
+command.  Type "tbrkin" to tell GSBug to break on all of the tool calls in
+its list.  Now, when either a call to SysBeep or a call to NewWindow
+(tool $090E is NewWindow) is made, we'll be dropped back into GSBug.
+
+
+Oh Yeah?  Prove It!:
+
+Make sure you're at GSBug's command line (press ESC if you aren't).  Type "R"
+and RETURN.  This resumes full execution of your application.  To test the
+tool breaks we just set, we need to force the Finder (or whatever app you
+stubborn folks decided to use instead of the Finder) to make a call to
+NewWindow and/or to SysBeep.  Double click on a disk icon, get info on a file,
+open a folder, open a desk accessory, etc to get the Finder to open a new
+window.  Notice that you land in GSBug?
+
+Press "S" and RETURN to enter single-stepping.  Notice that the highlighted
+instruction is "NewWindow".  Ah, the tool break works.  Now, press SPACE BAR
+to execute the NewWindow call, press ESC to stop single-stepping, and type "R"
+and RETURN to resume running the Finder.  (if we didn't bother to single step
+across the NewWindow call, we would just fall right back into the debugger
+since we have a break point set on that call).
+
+
+Take it Out, Wise Guy!;
+
+Tired of falling into GSBug everything a new window is opened?  There are
+several ways to remove tool breaks.  The easiest way is to type "tbrkout" to
+stop breaking on the listed tool calls without trashing the list.  Typing
+"tbrkin" makes GSBug start breaking on them again.
+
+To clear the list of tool breaks, either type "clrtbrk _sysbeep" (to remove
+the sysbeep break we put in earlier) and repeat that for "_newwindow" or wipe
+the all out with "clralltbrks".  I'll let you decide...
+
+
+Cheap Trick #1:
+
+Being able to break into the debugger based on a tool call is VERY handy!  But
+what if you want to see the stack being set up BEFORE your code gets all the
+way down to the tool call itself?  After all, if you're not putting enough
+parameters on the stack (or too many), then breaking on the tool call itself
+is too late to watch the stack being built.  There's an easy solution for
+this - stick a SysBeep call in your source ABOVE the tool call you really
+want to break on and set a tool break on SysBeep.  This will let you
+single-step through the stack setup for the call you're really interested in.
+OK, so it's a cheap trick, but it's darned effective...
+
+This trick was invented in the dark ages before DebugStr was part of GSBug
+(DebugStr is explained near the very end of this document and is a little
+trickier to use than Cheap Trick #1).
+
+
+I Don't Like My Registers:
+
+Remember earlier when I mentioned that you can change the values of the
+various registers from within GSBug?  This lets you change values that are
+about to be pushed on the stack and do all kinds of neat things.  You're
+sharp, so I won't bore you with all the things this lets you do, I'll just
+cut right to the description of HOW to do it...
+
+To change the accumulator's value, type "a=value" on the command line.
+Replace "value" with the hex value you want  to stuff into the accumulator.
+Type "x=value" to set the x register, "y=value" to set the y register, etc.
+You can't type "a=x" to set the accumulator to the value in the x register,
+but since you can see the x register's value, this isn't that big of a loss.
+
+
+Cheap Trick #2:
+
+If you accidently SKIP an instruction that you didn't mean to (and you haven't
+executed any more since then), you can "unskip" it by exiting single-step
+mode, then type "pc=value" where "value" is the address (all three bytes just
+to be safe) that the skipped instruction is at.  Press RETURN and then resume
+single-stepping (notice that you're back at the skipped instruction now).
+
+This tricks works because the "pc" register is the program counter (the thing
+that determines what address will have its instruction executed next).
+
+
+Cheap Trick #3:
+
+Fudging the program counter (pc=value) will let you push extra info on the
+stack in cases where you didn't push enough for a call.  Be careful with
+this - you may need to set the accumulator before re-executing an
+already-executed PHA and you could totally trash the stack if you're not
+paying attention.  One place this is handy is to compensate for passing a
+WORD instead of a LONG (easy to do with C when you're dealing with resource
+ID's).  If you don't understand this trick, don't use it!
+
+A minor modification on this stunt is (obviously) to pull extra bytes OFF of
+the stack in cases where you left something on there that shouldn't have been
+left on.  Once you spot problems like too much or too little data on the
+stack,  FIX YOUR SOURCE CODE AND RECOMPILE IT!!!!  You don't really want to
+have to find this bug a second time do you?
+
+
+Cheap Trick #4:
+
+GSBug is a lot like the monitor in certain respects.  That means many of the
+commands you're used to from the monitor will work under GSBug.  Setting
+values in memory under GSBug is done just like it is under the monitor
+(i.e.:  address : value1 value2 value3 value4 ...).   addressT and RETURN
+starts tracing at the memory location specified by "address".  addressS and
+RETURN starts single-stepping at the memory location specified by "address".
+addressL and RETURN lists 19 lines of disassemby starting at the memory
+location specific by "address".  You can even use the built-in mini assembler
+if you want (type "asm" and RETURN).
+
+
+Peering Into Memory:
+
+The 19 "windows on memory" can be used by typing "mem" and RETURN on the
+command line.  This puts the cursor on the far right of the first line in the
+RAM subdisplay area.  Type the address you want to watch and press RETURN.
+That will move you to the next line (so you can set the address for the second
+memory location).  If you want to see two bytes starting at that address,
+press "P".  To see three bytes, press "L".  "Z" toggles between direct-page
+and absolute addressing, ":" toggles between direct, 2-byte indirect, and
+3-byte indirect addressing.  Press "?" for more info.
+
+This provides a nice way to look at variables in memory, dereference
+pointers/handles, etc.  When the contents of any "peered into" location
+changes, the corresponding line on GSBug's screen will change also.
+
+
+Cheap Trick #5:
+
+(this one's actually not cheap, it's pretty danged useful!)  While
+single-stepping or tracing, you can see other "screens" by pressing various
+keys (this accounts for the weird effects I alluded to earlier).  Press "S" to
+see the SHR screen (i.e.:  your desktop application's desktop), "D" to see the
+double hi-res screen, "T" to see the text screen, "8" to see 80-column
+display, "4" to see 40-column display, "H" to see the Hi-Res screen, "L" for
+the Lo-Res screen, and ESC to exit single-stepping.  This lets you see your
+application's screen instead of GSBug's screen (makes it a LOT easier to
+debug your apps when you can see their screens...).
+
+
+Study For The Test:
+
+I told you earlier that there would be a test at the end of this tutorial, so
+now's your chance to kick back and study a bit.  So far, we've covered what
+the various parts of GSBug's screen mean, how to disassemble pieces of memory
+(using "L"), how to single-step and trace (at different speeds) through your
+application, how to set, use, and clear breakpoints, how to display various
+screens, and how to set up the RAM subdisplay area.
+
+
+Don't Touch That Dial!:
+
+The material covered so far gives you a decent foundation to draw upon as you
+hunt bugs in your own software.  We've only lightly touched on what GSBug can
+really do (I'm not typing all 150 or so pages of the manual into this
+"introduction" to GSBug).  GSBug offers a lot of power and capabilities that
+should be learned by all developers.
+
+Before I wrap up this tutorial I want to cover the use of templates and
+describe some of the new features in GSBug v.1.5b11 that aren't described in
+the APDA documentation (because we just added the features and haven't
+replaced APDA's master manual yet).
+
+
+Templates By Jim:
+
+GSBug provides an easy way for you to view portions of memory through
+templates.  This allows you to "see" the data structures in memory just
+like they appear in the documentation (i.e.: see them divided into the
+various fields).  The GSBug.Templates file that you were supposed to
+have placed in the SYSTEM/SYSTEM.SETUP folder of your boot disk contains
+a complete set of templates for use with our interface files.  One of the
+Apple II Developer Technical Support Engineers put these templates together
+(and came up with a pretty neat way to build in a "help system" - so tell
+Jim "thanks" next time a template bails you out of a jam).
+
+GSBug does NOT automatically load those templates unless you rename them (see the "GSBug.Specs" file for more information).  You have to tell GSBug to load
+them (and you can unload them later).  To load these templates, just type
+"loadtemp */system/system.setup/gsbug.templates" and press RETURN.  Keep
+trying until you get it right - it does work (watch out for typos, etc).
+
+To view a piece of memory with a template, simply determine the starting
+address of the template.  The starting address can be found in a number of
+ways - you can dereference a pointer that you just pushed on the stack, etc.
+Then, type an underscore, the type of structure you want used, a blank space,
+and the starting address (don't forget the bank).  (i.e.:  if you know you
+have a graf port starting at location 06/15E4, then type:  "_grafport 06/15E4"
+and press RETURN.
+
+To use the built-in template help system that Jim came up with (thanks Jim!),
+just type: "_template 0" and press return.  This will give you a list of all
+the categories of help you can get more info on (such as ADB, FONTS, etc).
+The categories are grouped by toolbox manager.  To get details on a particular
+toolbox manager's tool calls, type "_toolmgrname 0" and press RETURN
+(replace "_toolmgrname" with the name of any tool manager - lead with an
+underscore or it won't work).  (i.e.: "_quickdraw 0" for details on QuickDraw
+data structures)  For more details, read the separate documentation file on
+using the templates.
+
+If you want to create your own custom templates, then read the GSBug manual
+(pages 86-88) or decipher the templates in the GSBug.Templates file.  To
+unload the templates (and free up the memory they're eating), type "killtemp"
+and press RETURN from GSBug's command line.
+
+
+The New Stuff:
+
+As if all of this weren't reason enough to use GSBug, the man behind this
+jewel added several more reasons (he calls them features).  All of these are
+fake tool calls that the debugger sees, intercepts, and acts on.
+
+The new calls are SetMileStone, DebugStr, DebugVersion, and DebugStatus.
+The two most important ones (in my opinion) are "SetMileStone" and "DebugStr".
+
+SetMileStone simply changes the debugger's copyright message to be a string of
+your choice and lets your app keep running.  If you're having a problem
+figuring out where your code was last at before it jumped off into the weeds,
+then sprinkle SetMileStone calls into your source code (with different strings
+on each, of course).  Then, when your app chokes and dies, you'll be presented
+with the text from the last SetMileStone that was executed.
+
+DebugStr works like SetMileStone (i.e.: changes the copyright string
+to something with info about your application) except it dumps you immediately
+into GSBug.  This is a little more work than Cheap Trick #1, but you can line
+up your source easier (since you'll have the debug string's message to guide
+you).
+
+DebugVersion and DebugStatus act just like normal version and status calls for
+regular tool sets - they simply allow you to verify whether GSBug is running
+and if so, what version of the debugger is running before you try to make any
+debugger tool calls.
+
+The tool numbers and parameter lists for these calls are:
+
+Name            Tool #  Parameter (returns)
+--------------  ------  ---------------------------------------------------
+DebugStatus     $06FF   (non-zero = true, ToolLocator error it not loaded)
+DebugStr        $09FF   pointer to Pascal-style string
+DebugVersion    $04FF   ($159F for v.1.5B9)
+SetMileStone    $0AFF   pointer to Pascal-style string
+
+
+Cheap (and short) Trick #6:
+
+If you get really fancy, you can build the strings for DebugStr and
+SetMileStone on the fly and imbed the values of key variables into them to
+further simplify locating bugs.
+
+
+Calling all Debuggers:
+
+Do _NOT_ leave calls to these debugger tools in your software when you ship it
+to customers!  Why?  Because making these calls on a system that doesn't have
+GSBug installed makes a real mess...
+
+
+Want More Info?
+
+Contact APDA and order the full package (you have a newer version of GSBug
+with this file, but APDA has the full manual).  Order it by calling APDA
+(1-800-282-2732) and asking for part #A0037LL/A (the price is $30).  Due to recent changes in APDA, you no longer need to be a member before you can order this product.

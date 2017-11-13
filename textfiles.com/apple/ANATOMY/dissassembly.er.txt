@@ -1,0 +1,798 @@
+******************************************************************
+*                                                                *
+*                     DISASSEMBLY OF ERRORS                      *
+*                                                                *
+*----------------------------------------------------------------*
+*                                                                *
+*      Assembly language programmers should appreciate the fact  *
+* that debugging and error trapping a program often requires     *
+* considerable more time than simply coding the routines needed  *
+* to perform the tasks originally intended.  Anyone who plans to *
+* modify DOS or access DOS from an assembly language program     *
+* should therefore be thoroughly familiar with DOS's error-      *
+* handling routines.  Unfortunately, this is not an easy task    *
+* because:                                                       *
+*      1) Hundreds of lines of code and dozens of decisions and  *
+*         flags may be required to process a simple error from   *
+*         the point of detection to the actual printing of the   *
+*         error message.                                         *
+*      2) The evolution of DOS has not always been a smooth      *
+*         process.  Some error-handling routines have been       *
+*         patched more times than a miser's favorite pair of     *
+*         socks.                                                 *
+*      3) Some error-handling routines reset the stack pointer   *
+*         to govern the execution pattern.  The values used to   *
+*         adjust the stack pointer are not always readily        *
+*         apparent.                                              *
+*      4) Some command handlers call other command handlers.     *
+*      5) Some command handlers use both function and subfunction*
+*         handlers whereas other commands use neither.           *
+*      6) DOS employs approximately 14 different levels of sub-  *
+*         routines.  It is therefore often very difficult simply *
+*         to keep the implications of a given command in         *
+*         perspective.                                           *
+*      Considering these difficulties, it doesn't seem feasible  *
+* to describe all the different potential execution patterns     *
+* associated with DOS's error-handling routines in a single      *
+* formatted disassembly.  However, the following listing should, *
+* WHEN USED WITH THE OTHER FORMATTED DISASSEMBLIES, help you     *
+* trace any DOS error to its bitter end.  In order to help you   *
+* keep things in perspective, note that this listing uses PHONY  *
+* command, function and subfunction handlers to depict a         *
+* MYTHICAL command that is vulnerable to every type of error in  *
+* DOS.  Also note that a given subroutine may be accessed at     *
+* different depths of execution by different commands.  (For     *
+* instance, PhonycommandhandlerA may access the BADFMXIT routine *
+* ($B385) at a level five subroutines deeper than the command    *
+* handler's entry point. On the other hand, PhonycommandhandlerB *
+* may enter BADFMXIT at a level seven subroutines deeper than    *
+* the command handler's entry point.)                            *
+*                                                                *
+*================================================================*
+*                                                                *
+*                  DOS ACCESS VS ERROR HANDLING                  *
+*                                                                *
+*----------------------------------------------------------------*
+*                                                                *
+*      Assembly language programmers who access DOS via the      *
+* file manager should note that they must write their own error- *
+* handling routines.  Where necessary, these routines should     *
+* close files, release DOS buffers and print the appropriate     *
+* error messages.                                                *
+*      Whenever possible, (nonturnkey) assembly language         *
+* programs intended for commerical distribution should be        *
+* designed to run on different-sized machines or accommodate     *
+* moved versions of DOS.  Under these conditions, DOS must be    *
+* accessed via indirect addressing.  Only the filemanager        *
+* (ie. DOS's function and subfunction handlers) and RWTS are     *
+* readily accessible through indirect addressing.  All other     *
+* sections of DOS (including the command handlers, the error-    *
+* handling routines and DOS's command parsing and processing     *
+* routines) are off limits.  It is therefore the programmer's    *
+* responsibility, to write his own supporting routines.  These   *
+* routines must not only handle errors, but they must also       *
+* detect certain errors.  (For example, none of the indirectly   *
+* accessible portions of DOS check a file description entry to   *
+* determine if the file found is of the correct type or not.     *
+* This is just another one of the duties of the program author.) *
+*      Some programmers implement DOS commands by direct calls   *
+* or by printing a string containing a return, control-D and the *
+* characters of a DOS command.  If you employ either of these    *
+* techniques, you should take special note of the ERRHNDLR       *
+* ($A6D2) and CKBSCRUN ($A65E) routines.  Several flags in these *
+* routines are responsible for determining the route taken to    *
+* exit DOS and whether or not an error message should be printed.*
+* If you want DOS to exit to your own custom error-handling      *
+* routine, be sure to place the address of your error handler in *
+* ADBSCERR ($9D5A, $9D5B) and condition the following flags as   *
+* indicated:                                                     *
+*        ACTBSFLG ($AAB6): $40   ;Denotes Applesoft.             *
+*        CURLIN+1 ($76): not $FF ;$FF denotes immediate mode.    *
+*        PROMPT ($33): not $DD   ;$DD = RH bracket = Applesoft   *
+*                                ;prompt.                        *
+* If you want DOS to print an error message before entering your *
+* error handler, you must also insure that the on-err flag       *
+* (ERRFLG, $D8) contains a positive value.                       *
+*                                                                *
+******************************************************************
+
+
+
+***********************
+*                     *
+* Line parsing and    *
+* command recognition *
+* routine.            *
+*                     *
+*---------------------*
+(9FCD)
+PARSECMD .
+         .
+         .
+         .
+(A018)   .
+PRSYNERR JMP SYNTXERR ;A DOS command was expected but not found.
+         .            ;- OR a filename was required but not issued.
+         .            ;- OR an illegal filename character was used.
+         .            ;- OR an option not applicable to the
+         .            ;  command was used.
+         .            ;- OR IN#, PR# or MAXFILES arguments were
+         .            ;  not in the correct range.
+         .
+(A02D)   .
+NODIRCMD LDA #15      ;An attempt was made to issue a READ, WRITE,
+(A02F)   JMP ERRHNDLR ;POSITION, OPEN or APPEND command in the
+         .            ;immediate mode.
+         .
+(A0C9)   .
+ARGRNGER LDA #2       ;Argument issued with the IN#, PR#
+(A0CB)   JMP ERRHNDLR ;or MAXFILES commands or  A, B, R, L, S, D
+         .            ;or V options was too large or too small.
+         .
+(A0CE)   .
+TOSYNTX  JMP SYNTXERR ;An option character was expected but not 
+         .            ;issued with the command.
+         .            ;A non-numeric char was issued as an
+         .            ;arugment for the IN#, PR#, or MAXFILES
+         .            ;commands or for the A, B, R, L, S, D,
+         .            ;or V options.
+         .
+         .
+         .
+         .
+         .
+* Final processing of the DOS command.
+(A17A)
+TODOSCMD JSR DODOSCMD ;Go do the DOS command.
+
+                      * Do the DOS command.
+                      (A180)
+                      DODOSCMD JSR RESTAT0  ;Zero out CONDNFLG and OPUTCOND.
+
+                                            * Reset CONDNFLG and OPUTCOND to zero.
+                                            (A75B)
+                                            RESTAT0  LDY #0
+                                                     STY CONDNFLG
+                                                     STY OPUTCOND
+                                            (A763)   RTS
+
+                      * Zero out the FM parameter list so we
+                      * can customize it in accordance with the
+                      * specific DOS command about to be executed.
+                      (A183)   JSR CLRFMPRM
+
+                                            * Clear out the FM parameter list.
+                                            (A1AE)
+                                            CLRFMPRM LDA #0
+                                                     LDY #$16
+                                            ZFMPARM  STA FMPRMLST-1,Y
+                                                     DEY
+                                                     BNE ZFMPARM
+                                            (A1B8)   RTS
+
+                      * Do a "stack jump" to process the command.
+                      * (Note:  THE COMMAND HANDLER IS ALWAYS
+                      * ENTERED WITH CONDNFLG & OPUTCOND = 0.)
+                      (A186)   LDA NDX2CMD  ;Get (a) = index to the command.
+                               TAX          ;(x) = index to the table of entry points.
+                               LDA CMDTBL+1,X ;Get the address of the command handler
+                               PHA          ;and put it on the stack (hi byte first).
+                               LDA CMDTBL,X
+                               PHA
+                      (A192)   RTS          ;Do a "stack jump" to the command handler.
+
+                      ********************************
+                      *                              *
+                      *    Phony Command Handler     *
+                      *                              *
+                      *------------------------------*
+
+                      (----)
+                      CmdPhony .
+                               .
+                               .
+                               .            ;Commands in which error can occur.
+                               .            ;(Only includes commands that are shown in
+                               .            ;their entirety in the formatted disassemblies.)
+                               .            ;------------------------------------------------
+                               .
+                      (A7D0)   JMP TYPMISM  ;CMDOPEN, CMDBSAVE, CMDSAVE, CMDAPPND / CMDPOSN,
+                               .            ;CMDWRITE, CMDREAD, CMDEXEC via CMDOPEN /
+                               .            ;CMDINIT via CMDSAVE / CMDBRUN via CMDBLOAD.
+                               .
+                               .
+                      (----)   JSR HNDLCMD
+
+                                            (A2A8)
+                                            HNDLCMD  .
+                                                     .
+                                                     .
+                                                     .            ;Commands in which error can occur.
+                                                     .            ;(Only includes commands that are shown in
+                                                     .            ;their entirety in the formatted disassemblies.)
+                                                     .            ;------------------------------------------------
+                                            (A018)   .
+                                            PRSYNERR JMP SYNTXERR ;Detected a BSAVE cmd with no accompanying
+                                                     .            ;A(ddress) or L(ength) parameters.
+                                                     .
+                                                     .
+                                            (A2CF)   JMP NOBUFERR ;CMDVERIFY, CMDLOCK, CMDUNLOK, CMDCATLG,
+                                                     .            ;CMDRENAME, CMDELETE, CMDAPPND, CMDCHAIN,
+                                                     .            ;CMDBSAVE, CMDBLOAD, CMDLOAD, CMDSAVE /     
+                                                     .            ;CMDBRUN via CMDBLOAD / CMDRUN via CMDLOAD /
+                                                     .            ;CMDWRITE, CMDREAD, CMDEXEC or CMDPOSN via
+                                                     .            ;CMDOPEN.
+                                                     .
+                                            (A369)   JMP TYPMISM  ;CMDBLOAD or CMDBRUN via CMDBLOAD.
+                                                     .
+                                            (A3A0)   JMP TOOLARGE ;CMDSAVE and CMDINIT via CMDSAVE.
+                                                     .
+                                            (A410)   .
+                                            TOTYPMIS JMP TYPMISM  ;CMDCHAIN, CMDLOAD or CMDRUN via CMDLOAD.
+                                                     .
+                                                     .
+                                            (A4AE)   JMP TOOLARGE ;CMDCHAIN, CMDLOAD or CMDRUN via CMDLOAD.
+                                                     .
+                                            (A5A5)   .
+                                            NOLNGINT LDA #1       ;CMDINT.
+                                            (A5A7)   JMP ERRHNDLR
+                                                     .
+                                            (A63F)   .
+                                            ENDATERR LDA #5       ;CMDEXEC, CMDREAD or CMDPOSN.
+                                            (A641)   JMP ERRHNDLR
+                                                     .
+                                                     .
+                                                     .
+                                                     .
+                                            (A6A8)   .
+                                            FMDRIVER JSR FILEMGR
+
+                                                                  (AB06)
+                                                                  FILEMGR  TSX          ;SAVE THE STACK POINTER so we can later
+                                                                           STX STKSAV   ;return to the caller of the file manager.
+                                                                           JSR RSTRFMWA ;Copy work buf ---> FM work area.
+                                                                           LDA OPCODEFM ;Check if the opcode is legal.
+                                                                           CMP #13      ;(Must be less than 13.)
+                                                                           BCS TOERROP  ;Range error - opcode too large.
+                                                                           ASL          ;Double opcode val & put it in (x)
+                                                                           TAX          ;so it indexes the table of function adrs.
+                                                                           LDA Phonyfunctbl+1,X ;Stick addr of function handler on
+                                                                           PHA          ;the stack (hi byte first) and then do a
+                                                                           LDA Phonyfunctbl,X ; "stack jump" to the function
+                                                                           PHA          ;handler's entry point.
+                                                                  (AB1E)   RTS
+                                                                           .
+                                                                           .
+                                                                  ----------------------
+                                                                  (AB1F)
+                                                                  TOERROP  JMP RNGERROP ;Normally can only occur if the file manager
+                                                                  --------------------- ;is being used directly by custom assembly
+                                                                                        ;language programs.
+                                                                           .
+                                                                           .
+                                                                  (----)   .
+                                                             FunctionPhony LDA SUBCODFM ;Check if subcode is legal.
+                                                                           CMP #5       ;(Must be less than 5.)
+                                                                           BCS TOERRSUB ;Error - illegal subcode.
+                                                                           ASL          ;Subcode * 2, cause 2 bytes per adr.
+                                                                           TAX          ;Index tbl of subfunction adrs.
+                                                                           LDA Phonysubfunctbl,X ;Get addr (minus 1) of subfunction
+                                                                           PHA          ;entry point and stick it on the stack
+                                                                           LDA Phonysubfunctbl,X ;(hi byte first).
+                                                                           PHA
+                                                                  (----)   RTS          ;Do a "stack jump" to the subfunction.
+                                                                           .
+                                                                           .
+                                                                  ----------------------
+                                                                  (AC6A)
+                                                                  TOERRSUB JMP RNGERRSB ;Normally, can only occur if the file
+                                                                  --------------------- ;manager is being accessed by a custom
+                                                                                        ;assembly language program and only if
+                                                                                        ;the function being used requires a
+                                                                                        ;subfunction.
+                                                                           .
+                                                                           .
+                                                                           .
+                                                                  (----)   .
+                                                          SubfunctionPhony .
+                                                                           .
+                                                                           .
+                                                                           .            ;Functions in which error can occur.
+                                                                           .            ;(Only includes functions that are shown in
+                                                                           .            ;their entirety in the formatted
+                                                                           .            ;disassemblies.)
+                                                                           .            ;---------------------------------------
+                                                                           .
+                                                                  (AB5E)   JMP LNGNOTAV ;FNOPEN, FNVERIFY, FNDELETE, FNRENAME,
+                                                                           .            ;FNLOCK and FNUNLOCK.
+                                                                           .
+                                                                  (AB61)   .
+                                                                  TOFILNOT JMP FILENOT  ;FNOPEN, FNVERIFY, FNDELETE, FNRENAME,
+                                                                           .            ;FNLOCK and FNUNLOCK.
+                                                                           .
+                                                                  (AC6D)   .
+                                                                  TOFILOCK JMP FILELOKD ;FNRENAME.
+                                                                           .
+                                                                  (ACB8)   .
+                                                                  NDATERR  JMP ENDOFDAT ;FNREAD.
+                                                                           .
+                                                                           .
+                                                                  (AD36)   JMP FILELOKD ;FNDELETE.
+                                                                           .
+                                                                  (B2C0)   .
+                                                                  TODSKFUL JMP DISKFULL ;FNOPEN.
+                                                                           .
+                                                                           .
+                                                                  (B241)   JMP DISKFULL ;FNOPEN, FNVERIFY, FNDELETE, FNRENAME,
+                                                                           .            ;FNLOCK and FNUNLOCK.
+                                                                           .
+                                                                           .
+                                                                           .
+                                                                  (----)   JSR RWTSDRVR
+
+                                                                                        (B052)
+                                                                                        RWTSDRVR STX IBTRK
+                                                                                                 STY IBSECT
+                                                                                        RWTSDRV1 STA IBCMD
+                                                                                        (B058)   .
+                                                                                                 .
+                                                                                                 .
+                                                                                        - finish setting up RWTS's
+                                                                                          input/output block (IOB).
+                                                                                                 .
+                                                                                                 .
+                                                                                                 .
+                                                                                        (B08A)   LDY ADRIOB   ;Set (y) & (a) to
+                                                                                                 LDA ADRIOB+1 ;pt at RWTS's IOB.
+                                                                                        (B090)   JSR ENTERWTS ;Go call RWTS.
+
+                                                                                                              (B7B5)
+                                                                                                              ENTERWTS PHP
+                                                                                                                       SEI
+                                                                                                                       JSR RWTS
+                                                                                                                       BCS ERRENTER
+                                                                                                                       PLP
+                                                                                                                       CLC
+                                                                                                              (B7BE)   RTS
+                                                                                                                       ======
+
+                                                                                                              (B7BF)
+                                                                                                              ERRENTER PLP
+                                                                                                                       SEC
+                                                                                                              (B7C1)   RTS
+                                                                                                                       ======
+
+                                                                                        (B093)   .
+                                                                                                 .
+                                                                                                 .
+                                                                                                 .
+                                                                                        (B09E)   BCS ERRWTSDR ;Branch if UNsuccess.
+                                                                                        (B0A0)   RTS
+                                                                                                 ============
+
+                                                                                        * RWTS operation was NOT successful.
+                                                                                        * (Translate RWTS error code (a) to
+                                                                                        * an FM error code (y).)
+                                                                                        (B0A1)
+                                                                                        ERRWTSDR LDA IBSTAT
+                                                                                                 LDY #7
+                                                                                                 CMP #$20     ;Vol mismatch?
+                                                                                                 BEQ SETFMERR ;Yes.
+                                                                                                 LDY #$04
+                                                                                                 CMP #$10     ;Write protected?
+                                                                                                 BEQ SETFMERR ;Yes.
+                                                                                                 LDY #$08     ;Must have been other,
+                                                                                        SETFMERR TYA          ;so indicate I/O err.
+                                                                                        (B0B3)   JMP BADFMXIT ;Go handle error.
+                                                                                                 ------------
+                                                                  (B35F)
+                                                                  LNGNOTAV LDA #1
+                                                                           BNE BADFMXIT ;ALWAYS.
+                                                                  RNGERROP LDA #2
+                                                                           BNE BADFMXIT ;ALWAYS.
+                                                                  RNGERRSB LDA #3
+                                                                           BNE BADFMXIT ;ALWAYS.
+                                                                  WRITPROT LDA #4
+                                                                           BNE BADFMXIT ;ALWAYS.
+                                                                  ENDOFDAT LDA #5
+                                                                           BNE BADFMXIT ;ALWAYS.
+                                                                  FILENOT  LDA #6
+                                                                           BNE BADFMXIT ;ALWAYS.
+                                                                  DISKFULL JMP FULLPTCH
+                                                                           NOP
+                                                                  FILELOKD LDA #10
+                                                                           BNE BADFMXIT ;ALWAYS.
+                                                                  GOODFMXT LDA RTNCODFM
+                                                                           CLC          ;(c) = 0 = signal good operation.
+                                                                           BCC FMEXIT   ;ALWAYS.
+                                                                  BADFMXIT SEC          ;(c) = 1 = signal unsuccessful operation.
+                                                                  FMEXIT   PHP          ;Save status on stack.
+                                                                           STA RTNCODFM ;Store return code in FM parameter list.
+                                                                           LDA #0       ;Avoid that infamous $48 bug.
+                                                                           STA STATUS
+                                                                           JSR CPYFMWA  ;Copy work area --> work buffer.
+                                                                  (B391)   PLP          ;Retrieve status of success of operation
+                                                                                        ;back from the stack.
+                                                                  (B392)   LDX STKSAV   ;ADJUST THE STACK POINTER TO FORCE EXIT
+                                                                           TXS          ;TO THE CALLER EVEN IF SEVERAL SUBROUTINES
+                                                                  (B396)   RTS          ;DEEPER THAN ORIGINAL ENTRY.  (Always
+                                                                           ============ ;returns to the AFTRFUNC routine ($A6AB)
+                                                                                        ;unless called by the RSETPTRS routine
+                                                                                        ;($B6B3) which is used to exit the
+                                                                                        ;append command handler.  In this later
+                                                                                        ;instance, STKSAV ($B39B) is reset to
+                                                                                        ;exit the command before the FMEXIT
+                                                                                        ;($B386) routine is entered.)
+
+
+                                                                  * Disk-full-error patch.
+                                                                  (BFED)
+                                                                  FULLPTCH JSR CPYFMWA  ;Copy work area --> work buffer.
+                                                                           LDX STKSAV   ;Reinstate the stk pointer so that CLOSEALL
+                                                                           TXS          ;($A316) sets STKSAV ($B39B) correctly.
+                                                                           JSR CLOSEALL ;Close all the files.
+                                                                           TSX          ;Reset the stk pointer so we can return to
+                                                                           STX STKSAV   ;the AFTRFUNC routine ($A6AB) in FMDRIVER.
+                                                                           LDA #9       ;Set (a) = disk-full error code.
+                                                                  (BFFD)   JMP BADFMXIT ;Go exit the error.
+                                                                           ------------
+
+                                            * Finish handling any function errors.
+                                            * (Execution returns here because the
+                                            * stack was reset with the value saved on
+                                            * entry to the FMDRIVER routine ($A6A8).)
+                                            * (If just read a byte from a data sector, enter
+                                            * with a clear carry (even if byte was a $00).)
+                                            (A6AB)
+                                            AFTRFUNC BCC FMDRVRTN ;Branch if no errors.
+                                                                  ;If just did a read, branch if dealing
+                                                                  ;with a byte from a data sector (as opposed
+                                                                  ;to a byte from a T/S list).
+                                            (A6AD)   LDA RTNCODFM ;Get error code from FM parameter list.
+                                                     CMP #5       ;End-of-data error?
+                                            (A6B2)   BEQ TOAPPTCH ;Yes - not handled like other errors!!!.
+                                                                  ;File ends at a full data sec and so we
+                                                                  ;encountered a zeroed out T/S link or a
+                                                                  ;zeroed out data pair (trk/sec vals for
+                                                                  ;next data sec listed in T/S list).
+                                            (A6B4)   JMP OTHRERR  ;Only take if got an error other than
+                                                     ------------ ;an end-of-data error.
+
+                                            TOAPPTCH JMP APNDPTCH
+                                            (A6B7)   ------------
+
+                                            * Note:  You are now entering an almost
+                                            * undecipherable mess of spaghetti programming.
+                                            * Parts of the following routines seem useless.
+                                            * Some instruction may just represent residual (but
+                                            * innocuous) bytes that are were left over from
+                                            * an earlier version of DOS.
+
+                                            * Check if file pointer and WASTEBYT are zeroes.
+                                            * (On entry, A4L/+1 is pointing at the FM work buffer.)
+                                            (B692)
+                                            APNDPTCH LDY #$13
+                                            CK4ZEROS LDA (A4L),Y
+                                            (B696)   BNE SETAPFLG ;Unless we are dealing with a 
+                                                                  ;useless file that was previously
+                                                                  ;opened, but never closed, this
+                                                                  ;instruction is always taken.
+                                            (B698)   INY
+                                                     CPY #$17
+                                            (B69B)   BNE CK4ZEROS
+
+                                            * The purpose of the following instructions is not
+                                            * understood.  This section of code may have been
+                                            * designed to deal with useless files that were
+                                            * opened but never closed.  Whatever, the original
+                                            * purpose was, the following code appears to keep
+                                            * the file pointer at #$000000 when a file with no 
+                                            * data is encountered.
+                                            * (On entry, A4L/+1 is pointing at the FM work buffer.)
+                                            (B69D)   LDY #$19
+                                            COPYRECS LDA (A4L),Y  ;Copy image of RECNMNWA/+1 and BYTOFFWA/+1
+                                                     STA RECNMBFM-$19,Y ;that were just stored in the work
+                                                     INY          ;buffer to RECNMBFM/+1 and BYTOFFFM/+1
+                                                     CPY #$1D     ;in the FM parm list.
+                                                     BNE COPYRECS
+                                            FMDVRTN  JMP BK2FMDRV
+                                            (B6A9)   ------------
+
+                                            * Set the append flag.
+                                            * (Never entered if dealing
+                                            * with an empty file.)
+                                            (B6AC)
+                                            SETAPFLG LDX #$FF
+                                                     STX APPNDFLG ;Set the append flag.
+                                            (B6B1)   BNE FMDVRTN  ;ALWAYS.
+                                                     ------------
+
+                                            (A6BA)   NOP
+                                            BK2FMDRV JSR CKIFAPND
+                                            (A6BB)
+
+                                                                  * Check if using APPEND command.
+                                                                  (BA69)
+                                                                  CKIFAPND LDX CMDINDEX ;Get command index.
+                                                                           CPX #$1C     ;Are we APPENDing?
+                                                                           BEQ RTNCKAPN ;Yes leave flag on.
+                                                                           LDX #0       ;No - turn off append flag.
+                                                                           STX APPNDFLG
+                                                                  RTNCKAPN RTS
+                                                                  (BA75)
+
+                                            (A6BE)   LDX #0       ;Zero out the "one-data byte" parameter in FM parm list.
+                                                     STX ONEIOBUF ;(Also referred to as low byte of CURIOBUF.)
+                                            FMDRVRTN RTS          ;Return to caller of FMDRIVER.
+                                            (A6C3)   ============
+
+
+                                            * Error was deadly so we better
+                                            * release the file's buffer and
+                                            * make sure the append flag is off.
+                                            (B65E)
+                                            OTHRERR  JSR GETBUFF  ;Locate buffer belonging to the file.
+                                                                  ;(Put addr of buf in A3L/+1.)
+                                            (B661)   BCS TOERRMSG ;No buffer was assigned so no need to
+                                                                  ;release file's buf or turn off append
+                                                                  ;flag.
+                                            (B663)   LDA #0       ;Zero out the append flag and set
+                                                     TAY          ;(y) to index the first byte of the
+                                                     STA APPNDFLG ;DOS name buf.
+                                                     STA (A3L),Y  ;Release the file's DOS buffer.
+                                            TOERRMSG LDA RTNCODFM ;Get error code so can index err msg.
+                                            (B66E)   JMP ERRHNDLR ;Exit and do error message.
+                                                     ------------
+
+                                            (A6C4)
+                                            SYNTXERR LDA #11
+                                                     BNE ERRHNDLR ;ALWAYS.
+                                            NOBUFERR LDA #12
+                                                     BNE ERRHNDLR ;ALWAYS.
+                                            TOOLARGE LDA #14
+                                                     BNE ERRHNDLR ;ALWAYS.
+                                            TYPMISM  LDA #13
+                                            (A6D0)
+
+                                            (A6D2)
+                                            ERRHNDLR STA ASAVED   ;Save error code for later use.
+                                            (A6D5)   JSR RESTATIN
+
+                                                                  * Patch to set condition 0 and
+                                                                  * clear the run interrupt flag.
+                                                                  (BFE6)
+                                                                  RESTATIN JSR RESTAT0
+
+                                                                                        * Reset CONDNFLG & OPUTCOND to zero.
+                                                                                        (A75B)
+                                                                                        RESTAT0  LDY #0
+                                                                                                 STY CONDNFLG
+                                                                                                 STY OPUTCOND
+                                                                                        (A763)   RTS
+
+                                                                  (BFE9)   STY RUNTRUPT ;Clear the run interrupt flag.
+                                                                  (BFEC)   RTS
+
+                                            (A6D8)   LDA ACTBSFLG ;Check if Integer or FP basic is active.
+                                            (A6DB)   BEQ WASINT   ;Branch if using Integer.
+                                                                  ;(On-error flag not applicable to integer.)
+                                            (A6DD)   LDA ERRFLG   ;Check if basic's ONERR flag is on.
+                                            (A6DF)   BMI ONERRACT ;Yes - skip printing of error message
+                                                                  ;cause we eventually want to go to our
+                                            (A6E1)                ;own custom BASIC error handling routine.
+                                            WASINT   LDX #0       ;Initialize index to tbl of offsets to errs.
+                                            (A6E3)   JSR PRDOSERR ;Go print:  <rtn>, <bell>, <rtn>.
+
+                                                                  * Print the DOS error message.
+                                                                  (A702)
+                                                                  PRDOSERR LDA OFF2ERR,X ;Use the error code to get an offset to
+                                                                                        ;the error message.
+                                                                  (A705)   TAX          ;(x) = offset to table of err msg text.
+                                                                  MOREMSG  STX TEMPBYT  ;Save offset to text.
+                                                                           LDA ERRTXTBL,X ;Get an error-message character.
+                                                                           PHA          ;Save it on the stack.
+                                                                           ORA #$80     ;Turn the hi bit on to satisfy monitor.
+                                                                  (A70F)   JSR GODSPLY
+
+                                                                                        * Character output handler.
+                                                                                        (9FC5)
+                                                                                        GODSPLY  JMP (CSW)    ;Pts 2 true hndlr.
+                                                                                                 ------------
+
+                                                                                        * Monitor ROM's output char handler.
+                                                                                        (FDF0)
+                                                                                        COUT1    .
+                                                                                                 .
+                                                                                        (See dis'mbly in APPLE II REFERENCE MANUAL.)
+                                                                                                 .
+                                                                                                 .
+                                                                                                 (RTS)
+
+                                                                  (A712)   LDX TEMPBYT  ;Reset (x) = offset to tbl of err msg text.
+                                                                           INX          ;Kick index up for next char of message.
+                                                                           PLA          ;Get original char back in (a).
+                                                                           BPL MOREMSG  ;Branch if more chars in message.
+                                                                  (A719)   RTS          ;(All but the last char in @ msg are pos.)
+
+                                            (A6E6)   LDX ASAVED   ;Get saved return code.
+                                                     JSR PRDOSERR ;Go print the error message.
+                                                                  ;(See dis'mbly above.)
+                                            (A6EC)   JSR CRVIADOS ;Print a <cr> via DOS & monitor ROM.
+
+                                                                  * Print a carriage return.
+                                                                  (9FC8)
+                                                                  CRVIADOS LDA #$8D     ;<cr>.
+                                                                  (9FCA)   JMP GODSPLY  ;Go print it.
+                                                                           ------------
+
+                                                                  * Character output handler.
+                                                                  (9FC5)
+                                                                  GODSPLY  JMP (CSW)    ;Pts 2 true hndlr.
+                                                                           ------------
+
+                                                                  * Monitor ROM's output char handler.
+                                                                  (FDF0)
+                                                                  COUT1    .
+                                                                           .
+                                                                  (See dis'mbly in APPLE II REFERENCE MANUAL.)
+                                                                           .
+                                                                           .
+                                                                           (RTS)
+
+                                            (A6EF)
+                                            ONERRACT JSR INITIOHK ;Reset the I/O hooks to point to DOS.
+
+                                                                  * Initialize the I/O hooks so that DOS intercepts
+                                                                  * all input & output.  For instance, if a routine
+                                                                  * encounters a "COUT JMP (CSW)", then execution will
+                                                                  * actually flow to DOS's output routine (OPUTINCP,
+                                                                  * $9EBD).  Similarly, any routine that refers to
+                                                                  * "RDKEY JMP (KSW)" will actually jump to DOS's
+                                                                  * input routine (INPTINCP, $9E81).
+                                                                  *
+                                                                  * The true (ie. normal) hooks are saved, ex:
+                                                                  *    KSW: KEYIN --> KSWTRUE: KEYIN.
+                                                                  *    CSW: COUT1 --> CSWTRUE: COUT1.
+                                                                  * The intercepts are then set as follows:
+                                                                  *    ADINPTCP: INPTINCP --> KSW: INPTINCP.
+                                                                  *    ADOPUTCP: OPUTINCP --> CSW: OPUTINCP.
+
+                                                                  * Check if the input hook needs to be reset.
+                                                                  (A851)
+                                                                  INITIOHK LDA KSW+1
+                                                                           CMP ADINPTCP+1
+                                                                  (A856)   BEQ CKOUTHK  ;Input hook already points to DOS's
+                                                                                        ;input handler, so go check output hook.
+
+                                                                  * Reset the input hook to point to DOS.
+                                                                  (A858)   STA KSWTRUE+1 ;KSW: KEYIN --> KSWTRUE: KEYIN.
+                                                                           LDA KSW
+                                                                           STA KSWTRUE
+                                                                           LDA ADINPTCP ;ADINPTCP: INPTINCP --> KSW: INPTINCP.
+                                                                           STA KSW
+                                                                           LDA ADINPTCP+1
+                                                                  (A868)   STA KSW+1
+
+                                                                  * Check if the output hook needs to be reset.
+                                                                  (A86A)
+                                                                  CKOUTHK  LDA CSW+1
+                                                                           CMP ADOPUTCP+1
+                                                                  (A86F)   BEQ SETHKRTN ;Output hook already points to DOS's
+                                                                                        ;output handler, so go exit.
+
+                                                                  * Reset the output hook to point to DOS.
+                                                                  (A871)   STA CSWTRUE+1,X ;CSW: COUT1 --> CSWTRUE: COUT1.
+                                                                           LDA CSW
+                                                                           STA CSWTRUE
+                                                                           LDA ADOPUTCP ;ADOPUTCP: OPUTINCP --> CSW: OPUTINCP.
+                                                                           STA CSW
+                                                                           LDA ADOPUTCP+1
+                                                                           STA CSW+1
+                                                                  SETHKRTN RTS
+                                                                  (A883)
+
+                                            (A6F2)   JSR CKBSCRUN ;Check if basic is running a program.
+
+                                                                  * Is a version of basic running?
+                                                                  (A65E)
+                                                                  CKBSCRUN PHA          ;Save (a) on the stack.
+                                                                           LDA ACTBSFLG ;Which basic is up?
+                                                                  (A662)   BEQ INTBASIC ;Branch if using integer.
+
+                                                                  * Using Applesoft - now if the line number
+                                                                  * is greater than 65288 ($FF in hi byte),
+                                                                  * then we are using the immediate mode.
+                                                                  (A664)   LDX CURLIN+1 ;Check hi byte of line number.
+                                                                           INX          ;If $FF --> $00, then # > 65288.
+                                                                  (A667)   BEQ IMEDMODE ;Branch if using immediate mode.
+
+                                                                  * FP apprears to be running a program.
+                                                                  * But, maybe CURLIN+1 was zapped, so
+                                                                  * also check the prompt.
+                                                                  (A669)   LDX PROMPT   ;Are we using an RH bracket (ie. an
+                                                                           CMP #$DD     ;Applesoft prompt)?
+                                                                  (A66D)   BEQ IMEDMODE ;Yes - so must be in immediate mode.
+
+                                                                  (A66F)
+                                                                  RUNNING  PLA          ;Get saved (a) back from the stack.
+                                                                           CLC          ;Signal program is running.
+                                                                  (A671)   RTS
+                                                                           ============
+
+                                                                  (A672)
+                                                                  INTBASIC LDA RUNMODE  ;Check Integer basic's run mode flag.
+                                                                  (A674)   BMI RUNNING  ;If neg, Integer basic is in deferred.
+
+                                                                  (A676)
+                                                                  IMEDMODE PLA          ;Get save (a) back from the stack.
+                                                                           SEC          ;Signal that we're in the immediate mode.
+                                                                  (A678)   RTS
+                                                                           ============
+
+                                            (A6F5)   LDX ASAVED   ;Get the saved return code.
+                                            (A6F8)   LDA #3       ;Set (a) = 3 in case we fall thru to go to
+                                                                  ;basic's error handling routine.  (The magic
+                                                                  ;number of "3" allows BSCERHLR ($D865) to
+                                                                  ;condition (c) = 1 and (z) = 1 to comply with
+                                                                  ;the basic routine that is responsible for
+                                                                  ;printing basic's error messages.)
+                                            (A6FA)   BCS DOWRM    ;Basic is not running.
+                                            TOBSCERR JMP (ADBSCERR) ;Jump to basic's error handling routine
+                                            (A6FC)   ------------ ;(BSCERHLR, $D865).  (ADBSCERR EQU $9D5A).
+                                            DOWRM    JMP (TOWRMVEC) ;Jump to basic's warmstart routine
+                                            (A6FF)   ------------ ;(RESTART, $D43C).  (TOWRMVEC EQ $9D5E).
+
+
+                                            * Table of offsets used to index the error
+                                            * message text table  ($AA3F - $AA4E).
+                                            * (Hackers often swap these bytes around so
+                                            * erroneous error messages will be used.)
+                                            (AA3F)
+                                            OFF2ERR  HEX 00       ;Error code - 0
+                                                     HEX 03       ;           - 1
+                                                     HEX 19       ;           - 2
+                                                     HEX 19       ;           - 3
+                                                     HEX 24       ;           - 4
+                                                     HEX 33       ;           - 5
+                                                     HEX 3E       ;           - 6
+                                                     HEX 4C       ;           - 7
+                                                     HEX 5B       ;           - 8
+                                                     HEX 64       ;           - 9
+                                                     HEX 6D       ;           - 10
+                                                     HEX 78       ;           - 11
+                                                     HEX 84       ;           - 12
+                                                     HEX 98       ;           - 13
+                                                     HEX AA       ;           - 14
+                                            (AA4E)   HEX BB       ;           - 15
+
+
+                                            * Text table of DOS error messages ($A971 - $AA3E).
+                                            * These messages are frequently altered in commerical
+                                            * programs. (Note that only the last character of each
+                                            * text message is written in negative ASCII form.  Also 
+                                            * note that error codes 11 to 15 are NOT set when DOS
+                                            * is accessed via indirect calls to the file manager.)
+                                            (A971)                ; Corresponding error code & address.
+                                            ERRTXTBL HEX 0D078D   ;               0      ($A971 - $A973)
+                                                                  ;<cr>, <bell>, <cr>.
+                                                     DCI 'LANGUAGE NOT AVAILABLE' ;1     ($A974 - $A989)
+                                                     DCI 'RANGE ERROR' ;         2 & 3   ($A98A - $A994)
+                                                                  ;Bad FM opcode or subcode or else,
+                                                                  ;got illegal arguments issued for IN#,
+                                                                  ;PR#, MAXFILES cmds or for A, B, R, L,
+                                                                  ;S, D, V, C, I or O options.
+                                                     DCI 'WRITE PROTECTED' ;       4     ($A995 - $A9A3)
+                                                     DCI 'END OF DATA' ;           5     ($A9A4 - $A9AE)
+                                                     DCI 'FILE NOT FOUND' ;        6     ($A9AF - $A9BC)
+                                                     DCI 'VOLUME MISMATCH' ;       7     ($A9BD - $A9CB)
+                                                     DCI 'I/O ERROR' ;             8     ($A9CC - $A9D4)
+                                                     DCI 'DISK FULL' ;             9     ($A9D5 - $A9DD)
+                                                     DCI 'FILE LOCKED' ;          10     ($A9DE - $A9E8)
+                                                     DCI 'SYNTAX ERROR' ;         11     ($A9E9 - $A9F4)
+                                                     DCI 'NO BUFFERS AVAILABLE' ; 12     ($A9F5 - $AA08)
+                                                     DCI 'FILE TYPE MISMATCH' ;   13     ($AA09 - $AA1A)
+                                                     DCI 'PROGRAM TOO LARGE' ;    14     ($AA1B - $AA2B)
+                                                     DCI 'NOT DIRECT COMMAND' ;   15     ($AA2C - $AA3D)
+                                            (AA3E)   HEX 8D       ;<CR>         no code      ($AA3E)
+
+

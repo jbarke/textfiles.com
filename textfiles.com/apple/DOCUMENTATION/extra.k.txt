@@ -1,0 +1,579 @@
+
+                           Extra K Documentation
+                           ---------------------
+                                 PART 1
+                                  by
+                               The Ghost
+                                  of
+                        The Atlanta Crackers BBS/AE
+                             (404)449-5986
+                          1200 Baud - 40 Megs
+
+
+HARDWARE REQUIREMENTS: Apple //c or a 128k Apple //e (with an extended
+                       80 column card; the standard 80 column card won't
+                       do). Extra K cannot access more than 128k.
+
+
+THE PROGRAMS EXPLAINED:
+
+----------------------------
+AUX.MEM.CHECK (DOS 3.3 only)
+----------------------------
+
+DOS 3.3 CHECK FOR 128k
+If you are writing EXTRA K programs that are to be used on Apples other than
+your own, your programs should check to see what kind of Apple is being used.
+AUX.MEM.CHECK is a small machine language program that determines whether or
+not auxiliary memory is present in an Apple using DOS 3.3 (see PRO DOS below).
+AUX.MEM.CHECK will return the following value in memory location 6:
+
+     0($00): Not a //e
+    32($20): //e but no 80 column card
+    64($40): 64k //e with 80 column card (no auxiliary memory)
+   128($80): Apple //c or 128k //e
+
+After a "BRUN AUX.MEM.CHECK" command, you can PRINT PEEK(6) to check for one
+of the values above. AUX.MEM.CHECK is used in EXTRA K's DOS 3.3 STARTUP
+program to make sure that a 128k Apple is being used. Here's one way you 
+could use it in your programs:
+
+   10 PRINT CHR$ (4) "BRUN AUX.MEM.CHECK"
+   20 IF PEEK (6) < 128 THEN PRINT "INSUFFICIENT MEMORY": END
+   30 REM PROGRAM CONTINUES....
+
+PRO DOS 128k CHECK
+With PRO DOS, the AUX.MEM.CHECK program itself is not necessary, thanks
+to PRO DOS location 49048 ($BF98). Use the following 128k check:
+
+   100 A = PEEK (49048): IF A < 128 THEN PRINT "NOT IIE OR IIC": END
+   110 A = A - 128: IF A > = 64 THE PRINT "APPLE III": END
+   120 IF A < 48 THEN PRINT "NOT 128K": END
+   130 REM PROGRAM CONTINUES.....
+
+
+--------------
+DISCONNECT.RAM (ProDOS only)
+--------------
+
+When PRO DOS boots on a 128k Apple, it automatically creates a "RAM disk"
+in Auxiliary memory with the volume name "/RAM". Because of memory conflicts,
+/RAM should be removed before any of EXTRA K's programs are used. 
+Type "-DISCONNECT.RAM" from the keyboard, or use the following line from
+within an Applesoft program:
+
+    10 PRINT CHR$(4)"-DISCONNECT.RAM"
+
+To reconnect /RAM, you will need to reboot.
+
+-When to use it: You must execute the DISCONNECT.RAM program once after booting
+ProDOS and before using any of Extra K's programs. Extra K's ProDOS STARTUP
+program automatically executes DISCONNECT.RAM for you, so you will only need
+to use DISCONNECT.RAM if you are booting a disk other than Extra K.
+-What's a ram disk:A RAM disk is a memory-based disk drive. To prove that
+ProDOS's RAM disk exists, boot a ProDOS disk other than Extra K, load an
+Applesoft Program (the bigger the better) and type"SAVE/RAM/PROGRAM". Now
+type "CATALOG/RAM". Now type "NEW" followed by "LOAD/RAM/PROGRAM" and
+"LIST". You take it from there. Futher instructions appear in Apple's
+ProDOS manuals.
+
+------------
+DISK.COMPARE
+------------
+
+DISK.COMPARE is a program that compares disks. In only 2 or 3 passes, it
+will give you a report on each corresponding track and sector (DOS 3.3) or
+track and block (ProDOS), indicating if they are identical or not.
+Use this program to find out if any changes have been made to a recently
+copied disk by comparing the copy with the master. It will work with
+DOS 3.3, ProDOS, Pascal, or CP/M disks. It won't work with copy-protected
+disks, but it will usually compare the unprotected disks that they store
+data on. It will not interfere with Beagle Bros (or most others) utilities
+in memory (GPLE,DOUBLE-TAKE,BEAGLE BASIC,etc), but anything in auxiliary
+memory will undoubtedly be over-written.
+-How to use it: Selete DISK.COMPARE from the Extra K boot-up menu or type
+"RUN DISK.COMPARE". The title screen will appear and you will be prompted
+to enter the slot and drive numbers for disk 1 and 2. Press return to
+accept the default values shown on the screen or change them to any legal
+slot and drive by entering the appropriate number. If you make a mistake,
+just press ESC to back up. It will work with 1 drive.
+DISK.COMPARE OPTIONS: After you've entered the info for te slots and drives,
+you will be shown the comparison screen with the compare options. Press
+ESC if you want to go back and change or verify the slot and drive numbers.
+
+COMPARE OPTION-
+Press "C" to start comparing disks. You will then be asked to insert the
+appropiate disk or disks. At this point you can press RETURN to begin
+comparison or ESC to make another selection. During the comparison, the
+map on the screen will indicate the state of each block or sector
+being compared. A dot (".") means the sectors or blocks are identical, and
+an "X" means they are different by at least one byte.
+
+DEC OPTION-
+Press "D" to display the track/sector/block numbers on the border of the
+disk map in decimal, If an error occurs during a comparison, the slot,drive,
+track,and sector or block will be given in decimal also.(Decimal is the
+default setting.)
+
+HEX OPTION-
+Pressing "H" will change the track/sector/block numbers to hexadecimal. Any
+errors during a comparsion will be indicated in hex as well. To change the
+default setting to hex, see "CHANGING THE DEFAULT SETTINGS".
+
+PRINT OPTION-
+Pressing "P" will print a hard copy of the last disk comparison. You will
+be prompted to input your printer's slot or press return to select the 
+default. If you decide not to print the screen, press ESC to see the
+previous menu.
+
+QUIT-
+Pressing "Q" will exit DISK.COMPARE and return you to Applesoft. If you
+quit accidently, type "RUN" to restart the program.
+
+DISK.COMPARE ERROR MESSAGES:
+If something happens to go wrong, you will see one of the following
+messages, designating the Slot, Drive,and Block (or Track/Sector) where
+the problem occured.
+     ERROR: (S#,D#,TR=##,SEC=##),CONTINUE? (DOS 3.3)
+     ERROR: (S#,D#,BLOCK=##),CONTINUE? (ProDOS)
+Press "Y" to continue or "N" to quit.
+
+CHANGING THE DISK.COMPARE DEFAULT SETTINGS:
+You can set the defaults to one drive (normal is 2) and/or hex (normal is decimal). Load DISK.COMPARE, for one drive change line 5 by variable D2.
+Change "D2=2" to "D2=1". To change the track/sector listing to hex,
+change line 6 from "GOSUB 10" to "GOSUB 12".
+
+---------
+DISK.COPY
+---------
+DISK.COPY is a fast disk duplication program. If you need instructions,
+you need help. It will not destroy utilities in main memory. 
+
+-----------
+DISK.FORMAT
+-----------
+DISK.FORMAT is a program for creating ProDOS disks. It performs the same
+function as the DOS 3.3 INIT command, except that no files are stored on
+the disk. It is easier to use than the formatter included with ProDOS
+because it can be run from Applesoft without disturbing utilities in
+memory. Each disk created with DISK.FORMAT will be named "/BLANK". You
+can rename a ProDOS disk with the Rename command. Foe example,type
+"RENAME/BLANK,/GOOD.DISK". Don't forget the slashes.
+
+Commands:
+C = Change Slot and Drive
+F = Format Disk
+Q = Quit
+
+-----------
+EXTRA.APPLE
+-----------
+EXTRA.APPLE is a program that makes your 128k Apple //e or //c work like
+two seperate 64k computers. They don't even have to be running under the
+same DOS. You can switch back and forth between these two Apples in
+about three seconds. Everything (including data,programs,pictures,variables,
+registers,and so on) is left unaltered. There is no "concurrent processing";
+only one program can be running at a time. Each 64k machine,when selected, has
+the undivided attention of the microprocessor.
+ EXTRA.APPLE can be used with any unprotected program or package that
+does not use the auxiliary memory and doesn't have to be booted to be used.
+
+USING EXTRA.APPLE-
+The simplest way to install EXTRA.APPLE is to type "BRUN EXTRA.APPLE".
+After it loads,type "CALL 600". This Call will copy everything in main
+memory over to auxiliary memory. Now you are using APPLE1 (64k) in main
+memory, with APPLE2 (64k) hidden in auxiliary memory. You can switch back
+and forth between APPLE1 and APPLE2 by typing "CALL 769". Switching
+may be done in immediate mode of from within a running program.
+
+ALTERNATE SWITCHING METHODS-
+There are three different ways to switch between APPLE1 and APPLE2. Use the
+method that works best with the programs you are using.
+
+#1- CALL 769 is the perferred way to switch between APPLE1 and APPLE2. It
+    works when EXTRA.APPLE is loaded in this procedure:
+    ]BRUN EXTRA.APPLE
+    ]CALL 600
+
+#2- & will make the switch if you load EXTRA.APPLE with this procedure:
+    ]BRUN EXTRA.APPLE
+    ]CALL 733
+    ]CALL 600
+    note: don't use this method with a program that also uses the ampersand
+          vector.
+
+#3- CONTROL-Z will make the switch if you load with this procedure:
+    ]BRUN EXTRA.APPLE
+    ]CALL 744
+    ]CALL 600
+    note: don't use this method with a program that also uses the input hook.
+
+To find out which Apple you are currently using, type "PRINT PEEK(768).The
+answer (1 or 2) will appear on the screen.
+
+DIFFERENT DOS'S FOR YOUR TWO APPLES:
+When you first install EXTRA.APPLE you will have the same DOS in both
+APPLE1 and APPLE2. To set up EXTRA.APPLE with two different DOS'S, follow
+these steps carefully:
+1. Make a hybrid (double-DOS) disk using HYBRID CREATE (see that section)
+2. Create a dual-boot disk (also under HYBRID,CREATE section)
+3. Add these three files to the ProDOS half of your hybrid disk.
+  -> DISCONNECT.RAM (from te ProDOS side)
+  -> EXTRA.APPLE (from te ProDOS side)
+  -> The follwoing ProDOS STARTUP program:
+
+     10 PRINT CHR$ (4) "-DISCONNECT.RAM": REM free aux memory
+     20 PRINT CHR$ (4) "-EXTRA.APPLE": REM load routines
+     30 REM set-up ampersand w/CALL 733 and/or CONTROL-Z w/ CALL 744
+     40 CALL 600: REM set-up APPLE2 by copying main mem to aux mem
+     50 IF PEEK (768) = 1 THEN PRINT CHR$ (4) "-DOS.SYSTEM": REM boot
+        DOS 3.3 and run HELLO program
+     60 HOME : PRINT CHR$ (4)"CAT": REM or anything you want
+4. Add the following files to the DOS 3.3 half of your hybrid disk:
+   -> EXTRA.APPLE (from the DOS 3.3 side)
+   -> The following DOS 3.3 HELLO program:
+
+     10 PRINT CHR$ (4) "BRUN EXTRA.APPLE": REM load routines
+     20 REM set up ampersand w/ CALL 733 and/or CONTROL-Z w/ CALL 744
+     30 HOME : PRINT CHR$ (4) "CATALOG": REM or anything you want
+
+Your hybrid disk should now have these teo catalogs:
+PRODOS HALF:
+/DOUBLE.DOS.DISK
+
+ NAME              TYPE   BLOCKS   MODIFIED
+*PRODOS             SYS       30   15-MAY-85
+*BASIC.SYSTEM       SYS       21   15-MAY-85
+*DOS.SYSTEM         SYS       19   15-MAY-85
+*STARTUP            BAS        1   15-MAY-85
+*DISCONNECT.RAM     BIN        1   15-MAY-85
+*EXTRA.APPLE        BIN        1   15-MAY-85
+
+BLOCKS FREE:   200     BLOCKS USED:      80
+
+
+DOS 3.3 HALF:
+
+DISK VOLUME 254
+
+*002 A HELLO
+*002 B EXTRA.APPLE
+
+When you boot this disk, ProDOS is loaded into main memory (APPLE1) and
+STARTUPUP is run. The CALL 600 in line 40 sets up a ProDOS APPLE2 in
+auxiliary memory and puts an exact copy of the running STARTUP program 
+there. Line 50 loads DOS 3.3 into main memory (APPLE1) and HELLO is run.
+When HELLO finishes, you will be left in immediate mode in APPLE1.
+ When you switch to APPLE2, STARTUP will continue running right after
+the CALL 600 (the point where APPLE2 execution last stopped). The IF
+statement in line 50 won't be executed and the program will be continue.
+
+The STARTUP and HELLO programs above are flexible, and can be altered
+to suit your needs.
+
+40/80 COLUMN PROBLEMS-
+You should use the same screen mode for both APPLE1 and APPLE2.
+
+RECONNECTING EXTRA.APPLE-
+If EXTRA.APPLE becomes disconnected (you'll know because te switching
+commands won't work), you can re-connect it in seceral ways:
+
+IF YOU'RE USING CALL 769 FOR SWITCHING APPLES:
+  Type "BRUN EXTRA.APPLE". Don't CALL 600
+
+IF YOU'RE USING "&" FOR SWITCHING:
+  POKE 1013,76, POKE 1014,1 and POKE 1015,3 and try switching Apples.
+  If this doesn't work, BRUN EXTRA.APPLE and CALL 733. Don't CALL 600.
+
+IF YOU'RE USING CONTROL-Z FOR SWITCHING:
+  Under DOS 3.3: CALL 963 (or CONTROL-RESET if you're in 40-columns) and
+  try switching Apples. If this doesn't work, BRUN EXTRA.APPLE and CALL 744.
+  Under ProDOS: POKE 48690,171 and POKE 48691,3 (or CONTROL-RESET if you're
+  in 40-columns) and try switching. If this doesn't work, BRUN EXTRA.APPLE
+  and CALL 744.
+
+USING EXTRA.APPLE WITH OTHER UTILITIES-
+EXTRA.APPLE works with programs which don't use auxiliary memory or page 3
+(from $300-$3CF). If you're using the same DOS in both Apples, you can run
+utilities like GPLE and DOUBLE-TAKE before you load EXTRA.APPLE. After you
+copy main memory to auxiliary memory (CALL 600) the utilities will work in
+both Apples. With a dual DOS setup, you'll have to load the utilities
+separately for each Apple.
+If you should accidently overwrite EXTRA.APPLE (it resides in page 3 from
+$300 to around $3cf), you can BRUN EXTRA.APPLE the next time you want to
+switch, and no harm will be done. If you're using APPLE2 when this happens,
+POKE 768,2.
+
+--------
+TRANSFER
+--------
+TRANSFER is a program for quickly copying Applesoft programs or binary
+files (not text files) between APPLE1 and APPLE2. TRANSFER is useful when
+using DOS 3.3 in one Apple and ProDOS in the other. Instead of using
+Apple's CONVERT program, you can transfer a file from one DOS to another
+in a few seconds and immediately save it on disk.
+USING TRANSFER-It may be used from either APPLE as long as it is present
+on the current disk. Just BRUN TRANSFER to install it above HIMEN. You may
+exit TRANSFER by using ESC. To rerun it, type "CALL 10".
+TRANSFERING APPLESOFT PROGRAMS-Press "A" to duplicate the Applesoft program
+currently in active memory. NOTE: Don't use TRANSFER if you switched from
+a running program to the current Apple. When you BRUN TRANSFER and the
+Applesoft program in memory is extremely long, you may have to exit
+TRANSFER and reload the Applesoft program. (Use CALL 10 to re-enter
+TRANSFER.)
+TRANSFERING BINARY FILES-Press "B" to load a binary file from disk into
+the current Apple, and then copy it into the other Apple. You may also
+specify the address where you want it to load. The file will be loaded
+and the hex values for the file's starting address (A$), length (L$),
+and ending address (E$) will be printed on the screen as it is copied
+to the other APPLE. Use these values to save the file under the new
+DOS. For example, if TRANSFER prints "A$6000,L$100,E$60FF" you can
+save the file as shown:
+
+First: Any DOS; Type "CALL 769" to switch to the other APPLE
+Then: DOS 3.3; Type "BSAVE FILE,A$6000,L$100"
+      ProDOS; Type "BSAVE FILE,A$6000,L$100"
+           or "BSAVE FILE,A$6000,E$60FF"
+
+LIMITATIONS-You cannot directly transfer binary files which load above
+HIMEN. If the computer locks up,you probably loaded a file over the 
+TRANSFER routine.
+
+
+(>
+
+
+                           Extra K Documentation
+                           ---------------------
+                                 PART 2
+                                  by
+                               The Ghost
+                                  of
+                        The Atlanta Crackers BBS/AE
+                             (404)449-5986
+                          1200 Baud - 40 Megs
+
+
+HARDWARE REQUIREMENTS: Apple //c or a 128k Apple //e (with an extended
+                       80 column card; the standard 80 column card won't
+                       do). Extra K cannot access more than 128k.
+
+
+THE PROGRAMS EXPLAINED:
+
+-------------
+EXTRA.SCREENS
+-------------
+EXTRA.SCREENS is a program which allows you to rapidly display full or
+partial text and graphics screens. A large number of screens may be 
+loaded from disk and stored in auxiliary memory. From there, any screen
+may almost-instantly be brought into view. SCREENS.DEMO shows you how
+this program works.
+
+EXTRA.SCREEN COMMANDS: (after BRUNning EXTRA.SCREENS)
+&SAVE.....lets you save a screen into auxiliary memory.
+&LOAD.....lets you load a screen from auxiliary memory into view.
+&RECALL...lets you load a screen file from disk into aux. memory.
+&STORE....lets you save all aux. memory screens to a file on disk.
+&LIST.....lets you "catalog" the screens in aux. memory.
+&CALL.....lets you rename any screen in aux. memory.
+&DEL......lets you erase an individual screen from aux. memory.
+&CLEAR....lets you erase all screens from aux. memory.
+&FRE......lets you see how much aux. memory is free.
+
+After EXTRA.SCREENS is installed, these commands are available from the 
+keyboard or from your Applesoft programs.
+To remove EXTRA.SCREENS type "FP" (under DOS 3.3) or "-FP" (under ProDOS
+with EXTRA K disk in drive). Any screens stored in aux.memory will be lost.
+
+------------
+SCREENS.CROP
+------------
+
+SCREENS.CROP is a program for cropping EXTRA.SCREENS text or graphics
+screens. RUN SCREENS.CROP, exisiting screens in aux.memory will not
+be disturbed. Press ESC to return to basic, or select one of the
+options from the menu on the screen.
+
+1-LOAD HI-RES SCREEN FROM DISK
+2-SAVE SCREEN TO MEMORY
+3-CROP SCREEN the following keys control cropping:
+  L,R,T,B: Left,Right,Top,Bottom--the side of the rectangle that will be
+           moved with the arrow keys.
+  ARROW KEYS-On graphics screens, the sides will jump 7 pixels(screen
+             dots at a time.
+  ESC-resets the rectangle to the outer border of the screen.
+  RETURN-when you're finished with cropping, this gets you back to the menu.
+4-LOAD SCREENS FROM MEMORY
+5-LIST SCREENS IN MEMORY (if you notice a file named "ZZZZ", ignore it
+                          It is a temporary screen storage file)
+6-CLEAR VIEWING SCREEN
+
+---------------
+EXTRA.VARIABLES
+---------------
+A program which increases the memory available to Applesoft programs by storing
+all variables in aux.memory, leaving main memory free for your programs.To 
+install this program, just "BRUN EXTRA.VARIABLES"
+DIFFERENCES- EXTRA.VARIABLES is transparent to Applesoft. The only commands
+affected are FRE,LOMEM,and HIMEM:
+
+FRE: FRE works according to the number you use inside the paraentheses;
+    ]PRINT FRE(-1) (or any negative number) to print the number of
+     bytes available for your program (in main memory)
+    ]PRINT FRE(0) to print the amount of free variable space (in aux.memory)
+     without doing a garbage collection.
+    ]PRINT FRE(1) (or any positive number) to print the amount of free
+     variable space and do a garbage collection.
+
+LOMEM:and HIMEM: With EXTRA.VARIABLES installed, these commands set the 
+       variables in auxiliary memory instead of main memory. Ignore
+       LOMEN and HIMEM unless you are using hi-res graphics or machine
+       language programs run in auxiaiary memory. If you need to change
+       the values of LOMEN or HIMEM in main memory, POKE the values
+       directly.
+
+Note: The command CHAIN will not work with this program.
+
+
+-----------
+EXTRA.STORE
+-----------
+A program that "patches" BASIC.SYSTEM so that ProDOS's STORE AND RESTORE
+commands works properly with variables stored in aux. memory by 
+EXTRA.VARIABLES. With EXTRA.VARIABLES in memory, type "BRUN EXTRA.STORE".
+That's all there is to it.
+
+
+----------------
+FP (ProDOS only)
+----------------
+A program that gives ProDOS the equivalent of DOS 3.3's FP command.
+
+
+-------------
+HYBRID.CREATE
+-------------
+A program that reformats a disk so it becomes half DOS 3.3 and half
+ProDOS. You will be able to access the files corresponding to the last
+DOS booted. You can even boot the DOS of your choice from the same disk.
+This program requires a disk previously formatted in either DOS. It will
+not work on a blank unformatted disk!
+
+After "RUN HYBRID.CREATE", press "C" to start the process or ESC if you
+change your mind. Type "Q" to quit.
+
+MAKING A DISK ProDOS BOOTABLE-
+New hybrid disk are data disks only. To make it bootable, transfer the files;
+PRODOS,BASIC.SYSTEM,AND STARTUP to it. You can rewrite STARTUP to anything 
+you like as this is the same as a DOS 3.3 HELLO program.
+
+CREATING A DUAL-BOOT DISK
+First make it ProDOS bootable as explained above. It must also have an 
+additional file DOS.SYSTEM on the ProDOS half and a HELLO program on 
+the DOS 3.3 half. Follwoing these steps:
+
+1- Use HYBRID CREATE to make a hybrid data disk.
+2- Transfer the three files PRODOS,BASIC.SYSTEM,AND DOS.SYSTEM from the
+   EXTRA K disk to your hybrid data disk.
+3- Type "NEW" and enter this sample STARTUP program:
+   10 HOME: VTAB 8
+   20 HTAB13: PRINT"D-DOS 3.3"
+   30 PRINT: HTAB 17: PRINT"OR":PRINT
+   40 HTAB 13:PRINT"P-PRODOS"
+   50 PRINT: HTAB13:PRINT"SELECT;";
+   60 GET A$: ON A$ <> "D" AND A$ <> "P" GOTO 60: PRINT A$
+   70 IF A$ = "D" THEN PRINT CHR$(4)"-DOS.SYSTEM"
+   80 PRINT CHR$(4)"CAT"
+
+4- Save this program as "STARTUP" (on ProDOS half).
+5- Now boot DOS 3.3 and make a HELLO file for the DOS 3.3 half.
+
+That's it.
+
+
+---------------------
+LOGBOOK (ProDOS only)
+---------------------
+This program keeps a visual history of your work. While it is active,
+every character printed to the text screen is simultaneously saved in
+auxiliary memory for easy recall. If memory capacity is reached (more than
+47,000 characters), the earliest characters are replaced by new information.
+
+COMMANDS:Once it is loaded, you can connect it with a PR#0 or PR#3 command.
+Several commands will disconnect it; CONTROL-RESET,ESC-CONTROL-Q,ESC-4,
+ESC-8, or PR#x (where x is not 0 or 3). CONTROL Q will quit storing 
+information. CONTROL R will reactivate it. CONTROL V allows you to view
+the contents of the LOGBOOK. 
+To see you logbook, enter "Look Mode". ESC or CONTROL C will exit the
+Look Mode. The following commands work while in Look Mode:
+  DOWN-ARROW = Scroll down one full page.
+  RIGHT-ARROW = Scrool down one line.
+  UP-ARROW = Scrool up one ful page.
+  LEFT-ARROW = Scrool up one line.
+  B = Jump to the beginning of the logbook.
+  E = Jump to the end of the logbook.
+  F = Find something. You will be prompted with "FIND:" to type the characters
+      you wish to search for. A beep tells you they were not found. If a match
+      is found, the line containing the match will be at the top of the screen.       Press RETURN to continue the search.
+  M = Mark line for future reference
+
+CONTROL-Z Will zap the logbook of all information. To remove it just run 
+the FP program.
+
+-----------------
+PEEK.AND.POKE and
+PEEK.AND.POKE.X
+-----------------
+These two programs install routines that let you Peek and Poke aux. memory
+using two new ampersand commands, &PEEK and &POKE. PEEK.AND.POKE works with
+normal Applesoft. PEEK.AND.POKE.X is compatiable with the EXTRA.VARIABLES 
+program.
+
+USING THE NEW COMMANDS-
+
+&POKE address, expression [,bank]
+&PEEK address,variable [,bank]
+
+
+To remove these programs "FP" from DOS 3.3, or "-FP" from ProDOS"
+
+
+-------
+SPOOLER (ProDOS and Apple //c only)
+-------
+SPOOLER works with the //c only.
+SPOOLER works with standard printer slot 1 only.
+SPOOLER requires ProDOS 1.1.0 or later.
+SPOOLER won't work with any word processor.
+
+This program lets //c owners use the extra 64k as a printer buffer.
+
+To install type "-SPOOLER" after it's loaded, you will be prompted with
+two messages which are self explainatory.
+
+SPOOLER COMMANDS-
+once it is loaded, you enter the programming mode by pressing both of
+the Apple keys (each side of the space bar) simultaneously. A "SPOOLER
+COMMAND: " prompt will be given. Select one of the following commands:
+
+C = CLEAR
+SPACE BAR = Pause / Resume
+Q = Quit
+
+Note: activating a mouse will turn off SPOOLER. Always exit SPOOLER
+      by selecting the "Q" option, or by executing FP.
+
+
+-----------------------------------------------------------------------------
+
+     This DOC file brought to you by THE GHOST of The Atlanta Crackers
+
+                  300/1200 baud BBS & AE 40 megs on-line
+
+                             (404)449-5986
+
+----------------------------------------------------------------------------
+
+
+(>

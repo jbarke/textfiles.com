@@ -1,0 +1,595 @@
+
+MODEM PROTOCOL DOCUMENTATION
+
+
+By Ward Christensen     1/1/82
+_____________________________________________________________________
+
+I will maintain a master copy of this.  Please pass on changes or
+suggestions via CBBS/Chicago at (312) 545-8086, CBBS/CPMUG (312)
+849-1132 or by voice at (312) 849-6279.
+
+Last Revision: 6/18/85  By Henry C. Schmitt.
+                        State Table Appendix.
+
+Previous Revisions: 1/13/85 By John Byrns.
+                            CRC Option Addendum.
+
+                    8/9/82  By Ward Christensen.
+                            Change ACK to 06H (from 05H).
+
+This version of the document was downloaded from the CBBS/CPMUG on
+6/13/85 and the addition of minor editorial changes were made by Henry
+C. Schmitt.
+
+Many people ask me for documentation on my modem protocol, i.e. the
+one used in  the various modem programs in CPMUG, on volumes 6, 25,
+40, 47... so here it is.  At the request of Rick Mallinak on behalf of
+the guys at Standard Oil with IBM P.C.s, as well as several previous
+requests, I finally decided to put my modem protocol into writing.  It
+had been previously formally published only in the AMRAD newsletter.
+
+
+
+Table of Contents
+
+ 1.  DEFINITIONS
+ 2.  TRANSMISSION MEDIUM LEVEL PROTOCOL
+ 3.  MESSAGE BLOCK LEVEL PROTOCOL
+ 4.  FILE LEVEL PROTOCOL
+ 5.  DATA FLOW EXAMPLE INCLUDING ERROR RECOVERY
+ 6.  PROGRAMMING TIPS.
+ 7.  OVERVIEW OF CRC OPTION
+ 8.  MESSAGE BLOCK LEVEL PROTOCOL, CRC MODE
+ 9.  CRC CALCULATION
+10.  FILE LEVEL PROTOCOL, CHANGES FOR COMPATIBILITY
+11.  DATA FLOW EXAMPLES WITH CRC OPTION
+
+Appendix 1.  MODEM PROTOCOL STATE TABLE
+
+
+ 1.  DEFINITIONS.
+
+<soh>     01H
+<eot>     04H
+<ack>     06H
+<nak>     15H
+<can>     18H
+<C>       43H
+
+
+ 2.  TRANSMISSION MEDIUM LEVEL PROTOCOL
+
+Asynchronous, 8 data bits, no parity, one stop bit.
+
+The protocol imposes no restrictions on the contents of the data
+being transmitted.  No control characters are looked for in the
+128-byte data messages.  Absolutely any kind of data may be sent
+- binary, ASCII, etc.  The protocol has not formally been adopted
+to a 7-bit environment for the transmission of ASCII-only (or
+unpacked-hex) data , although it could be simply by having both
+ends agree to AND the protocol-dependent data with 7F hex before
+validating it.  I specifically am referring to the checksum, and
+the block numbers and their ones-complement.
+
+Those wishing to maintain compatibility of the CP/M file
+structure, i.e. to allow modemming ASCII files to or from CP/M
+systems should follow this data format:
+
+* ASCII tabs used (09H); tabs set every 8.
+* Lines terminated by CR/LF (0DH 0AH)
+* End-of-file indicated by ^Z, 1AH.  (one or more)
+* Data is variable length, i.e. should be considered a
+continuous stream of data bytes, broken into 128-byte
+chunks purely for the purpose of transmission.
+* A CP/M "peculiarity": If the data ends exactly on a
+128-byte boundary, i.e. CR in 127, and LF in 128, a
+subsequent sector containing the ^Z EOF character(s) is
+optional, but is preferred.  Some utilities or user
+programs still do not handle EOF without ^Zs.
+* The last block sent is no different from others, i.e.
+there is no "short block".
+
+
+ 3.  MESSAGE BLOCK LEVEL PROTOCOL
+
+Each block of the transfer looks like:
+
+<SOH><blk #><255-blk #><--128 data bytes--><cksum>
+
+in which:
+
+<SOH>       = 01 hex
+<blk #>     = binary number, starts at 01 increments by 1,
+and wraps 0FFH to 00H (not to 01)
+<255-blk #> = blk # after going thru 8080 "CMA" instr, i.e.
+each bit complemented in the 8-bit block
+number.  Formally, this is the "ones
+complement".
+<cksum>     = the sum of the data bytes only.  Toss any
+carry.
+
+
+ 4.  FILE LEVEL PROTOCOL
+
+
+4A.  COMMON TO BOTH SENDER AND RECEIVER:
+
+All errors are retried 10 times.  For versions running with
+an operator (i.e. NOT with XMODEM), a message is typed after
+10 errors asking the operator whether to "retry or quit".
+
+Some versions of the protocol use <can>, ASCII ^X, to cancel
+transmission.  This was never adopted as a standard, as
+having a single "abort" character makes the transmission
+susceptible to false termination due to an <ack> <nak> or
+<soh> being corrupted into a <can> and cancelling
+transmission.
+
+The protocol may be considered "receiver driven", that is,
+the sender need not automatically re-transmit, although it
+does in the current implementations.
+
+
+4B.  RECEIVE PROGRAM CONSIDERATIONS:
+
+The receiver has a 10-second timeout.  It sends a <nak>
+every time it times out.  The receiver's first timeout,
+which sends a <nak>, signals the transmitter to start.
+Optionally, the receiver could send a <nak> immediately, in
+case the sender was ready.  This would save the initial 10
+second timeout.  However, the receiver MUST continue to
+timeout every 10 seconds in case the sender wasn't ready.
+
+Once into a receiving a block, the receiver goes into a
+one-second timeout for each character and the checksum.  If
+the receiver wishes to <nak> a block for any reason (invalid
+header, timeout receiving data), it must wait for the line
+to clear.  See "programming tips" for ideas.
+
+Synchronizing:  If a valid block number is received, it will
+be:
+
+1)  the expected one, in which case everything is fine; or
+2)  a repeat of the previously received block.  This should
+be considered OK, and only indicates that the receiver's
+<ack> got glitched, and the sender re-transmitted;
+3)  any other block number indicates a fatal loss of
+synchronization, such as the rare case of the sender
+getting a line-glitch that looked like an <ack>.  Abort
+the transmission, sending a <can>
+
+
+ 4.  FILE LEVEL PROTOCOL (cont)
+
+
+4C.  SENDING PROGRAM CONSIDERATIONS.
+
+While waiting for transmission to begin, the sender has only
+a single very long timeout, say one minute.  In the current
+protocol, the sender has a 10 second timeout before
+retrying.  I suggest NOT doing this, and letting the
+protocol be completely receiver-driven.  This will be
+compatible with existing programs.
+
+When the sender has no more data, it sends an <eot>, and
+awaits an <ack>, resending the <eot> if it doesn't get one.
+Again, the protocol could be receiver-driven, with the
+sender only having the high-level 1-minute timeout to abort.
+
+
+ 5.  DATA FLOW EXAMPLE INCLUDING ERROR RECOVERY
+
+Here is a sample of the data flow, sendin' a 3-block message.  It
+includes the two most common line hits - a garbaged block, and an
+<ack> reply getting garbaged.  <xx> represents the checksum byte.
+
+SENDER                                       RECEIVER
+                                  times out after 10 seconds
+                             <---            <nak>
+<soh> 01 FE -data- <xx> --->
+                             <---            <ack>
+<soh> 02 FD -data- <xx> --->    (data gets line hit)
+                             <---            <nak>
+<soh> 02 FD -data- <xx> --->
+                             <---            <ack>
+<soh> 03 FC -data- xx   --->
+        (ack gets garbaged)  <---            <ack>
+<soh> 03 FC -data- xx   --->
+                             <---            <ack>
+<eot>                   --->
+                             <---            <ack>
+
+
+ 6.  PROGRAMMING TIPS.
+
+* The character-receive subroutine should be called with a
+parameter specifying the number of seconds to wait.  The
+receiver should first call it with a time of 10, then <nak> and
+try again, 10 times.
+
+  After receiving the <soh>, the receiver should call the
+character receive subroutine with a 1-second timeout, for the
+remainder of the message and the <cksum>.  Since they are sent
+as a continuous stream, timing out of this implies a serious
+like glitch that caused, say, 127 characters to be seen instead
+of 128.
+
+
+ 6.  PROGRAMMING TIPS (cont)
+
+* When the receiver wishes to <nak>, it should call a "PURGE"
+subroutine, to wait for the line to clear.  Recall the sender
+tosses any characters in its UART buffer immediately upon
+completing sending a block, to ensure no glitches were
+misinterpreted.
+
+  The most common technique is for "PURGE" to call the character
+receive subroutine, specifying a 1-second timeout, and looping
+back to PURGE until a timeout occurs.  The <nak> is then sent,
+ensuring the other end will see it.
+
+* You may wish to add code recommended by John Mahr to your
+character receive routine - to set an error flag if the UART
+shows framing error, or overrun.  This will help catch a few
+more glitches - the most common of which is a hit in the high
+bits of the byte in two consecutive bytes.  The <cksum> comes
+out OK since counting in 1-byte produces the same result of
+adding 80H + 80H as with adding 00H + 00H.
+
+
+ 7.  OVERVIEW OF CRC OPTION
+
+The CRC used in the Modem Protocol is an alternate form of block
+check which provides more robust error detection than the
+original checksum. Andrew S. Tanenbaum says in his book, Computer
+Networks, that the CRC-CCITT used by the Modem Protocol will
+detect all single and double bit errors, all errors with an odd
+number of bits, all burst errors of length 16 or less, 99.997% of
+17-bit error bursts, and 99.998% of 18-bit and longer bursts.
+
+The changes to the Modem Protocol to replace the checksum with
+the CRC are straight forward.  If that were all that we did we
+would not be able to communicate between a program using the old
+checksum protocol and one using the new CRC protocol.  An initial
+handshake was added to solve this problem. The handshake allows a
+receiving program with CRC capability to determine whether the
+sending program supports the CRC option, and to switch it to CRC
+mode if it does.  This handshake is designed so that it will work
+properly with programs which implement only the original
+protocol.  A description of this handshake is presented in
+section 10.
+
+
+ 8.  MESSAGE BLOCK LEVEL PROTOCOL, CRC MODE
+
+Each block of the transfer in CRC mode looks like:
+
+<SOH><blk #><255-blk #><--128 data bytes--><CRC hi><CRC lo>
+
+in which:
+
+<SOH>       = 01 hex
+<blk #>     = binary number, starts at 01 increments by 1,
+and wraps 0FFH to 00H (not to 01)
+<255-blk #> = ones complement of blk #.
+<CRC hi>    = byte containing the 8 hi order coefficients of
+the CRC.
+<CRC lo>    = byte containing the 8 lo order coefficients of
+the CRC.
+
+
+ 9.  CRC CALCULATION
+
+
+9A.  FORMAL DEFINITION OF THE CRC CALCULATION
+
+To calculate the 16 bit CRC the message bits are considered
+to be the coefficients of a polynomial.  This message
+polynomial is first multiplied by X^16 and then divided by
+the generator polynomial (X^16 + X^12 + X^5 + 1) using
+modulo two arithemetic.  The remainder left after the
+division is the desired CRC.  Since a message block in the
+Modem Protocol is 128 bytes or 1024 bits, the message
+polynomial will be of order X^1023.  The hi order bit of the
+first byte of the message block is the coefficient of X^1023
+in the message polynomial.  The lo order bit of the last
+byte of the message block is the coefficient of X^0 in the
+message polynomial.
+
+
+ 9.  CRC CALCULATION (cont)
+
+
+9B.  EXAMPLE OF CRC CALCULATION WRITTEN IN C
+
+This function calculates the CRC used by the "Modem
+Protocol".  The first argument is a pointer to the message
+block.  The second argument is the number of bytes in the
+message block.  The message block used by the Modem Protocol
+contains 128 bytes.
+
+The function return value is an integer which contains the
+CRC.  The lo order 16 bits of this integer are the
+coefficients of the CRC.  The lo order bit is the lo order
+coefficient of the CRC.
+
+int calcrc(ptr, count) char *ptr; int count; {
+
+int crc, i;
+
+crc = 0;
+while(--count >= 0) {
+crc = crc ^ (int)*ptr++ << 8;
+for(i = 0; i < 8; ++i)
+    if(crc & 0x8000)
+        crc = crc << 1 ^ 0x1021;
+    else
+        crc = crc << 1;
+}
+return (crc & 0xFFFF);
+}
+
+
+10.  FILE LEVEL PROTOCOL, CHANGES FOR COMPATIBILITY
+
+
+10A.  COMMON TO BOTH SENDER AND RECEIVER:
+
+The only change to the File Level Protocol for the CRC
+option is the initial handshake which is used to determine
+if both the sending and the receiving programs support the
+CRC mode.  All Modem Programs should support the checksum
+mode for compatibility with older versions.
+
+A receiving program that wishes to receive in CRC mode
+implements the mode setting handshake by sending a <C> in
+place of the initial <nak>.  If the sending program
+supports CRC mode it will recognize the <C> and will set
+itself into CRC mode, and respond by sending the first
+block as if a <nak> had been received.  If the sending
+program does not support CRC mode it will not respond to
+the <C> at all.
+
+
+10.  FILE LEVEL PROTOCOL, CHANGES FOR COMPATIBILITY (cont)
+
+
+10A.  COMMON TO BOTH SENDER AND RECEIVER (cont)
+
+After the receiver has sent the <C> it will wait up to 3
+seconds for the <soh> that starts the first block.  If it
+receives a <soh> within 3 seconds it will assume the sender
+supports CRC mode and will proceed with the file exchange
+in CRC mode.  If no <soh> is received within 3 seconds the
+receiver will switch to checksum mode, send a <nak>, and
+proceed in checksum mode.
+
+If the receiver wishes to use checksum mode it should send
+an initial <nak> and the sending program should respond to
+the <nak> as defined in the original Modem Protocol.
+
+After the mode has been set by the initial <C> or <nak> the
+protocol follows the original Modem Protocol and is
+identical whether the checksum or CRC is being used.
+
+
+10B.  RECEIVE PROGRAM CONSIDERATIONS:
+
+There are at least 4 things that can go wrong with the mode
+setting handshake:
+
+1.  the initial <C> can be garbled or lost.
+2.  the initial <soh> can be garbled.
+3.  the initial <C> can be changed to a <nak>.
+4.  the initial <nak> from a receiver which wants to
+receive in checksum can be changed to a <C>.
+
+The first problem can be solved if the receiver sends a
+second <C> after it times out the first time.  This process
+can be repeated several times.  It must not be repeated a
+too many times before sending a <nak> and switching to
+checksum mode or a sending program without CRC support may
+time out and abort.
+
+Repeating the <C> will also fix the second problem if the
+sending program cooperates by responding as if a <nak> were
+received instead of ignoring the extra <C>.
+
+It is possible to fix problems 3 and 4 but probably not
+worth the trouble since they will occur very infrequently.
+They could be fixed by switching modes in either the
+sending or the receiving program after a large number of
+successive <nak>s.  This solution would risk other problems
+however.
+
+
+10.  FILE LEVEL PROTOCOL, CHANGES FOR COMPATIBILITY (cont)
+
+
+10C.  SENDING PROGRAM CONSIDERATIONS.
+
+The sending program should start in the checksum mode.
+This will insure compatibility with checksum only receiving
+programs.  Anytime a <C> is received before the first <nak>
+or <ack> the sending program should set itself into CRC
+mode and respond as if a <nak> were received.
+
+The sender should respond to additional <C>s as if they
+were <nak>s until the first <ack> is received.  This will
+assist the receiving program in determining the correct
+mode when the <soh> is lost or garbled.  After the first
+<ack> is received the sending program should ignore <C>s.
+
+
+11.  DATA FLOW EXAMPLES WITH CRC OPTION
+
+
+11A.  RECEIVER HAS CRC OPTION, SENDER DOESN'T
+
+Here is a data flow example for the case where the receiver
+requests transmission in the CRC mode but the sender does
+not support the CRC option. This example also includes
+various transmission errors.  <xx> represents the checksum
+byte.
+
+SENDER                                      RECEIVER
+                             <---            <C>
+                              times out after 3 seconds
+                             <---            <nak>
+<soh> 01 FE -data- <xx> --->
+                             <---            <ack>
+<soh> 02 FD -data- <xx> --->    (data gets line hit)
+                             <---            <nak>
+<soh> 02 FD -data- <xx> --->
+                             <---            <ack>
+<soh> 03 FC -data- <xx> --->
+        (ack gets garbaged)  <---            <ack>
+                             times out after 10 seconds
+                             <---            <nak>
+<soh> 03 FC -data- <xx> --->
+                             <---            <ack>
+<eot>                   --->
+                             <---            <ack>
+
+
+11.  DATA FLOW EXAMPLES WITH CRC OPTION (cont)
+
+
+11B.  RECEIVER AND SENDER BOTH HAVE CRC OPTION
+
+Here is a data flow example for the case where the receiver
+requests transmission in the CRC mode and the sender
+supports the CRC option.  This example also includes
+various transmission errors.  <xxxx> represents the 2 CRC
+bytes.
+
+SENDER                                        RECEIVER
+                               <---            <C>
+<soh> 01 FE -data- <xxxx> --->
+                               <---            <ack>
+<soh> 02 FD -data- <xxxx> --->    (data gets line hit)
+                               <---            <nak>
+<soh> 02 FD -data- <xxxx> --->
+                               <---            <ack>
+<soh> 03 FC -data- <xxxx> --->
+        (ack gets garbaged)    <---            <ack>
+                             times out after 10 seconds
+                               <---            <nak>
+<soh> 03 FC -data- <xxxx> --->
+                               <---            <ack>
+<eot>                     --->
+                               <---            <ack>
+
+
+Apendix 1.  MODEM PROTOCOL STATE TABLE
+
+
+A1A.  CONSIDERATIONS
+
+The Modem Protocol can be considered a group of states and
+transitions. States represent certain actions taken by the
+program and certain expected results for those actions.
+The transitions are actions taken in reponse to a
+particular result, actions which can result in another
+state.
+
+The state table shows the complete set of states for a
+program with the CRC option.  Programs without this option
+should ignore the <C> result in the Send-Init state and
+also ignore the Rec-Init-CRC state.
+
+
+Apendix 1.  MODEM PROTOCOL STATE TABLE (cont)
+
+
+A1A.  CONSIDERATIONS (cont)
+
+
+There is a minor difference between the Data Flow Examples
+given by Ward Christensen and John Byrns.  This difference
+is the reaction of the sender when the <ACK> to a block is
+garbled (not lost).  In Ward's example the sender reacts by
+retransmitting the current block.  In John's example the
+garbled <ACK> is ignored and nothing happens until the
+reciever has a timeout and sends a <NAK>.  The state table
+uses the first method of reacting to a garbled <NAK>.  This
+is the recommended method as the retransmission of a data
+block, even at the lowest baud rates, takes considerably
+less time than waiting for a timeout from the receiver.
+
+In the State Table, n is the current block number
+(therefore n-1 is, of course, the previous block number); r
+is the retry counter and c is the CRC handshake retry
+counter.  The actions n+, r+ and c+ are incrementing the
+appropriate counter.  It should be noted that the action n+
+will always cause r = 0 or, to put it another way, whenever
+a block is successfully sent and recieved the retry counter
+is reset.  When a r+ action causes r to reach the
+threshold, an error is generated and the program is
+aborted.
+
+A Result in angle brackets (i.e. < >) is the reciept of
+that character. A Result of "Block..." is the reciept of a
+complete, valid data block. Results of Other and Timeout
+are the reciept of any unlisted input (invalid or
+incomplete blocks included) and the occurance of a timeout
+in the character recieve routine, respectively.
+
+This is because some installations (e.g. CompuServe) will
+send an <EOT> to signal that the processor is too busy to
+successfully transfer a file.
+
+
+Apendix 1.  MODEM PROTOCOL STATE TABLE (cont)
+
+
+A1B.  STATE TABLE
+
+State
+   Action on entry
+      Result      Action on result                    Next State
+Send-Init
+   Set checksum mode, n = 0
+      <NAK>       Get data for first block, n+        Send-Data
+      <C>         Set CRC mode, get data
+                  for first block, n+                 Send-Data
+      Other       r+                                  Send-Init
+      Timeout     Error                               Abort
+Send-Data
+   Send Block n
+      <ACK>       Get data for next block, n+         Send-Data, or
+                                                      Send-EOT, if EOF
+      <NAK> or
+      Other       r+                                  Send-Data
+      Timeout     Error                               Abort
+Send-EOT
+   Send <EOT>
+      <ACK>       --                                  Exit
+      Other       r+                                  Send-EOT
+      Timeout     Error                               Abort
+Rec-Init-CRC
+   Set CRC mode, Send <C>, n = 1
+      Block n     Store data, send <ACK>, n+          Rec-Data
+      <EOT>       Error                               Abort
+      Other       r+                                  Rec-Init-CRC
+      Timeout     c+                                  Rec-Init-CRC
+      c+ threshold                                    Set checksum
+                                                      mode,
+                                                      r = 0
+                                                      Rec-Init-Cksm
+Rec-Init-Cksm
+   Send <NAK>
+      All         --                                  Rec-Data
+Rec-Data
+   --
+      Block n     Store data, send <ACK>, n+          Rec-Data
+      Block n-1   Send <ACK>, r+                      Rec-Data
+      <EOT>       If n = 1, Error                     Abort
+                  Else  Send <ACK>                    Exit
+      Other or
+      Timeout    Send <NAK>, r+                       Rec-Data
+Abort
+   Display error, clean up, abort program
+Exit
+   Clean up, exit program

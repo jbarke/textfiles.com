@@ -1,0 +1,454 @@
+*****************************************************************
+Following  is a second conversational 'chat' between James  Davis 
+and  Raymond Wood designed as a follow-up of the first  one.   It 
+takes  on the form of a tutorial again due to the high number  of 
+requests for same following the first one we released.
+
+Note, this is an update of the original text in that I discovered
+an inadvertant error in the original that confused SEAlink and
+Zmodem relative to their implementation of network flow control.
+*****************************************************************
+
+D:  Shall we start this off with a kind of outline as to where  I 
+think  we  will  go  with it?   We  discussed  many  fundamentals 
+involved  with communications in the first tutorial and ended  up 
+discussing  several of the more popular file transfer  protocols.  
+This  session  will  go farther into the area  of  file  transfer 
+protocols, technology such as the 9600 bit per second modems  and 
+error  correcting modems with MNP or ARQ, and how one goes  about 
+intelligently selecting a protocol given a basic understanding of 
+their  environment.  For example, while Ymodem was  described  as 
+the 'King of the hill' when it comes to performance, that is  not 
+true  if you are using one of the packet switching networks.   It 
+is also not true at 9600 bits per second.
+
+W:   You  mentioned 9600 and MNP.  I thought that  there  was  no 
+industry standard  for 9600 and that it is only practical if  the 
+other  end is talking the same language with the  same  hardware?  
+Also   that   MNP  was  implemented  in  the  hardware   of   the 
+modem...where am I wrong ?
+
+D:   You're  not wrong.  GT PowerComm (12.20) now  supports  9600 
+baud.  I believe the newest version of Qmodem (3.0) does as well.
+
+Paul  Meiners,  the  author of GT  PowerComm,  has  a  USRobotics 
+HST9600 baud modem and he is using it every day.  I, too, have  a 
+USR  HST9600 as well as a Microcom MNP modem that I  am  testing.  
+There are two quite different error correction methods in use  at 
+this   time.   MNP  (Microcom  Networking  Protocol)  which   was 
+developed by Microcom and ARQ (a general term used by USR to mean 
+Automatic  Retry  Request protocols - theirs  being  specifically 
+called USR-HST [High Speed Technology]) and these two methods are 
+totally  incompatible.   Even the methods used to  modulate  9600 
+baud  signals  appears  to be  incompatible.   However,  we  have 
+successfully  connected these two different brands of  modems  in 
+'reliability' mode.  The USR has the ability to 'fallback' to MNP 
+at  1200 or 2400 baud where MNP has established a standard.   (Of 
+course, that makes sense for our PCP users).
+
+We  have  also connected with other USR HST9600 modems  and  seen 
+that  we  have outstanding performance at 9600  baud.   (We  have 
+cruised  along at about 945 cps during transfers of more  than  3 
+million  bytes  so far).  Further, GT is such an  efficient  comm 
+program that we are able to drive these modems at 19,200 bits per 
+second from the systems while the modem is communicating at  9600 
+to  another modem - for additional performance.  It is  for  this 
+very  reason  that  we had to implement flow  control  -  so  the 
+transmitting modem does not overrun.  I will discuss this in more 
+detail a little later in this tutorial.
+
+So, while you are correct that there is no standard at 9600 baud, 
+that  does  not  mean  that  9600  baud  modems  are  necessarily 
+impractical.  We are determining to what extent it is a  problem.  
+What  concerns me the most is the different  modulation  methods.  
+Nevertheless, it will not stop our  support  of 9600 baud.
+
+Finally, you are right again, MNP (ARQ) is a hardware function  - 
+but it can and should be a transparent one.  I note, for example, 
+that  since  I began testing these modems I have  connected  with 
+several  (many)  others and, as a result,totally  eliminated  the 
+line  noise  that was present prior to the MNP connection  -  ie, 
+there  appears  to  be  more to MNP than  just  error  free  file 
+transfers.  Thus, we must look at it.  And, in doing so, we  will 
+test  the various non-error checking protocols that are  used  in 
+such  environments  (Ymodem-G,  for example).  It is  as  much  a 
+learning  curve  for  us as for the users - we just  MUST  do  it 
+behind the scenes for credibility sake.
+
+W:   I  understand the necessity to stay  up  with  technological 
+advances affecting your your product.  What I am not to clear  on 
+is exactly what is MNP or ARQ and why have they come about.   Can 
+you shed some light on this? 
+
+D:  Since 2400 baud modems are NOT really 2400 'baud' - they  are 
+2400 bits per second,  1200 baud modems - it has been clear  that 
+the limit of reliable communications in terms of speed using  the 
+bandwidth  of  the  existing telephone  circuitry  has  not  been 
+reached.  However, it is also clear that as we more densely  pack 
+information  within  that  bandwidth  the  incidence  of   errors 
+increases.    The  manufacturers  investigated,   starting   with 
+Microcom, various error detection and recovery methods that  were 
+hardware  assisted.   That  was the the birth  of  MNP  (Microcom 
+Networking  Protocol).   There  has been  an  evolution  in  that 
+technology  which  results in several 'levels' of  MNP  available 
+today.  The higher the level, the more function is included.   At 
+any level, MNP merely insures that the data received by the modem 
+is what was sent by the sending modem.  That is INSUFFICIENT,  in 
+my  opinion.   The  only  valid scenario  is  one  in  which  the 
+receiving  COMPUTER is insured that it received  accurately  what 
+the  sending COMPUTER sent.  There are cables,  ports,  circuits, 
+timings,  etc.  that MNP DOES NOT CHECK.  Thus, it seems  that  a 
+combination   of  software  and  hardware  error  detection   and 
+correction methods is necessary.
+
+Almost  all  file  transfer protocols check  what  I  believe  is 
+necessary  - computer to computer accuracy.  What, then,  is  the 
+advantage  of  MNP?   Well, to begin with,   it  SHOULD  be  more 
+efficient.   If  the software need only be  concerned  with  data 
+bytes  and  not CRC and other control bytes, then  it  should  be 
+faster.  Further, the newer levels of MNP are more efficient than 
+you  might  have guessed.  They strip off the start bit  and  the 
+stop  bits  from  each  byte, for  example,  and  that  increases 
+transfer  performance  by 20% (8 bits per byte rather  than  10).  
+Further,  they  send 'compressed' data  via  internal  algorithms 
+which increases performance even more.   On the other side of the 
+ledger,  MNP and ARQ technology has some built  in  disadvantages 
+from a performance point of view, they are, after all, no  longer 
+just high speed pipes but are now full computers (usually  Z80's) 
+and  are  prone  to  modest  slowdowns  at  the  higher   speeds.  
+Nevertheless, at 9600 'baud' it is possible to obtain about  1100 
+cps  rather than 960 and at 2400 'baud' it is possible to  obtain 
+upwards of 290 cps rather than 240.
+
+Not to forget, as I mentioned earlier, MNP is active at all times 
+while  protocol  transfers are active only during  a  transfer  - 
+thus,  line noise is effectively filtered out even while  we  are 
+chatting.   There  are  several possible advantages,  and  a  few 
+disadvantages - not the least of which is the lack of standards. 
+
+W:  Jim,  I understand what you just said and from that it  would 
+seem  that  MNP is needed at both ends to do the  job.   Is  that 
+correct?  Also is MNP proprietary for just Microcom modems?
+
+D:   It  is obviously true that MNP (or ARQ) must exist  on  both 
+ends  to be functional.  When my Microcom modem connects  with  a 
+non-MNP  modem  it recognizes that fact and reverts  to  being  a 
+standard  Hayes  compatible  modem.  Further, when  the  USR  HST 
+connects  with  a Microcom that has MNP, there is a  fallback  in 
+baud  rates  to  2400  baud  in both  modems  so  that  they  can 
+communicate  using MNP.  That is likely to be overridden  by  the 
+users, however, via disabling MNP or ARQ in such situations.  (My 
+opinion only).  However, it is reasonably certain that 9600  baud 
+connections cannot be established without error correction  being 
+functional.  Further, while Microcom  MNP is wider used than  ARQ 
+(USR's  method), the USR method of supporting both (at  different 
+baud rates) is more flexible and argues for USR.  It may be  that 
+we obtained the wrong 9600 baud modems at this time.  It is  part 
+of the testing and learning process.
+
+As  to  the proprietary nature of MNP, according  to  USRobotics, 
+Microcom  has placed at least the first three levels of MNP  into 
+the public domain.  It is certain that they have been generous in 
+licensing out at least the lower 'levels' to other manufacturers.  
+What alternative do they have?  Unless a standard evolves,  these 
+are contests that damage the future, not advances it.
+
+W:   It  seems  obvious that standards in this area  are  to  the 
+advantage  of all concerned.  Is there a  standards  organization 
+looking into this?  I would like to have 9600 baud capability and 
+error   free  transmission.   However,  I  would  also  like   to 
+communicate with whomever without having to worry about whats  at 
+the other end.  Do you see what I am concerned about?
+
+D:   Of course.  It is a paraphrase of my earlier discussion.   I 
+think  the  only 'standards organization' that  is  effective  is 
+called   the   marketplace.   The  huge  power   of   the   Hayes 
+organization, because of its modem standard, is likely to be  the 
+telling blow to other manufacturers - when they finally put there 
+own  9600  baud technology - may well become  the  new  standard.  
+Because  of this I believe it is premature to buy 'long' in  such 
+security issues as USRobotics and Microcom. 
+
+W:  Whenever I talk to the Hayes people at a convention or  trade 
+show, they know or say nothing about 9600 development.  I do  not 
+know  if this is just policy or not.  I think that when  they  do 
+introduce  9600 that it would not necessarily mean that  whatever 
+they  do will be the standard.  I may be naive, but I would  like 
+to believe that will be the case.  I say this only because others 
+are  active in meeting a need and they are not or appear  not  to 
+be.
+
+D:  No argument there.  My point remains valid only if Hayes does 
+something in the near term.  Intel saw what happens when they get 
+over  confident and let competition pass them by when they  first 
+put the 8080 micro-computer chip into the marketplace.  They  had 
+it  made, save only that the Z80 took it ALL away from them.   It 
+was  an awfully long time before they we were able to  come  back 
+and Motorola nearly did it to them again.  So, while Hayes has by 
+far  the  largest  visible shelf space in  the  industry  at  the 
+moment,  USR (my guess) or Microcom could steal it away from lack 
+of responsive attention on their part. 
+
+W:   It would seem that you need compatible hardware  above  2400 
+baud  and  compatible software as well for  truly  effective  and 
+increased performance.  Does Paul Meiners' Megalink protocol  tie 
+into this somehow?
+
+D:   Megalink  is an extremely  efficient  protocol  particularly 
+designed  for  the network environments like PCP and  the  higher 
+baud  rates.   It  is 'network friendly',  which  means  that  it 
+recognizes  and honors flow control imposed by the network.   For 
+efficiency  it  uses 512 byte packets (4 blocks), it  is  a  full 
+streaming  protocol,  which means it does not ever  stop  sending 
+unless  it receives a NAK saying a packet was received in  error, 
+and it is batch oriented.  It uses block 0 header information, as 
+do all the '...link' protocols so that the resulting file is  the 
+same size and properly time and date stamped, and it uses 32  bit 
+CRC rather rather than 16. 
+
+I  think  it is time to go back to the earlier tutorial  and  add 
+some more concepts at this time.
+
+Since our last discussion there has been increased popularity  in 
+two relatively new file protocols.  The first of these is  called 
+SEAlink and the second is Zmodem.  You will recall in the earlier 
+discussion  that 'windowing' techniques are beginning  to  become 
+available  in  the  file  transfer protocols.   There  is  now  a 
+Windowing  Kermit,  for  example,  as  well  as  WXmodem.   These 
+programs  attempt  to obtain better performance by  avoiding  the 
+start-stop approach used by earlier protocols where after sending 
+a  packet  of  data the transmitter would stop and  wait  for  an 
+Acknowledgment that the packet had been properly received  before 
+sending  the  next  one.  Windowing  protocols  assume  that  the 
+packets are being received without error and do not wait  between 
+packets.   The  receiving systems DO send ACK signals,  its  just 
+that  the transmitter is not waiting for them.  Assuming  all  is 
+well, time has been saved as a result.  When an error does occur, 
+a  NAK  is returned to the transmitter and associated  with  that 
+signal  is  the packet number that was in  error.   Assuming  the 
+transmitter  still  has  that packet at its  disposal  it  merely 
+retransmits it and proceeds.
+ 
+That is the limit, of course.  In order to be able to  retransmit 
+a  packet it must still be in the transmit buffer and the  buffer 
+has  a  finite  length.  All windowing protocols  set  a  maximum 
+'window  size'.   This means that there can be no more  than  'x' 
+packets sent without a reply before the transmitter is forced  to 
+wait for that reply else error recovery would not work.  This  is 
+no  big  deal at 1200 baud, but at 2400 and above  it  is  really 
+quite limiting.
+ 
+SEAlink  is a windowing protocol.  It has as an  added  advantage 
+over WXmodem, for example, two important features: it uses 3 byte
+CRC for increased reliability and it uses a window size of 6
+rather than the 4 used by WXmodem.  It is NOT 'network-friendly'.
+ 
+What  is 'network-friendly'?  It is a design that recognizes  and 
+honors  XON/XOFF  signals that are placed on a  packet  switching 
+network when that network (like PC Pursuit) becomes so busy  that 
+it is nearly choking on data.  When the network places an XOFF on 
+the line, a network-friendly recognizes it for what it is  rather 
+than  a coincidental configuration of bits in a byte of data  and 
+stops  sending data!  It stops until it receives an XON from  the 
+network.  Why is that important?  Well, it is my experience  that 
+a  huge  number  of subscribers now exists for  PCP.   Forcing  a 
+network to exceed its ability to handle data could only crash the 
+network.   PCP would not allow that.  They have intelligent  node 
+controllers  that selectively will abort a 'hog' link  that  does 
+not  honor  its earlier 'request' to wait a  little  (via  XOFF).  
+Thus,  using  a  protocol that is not  network-friendly  is  like 
+saying: "I don't care if I am a hog.  And, if you don't like  it, 
+then abort me."  As usage continues to increase, the network will 
+oblige that attitude.
+ 
+The  result  of being network-friendly is two fold  in  terms  of 
+'hits'  against  performance: 1) while you are  waiting  for  the 
+network to send you an XON you are not sending data and 2)  there 
+are  MANY extra bytes of control information that  definitionally 
+must be sent along with your data.
+ 
+Let  me  explain that last point as it is not  obvious,  I  know.  
+XOFF  and XON are simply bytes, just like the letter 'A'  or  the 
+digit  '4'.  If no data file contained those bytes then it  would 
+be  easy  to  implement  a  network-friendly  protocol.   Recall, 
+however, that it is almost always true that data is sent in  some 
+form  of archive or compressed format.  The resulting  bytes  can 
+have  ANY  configuration  despite what  the  un-archived  or  un-
+compressed  file  looks  like.   In other  words,  the  odds  are 
+essentially  100%  that the data files that you send  consist  of 
+probably  many bytes that look like XOFF or XON.  That cannot  be 
+allowed  to  happen.   The  protocol finds  all  such  bytes  and 
+encapsulates  them  in  what is called an  escape  sequence  that 
+consists  of a special byte (usually the DLE character)  followed 
+by a 'folded' duplicate of the byte that needed to be camouflaged 
+(the  XON  or  XOFF).   Folding merely means  that  the  byte  is 
+transmogrified  in  some  way  (usually  via  being  sent  as   a 
+compliment  -  XORed with all 1's).  Further, the  DLE  character 
+itself must also be escape sequenced for this method to work.  It 
+is a random process that results in indeterminate performance for 
+any particular file.  That is, if a file had none of these  three 
+special  byte  combinations in it, then the time to  transmit  it 
+would be minimal where a file that happened to have many of  them 
+will  have  that  many  more bytes to send  in  order  to  escape 
+sequence  it.   In  such a case the file  would  take  longer  to 
+transmit than the first.  Same protocol, different performance.
+ 
+On  balance, the designers of SEAlink did an excellent job.   The 
+performance  of SEAlink is essentially as good as WXmodem yet  it 
+is more reliable and uses the 'link' header.  Why is SEAlink becoming 
+so  popular?   Because  it is a protocol supported  under  a  BBS 
+system  called  OPUS which is quickly replacing most of  the  old 
+FIDO systems all over the country.  It is a good protocol.Because
+it is not network-friendly it does not bother with (it doesn't have
+to) escape coding anything.   That is probably a fatal mistake to
+its  future particularly as the networks get crowded.
+ 
+The next one of interest is called Zmodem.  This is almost always 
+found  as an external protocol.  That means it is included  in  a 
+file  (DSZ.EXE)  that  is  shelled to by  the  host  or  terminal 
+communications program when it is needed.  As such, it requires a 
+lot of memory compared to the internal protocols.  But because of 
+that,  it is easy to install as a protocol offering of  many  BBS 
+systems.   There  is  another  and  more  significant  difference 
+between Zmodem and the other protocols we have already  discussed 
+so  far.  Instead of being start-stop in nature, and  instead  of 
+being  windowing,  it  is  a  streaming  protocol.   A  streaming 
+protocol  does  not expect to get ANY ACK signals back  from  the 
+receiver  until the transfer is complete and successful.   If  an 
+error  occurs  it  will  receive  a NAK  and  it  is  up  to  the 
+transmitter to insure that it can recover from any NAK  received.  
+Thus,  because  it  is not a windowed  protocol  it  never  stops 
+transmitting  unless there is an error.  That means it should  be 
+faster than even the windowing protocols.
+ 
+Zmodem uses 32-bit CRC for reliability and it is network-friendly.
+In some ways it is not very user-friendly, however.  For example,
+in every other protocol there is a way to 
+terminate  the transfer should you wish to do so while it  is  in 
+progress.   The usual manner is to press Cntl-X one or two  times 
+and  wait  till the other end recognizes the  abort  request  and 
+finally stops.  In the case of Zmodem you must do so 5! times in 
+a row to stop it.  I suggest that not 1 user in a thousand  knows 
+that.  It is a popular protocol as a result of its performance on 
+the  packet  switching  networks.    Incidentally,  they 
+also escape sequenced a fourth byte - the SYN.  It is for  rather 
+obscure reasons and I believe a mistake.
+ 
+Included  in  GT  PowerComm 12.20 is  the  newest  file  transfer 
+protocol.   It  is called MegaLink.  It uses 32-bit  CRC,  it  is 
+network-friendly, is faster than Sealink, and like all the 'link' 
+named  protocols  it uses a header record that results  in  exact 
+size and proper time and date stamping of the resulting file when 
+received.   Most  interesting  about  MegaLink  is  how  well  it 
+performs  at  the very highest baud rates.   Running  comparative 
+tests of four different protocols, all sending the same 880K file 
+to  the same machine and at 9600 baud, I obtained  the  following 
+results:
+
+    WXmodem   60.4 % efficiency  580 cps
+    SEAlink   75.6 %             725 cps
+    Ymodem    77.6 %             744 cps
+    Zmodem         unsuccessful*
+    MegaLink  98.5 %             945 cps
+
+In order, WXmodem did so poorly for two reasons: at 9600 baud its 
+window limit of 4 is the same as not having a windowing technique 
+at  all.   Second,  there are ACK signals coming  back  for  each 
+packet  sent.  In the 9600 baud arena, the transmission  is  only 
+9600 baud in one direction and only 300 baud in the other!  It is 
+transparent,   more  or  less,  to  the  users  as   the   modems 
+automatically change which direction is at 9600 baud based on the 
+volume of data that needs to be sent in each direction at any one 
+time.   Further, while one character (the ACK itself at 300  baud 
+is  not significant, the ACK/NAK response is actually either  two 
+or  three  bytes  rather  than one  as  you  might  expect.   The 
+additional byte(s) is for packet number (and it's compliment).
+
+SEAlink is being driven about as fast as it can go.  It is not as 
+fast as Ymodem because of the small window it uses (like WXmodem) 
+and because it has so many more characters to transmit because it 
+is network-friendly (escape sequences).
+
+Ymodem  is  going as fast as it can.  It  is  effected  primarily 
+because  of  the start-stop nature of its function and  the  fact 
+that  the  ACK/NAKs  are coming back at 300 baud.   Here  we  see 
+clearly  an indication that the days of the start-stop  protocols 
+are numbered.
+
+As an aside, Ymodem-G would have performed MUCH better because it 
+has  no  error  control  whatever, thus it  has  fewer  bytes  to 
+transmit and no turnaround delays.  Remember, however, that error 
+correcting modems are only capable of insuring that the data sent 
+from  one  modem is received reliably by the other.  As  will  be 
+seen  in  the  discussion later  about  Zmodem's  total  failure, 
+Ymodem-G would not have reliably worked in this test.
+
+It  is  interesting that Zmodem failed altogether at  9600  baud.  
+The  reason is a little subtle and it leads to the next  thing  I 
+wanted to discuss anyway.
+ 
+I earlier mentioned that the MNP and ARQ modems are able to strip 
+the  start  and  stop bits from bytes, (they must,  thus,  be  in 
+synchronous  mode rather than asynchronous), and that  they  also 
+may  use  a  form  of compression  beyond  that  for  performance 
+reasons.   I  further stated that at 9600 baud the  modem  I  was 
+using was able to perform at 1100 cps rather than 960.  This  may 
+have  caused  you  to  ponder: if the modem  is  connect  to  the 
+computer  at 9600 baud that means the computer can only send  960 
+characters  per second to the modem for subsequent  transmission.  
+So how can the modem send it any faster than it receives it?
+ 
+The answer is that it cannot do so.  The method to use to  obtain 
+these  extraordinary performances is to connect your computer  to 
+the  modem  at 19,200 baud and utilize a buffer in the  modem  to 
+match  up the input with the output.  Naturally, as the  data  is 
+arriving at the modem much faster than it is leaving, there  must 
+be  a way to stop the input.  Well, you guessed it, we  use  flow 
+control just like the networks when they are getting choked.   In 
+particular, we sense that the modem's Clear To Send signal is  on 
+or  off.   When off, we stop sending data to it and when  on,  we 
+instantly start cramming data at it at 19,200 baud.  In this way, 
+the modem is able to send data at 1100 cps.  Naturally, the modem 
+must  be  able  to  control its CTS  signal  for  this  to  work.  
+USRobotics HST is capable of doing so.
+ 
+I showed you what happened to Zmodem when we tried to transfer to 
+it  at in excess of 9600 baud - it failed.  That is not  entirely 
+the fault of Zmodem, however.  Unless the receiving system is  of 
+the AT class of computers you will probably find that  regardless 
+of  what  kind of software you are using with it,  the  modem  is 
+faster  than the computer's ability to feed it or eat  from  it!!  
+Now that is amazing, isn't it?  We now have modems that are paced 
+by  the  computer they are attached to instead of the  other  way 
+around.
+
+Incidentally,  unless  the receiving computer is connect  to  the 
+receiving  modem  at  19,200  instead  of  9600  baud,  and   has 
+implemented some form of flow control to signal the sending modem 
+that  it's  buffer  is full, 1100 cps transmissions  to  it  will 
+naturally fail when the buffer is overflowed.
+
+
+
+
+
+X-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-X
+
+ Another file downloaded from:                               NIRVANAnet(tm)
+
+ & the Temple of the Screaming Electron   Jeff Hunter          510-935-5845
+ Rat Head                                 Ratsnatcher          510-524-3649
+ Burn This Flag                           Zardoz               408-363-9766
+ realitycheck                             Poindexter Fortran   415-567-7043
+ Lies Unlimited                           Mick Freen           415-583-4102
+
+   Specializing in conversations, obscure information, high explosives,
+       arcane knowledge, political extremism, diversive sexuality,
+       insane speculation, and wild rumours. ALL-TEXT BBS SYSTEMS.
+
+  Full access for first-time callers.  We don't want to know who you are,
+   where you live, or what your phone number is. We are not Big Brother.
+
+                          "Raw Data for Raw Nerves"
+
+X-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-X

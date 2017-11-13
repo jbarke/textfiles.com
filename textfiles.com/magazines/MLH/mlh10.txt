@@ -1,0 +1,78 @@
+MiniSport Laptop Hacker - Vol 10, 4 Apr 1993
+Copyright(C) 1993 by Brian Mork.
+
+>>> ADMIN
+Previous issues are 1-5,6A,6B, and 7-9.  I received some questions about
+spuratic receipt of all issues.  I've gotten feedback that some sysops were
+killing any messages over 3K.  With all the routing headers added to the
+top, that was pretty limiting!  I'm now splitting the issues into two
+parts.  That should grease the path to your particular QTH. Thanks to
+N7FTM, W9NQP, WB8HQS, N8QYG, N9ADS, W5SYT for input.
+
+>>> EXTERNAL DRIVE PINOUT
+Here's the external floppy pinout. Thanks, Steve (W9NWP). Pin numbering is
+like a Scotch-flex header:     1  3  5  7  9 11 13 15 17 19
+                               2  4  6  8 10 12 14 16 18 20  or rotate CW:
+
+      2 _Side Select                1 _Disk Change
+      4  GND                        3 _Read Data
+      6 _Track Zero                 5 _Write Protect
+      8 _Write Enable               7 _Index
+     10  GND                        9 _Write Data
+     12  GND                       11 _Step
+     14 _Drive Select 2            13 _Direction Select
+     16 _Motor ON                  15 _RPM
+     18  Vcc                       17  Vcc
+     20  GND                       19  GND
+
+The underscore character indicates negated signals (true when low).
+
+>>> COM I/O ARCHITECTURE
+Continuing where Volume 8 left off...
+
+Interrupt Enable Register (IER) at address (BASE+1)
+---------------------------------------------------
+Only the lower 4 bits are used.  The high four bits are permanently at
+zero.  The four used bits indicate which conditions will cause the UART to
+interrupt the computer.
+
+CAUTION: BASE+1 will access this register if and only if the most signifi-
+cant bit of the LCR (BASE+3) is zero.
+
+Bit 0: Received Data Available.  Set this to 1 if you want the computer
+       interrupted when new data has arrived.  This bit is reset to zero
+       upon completion of the associated interrupt service routine.
+Bit 1: Transmitter Register Empty.  Set this to 1 if you want to be inter-
+       rupted when the UART is ready to receive another character to trans-
+       mit.  This bit is reset to 0 immediately upon reading the IIR regis-
+       ter.
+Bit 2: Receiver Line Status.  Set to 1 if you want the UART to interrupt
+       when any of the following occur: Overrun Error, Parity Error, Fram-
+       ing Error, or Break Interrupt. Reset to 0 upon completion of the
+       associated interrupt service routine.
+Bit 3: Modem Status. Set to 1 if you want the UART to interrupt the comput-
+       er when it receives any of: Clear to Send, Data Set Ready, Ring In-
+       dicator or Received Line Signal Detect.  This bit is reset to 0 upon
+       completion of the associated interrupt service routine.
+Bit 4-7: Always 0.
+
+Interrupt Identification Register (IIR) at address (BASE+2)
+-----------------------------------------------------------
+The 8250 prioritizes the four types of interrupts discussed under the IER
+section in the following order from top priority to lowest: RLS, RDA, TRE,
+and MS.  The following three bits indicate the highest pending interrupt.
+
+Bit 0: When 0, some interrupt is pending.
+
+Bits 1,2: Indicate the type of the highest priority pending interrupt. RLS
+       gives 11, RDA gives 10, TRE gives 01, MS gives 00.
+
+Bits 3-7: Always 0.
+
+And a request: If anybody has an I/O address map for the IBM-PC environent,
+addresses 00H up to 0FFH, I would love to get a copy.  Packet me the info
+directly, or maybe mail me a photocopy of something.  Thank you!.
+
+73, Brian Mork (Opus-OVH)          KA9SNF@wb7nnf.#spokn.wa.usa
+                                   Internet ka9snf@jupiter.spk.wa.us
+                                   6006-B Eaker, Fairchild, WA 99011

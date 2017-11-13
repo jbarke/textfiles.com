@@ -1,0 +1,662 @@
+
+                      ***************************
+                     *       Locksmith 6.0        *
+                     *  Documentation by Mr. Wiz  *
+                      ***************************
+
+System requirements:
+Apple II, Apple II+, Apple //e, Apple //c, or compatible.
+48K RAM and 1 disk drive minimum.
+Optional RAM - 16K, 32K, 48K, 64K, 128K, 256K.
+
+Common Locksmith Control Keys:
+-----------------------------
+These keys can be typed at any time while in Locksmith.
+
+CTRL-Z - Will print text screen to printer.  Printer slot assumed to be in slot 1, but may be changed by parameter PRT.SLOT.
+
+ESC - Will abort current function and return to an earlier menu.  Repeated pressing will return to main menu.
+
+RESET - Will exit Locksmith and reboot system.
+
+Note: Locksmith (LS) uses extensive memory overlays while performing tasks.  Keep the LS disk in the boot drive until instructed to remove it.
+
+The top 7 lines of the display show the status of the current operation.  Tracks are number 0-23 (hex) corresponding to 0-36 (decimal).  Quarter tracks are also allowed.
+
+Main Menu:
+---------
+Booting the LS disk will result in the main menu appearing.  The body of this menu displays the keystrokes (inverse) which you enter to perform certain functions.  Briefly, they are:
+
+(B) BACKUP/COPY - Backup protected software using LS standard copy functions.
+
+(F) FAST BACKUP - Quickly create copies of unprotected software.  Will utilize all additional memory in the computer for a copy process taking as little as 8 seconds.
+
+(/) CLR STATUS - Clears the track status display at the top of the screen.
+
+(N) DISK EDITOR - Formerly, the Nibble Editor.  Allows manual reading, searching, changing, etc. of data in a sector format or nibble format.  Can also be used to edit data in RAM.
+
+(L) LOAD RAM CD - Will load slot 0 RAM with 12K of data found on tracks 12, 13 and 14 (hex) of LS disk.  Useful for loading Inspector or Watson.  Pressing I will invoke these functions once they are in memory.
+
+(*) PARAMETERS - Allows display and changing of curent LS operating parameters by name.
+
+(T) TEXT EDITOR - Used to edit files containing LS Programming Language (LPL), which can be loaded and saved on the parameters disk.  The BACKUP function allows automatic backup of protected software after specifying the name of the software.
+
+(R) RAMCD UTILS - Can be used to test RAM cards in your Apple.  Will test any size cards, and two tests are provided: a basic test and an extensive test.  The test can be performed continuously or just once to help isolate intermittent errors.  In addition, the contents of any 16K bank of the RAM card can be dumped to main memory, edited with the disk editor and re-loaded to RAM cards.
+
+(Q) SCAN DISK - Allows you to examine on the hi-res screen an overall "picture" of the disk, track by track.  This is useful in determining which tracks are actually used.
+
+(A) BOOT TRACER - A sophisticated debugger which can simulate the operation of the 6502 in the Apple.  Because disk reading is simulated, it is possible to actually "boot" a disk (whether protected or not) under control of the debugger and trace the boot code of the program.
+
+(C) CERTIFY DISK - Writes a special pattern to each track of a disk and verifies the integrety of the disk surface.
+
+(U) 16-S UTILS - Brings up a second menu of 16 sector utilities.
+
+(D) DOS3.3 UTIL - Brings up a second menu of DOS 3.3 utilities.
+
+(X) DSK RECOVER - Will read a difficult or impossible to read disk and write a good copy to another disk.  Useful in transferring disks that were written in an improperly aligned machine.
+
+(S) DISK SPEED - Allows speed adjustment of disk drives.
+
+(E) ERASE DISK - Will partially or completely erase a disk.
+
+(I) INSPECTOR - Invokes Inspector or Watson utilities if loaded with the "L" menu item.
+
+Backup/Copy Disk:
+----------------
+Pressing 'B' will invoke the standard default copy method for copying protected disks.  This will work with most protected software.
+
+Pressing 'F' will invoke the high-speed copy process.  This only works for unprotected software and utilizes as much memory as you have available.  The following commands are used in Fast Backup:
+
+     12   Copy drive 1 to drive 2
+     21   Copy drive 2 to drive 1
+     11   Copy to and from drive 1
+     22   Copy to and from drive 2
+     1    Read verify drive 1
+     2    Read verify drive 2
+     10   Copy drive 1 to memory
+     20   Copy drive 2 to memory
+     01   Copy memory to drive 1
+     02   Copy memory to drive 2
+     V    Toggle verify flag after each operation
+
+(SPACE or RETURN) to start operation
+In addition to these commands there are several parameters which can be modified to allow read and write sector oriented protected disks, and set internal parameters.  The following parameters apply:
+
+0007=00 Requested output volume # or 0, if same as input volume.
+
+0008=00 Begin track to process.
+
+0009=22 End track to process.
+
+0010=08 Maximum read retry count. Retry number is 1-9 for first 9 revolutions of disk, A-Z for next 26.  After that the display will not change.
+
+0011=03 Maximum verify after write retry.
+
+0012=10 Motor On delay for read. 7F maximum.
+
+0013=10 Motor On delay for write. Maximum is 7F.
+
+0014=80 Seek Off delay to read. DOS uses FF, the longest value. A delay of 00 is satisfactory and will reduce overall copy time by about 1 second.
+
+0015=80 Seek Off delay for write.  Do not change to any number less than 80 or drive may begin writing before the seek mechanism has settled.
+
+0016=0B Number of self-sync before address field, expressed in excess-5 notation.  The default value will write 16 self-sync nibbles and the value of 01 will write 6 self-sync nibbles.  Setting this value very low will cause over-writing of the subsequent address field, too high will not allow all 16 sectors to fit on a disk.
+
+0017=08 Number of self-sync before data field. (See 0016.)
+
+0018=00 Alternate writing to drive 1 and 2.  Setting to FF will cause alternate writing between 2 drives allowing very fast and efficient disk copying and use of memory.
+
+To change any parameter, enter the 4-digit address and press RETURN.  The current value will be displayed, enter a new value if you wish to change it.
+
+Clear Track Status Display:
+--------------------------
+The track status display is not cleared after each LS function.  Pressing '/' will manually clear this display.
+
+Disk, Nibble, and Memory Editor:
+-------------------------------
+Pressing 'N' will enter the Disk Editor (formerly Nibble Editor).
+
+Cursor Movement-I,J,K,M diamond or arrow keys on //e or //c. '<' and '>' will page forwards and backwards through memory. ',' and '.' will scroll continuously through the buffer.
+
+Display Control-'A' will toggle ASCII display on/off.  'B' will toggle between byte and nibble modes.  In nibble mode, self-sync bytes are inverse.
+
+Control Keys-CTRL-R will read a track into buffer. CTRL-W will write track from buffer to disk.  (IF NO ANALYSIS WAS DONE TO TRACK TO SET TRACK START AND END, LS WILL ATTEMP TO WRITE ENTIRE BUFFER.)  CTRL-V will verify track start.  Place cursor over nibble you wish to start verification process.  CTRL-I will insert nibbles into the current buffer starting to the right of the nibble your cursor is on.  CTRL-D will delete nibbles.  CTRL-F will find a pattern of nibbles.  Pressing RETURN will search for string defined in parameter PATO, 'L' will prompt you for a length (1-F).  CTRL-B moves cursor to track start, CTRL-E to track end.  '(' sets track start to current cursor, ')' sets track end.  'S' sets nibble under cursor to self-sync, 'N' sets nibble to normal.  'C' enters change mode.  'H' will display buffer on hi-res screen, 'HG' will print hi-res screen if your printer is capable of graphics output.  The printer initialization string is defined in parm GR.CHARS.  'G' from text mode will display a picture of buffer using text characters. A period (.) means all nibbles in string are normal, an inverse (#) means self-sync, (+) means a combination of normal and self-sync. 'D' is the 16 sector address decode command.  The first 4 numbers are the buffer address, next is the letter 'V' with a hex number (the volume), a two digit number with (/) another 2 digit number for track/sector.  Following that is either '?', 'CS', or '**'.  A '?' means either the check sum or trailer are incorrect.  'CS' means data field check sum is incorrect. '**' means data field info is incorrect or the disk is 13 sector.  Pressing '#' prints the current track in the bufferfrom '(' to ')'.  CTRL-S will process the analysis portion of the current track procedure used after reading to analyze the nibble data and set pointers for later writing.
+
+Framing Bit Analyzer:
+--------------------
+     Framing bits (sync bits or timing bits) are the zero bits which occur between nibbles of data on the disk.  These nibbles are called self-sync bytes.  16 sector disks use 10-bit self sync or 2 framing bits.  The analyzer performs statistical analysis using precise timing loops and reports the timing relationship of the nibble data.  The analyzer is entered by pressing '$' from the disk editor and reading in a track.
+     An example:  Get into the disk editor and CTRL-R to read a track of nibbles.  Place the start '(' pointer to the start of the address field (D5 AA 96).  Move the cursor down about 10 lines and set the end pointer ')'. Now move the cursor back up to the DE AA after the start of the address field.
+     The analyzer uses the data from the start pointer to the nibble immediately before the cursor as a "key".  If you placed '(' before the D5 nibble and the cursor on the DE nibble, the key length would be $0B nibbles.
+     Enter the analyzer by pressing '$'.  The display shows the data being analyzed on the left with statistics on the right.
+     The following commands control the framing analyzer:
+     SPACE temporarily stops so you can examine statistics.
+     RETURN start again.
+     < and > allow scrolling.
+     T switches from nibble to timing stats.
+The info on the right of the screen might look like the following:
+        R=0007
+        F=07
+            ??
+          --  ++
+        0   02
+        1 00  25
+        2 25  03
+        3 02  00
+        4 01  01
+        5 00  18
+        6 0B  00
+        7 00  07
+        8   03
+The R= value is the number of reads which occurred.  The F= value is the number of reads in which the "key" of the data was found on the track.  Because of limited buffer space, if a large data length is specified, it is possible that the buffer may not fully contain the data specified.
+     The table of numbers represents the count of the differences of the data read with the "ideal" values of 10, 20, 30, etc.  These error diferences range from -7 to +7, with 00 being ideal.  For example, in the table above, the count for +1 is 25 (hex).  This means that there are 25 occurrences of nibbles with timing values of one greater than the ideal value (11, 21, 31, etc.).  The "8" count of 03 indicates 3 occurrences of timing values exactly halfway between ideal values.  This indicates that more examples are needed.  The "??" is displayed when the values for the +- 6,7, and 8 counts are non-zero, and indicates that more examples are needed.
+     When nibble data is displayed on the left side, the inverse/normal mode of each nibble indicates the number of framing bits after the nibble.  Normal text indicates no framing bits.  Both digits are inverse if 2 framing bits while only one digit means 1 framing bit.  A flashing value is 3 or more framing bits.
+     If the nibble data has the high order bit turned off, this indicates that at least one read occurred where the data after the key did not match.  This could have been caused by a loss of sync while reading or by the key being specified as too short which caused a non-unique part of the track to be analyzed instead of the desired part.
+
+Load RAM Card:
+-------------
+     Pressing 'L' from the main menu will cause tracks $12, $13, and $14 to be read into memory addresses $D000-$FFFF of a RAM card in slot 0 (or the top 16K of a 64K //e or //c).
+     If you have Inspector or Watson you can load it into RAM as follows:
+1. Boot Inspector or Watson.
+2. Enter Inspector or Watson, insert your LS disk and press the following:
+    B D 0 <return>
+    T 1 2 <return>
+    CTRL-W
+3. Then press CTRL-I 15 times.
+This will write Inspector or Watson you your LS disk.
+     Your LS disk normally contains a copy of Integer Basic and the monitor on tracks $13 and $14.  Inspector/Watson will go on track $12.
+
+Parameters:
+----------
+     Pressing '*' will allow display and modification of parameters using their LS Programming Language variable names.  To display the value of a parameter, enter the keyword "SHOW" followed by the parm name.  For example, to display the current value of the parameter SLOT, enter SHOW SLOT. To change the value, enter the parm name and new value, SLOT 4.  If you make an error, LS will beep and ignore your request.
+     The following patch is useful in reading sectors from a disk that reads unreliably.  This patch to RWTS will defeat the head recalibration routine after an I/O error and try to read again:  BDCC 4C C1 BD.  To reset the normal value, use  BDCC 10 F3 AD.  To restore parms to their original values, just rebot LS.
+
+Backup Using Custom Parameters:
+------------------------------
+     The text editor function is used to automatically select a parameter file to be used to back up a disk.  To enter this function, press 'N' for NEW (clears the buffer) followed by 'B' for Backup.
+     If the parm disk is not in the drive, you will be prompted to insert it.  A list of directory entries will be displayed.  Move the "light bar" using the arrow keys to the proper selection (or CTRL-K, CTRL-J).  CTRL-N and CTRL-P will move by pages.  If you know the name, just type the first letter to find the proper selection quickly.  Pressing RETURN will enter your selection.
+
+Loading A Parameter File:
+------------------------
+     Pressing 'L' will prompt you to load a parm file from the parm disk.  Follow the directions under Backup Using Custom Parms.
+
+Saving A Parameter File:
+-----------------------
+     'S' will save a parameter file to the parm disk.  You may create your own, or transfer one from one disk to another.
+
+New - Create Edit Work Area:
+---------------------------
+     'N' will clear the text editor and start a new parm file entry.
+
+Text Editor:
+-----------
+     To enter the text editor, press 'E'.  ESC will exit the text editor and return to the edit menu.  'N' clears the text editor for a NEW file.
+     The text editor is a line numbered editor.  All lines entered are given sequential line numbers, which are displayed in inverse on the left of the screen.  Line numbers are displayed in hex, and only those referring to a portion of a file with the ".I" directive refer to LPL (Locksmith Programming Language).
+     Lines are displayed one line at a line with 2 positions for the line number and 38 positions for the entry (40 characters).  If it is necessary to continue an LPL statement on anothr line, the minus (-) sign as the last character of the first line is needed.
+     There are 2 cursors used in the editor.  If the line number is flashing, the cursor is on the line.  If a single character is flashing, the cursor is within the line at the cursor position.  This is important for insert and delete operations.  Characters can be inserted at the current cursor position with CTRL-I, CTRL-D will delete characters.
+     Use 'X' for Syntax Checking after you have entered your text.
+
+RAM Card Utilities:
+------------------
+     RAM card utilties are selected with 'R'.  They are self-explanatory and include a helpful RAM card test feature as well as being able to dump the contents of the ram card to and from main memory 16K at a time to locations 2000-5FFF as follows:
+          2000-2FFF RAM card pages D0-DF alternate
+          3000-3FFF    "       "   D0-DF
+          4000-4FFF    "       "   E0-EF
+          5000-5FFF    "       "   F0-FF
+
+Scan Disk:
+---------
+     'Q' will help you to determine what tracks are in use on a disk you are trying to copy.  This utility will scan a disk for valid data.  The display is hi-res and runs from bottom to top of the screen.  The first time you run ths utility, you should use a normal DOS 3.3 disk for comparison purposes.  First try tracks 0-22 in whole increments.  This will show what a normal good disk looks like.  The series of dots above each track number are the gaps of self sync bytes between each sector.  Normally, on a 16 sector disk there will be 16-17 of these dots.  A 13 sector disk will have 13-14 dots.  On a 16 sector disk, one of the dots will be a little longer than the others, relating to self sync bytes before track 0.  You will notice that the dots will either move up or down as you move from track to track.  This is due to the time it takes to move the disk drive head from track to track.
+     Now try scanning from .5 to 22.5 in increments of 1.  You will see very long white lines with no particular pattern.  This means there is no valid data on that track.  Some evidence of valid data such as short bursts of dots is cross-talk between adjacent half tracks.
+     Spiral tracking or 1/4 tracking will show as a long band of white with a pattern of black between the white.
+
+Automatic Boot Tracer:
+---------------------
+     The Automatic Boot Tracer (ABT) is intended for the more experienced Apple programmer, but may be the greatest utility on the LS disk.  It essentially simulates the 6502 processor in your Apple in a very slow speed so you can boot trace disks, copy protected or not.
+     Pressing 'A' invokes the ABT function and requires a RAM card of at least 16K to work.  The upper 16K in a //e or //c works fine.  LS will prompt you for the slot of your RAM card, normally you select 0.  ABT will be installed and then entered.  (ABT will sometimes be called the simulator or debugger in this discussion.)
+     The screen will clear and an inverse line of text will appear on the top of the screen indicating ABT is now operating.  Pressing <reset> now will enter the ABT and you can boot a disk with 6CTRL-P. Unfortunately, a disk that boots into the RAM card area will destroy the simulator function.
+
+Information Line:
+     The top line in inverse normally starts out as:
+     FA62  CLD       A=00 X=00 Y=00 P=34 S=FD
+The first 4 characters are the program counter address followed by the opcode to be executed.  Next are the A, X, and Y registers, the processor status register contents and the value of the stack pointer.
+     At this time press 'R' followed by any key from A to X.  This moves the inverse status line to another location on the screen.  Y or Z will move the line off the screen.
+
+Idle Mode:
+     The simulator is in idle mode at this time.  The progam is running but all activity has ceased at the address shown.
+     Press CTRL-C at this time to enable the 65C02 instructions, especially if you have the enhanced //e or //c.
+     The 'S' key will start execution under control of the simuator.  The ABT is now running.  The display will rapidly change as the boot is started.  The "beep" you hear from the speaker will be slightly different than the normal Apple beep.
+     To stop the simulator, press CTRL-Z putting you into the idle mode.  This is the normal stop key but can be changed if you need CTRL-Z in your program.  To change it, stop the program with CTRL-Z, press CTRL-X followed by whatever key you want to assign to the stop function.
+     Enter the idle mode and press SPACE to single step the program.  A "+" or "-" will appear after each conditional branch depending on whether or not the branch will be taken (+) or not (-).
+     While in idle mode, CTRL-Y will place you in the monitor where you can use 'L' to disassemble the code.  To reenter the simulator, pess CTRL-Y <RETURN>.  Before placing you in the monitor, the simulator saved low memory pages 00 to 07 in the RAM card.  After reentering the simulator, this memory was refreshed, insuring that no memory was changed.
+     Other idle mode commands are:
+        T - Trace subroutine until a JSR or RTS is fetched.
+   CTRL-R - Cause a simulated reset to occur. The program counter
+            is fetched from $FFFC.
+   CTRL-I - Causes a simulated IRQ interrupt.
+   CTRL-F - Turns off IRQ pending flag.
+   CTRL-N - Causes simulated NMI interrupt.
+   CTRL-Q - Quit simulator and go to monitor.
+        1 - Set single-cycle mode, using SPACE to cycle one 6502
+            processor cycle at a time, instead of an entire
+            instruction.
+        0 - Set instruction mode, valid only when on an instruction
+            boundary (not in the middle of an instruction).
+        B - Toggle beep flag on/off.
+        C - Toggle click flag on/off.
+   CTRL-C - Toggle 65C02 flag on/off.
+        K - Take next keypress and place it in the keyboard register.
+            When instruction stepping throuhg code that reads the
+            keyboard, this key allows a way to enter a keyboard
+            command without entering run mode.
+      ESC - Enter simulator menu.
+
+Simulator Control Window:
+     Press ESC while in the idle mode.  The simulator control window is displayed, and the cursor appears in the upper left of the window.
+     Use the RETURN key, and the left and right arrows to move the cursor around the window.  To change data anywhere, position the cursor over the value to change, enter the change.  To exit and return to idle mode, press ESC again.  CTRL-C will cancel any changes you made.
+     The top line of the simulator control window appears very much like the idle mode window, except the program counter is more to the right and no instruction is disassembled.  The number on the left is used for single byte reading, writing, and memory editing.  Enter a number followed by 'R' to read, 'W' to write, and 'E' to edit.
+     To change display modes for the simulated program (text, graphics, hi-res, lo-res, page1, page2, fullscreen, mixed) key in the address to toggle ($C050-$C057) and enter 'R'.  When tracing a program in graphics mode, place the information line on rows U, V, W, or X and toggle mixed text-graphics mode.
+     To edit, enter 'E' and the memory is displayed in both hex and ASCII text.  Move the cursor with the arrows and RETURN.
+     The second line of the window contains: 
+         RU=65   0=I 1=I 2=I 3=S 4=I 5=I 6=D 7=I
+"RU=65" (decimal 101) is the register update value, representing the number of instructions that are simulated before the registers and program counter are updated on the screen, when in "running" mode.  If the number is set too small, the registers will be updated after every instruction.  This causes the simulator to run less efficiently, because of overhead involved in updating the information line.
+
+Slot Specifications:
+     The rest of the second line displays the slot numbers and how they are to be used.  Because the simulator resides on a RAM board (indicated by 'S' in the slot display for "SYSTEM"), it must know about all other RAM boards and firmware boards if it is to correctly simulate their operation.  Initially, these locations are set to 'I' (INVALID).  Any reference to these invalid slots will cause the simulated program to stop and control is passed to idle mode.  Valid slot specification values are:
+        S - system (simulator) slot
+        I - invalid
+        D - floppy disk drive
+        A - RAM card of 16K or 32K
+        B - RAM card of 64K or more
+        F - Firmware card or ROM card
+        T - transparent
+If the specification for a slot is "transparent", any commands for the device in that slot will be given without checking or conversion by the simulator.  Transparent mode should be used for:
+     Any devices such as RAM or ROM cards that bank select memory
+     into addresses $D000-$FFFF, which is used by the simulator.
+
+     Any devices such as disk drives which are timing dependent.
+
+     Any devices which use direct memory access to modify memory
+     from addresses $0000-$07FF, as this memory is used by the
+     simulator.
+
+Address Compare Stop:
+     The third line of the simulator window starting with "PC" is the "PC compare stop" line.  Up to 4 program counter values for "compare stop" can be specified.  If the simulated program's PC equals one of these values, the simulator immediately enters idle mode.  In addition, one compare stop range can be specified.  To enter program counter stop values or a range, cnage th number (initially 0) to the number of stop addresses to be entered and then enter the address.  To cancel, reenter 0.
+     The "MR" line is the "memory read address compare stop" line.  Again, up to 4 stops and 1 memory range can be set.  Whenever the simulated program attempts to read one of these addresses, either by direct addressing, indirect addressing, or stack fetch, the simulator will enter idle.
+     The "MW" line is the "memory write address compare stop" line.  It follows the same conventions as the MR line.
+
+END OF LOCKSMITH 6.0 DOCS - PART 1 of 2 PARTS
+
+                     Locksmith 6.0 Docs - Part 2
+                                  by
+                                Mr. Wiz
+
+Program Counter Swap:
+     The "PCSW" area of the window is the "program counter swap" control area.  4 address pairs can be specified here.  If the PC equals the first value of the pair, the PC is immediately set to the second value, and execution continues.  This is useful in eliminating slow timing loops, which are unnecessary in the simulator.  Initially 3 pairs of PCSW values are given:
+         FCA8 FCB3 - nullifies monitor wait routine
+         BA00 BA10 - nullifies DOS 3.3 seek delay routine
+         BD9E BDAB - nullifies DOS 3.3 motor-on wait routine
+
+Program Counter Trace Table:
+     The bottom 8 lines of the window contain the PC trace table.  The last 64 values of the program counter are kept here, so that whn the simulator is halted, a history of the last 64 instructions can be examined.
+
+Program Halts:
+     A program running under control of the simulator halts and the simulator enters idle mode whenever one of the following conditions are met:
+
+          The stop key is pressed.
+
+          An invalid 6502 or 65C02 opcode is encountered. ??? will
+          be displayed where the opcode should be.
+
+          A JSR or RTS instruction is fetched while running in "T"
+          (trace) mode.
+
+          A read or write to the device select addresses of a slot marked
+          as "I" (invalid) in the slot table.
+
+          A compare stop occurs for PC, MR, or MW while running.
+
+          An attempt is made to write to the floppy disk.
+
+          An attempt is made to reference certain I/O addresses.
+          Among these are $C060 and $C068 for either read or write.
+
+Internal Operational Notes:
+     A few notes about the internal operation of the boot tracer/simulator/debugger:
+     Floppy disk reading is simulated by reading an entire track of nibbles and passing them one at a time to the simulated program requesting them.  Each time the simulated program requests a nibble, the next nibble in the buffer is returned.  The simulated program never has to wait for a nibble by polling the high-order bit of the disk register.  Because of this, framing bit timing is not preserved.  In additon, the track is not synchronized to any other track upon reading.  Floppy disk writing is not supported.
+     When reading a floppy disk, the simulator maintains the nibbles of the most current track on the simulator's system RAM card.  This track image is valid until either the slot or drive number is changed or reselected, or the read/write head is stepped to a different track.  Only if the current track image is invalid will the real floppy disk be read again.  Therefore, if the user performs a CATALOG operation while under control of the simulator and then changes the disk and performs another CATALOG operation, the catalog information from the first disk will still be displayed because the catalog did not cause the head to change tracks and invalidate the track buffer.  To manually invalidate the buffer, change the slot spcification to 'I' and back to 'D' while the simulator is running.
+     The simulator has code for "sector-assist" built in.  This means that when the simulated program requests a nibble followed immediately by testing for disk register ready and compare for $D5, the simulator immediately finds the next $D5 in the track buffer and returns it to the simulated program, instead of requiring the program to ignore each nibble until the value $D5 is found.
+     The paddle I/O addresses ($C064-$C067 and $C06C-$C06F) are correctly simulated if the code that accesss the I/O addesses is similar to the monitor routine at $FB1E ($PREAD).  If the reference is not similar, idle mode will be entered.
+
+     One final note about ABT.  It is not fast!  A typical disk trace took over 40 minutes just to simulate a typical 30 second game boot.  However, the results and information gained were outstanding.  Be patient!
+
+
+LOCKSMITH PROGRAMMING LANGUAGE:
+------------------------------
+     Locksmith Programming Language (LPL) is a user tool to specify how LS is to perform certain functions.  With it, you can set up certain procedures to backup difficult to copy disks, search for information, repair damaged disks, etc.  LPL commands, or statements, are collected into a file that can be entered from the keyboard and saved to a parm disk.
+
+The .I (Include) Command:
+     Files are saved under their own names.  For example, if a file called "BRODBUND" exists on a parm disk and it contains LPL statements you wish to use in the current file, use the following statement in your LPL file:
+          .I BRODBUND
+The .I must appear as the first characters on the line, followed by a space and the name of the file.  To include part of a file, specify the starting and ending line numbers:
+          .I TESTFILE,4-1F
+would include only lines 4 through 1F of the TESTFILE.  There is no limit to the number of .I statements you can use, except that the total number of lines cannot exceed $FF.
+     Each line in an LPL file is given a line number (in hex and inverse).  Line numbers are really unimportant except for reference purposes.  Lines cannot exceed 38 characters in length.  The following is an example of an LPL line:
+          FIND D5 AA 96
+This is an example of a single LPL statement.  Multiple statements are allowed separated by a colon (:). Example:
+          SLOT 6 : IN.DRIVE 1 : OUT.DRIVE 2
+Spaces before and after colons are not necessary.  If a line will exceed 38 characters it can be continued on the next line by coding a "-" as the last character on the line:
+          DEPOSIT (DF) (F4) (DF) (D4) (FF) -
+          D5 AA 96 AA AA
+You may insert remarks or comments if proceeded by an asterisk (*).  Examples:
+          * SET SLOT NUMBER : SLOT 6
+          SLOT 6 : * SET SLOT NUMBER
+Both lines are equal, valid statements after a colon will be acted upon.
+
+LPL Statements:
+     LPL statements consist of "tokens" which can be thought of as words in a sentence.  Tokens are separated by blanks.  The first token used in a statement determines the type of the statement.  A token can represent variable names or parameter names, a constant, or a processing routine name.  Statements can be grouped into the following categories:
+          Comment or blank line
+          Statement label
+          Assignment statement
+          Processing
+Any statement may have a statement label preceding it.  Statement labels are optional and are used for branching within the LPL file with the GOTO statement.  A statement label begins with the keyword "LABEL", and is followed by a name.  Label names can be of any length, and are any sequence of alphanumeric characters or any period, with the first character alphabetic.  Examples:
+          LABEL READ.TRACK.AGAIN :
+          GOTO READ.TRACK.AGAIN
+
+          LABEL A2:ERROR:PRT "LENGTH ERROR"
+          GOTO A2.ERROR
+
+Types of Constants:
+     Several types of constants are used in LPL.  They are described herewith.
+     Single byte constant (hex):
+          D5
+          6
+          00
+          (FF) single bytes in parentheses indicate self-sync
+
+     Multiple byte constant (hex:
+          (FF) D5 AA 96
+          00 10 20 30 40 50 60 70 80
+
+     Double byte constant (hex):
+          1A70 Double byte constants usually represent addresses or lengths.
+
+     Track value constant (hex):
+          12.5
+          1A.75
+          11.0
+          0.
+          Track value constants contain a decimal point.
+
+     Single byte character constant:
+          "X"
+          'X' Note that either single or double quotes are used.
+
+     Multiple byte character constants:
+          "DON'T FORGET TO COVER NOTCH."
+          If a quote is to appear in the constant, use the other
+          quote to delimit the string.
+
+     Multiple byte constants can consist of a mix of hex and ASCII:
+          89 'GRD' 8D
+
+     Special constants:
+          ? - represents a "don't care" value when used in a search pattern.
+
+     Flag constants:
+          YES
+          NO
+          ON
+          OFF
+          These are equivalent to 0-FF, but are preferred because of their
+          readability.
+
+Types of Variables:
+     Variable names within LPL usually have a specified use for each name, although some general purpose names have been provided for the user.  Several types of variable names are provided within LPL:
+     Single byte variable:
+          SLOT
+          IN.DRIVE
+          OUT.DRIVE
+
+     Multiple byte pattern/string variables:
+          GR.CHARS
+          PAT1
+          SYNC.PAT
+          Pattern/string variables are variable length, and have a one byte
+          length as the first byte of a variable.  Although pattern/string
+          variables have a variable lenght, each is allowed a maximum length
+          of 15 (decimal).
+
+     Multiple byte variable:
+          RD.NIB.TRANS
+          SEC.TRANS
+          SELECT.TAB
+          These variables refer to multiple-byte areas of memory of fixed
+          length, such as lookup tables.
+
+If you have a need to refer to a byte within a multiple byte variable, you can code a plus sign followed by the displacement into the table:
+        NIB.TRANS +2F
+
+     Double byte pointer variable:
+        START
+        END
+        LEN
+        CURSOR
+        PTR.W
+        PTR.X
+        Double byte pointer variables can also represent length.
+
+     Track variable:
+        BEGIN.TRK
+        END.TRK
+        INCR.TRK
+        SYNC.TRK
+        Track variables can represent integral track values or 1/4,
+        1/2, or 3/4 tracks.
+
+     Flag variable:
+        SYNC
+        COUNT
+        SHOW.ADDR
+
+        Flag variables are single byte variables that contain a flag of
+        YES/NO, ON/OFF, or FF/0 and act as switches which can be set
+        and tested.  Values other than these may have unpredictable results.
+
+The Assignment Statement:
+     Used to assign a value to a variable.  The variable can be assigned the value of a constant or another variable.  The variable and the constant to which it is assigned must be of the same type.  For example, a pointer variable can only be assigned to another pointer variable.  Examples:
+
+        START CURSOR - Set the variable START (start of track data)
+        to CURSOR (current cursor locaton).
+
+        CURSOR 2040 - Set variable of CURSOR to point to 2040.
+
+        SLOT 6 - Set one-byte var SLOT to value of 6.
+
+        BEGIN.TRK 12.5 - Set track var BEGIN.TRK to value of 12.5
+
+        COUNT YES - Set flag var to flag value of yes.
+
+        PAT4 D5 AA 96
+        PAT4 PAT7 - Both examples are valid.
+
+        GR.CHARS 89 'GRD' - Set string var GR.CHARS to 4 byte string
+        consisting of hex 89 (CTRL-I) followed by ASCII 'GRD'.
+
+        DF.HDR3 B4 : AF.HDR3 DD - Set the third data field header byte to
+        B4 (normally AD) and third address header byte to DD.
+
+        AF.TRL1.TEST IGNORE.TRL
+        AF.TRL2.TEST IGNORE.TRL
+        DF.TRL1.TEST IGNORE.TRL
+        DF.TRL2.TEST IGNORE.TRL - Assignment statements patch RWTS to
+        ignore the trailer nibbles of the address and data fields.
+
+        AF.TRL1.TEST NORM.TRL1
+        DF.TRL1.TEST NORM.TRL1 - Patch RWTS back to normal trailer nibble
+        checking.
+
+        AF.CSUM.TEST IGNORE.CSUM
+        DF.CSUM.TEST IGNORE.CSUM
+        AF.CSUM.TEST NORM.AF.CSUM
+        DF.CSUM.TEST NORM.DF.CSUM - Used to patch RWTS to ignore or to use
+        address field and data field checksum.
+
+        AF.HDR1 D5
+        AF.HDR2 AA
+        AF.HDR3 96
+        AF.TRL1 DE
+        AF.TRL1 AA
+        DF.HDR1 D5
+        DF.HDR2 AA
+        DF.HDR3 AD
+        DF.TRL1 DE
+        DF.TRL1 AA - Set default header and trailer values for address
+        fields and data fields used for reading.
+
+
+        DF.HDR1.WRT D5
+        DF.HDR2.WRT AA
+        DF.HDR3.WRT DD
+        DF.TRL1.WRT DE
+        DF.TRL2.WRT AA
+        DF.CSUM.SEED.WRT 00 - Set header and trailer nibbles to be used
+        when writing a data field. The last statement sets the seed to
+        be used for the calculation of the checksum for writing the data
+        field.
+
+Processing Routines:
+     LPL processing routines (algorithms in earlier versions of LS) are routines that the user can invoke on demand using LPL.  Some of the routines are complex and are driven by many variables, while others are simple and operate using only one or two variables.  Some routines use parameters consisting of constants or pointers passed to them and some accept no parameters at all.  The valid syntax of each processing routine is described in an addendum, but we will describe some of the routines here and give some examples of their use.  The Parm disk has excellent examples of routines.
+
+        ABORT "DATA NOT FOUND" - Abort current operation and return to LS
+        main menu.
+
+        PAUSE "ENTER 1,2 OR 3:" - After a keypress, the value of the key
+        is placed in the single-byte variable KEY.IN
+
+        PRT "DISK MUST BE WRITE/ENABLED" - Prints message on screen.
+        If last character is blank, cursor remains on same line.
+
+        SHOW SLOT - Print value of variable named slot. If flag variable
+        SHOW.ADDR is YES or NO, the address of the variable SLOT is also
+        printed.
+
+        GOTO READ.AGAIN - Branches to lable READ.AGAIN elsewhere in LPL.
+
+        FIND D5 AA 96 - Search from current cursor position until END
+        pointer, searching for D5 AA 96.
+
+        FIND PAT4 - Same as previous example, except search for the contents
+        of string var PAT4.
+
+        ERROR '5' - Causes the character '5' to be placed in the current
+        track of the status display area.
+
+        PAT4 D4 DD FF
+        PAT5 D5 AA 96
+        CHANGE PAT4 PAT5 - Changes all occurences of first string to
+        second string for entire range of START to END.
+
+        ERASE - Causes track to be erased on the output drive.
+
+        FORWARD TRK.LEN
+        BACK TRK.LEN - Cause CURSOR to be moved forward or back by the
+        length determined by variable TRK.LEN. These routines can also
+        be coded with a 2-byte constant: FORWARD 024E or BACK 0042
+
+        CODE AD CUR.TRK 0A 0A 0A 0A 60 - CODE processing routine is provided
+        for 6502 M/L programmer.  Parms supplied are decoded, placed in a 
+        contiguous area of memory, and given control with a JSR instruction.
+
+        PRT "ASCII TEXT TO PRINT" - The PRT routine prints data on screen.
+        If last byte is blank, no new line is started. Example:
+        PRT "TRACK INCREMENT IS " : SHOW INCR.TRK
+
+Some processing routines function slightly differently depending on whether in "nibble-mode" or "byte-mode".  If the last read or write command was NREAD or NWRITE, the nibble-mode is used.  If last read or write is SREAD, SWRITE, TREAD or TWRITE then byte-mode is used.
+
+The routines which function differently depending on whether in nibble or byte mode are FIND, VER, and CHANGE.
+
+In nibble mode, a zero value in the pattern specified acts as a "don't care" value.  It can be either coded as "?" or "0".
+
+In byte mode (used when reading or writing sectors), the zero value in a pattern is significant.  Example:
+
+        NREAD : FIND D5 00 96
+
+Performs a nibble-read of the current track, and places the CURSOR on the first occurence of a D5 value, followed by any value, followed by a 96 value.
+
+The following processing routines accept either string vars or multiple byte constants:
+
+        FIND
+        VER
+        REP
+        DEPOSIT
+
+The nibble or byte mode can be changed manually by setting the flag variable BYTE.MODE to YES if byte mode is desired, or NO if nibble mode is desired.
+
+Track Procedures:
+     A track procedure is a sequence of LPL statements that are to be executed for each track that is being copied.  The track procedure is defined with the BEGIN.PROC and END.PROC statements.  The procedure is then later invoked for each track to be processed, by the processing routine which will invoke the track procedure.  There is currently only one procedure to invoke this processing, the COPY procedure.  The "current" procedure is the last one to be defined.  If no procedure is defined, then the default LPL procedure will be used.  For example:
+
+         BEGIN.PROC
+           ...
+            ... track procedure A
+           ...
+         END.PROC
+
+         COPY 12 18 2
+
+
+         BEGIN.PROC
+           ...
+            ... track procedure B
+           ...
+         END.PROC
+
+         COPY 1 9 2
+         COPY 13 19 2
+
+In this example, the first 2 copy procedures will use track procedure A, the second two will use procedure B.
+
+     The LPL statements within the track procedure can be used to process a track in one of two modes.  Either in nibble-mode or sector-mode.  Nibble processing routines are NREAD, NWRITE, NVERIFY, whcih process a track in the form of nibbles.  Sector-mode processing routines are TREAD, TWRITE, TVERIFY which process a track in the form of 16 separate sectors.
+     The format of a COPY command is: COPY <begin track> <end track> <track increment>.  The values are stored in the variables BEGIN.TRK, END.TRK, and INCR.TRK.
+     If tracks are to be synchronized or nibble counting is to be used, set track variables SYNC or COUNT to YES.  The SYNC and COUNT keywords are not set to YES as in LS version 5.0.
+
+LPL Error Codes:
+     During execution of the LPL program, some errors may be encountered which cannot be checked for during syntax checking.  If an error is found, processing stops and the following message is displayed on the screen:
+         LPL CODE ABORTED
+
+          ERROR CODE xx
+where xx is one of the following:
+
+01 GOTO statement encountered without finding the matching LABEL statement.
+
+02 BEGIN.PROC statement encountered while already within a track procedure.
+
+03 END.PROC statement encountered while already outside a track procedure.
+
+04 COPY statement encountered within a track procedure. The COPY statement invokes a track procedure and cannot occur within one.
+
+05 USE.DEFAULT.PROC encountered while within a track procedure.
+
+
+Data Field Nibble Encoding Table:
+--------------------------------
+     The following translate table is used for calculating data field checksums.  It is described in the chapter on the disk editor describing the 'D' command.
+
+         00:96    01:97    02:9A    03:9B
+         04:9D    05:9E    06:9F    07:A6
+         08:A7    09:AB    0A:AC    0B:AD
+         0C:AE    0D:AF    0E:B2    0F:B3
+         10:B4    11:B5    12:B6    13:B7
+         14:B9    15:BA    16:BB    17:BC
+         18:BD    19:BE    1A:BF    1B:CB
+         1C:CD    1D:CE    1E:CF    1F:D3
+         20:D6    21:D7    22:D9    23:DA
+         24:DB    25:DC    26:DD    27:DE
+         28:DF    29:E5    2A:E6    2B:E7
+         2C:E9    2D:EA    2E:EB    2F:EC
+         30:ED    31:EE    32:EF    33:F2
+         34:F3    35:F4    36:F5    37:F6
+         38:F7    39:F9    3A:FA    3B:FB
+         3C:FC    3D:FD    3E:FE    3F:FF
+
+ -END- PART 2 OF 2 PARTS
+ ......................................

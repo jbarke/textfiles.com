@@ -1,0 +1,151 @@
+ ____      ___         _   _         
+|    \ ___|  _|___ ___| |_|_|___ ___ 
+|  |  | -_|  _| -_| .'|  _| |   | . |
+|____/|___|_| |___|__,|_| |_|_|_|_  |
+                                |___|
+                                         
+ _____                     _____         
+|   __|___ _ _ ___ ___ ___|     |___ ___ 
+|__   | . | | |  _|  _| -_|   --| . | . |
+|_____|___|___|_| |___|___|_____|___|  _|
+                                    |_|  
+                                                                         
+      [- defeating sourcecop -]
+
+SourceCop is an obfuscation tool provided by its creators at 
+http://www.sourcecop.com. It's cropping up in various PhishKits 
+that have surfaced. The info on sourcecop.com's website make the 
+following claim: "SourceCop for PHP encrypts your PHP code using 
+a special encryption method. This encryption makes it almost 
+impossible for a human to understand." Does it live up to the hype? 
+Challenge accepted...
+
+Well, since the dudes over at sourcecop.com claim it's almost 
+impossible for a human to understand, I must test this theory. 
+This is purely in the interests of science and for educational 
+purposes.
+
+Encryption is definitely a good means to secure your data. However, 
+if certain environmental factors are not adhered to when employing 
+such a means of security, encryption can be useless. In the case of 
+scripting languages, this becomes very important since the source 
+code can be obtained and reviewed. Most importantly, if the entire 
+encryption algorithm and key are also included in the script... 
+you're gonna have a bad time! This happens to be the fundamental 
+flaw in sourcecop.com's design. Although the source provided does 
+look daunting, it's just a tricky means of obfuscating the source.
+
+The begging of each encoded file begins with something like the 
+following:
+
+     1	< ?php
+     2	
+     3	if (!function_exists('f29179060'))
+     4	{
+     5	  function f29179060($fld)
+     6	  {
+     7	    $fld1 = dirname($fld);
+     8	    $fld = $fld1 . '/scopbin';
+     9	    clearstatcache();
+    10	    if (!is_dir($fld)) return f29179060($fld1);
+    11	    else return $fld;
+    12	  }
+    13	}
+    14	
+    15	require_once (f29179060(__FILE__) . '/83610228.php');
+
+The oddly named file on line 15 is what interests us. This file 
+includes some homebrewed crypto used for the decoding of the 
+data which contains the page ($REXTHEDOG4FBI). Let's keep 
+scrolling down in the file:
+
+    16	
+    17	$REXISTHECAT4FBI = 'A5544FC4FC57239757239797E54EB9A68E3';
+    18	f29179060g0666f0acdeed38d4cd9084ade1739498
+       (f29179060f0666f0acdeed38d4cd9084ade1739498(__FILE__));
+    19	$REXISTHEDOG4FBI = '63825363638253636382536362536363825363';
+    20	$REXISTHECAT4FBI = '94CD76CD371C5A7BC70C186E779C2935A781A6';
+    21	eval(f29179060y0666f0acdeed38d4cd9084ade1739498
+              ('MzAxQjNCNDQ0RkY0MUU2MkY0', $REXISTHEDOG4FBI));
+    22	? >
+    23	
+
+There are 2 variables that immediately stick out due to their 
+amusingly interesting names: $REXTHECAT4FBI, $REXTHEDOG4FBI. These
+are telltale signs that sourcecop has been used in the encoding
+of the file. Please note that values for variables have 
+changed as this was part of a live phish.
+
+The first call is to a function denoted:
+f29179060g0666f0acdeed38d4cd9084ade1739498 listed on line 18. Its
+argument is another function call:
+f29179060f0666f0acdeed38d4cd9084ade1739498. The combination of these
+two functions provide a quite interestingly devised anti-debugging
+measure for those trying to dump the contents of variables in the
+encoded file. The inner-most function grabs the entire contents of
+a file and builds a giant string containing the document; while the 
+outer function searches the file being decoded for the following 
+PHP function calls:
+
+1. echo
+2. print
+3. sprint
+4. sprintf
+
+If one of these keyword patterns exist in the file being decoded, 
+the rendering of the document is halted. It seem this is used as 
+a means to deter someone with rudimentary skills to try and 
+reverse engineer the algorithm.
+
+Last but most definitely not least, you see an eval call with the
+function f29179060y0666f0acdeed38d4cd9084ade1739498 as an argument.
+This function is our decryption function. The first argument is the
+key for the decryption, while the second argument is the document 
+itself ($REXISTHEDOG4FBI) in encoded form. The decryption function
+contains a homebrewed algorithm encompassing a combination of an 
+encoding scheme coupled with 3 ciphers: base64 encoding, the xor 
+cipher, and some simple substitutions. The decryption algorithm
+returns a valid PHP document containing the contents that are to
+be rendered in the browser, thus the eval.
+
+Checkmate!
+
+A quick little hack for those professionals looking to dump the
+contents of the document quickly. Simply just replace the eval
+function call with a call to highlight_string. Reload the 
+document in the web browser and violah!
+
+thus this:
+
+eval(f29179060y0666f0acdeed38d4cd9084ade1739498
+      ('MzAxQjNCNDQ0RkY0MUU2MkY0', $REXISTHEDOG4FBI));
+
+becomes this:
+
+highlight_string(f29179060y0666f0acdeed38d4cd9084ade1739498
+                  ('MzAxQjNCNDQ0RkY0MUU2MkY0', $REXISTHEDOG4FBI));
+
+The function highlight_string returns a syntax highlighted version 
+of the given PHP code. In this case, the HTML document encompassing 
+the Phish is dumped into the browser without rendering. The reason 
+this works is remember the decryption algorithm is returning a 
+fully valid PHP document.However, the downside of this workaround 
+is that each encoded file must receive the change. Obviously, this 
+can be scripted very easily.
+
+- King
+
+ _____     ___                             
+| __  |___|  _|___ ___ ___ ___ ___ ___ ___ 
+|    -| -_|  _| -_|  _| -_|   |  _| -_|_ -|
+|__|__|___|_| |___|_| |___|_|_|___|___|___|
+
+SourceCop
+ - http://www.sourcecop.com
+Base64 Encoding
+- http://en.wikipedia.org/wiki/Base64
+XOR cipher
+- http://en.wikipedia.org/wiki/XOR_cipher
+Substitution cipher
+- http://en.wikipedia.org/wiki/Substitution_cipher
+

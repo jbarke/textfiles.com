@@ -1,0 +1,309 @@
+THE ASSEMBLER
+    The assembler documentation is broken into three main sections:
+         1) Preliminary Definitions
+         2) Assembler Syntax Conventions
+         3) Assembler Pseudo Opcode Descriptions
+
+    The type of operand for almost all of Merlin's pseudo ops and the 6502 and 65C02 microprocessors can be grouped into one of the four categories:
+         1) Expressions
+         2) Delimited Strings (d-strings)
+         3) Filenames or Pathnames
+
+              ASSEMBLER SYNTAX CONVENTIONS
+
+    A line of source code typically looks like:
+   label      opcode    operand        ;comment
+
+    The maximum allowable label length is 13 characters, but more than 8 will produce messy assembly listings.  A label must begin with a character at least as large, in ASCII value as the colon and may not contain any characters less in ASCII value than the number zero.  Note that periods (.) are not allowed in labels since the period is used to specify the logical OR in expressions.
+    A line may contain a label by itself.  This is equivalent to equating the label to the current value of the address counter.
+
+         Source Opcode and Pseudo Opcode Conventions
+    The assembler examines only the first 3 characters of the OPCODE (with certain exceptions such as macro call and the Sweet 16 POPD).  For example you can use PAGE instead of PAG (because of the exception, the fourth letter should not be a D).  The assembler listing will not look well with an opcode longer than five characters unless there is no operand
+
+         Operand and Comment Length Conventions
+    The maximum allowable combined OPERAND + COMMENT length is 64 characters.  You will get an operand too long error is you use more than this.  A comment line by itself is also limited to 64 characters.
+
+         Number Format
+    The assembler accepts decimal, hexadecimal and binary.  Hex numbers must be preceded by $ and binary by % thus the following four numbers are all =
+    100       $64       %1100100       %01100100
+    As indicated by the last binary number, leading zeros are ignored.
+
+         Immediate data vs addresses
+    In order to instruct the assembler to interpret a number as immediate data the number must be prefixed with a #   ( LDA  #$64)
+    A number not preceded by # is interpreted as an address (LDA $64) Loads the accumalator with number in loc $64
+
+         Primitive Expressions
+    Expressions are built up from primitive expressions by use of arithmetic and logical operations.  The primitive expressions are:
+         1) A label
+         2) A number (dec ,hex or binary)
+         3) Any ASCII character preceded or enclosed by quotes or single quotes)
+         4) The character * (standing for the present address)
+    All number formats accept 16-bit data and leading zeros are never required. In case 3 the value of the primitive expression is just the ASCII value of the character.  The high bit will be on if a " is used, and off is a ' is used.
+
+         Arithmetic and Logical Operations in Expressions
+    The assembler supports the 4 arithmetic opertations + - / and *, It also supports the three logical operations: ! (Exclusive OR), . (or), and & (AND).
+
+         Building Expressions
+    Expressions are built using the primitive expressions defined above, either with or without arithmetic and/or logical operations.  This means that expressions can take the form of primitives or primitives operated on by other primitives using the arithmetic and logical operations.
+    Some examples of legal expressions are:
+         #01            (primitive expression =1)
+         #$20           (primitive expression = 32 dec)
+         label          (primitive expression of a label)
+         #"A"           (primitive expression of letter "A")
+         *              (primitive = current value of PC)
+    The following are example of more complex expressions
+         LABEL1-LABEL2  (LABEL1 MINUS LABEL2)
+         2*LABEL+$231   (2 TIMES LABEL PLUS HEX 231)
+         1234+%10111    (1234 PLUS BINARY 10111)
+         "K"-"A"+1      (ASCII K MINUS ASCII "A" PLUS 1)
+         "O"!LABEL      (ASCII "O" EOR LABEL)
+         LABEL&$7F      (LABEL AND HEX 7F)
+         *-2            (PRESENT ADDRESS MINUS 2)
+         LABEL.%100     (LABEL OR BINARY 100)
+
+         Parentheses and Precedence in Expressions
+    Parentheses are not normally allowed in expressions.  They will not modify the precedence of expressions evaluations.  All arithmetic and logical operations are evaluated left to right.
+    Parentheses are used to retrieve a value from the memory location specified by the value of the expression within the parentheses,  much like indirect addressing.  This use is restricted to certain pseudo ops, however.  For example   DO ($300)  will instruct the assembler to generate code if the value of memory location $300, at the time of assembly is non-zero.
+
+         Example use of Assembler Expressions
+    The ability of the assembler to evaluate expressions such as LAB@-LAB!-1 is very useful for the following type of code:
+    COMPARE   LDX  #E0DATA-DATA-1
+    LOOP      CMP  DATA,X
+              BEQ  FOUND               ;found
+              DEX
+              BPL  LOOP
+              JMP  REJECT              ;not found
+    DATA      HEX  CACFC5D9
+    EODATA    EQU  *
+   With this type of code you can add or delete some of the data and the value which is loaded into the x index for the comparisons will be automatically adjusted.
+
+         IMMEDIATE DATA SYNTAX
+    For those opcode such as LDA, CMP & etc, which accept immediate data (numbers as opposed to addresses) the immediate mode is signaled by preceding the expression with #. LIke LDX #3.
+         #<expression   produces the low byte of the expression
+         #>expression   produces the high byte of the expression
+         #expression    also gives the low byte (the 6502 does not accept 2-byte data)
+         #/expression   is optional syntax for the high byte of the expression
+
+         6502 addressing modes
+    The assembler accepts all 6502 and 65C02 opcodes.  It also accepts BLT(Branch if Less Than) and BGE (Branch if Greater or Equal) for BCC and BCS respectively.
+         Special non zero page addressing
+    Merlin provides the ability to Force non zero page addressing. Add anything (except "D") to the end of the opcode
+         LDA  $10    assembles as zero page (2 bytes)
+         LDA: $10    assembles as non zero page (3 bytes)
+    Also in indexed indirect modes only zero page expressions are allowed.
+ 
+         65C02 and 65802 opcodes
+    The assembler will assemble 65C02 source code as well as 65802 source code.  The XC pseudo opcode activates these features.  This opcode is discussed in the Pseudo ops section.
+
+
+ASSEMBLER PSEUDO OPCODE DESCRIPTIONS
+
+             DIRECTIVES
+
+         EQU (=)
+    Label EQU expression
+
+         EXT (EXTernal label)
+    Label EXT   [Label is external labels name]
+    PRINT EXT   [ define PRINT as external]
+    This pseudo op defines a label as an external label for use by the Linker.
+
+         ENT (ENTry label)
+    label ENT
+    PRINT ENT [ define PRINT as entry label]
+    This pseudo op will define the label in the label column as an ENTRY label.  An entry label is a label that may be referred to as an EXTernal label by another REL code module.  The true address of an entry label will be resolved by the LINKER.
+    The REL code module being written or assembled may refer to the ENT label just as if it were an ordinary label.
+
+         ORG (set ORiGin)
+    ORG expression
+    Establishes the address at which the program is designed to run. It defaults to $8000. If more than one ORG is used the first establishes the Bload address and the second the orgin.  You cannot use ORG*-1 to back up the object pointers as is done in some assemblers.  This must be done instead by DS-1.
+
+         REL (RELocatable code module)
+    This instructs the assembler to generate code files compatible with the relocating linker.
+
+         OBJ (set OBJect)
+    OBJ expression
+    This is accepted only prior to the start of the code, it only sets the division line between the symbol table and object code read in memory(which defaults to $8000). IF the REL opcode is used then OBJ is disregarded.
+
+         PUT (PUT a text file in assembly)
+    PUT filename
+    PUT reads the named file and inserts it at the location of the opcode.  There are two restrictions on a PUT file.  One there cannot be MACRO definitions inside a file which is PUT, they must be in the main source or in a USE file.  Second a PUT file may not call another PUT file with the PUT opcode.  OF course linking can be simulated by having then main program just contain the macro definitions and call in turn all the others with the PUT opcode.
+    Any variable may be used as local variables.
+
+         USE  (USE a text file as a macro library)
+    USE filename
+    This works like PUT but the file is kept in memory.  It is intended for loading a macro library that is USEd by the source file.
+
+         VAR (setup VARiables)
+    VAR expr;expr;expr
+         VAR 1;$3;LABEL  [set up VAR's 1,2 and 3]
+    This is just a convenient way to = the variables ]1 - ]8. VAR 3;$42;LABEL will set ]1=3 ]2=$42 and ]3 = LABEL.  This is designed for use just prior to a PUT.  IF a PUT file use ]1 - ]8, except in PMC (or >>>) lines for calling macros, there must be a previous declaration of these.
+
+         SAV  (SAVe object code)
+    SAV filename
+    Will save the current object code.  Acts same as the EXEC mode but it can be done several times during assembly.  Together the PUT and SAV make it possible to assemble very large files.
+
+         TYP expression
+    This sets the file type to be used by DSK or SAV.  The default is BIN. Valid file types are 0,6,$F0-$F7 and $FF (no type, BIN, CMD, user defined, SYS)
+
+         DSK (assemble directly to disk)
+    DSK filename (or pathname)
+    DSK will direct the assembly directly to disk.
+
+         END (END of source file)
+    This rarely used opcode instruct the assembler to ignore the rest of the source.
+
+         DUM (DUMmy section)
+    DUM expression
+    This starts a section of code that will be examined for value of labels but will produce no object code.
+
+    DEND (Dummy END)
+    This ends a dummy section and reestablishes the ORG address  to the value it had upon entry to the dummy section
+
+    Sample useage of DUM and DEND
+
+    1              ORG  $1000
+    2
+    3 IOBADRS      EQU  $B7EB
+    4
+    5              DUM  IOBADRS
+    6 IOBTYPE      DFB  1
+    7 IOBSLOT      DFB  $60
+    8 IOBDRV       DFB  1
+    9 IOBVOL       DFB  0
+   10 IOBTRACK     DFB  0
+   11 IOBSECT      DFB  0
+   12              DS   2
+   13 IOBBUF       DA   0
+   14              DA   0
+   15 IOBCMD       DFB  1
+   16 IOBERR       DFB  0
+   17 ACTVOL       DFB  0
+   18 PREVSL       DFB  0
+   19 PREVDR       DFB  0
+   20              DEND
+   21
+   22 START        LDA  #SLOT
+   23              STA  IOBSLOT
+   24 *  And so on
+
+              FORMATTING PSEUDO OPS
+
+         LST ON/OFF
+    LST ON    [ turn listing on]
+    LST OFF   [ turn listing off]
+    LST       [ turn listing on]
+   This controls the assemblu listing to be sent to screen (or other output device ).  If the LST is off the object code will be generated much faster, but this is recommended only for debugged programs.  Note: CONTROL D from the keyboard toggles this flag during the second pass.
+
+         EXP ON/OFF/ONLY (macro EXPand control)
+    EXP ON         [ macro expand on]
+    EXP OFF        [ print only macro call]
+    EXP ONLY       [ print only generated code]
+   EXP ON will print an entire macro during the assembly. The OFF condition will print only the PMC pseudo-op.  EXP defaults to ON.  This has no effect on the object code generated.  EXP ONLY will cause expansion of the macro to the listing omitting the call line and end of macro line.  (if the macro call line is labeled it is printer).  This mode will print out just as if the macro lines were written out in the source.
+
+         LSTDO OR LSTDO OFF  (LiST the DO OFF areas of code)
+    LSTDO   [ LIST THE DO OFF AREAS]
+    LSTDO OFF [ don't list DO OFF areas]
+   This opcode causes the listing of DO OFF areas of code to be printed in listing or not to be printed.
+
+         PAU (PAUse)
+    On the second pass this cause assemblu to pause until a key is hit.  This can also be done from the keyboard by hitting the space bar.  This is handy for debugging.
+
+         PAG
+    This sends a formfeed to the print.
+
+         AST  (send a line of ASTerisks)
+    AST 30    [ send 30 asterisks to listing ]
+
+         SKP  (SKiP lines)
+    SKP 5     [ skip 5 lines in listing]
+   This sends expression number of carriage returns to the listing.  The number format is the same as in AST.
+
+         TR ON/OFF (TRuncate control)
+    TR ON     [ limit object code printing]
+    TR OFF    [ don't limit object code print]
+   TR ON or TR (alone) limits object code printout to three bytes per source line, even if the line generates more than three.  TR OFF resets it to print all object bytes.
+
+         DAT  (DATe stamp assembly listing)  (ProDos only)
+    This prints the current date and time on the second pass of the assembler.
+
+         CYC (calculate and print CYCle times for code)
+    CYC       [ print opcode cycles & total]
+    CYC OFF   [ stop cycle time printing]
+    CYC AVE   [ print cycles & average]
+   This opcode will cause a program cycle count to be printed during assembly.  A second CYC opcode will cause the accumulated total to go to zero.  CYC OFF causes it to stop printing cycles.  CYC AVE will average in the cycles that are undeterminable  due to branches, indexed and indirect addressing. The cycle times will be printer to the right of the comment field and will appear similar to any one of the following:
+
+    5  ,326        5'  ,0326      5'',0326
+The first number displayed is the cycle count for the current instructions.  The second number displayed is the accumulated total of cycles in decimal.
+    A single quote after the cycle count indicates a possible added cycle,  depending on certain conditions the assembler cannot foresee.  If this appears on a branch instruction then it indicates that on cycle should be added  if the branch occurs.  For non-branch instructions, the single quote indicates that one cycle should be added if a page boundary is crossed.
+    A double quote after the cycle count indicates that the assembler has determined that a branch would be taken and that the branch would cross a page boundary.  In this case the extra cycle is displayed and added to the total.
+    The CYC opcode will also work for the extra 65C02 opcodes in Merlin.  It will not work with for the additional 65C02 opcodes present in the Rockwell 65C02.
+
+              STRING DATA PSEUDO OPS
+
+         General notes on String Data and String Delimiters
+    Different delimiters have effects.  Any delimiter less than (in ASCII value) the single quote ' will produce a string with the high bits on,  otherwise the high bits will be off.
+    All of the opcodes in this section except REV also accept hex data after the string.  Any of the following syntaxes are acceptable:
+    ASC "STRING"878D00
+    FLS "STRING",878D00
+    DCI "STRING",87,8D,00
+    STR "STRING",878D00
+    INV "STRING",878D00
+    
+         ASC (define ASCii text)
+    ASC "STRING"        [negative ascii string]
+    ASC 'STRING'        [postive ascii string]
+    ASC "Bye,Bye",8D    [ negative with added hex bytes]
+
+         DCI (Dextral Character Inverted)
+    DCI "STRING"   [neg ascii except for the G]
+   This is the same as ASC except that the string is put into memory with the last character having the opposite high bit to the others.
+
+         INV (define INVerse text)
+    INV "STOP"     [negative ascii, inverse on printing]
+   This puts a delimited string in memory in inverse format.
+
+         FSL (define FLaShing text)
+    Same as INV but for flashing text
+
+         REV (REVerse)
+    This puts the d-string in memory backwards: Example REV "DISK VOLUME" gives  EMULOV KSID . Hex data may not be added after the string terminator.
+
+         STR (define a STRing with a leading length byte)
+    STR "/PATH/"        [pos ascii, (ProDos pathname?)]
+    STR "HI"            [result= 02 C8 C9]
+    STR 'HI',8D         [result= 02 48 49 8D]
+   This puts a delimited string into memory with a leading length byte.  Otherwise works same as ASC.  NOTE: the following HEX bytes if any are not counted in the length.  This is mainly intended for use with ProDos which uses this type of data extensively.
+
+              DATA and STORAGE ALLOCATION PSEUDO OPS
+         DA OR DW (Define Address or Define Word)
+    DA  $FDF0           [results: F0 FD in memory]
+    DA 10,$300          [results: 0A 00 00 03]
+    DW LAB1,LAB2        [example of use with labels]
+   This stores the two byte value of the operand usually an address in the object code, low byte first.  These two pseudo ops also accept multiple data separated by commas (such as DA 1,10,100)
+
+         DDB (Define Double Byte)
+    DDB $FDED+1         [ results: FD EE in memory]
+    DDB 10,$300         [ results: 00 0A 03 00]
+   As DA but places high byte first.
+
+         DFB or DB (DeFine Byte or Define Byte)
+    DFB 10         [results: 0A in memory]
+    DFB $10        [results: 10 in memory]
+    DB  >$FDED+2   [results: FD in memory]
+    DB  LAB        [example of use with label]
+   This puts the byte specified by the operand into the object code.  It accepts several bytes of data, which must be separated by commas and contain spaces.  The standard number format is used and arithmetic is done as usual.
+
+         HEX (define HEX data)
+    HEX 0102030F   [results: 01 02 03 0F in memory]
+    HEX FD,ED,C0   [results: FD ED C0 in memory]
+   This is an alternative to DFB which allows convenient insertion of hex data.  Unlike all other cases the $ is not required or accepted here.
+
+         DS (Define Storage)
+    DS 10     [zero out 10 bytes of memory]
+    DS 10,$80 [put $80 in 10 bytes of mem]
+    DS \      [zero mem to next memory page]
+    DS \,$80  [put $80 in mem to next page]
+   This reserves space for string storage data.  It zeros out this space if the expression is postive.  DS 10, for example will set aside 10 bytes for storage.
+    NOTES for REL files and Linker
+   The \ options are intended for use mainly with REL files and work slightly different with these files. Any DS\ opcode occurring in a rel file will cause the linker to load the next file at the first available page boundary.

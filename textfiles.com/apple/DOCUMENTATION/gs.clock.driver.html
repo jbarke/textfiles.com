@@ -1,0 +1,100 @@
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+:                             GS CLOCK for BASIC                              :
+:                             ------------------                              :
+:                                                                             :
+:                      Docs & Program by: The Screamer                        :
+:                                                                             :
+:                            Released on 1/21/87                              :
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+GS CLOCK #1 and GS CLOCK #2 are two assembly language clock drivers which
+interface with BASIC and allow you to easily manipulate the IIGS's built in
+clock. Neither program checks for a IIGS and if you do not run it on a IIGS
+then unpredictable things will occur. This was written with Telecat sysops in
+mind, but of course can be useful in many other programs.
+
+GS CLOCK #1:
+------------
+
+     This routine reads the clock and returns it in a string variable in this
+format:
+          12/12/87 12:12:12   [mn=month, dy=day, yr=year
+           ^  ^  ^  ^  ^  ^    hr=hour, mi=minutes, sc=seconds]
+          mn dy yr hr mi sc   
+
+This routine is fully relocatable and can be loaded up practically anywhere
+in memory and is only 60 bytes long, the default address is $300 (768) - and
+does not interfere with Telecat's Driver in any way. To access the routine
+follow this format:
+
+          CALL 768,A$    [768=decimal BLOAD address, A$=any string variable]
+
+If you do not put a comma or do not put a string variable then a SYNTAX ERROR will result and the normal ONERR routines will take over.
+
+If you plan on using it on your Telecat board simply BLOAD GS CLOCK #1,A$1650
+and to call it issue this CALL 5712,A$. MF.STARTUP does not have to be changed,
+and you lose *NO* memory for BASIC programs or variables with this. Loading
+it at $1650 gives you quite a bit of extra memory for your driver as well.
+
+GS CLOCK #2:
+------------
+
+     This routine is almost the same as the first version, except that it's
+output is exactly the way the Thunderclock, Thunderclock Plus, Timemaster II
+H.O., and compatibles output time - it's also much more professional looking.
+This routine is NOT relocatable and cannot be loaded anywhere in memory, if it
+is not loaded at it's original address then it will also yield unpredictable
+results. This routine is exactly 349 bytes long and therefore does not fit 
+at $300. I have assembled 3 versions, all the same but with different
+originate address ($1650, $9200, and $BC00). The $1650 version should fit in
+fine for all Telecat sysops with a minor change in MF.STARTUP (see end), the
+original Telecat driver ends at $15F7 so this provides quite a few (about 70)
+extra bytes for any modified drivers. The $9200 version is perfect
+for 48k DOS and HIMEM must be set accordingly. The $BC00 version is perfect
+for 64k DOS and HIMEM should also be set. By the way each version is
+noted by it's end address (ie: GS CLOCK #2 $1650 = $1650 originate version).
+
+The output for all of them is in this format:
+
+      SUN DEC 25 12:00:00 PM    [dow=day of week, mon=month, dy=day
+      ^   ^   ^  ^  ^  ^  ^      hr=hour, mn=minutes, sc=seconds, and
+      dow mon dy hr mn sc AM/PM  AM/PM is obvious]
+
+To call this routine from BASIC follow this format:
+
+        CALL xxxx,A$      [xxxx=address of program, A$=any string variable]
+
+As before A$ can be any string variable, and if it is not a string variable
+or the comma is forgotten then a SYNTAX ERROR will result.
+
+Decimal locations:
+
+$1650 = 5712  [so it would be CALL 5712,A$]
+$9200 = 37376 [so it would be CALL 37376,A$]
+$BC00 = 48128 [so it would be CALL 48128,A$]
+
+In order to use GS CLOCK #2 with Telecat MF.STARTUP must be changed so
+that the BASIC programs do not overwrite the clock drivers. To change
+them LOAD MF.STARTUP and change the POKE 104,23 to POKE 104,24 - now
+all BASIC programs will start at $1800, not $1700 as before. While you
+do lose 256 bytes of memory for BASIC programs and variables I kind of
+think it is worth it, I mean 256 bytes!
+
+I'd also like to say that both programs can be used in any DOS, be it
+DOS 3.3, ProDOS, or anything. GS CLOCK #1 is fully relocatable, whereas
+GS CLOCK #2 is not - if you require a new originate address contact me or
+simply change all of the address-dependent locations. Also do not try
+to use either clock in immediate mode (from the "]" prompt) they are only
+made to work inside of a BASIC program. The variable you signify when calling
+either clock does nt have to be defined already, if it is not it will
+define it and if it is already defined then it will replace it. Another thing
+is that the clock drivers must be BLOADED not BRUNNED to be installed in
+memory.
+
+Program and Docs by The Screamer -- 1/21/87
+
+I can be found on these boards:
+
+             Apple Tree //........................305/556-6858
+             Cap. Connection ][...................716/473-8051
+             Rock'n Roll Harbour..................305/821-2232

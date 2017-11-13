@@ -1,0 +1,186 @@
+                                             
+=======================
+VB.NET IRC Client
+=======================
+
+by Jakash3
+March 05, 2010
+
+After building my first irc bot, I wish to make a tutorial on making a program
+to: connect to an irc server, join a channel, and send and receive channel
+comments. The process involves creating a socket and using it to connect to
+the server. Once connected, it will send and receive messages from the server
+which it will parse and output to the screen.
+
+Before we start this tutorial, I assume that you know the common irc commands
+and you have been in an irc chat before, and also that you VB.NET. We will be
+making a VB.NET Console Application. In the source code we will first need to
+define the essential variables that will hold data for bot to use and act upon,
+including a variable for the socket object:
+
+---------------------------------------
+Dim sock As System.Net.Sockets.Socket
+Dim ircserver As String
+Dim port As Integer
+Dim Channel As String
+Dim nick As String
+
+'The following objects are for manipulating the console IN and OUT streams
+Dim cout As System.IO.TextWriter = Console.Out
+Dim cin As System.IO.TextReader = Console.In
+---------------------------------------
+
+Next, we will prompt the user to enter in information for these variables in
+order to specify the irc server, port, and channel to connect to as well as
+their nick name to use.
+
+---------------------------------------
+Sub Main()
+cout.WriteLine("My IRC Bot")
+cout.Write(vbNewLine)
+cout.Write("Server name: ")
+ircserver = cin.ReadLine
+cout.Write("Port number: ")
+port = cin.ReadLine
+cout.Write("Channel: ")
+channel = cin.ReadLine
+cout.Write("Nickname: ")
+nick = cin.ReadLine
+---------------------------------------
+
+Now we initialize and connect the socket:
+
+---------------------------------------
+Dim ipHostInfo As System.Net.IPHostEntry = System.Net.Dns.GetHostEntry(ircserver)
+Dim EP As New System.Net.IPEndPoint(ipHostInfo.AddressList(0), port)
+sock = New System.Net.Sockets.Socket(EP.Address.AddressFamily, Net.Sockets.SocketType.Stream, Net.Sockets.ProtocolType.Tcp)
+sock.Connect(ircserver, port)
+---------------------------------------
+
+Once we connect to an irc server with a socket, it is a rule that you send at
+least the NICK and USER commands to the server. This is where you register
+and identify yourself as a new user, after that I will give myself a nickname
+and set my mode status to +B which means Bot:
+
+---------------------------------------
+send("NICK " & nick)
+send("USER " & nick & " 0 * :REALNAMEHERE")
+send("JOIN " & channel)
+send("MODE " & nick & " +B")
+---------------------------------------
+
+These lines of code will use the send() Sub-procedure to send data to the
+server. Here.s what that Sub looks like:
+
+---------------------------------------
+Sub send(ByVal msg As String)
+msg &= vbCr & vbLf
+Dim data() As Byte = System.Text.ASCIIEncoding.UTF8.GetBytes(msg)
+sock.send(data, msg.length, socketflags.none)
+End Sub
+---------------------------------------
+
+The send sub will first take the argument and append a carriage return and
+linefeed at the end of the string because irc servers separate each message
+sent to it by CrLf. Then it will chop that string into a byte array filled
+with each character of that string and use that as an argument to the send
+method for the socket to send that data to the server.
+
+Next we will make a loop to have the socket query to receive data from the
+server for as long as the socket is still connected:
+
+---------------------------------------
+While sock.connected = True
+Dim mail As String = recv()
+cout.WriteLine(mail)
+End While
+---------------------------------------
+
+recv() function will receive a packet of 4096 bytes in length from the server
+as seen here:
+
+---------------------------------------
+Function recv() As String
+Dim data(4096) As Byte
+sock.Receive(data, 4096, SocketFlags.None)
+Dim mail As String = System.Text.ASCIIEncoding.UTF8.GetString(data)
+If mail.Contains(" ") Then
+If mail.Substring(0, 4) = "PING" Then
+Dim pserv As String = mail.Substring(mail.IndexOf(":"), mail.Length - mail.IndexOf(":"))
+pserv = pserv.TrimEnd(Chr(0))
+mail = "PING from " & pserv & vbNewLine & "PONG to " & pserv
+send("PONG " & pserv)
+ElseIf mail.Substring(mail.IndexOf(" ") + 1, 7) = "PRIVMSG" Then
+Dim tmparr() As String = Nothing
+mail = mail.Remove(0, 1)
+tmparr = mail.Split("!")
+rnick = tmparr(0)
+tmparr = mail.Split(":")
+rmsg = tmparr(1)
+mail = "msg: " & rnick & ">" & rmsg
+End If
+End If
+mail = mail.TrimEnd(Chr(0))
+mail = mail.Remove(mail.LastIndexOf(vbLf), 1)
+mail = mail.Remove(mail.LastIndexOf(vbCr), 1)
+Return mail
+End Function
+---------------------------------------
+
+Now when it receives data from the server the messages we care about the most
+are the ones that show up on an irc client and the ping requests from the
+server to check if the client (us) is still active and online. When the server
+sends a ping request, then we must send a pong message back. When a ping
+request is sent from a irc server it comes in this format:
+
+---------------------------------------
+PING :sender
+---------------------------------------
+
+Where sender is the name of the server who sent the ping request. If a client
+gets this message from the server then it must reply back with this message:
+
+---------------------------------------
+PONG :receiver
+---------------------------------------
+
+Where receiver is the name of the server to send the pong reply back to. Well
+that.s part of what the function does after receiving the packet from the
+server and converting it to a string. It first analyzes the packet first to
+see if it.s a ping request and sends a pong reply back to the sender (which is
+found by extracting the name of the server from the ping message) if it is.
+Another common type of message that the server sends is the PRIVMSG message.
+Which means that a user made a comment either to the channel on irc or to you
+
+as a private message. The syntax is:
+
+---------------------------------------
+:nick!realname PRIVMSG receiver :msg
+---------------------------------------
+
+Where nick is the nickname of the user sending the message, realname is the
+realname or addresss of that user, receiver is the name of another user or a
+channel to send the message to, and msg is the message to send. If the
+receiver is a channel, then all users will see that message; Otherwise only
+the user of the username specified on this message will receive that msg. What
+makes it easier for programs is that the nick and realname are separated by !
+and the message is prefixed with :.
+
+Well after all that, if for some reason the While loop breaks and the socket is
+disconnected, then it will issue the socket.close method and Return from the
+main sub.
+
+Now since we already know how to send and receive messages to irc servers now
+you can make you own irc client or bot to process those messages and make
+replies.
+To send a message just use the PRIVMSG command:
+
+---------------------------------------
+PRIVMSG receiver :msg
+---------------------------------------
+
+receiver could be the name of a user or a channel. Remember to prefix the
+channel with #
+
+For more commands on the irc client protocol read this:
+http://www.mirc.com/help/rfc2812.txt

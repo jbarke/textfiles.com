@@ -1,0 +1,162 @@
+MiniSport Laptop Hacker - Vol #20.  Feb 1994
+To discourage pecuniary interests, Copyright (c)1994 Brian Mork
+
+>>> ADMIN
+Two places are archiving the MLHacker series (Thank you both!).  The
+first is an Internet e-mail server: ham-server@grafex.cupertino.ca.us,
+in directory \hamradio\newsletters. The second is an ftp only site:
+ftp.cs.buffalo.ed, in directory \pub\msdos\ham-radio.  In either case,
+look for the file mlhacker.zip.  I think my inbound mail was being re-
+jected on Internet during the month of January.  Things appear to be
+again stable in the Spokane area.  Notice my packet address changed.
+
+>>> GDU UTILITY
+The GDU utility provided on your ROM disk C: is worth having!  I down-
+loaded it to my main computer (use FWL and the cable described in
+MLHacker #4) and tried running it there.  It works great, even with a
+huge IDE disk drive! I've learned a lot about File Allocation Tables,
+disk space allocation, deleted files, etc.  I thought it might be fun to
+use GDU to walk through a short tour of your RAMdisk FAT.  If you mess
+it up, so what?  It's RAMdisk anyway.  Clear it out and reformat it.
+Takes about 45 seconds.  Do be sure to first offload important stuff
+onto 2" disk or to another computer over the serial link (with FWL).
+
+Here's the plan.  1) We'll make a normal text file taking up two alloca-
+tion units.  2) Then use GDU to make another directory entry pointing to
+the same text.  CHKDSK will report this as a "cross linked" file.
+3) Then we'll delete one of the files, causing MSDOS to change the entry
+for each allocation unit of that file in the FAT to available status.
+CHKDSK will now report the remaining directory entry as having invalid
+allocation units.  4) We'll go in and manually retake the allocations
+and CHKDSK will then report a "lost allocation."  5) Finally, we'll
+tweak the directory entry to point back to the recovered clusters.
+
+1. From the root directory, run the MSDOS DEBUG program and get the "-"
+prompt.  Enter the command "F 0100,08F7 20 48 49 0D 0A".  This puts 408
+repeats of " HI<CR><LF>" into memory starting at address 0100.  A total
+of 2040 (07f8 hex) bytes were stored.  For reasons that will be clear in
+a moment, write out these 07f8H bytes, plus one extra, to a disk file
+called HI.TXT.  Use these DEBUG commands: R CX, 07F9, N HI.TXT, W, Q.
+
+Type out HI.TXT and watch all the HIs scroll by on the screen.  You'll
+probably have a few scrap characters at the end.  That's because DOS
+only stores files in chunks of 1024 bytes on this computer.  For other,
+bigger, disk drives, DOS uses bigger chunks, or clusters.  My 250 Mb
+hard drive on another computer uses 4096 byte units.  Run GDU and select
+the "Display FAT Cluster Chain" option.  Highlight HI2.TXT and press
+return.  You'll be shown two cluster numbers where your text has been
+stored.  For me, it's cluster numbers 7 and 8.  Yours will be different.
+Write down *your* numbers for future use.  Whenever I refer to cluster 7
+and 8 below, use your numbers instead.
+
+Press ESC (back to the main menu) and select the "List/Edit in Hex and
+ASCII" option and select the HI.TXT file.  You'll be shown a binary im-
+age of the file, plus an ASCII interpretation (try toggling the F2 key).
+Scroll down to the end of the file and see the blinking cursor.  The
+cursor blinks at the first byte that does *not* belong to the file.
+Remember that extra byte I mentioned above?  MSDOS uses 1A (control-Z)
+to mark the end of the file, and we'll replace that extra byte we saved
+with a control-Z. Use the F8 key to edit the file, move over to the last
+byte of the file (after the last 0D 0A, just before the previously
+blinking cursor) and put a 1A in that spot.  Press F8 again to save the
+changes and exit the GDU program.  Type out the file again and it will
+cleanly end after the 408th "HI".
+
+2. The sectors on the disk are used as follows:
+
+           Description        RAMdisk             2" disk
+          ------------------------------------------------
+           Boot sector         0                   0
+           FAT copy #1         1-5                 1-3
+           FAT copy #2         6-10                4-6
+           Root directory      11-42               7-13
+           Clusters            43+                 14+
+
+We need to go into the root directory and make a clone of HI.TXT with a
+slightly different name, pointing to the same data.  First, make a nor-
+mal copy with the command "COPY HI.TXT HI2.TXT", then delete it with
+"DEL HI2.TXT".  Use GDU to select the "Display/Edit Logical Sectors"
+option.  Choose sector 11 and scroll down until you see the HI.TXT entry
+in the root directory.  Each entry takes two lines (32 bytes) on this
+display.  Look further down the table of files to find rI2.TXT.  Use the
+F8 key to change the E5 back to a 48 (letter H).  You just unerased
+HI2.TXT, but we need to do more.  Our goal is to make it point to the
+same text.  The last four bytes of a directory entry give the file size.
+Both files should say 00 00 07 F9 (read backwards).  The two bytes *be-
+fore* these bytes gives the first cluster that the file uses.  Mine says
+00 07 and 00 09.  Yours will be different depending on where MSDOS de-
+cided to put your file at (HI.TXT should match the numbers you wrote
+down above).  Use F8 to edit the HI2.TXT entry to match the HI.TXT en-
+try. Run CHKDSK.  CHKDSK will report a cross link on cluster 7.
+
+3. Delete HI.TXT from disk using the command "DEL HI.TXT".  CHKDSK now
+reports that the first cluster number of HI2.TXT is invalid.  Why?
+Cluster 7 and 8 was marked as available (000 hex for both clusters) when
+MSDOS deleted HI.TXT.  When CHKDSK now looks to find the first cluster
+of HI2.TXT, it finds a 000 indicating that data is in cluster zero.
+Well there is no cluster zero (they range from 2-55B on the RAMdisk)!
+That's why MSDOS uses 000 to indicate a deleted, available cluster.  An
+unerased file points to a deleted cluster.  That's why CHKDSK says the
+000 entry at cluster 7 is invalid.
+
+Run CHKDSK with the /F option.  It will "fix" this problem.  What it
+actually does is sets the first cluster number and size of HI2.TXT to
+zero.  Problem fixed? Yea, sure, but your data is still out there on
+disk, unclaimed by any file!
+
+4. We need to go into the FAT and make cluster 7 point to cluster 8, and
+change cluster 8 to "last cluster" status.  But where are the 12-bit FAT
+entries for cluster 7 and 8?  Two formulas give the answer:
+
+          byte_offset = cluster# * 1.5
+          FAT_Sector_offset = int ( byte_offset / 384 )
+          Offset_into_sector = byte_offset - FAT_Sector_offset * 384
+
+[As a quick aside, because of the limited size of the RAMdisk and the 2"
+disk, MSDOS uses 1.5 bytes for a FAT entry.  If you use GDU on your main
+computer with larger disks, each entry takes an even 2 bytes, making the
+calculations much easier.  In that case use 2 instead of 1.5 and 256
+instead of 384, in the above formulas.]
+
+My FAT_Sector_offset is zero for both clusters, and my Offset_into_sec-
+tor comes out to 10.5 and 12.  Use your numbers as we progress.  Use GDU
+to edit the (FAT_Sector_offset + 1) sector.  For me, it's sector 1.  My
+bytes line up as follows:
+
+Byte offset into sector >     ...16 15 14 13 12 11 10 09 08 ...
+Data on disk >                ...00 00 00 00 00 00 0F FF 00 ...
+                                           ^^^^ ^^^^
+Cluster entry >                              8    7
+
+The goal is to make the first entry point to the second and put FFF into
+the second one.  In my case, I'll change them as shown below.  Notice
+your two cluster numbers may not be sequential.  Just go to each one
+individually and fix it.
+
+Byte offset into sector >     ...16 15 14 13 12 11 10 09 08 ...
+Data on disk >                ...00 00 00 0F FF 00 8F FF 00 ...
+                                           ^^^^ ^^^^
+Cluster entry >                              8    7
+
+5. CHKDSK will report "2 lost clusters in 1 chain".  Use GDU to edit the
+root directory entry for HI2.TXT.  Point to the proper first cluster by
+changing the 11th and 12th byte on the second line of the directory en-
+try to 07 00 (or whatever your first cluster number was).  Everything is
+almost back to normal.  Remember the second FAT stored in sectors 6-10
+for the RAMdisk?  They don't match.  You could go manually fix them, but
+there's an easier way.  Run CHKDSK.  This time it will say errors are
+found, but it doesn't say that it's mismatched FATs and bad file size
+entries in the directory.  Run CHKDSK with the /F option and it will fix
+up the second FAT copy to match the first and will update the size of
+HI2.TXT to 2048 bytes (2 clusters).  Remember the original HI.TXT was
+only 2041 bytes.  You can go edit change the last four bytes in the di-
+rectory entry from 00 08 00 00 to F9 07 00 00, if you wish.
+
+Whew!  What fun.  If it's any consolation, it took five disk drive
+crashes and *days* of time for me to learn what I just related to you.
+GDU is a great program and works fine on my other computer system.
+
+Please provide feedback!      * Direct data 1-509-244-9260
+                              * AX.25 KA9SNF@wb7nnf.#ewa.wa.usa
+                              * Internet bmork@opus-ovh.spk.wa.us
+73, Brian                     * 6006-B Eaker, Fairchild, WA 99011

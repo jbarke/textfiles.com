@@ -1,0 +1,333 @@
+                                Intele-Term 1.2
+                          Script Language Description
+
+                         Copyright 1986 by Morgan Davis
+
+
+
+
+DESCRIPTION
+
+The IT (Intele-Term) program on this disk has the ability to execute scripts,
+files containing many instructions which can be executed in a batch mode, not
+unlike EXEC files in ProDOS BASIC.  The script language contains a variety of
+commands which allow you to perform many sophisticated tasks with the
+Intele-Term program, such as automatic redial until connect, automatic login,
+sending and receiving files using XMODEM protocol, and much more.
+
+With the [A]t command in IT, you can tell IT to wait until a certain time of
+day before executing a script for you.  This allows your computer to wait
+until a specified time before running a complex set of dialing and connecting
+instructions.  For example, you could write a script which lets your computer
+dial up an information service at 3 o'clock in the morning when the rates are
+cheapest, then download stock quotes, send or retrieve electronic mail, etc.
+
+While a script is busy running, you can cancel it by pressing Escape.
+
+Using any standard ASCII text editor, you can write your script file.  Name
+it anything, but give it a .SRC file extension.  This lets you distinguish
+between the script source file and the compiled output that IT uses.  The
+structure of a script file follows these guidelines:
+
+        1.  Each instruction is on a line by itself
+
+        2.  Labels are declared on lines by themselves
+            and a colon (:) follows the label name.
+
+        3.  When labels are referenced, the colon is
+            not used.
+
+        4.  Indenting is optional, but aids in keeping
+            your program readable.
+
+        5.  All text arguments can have control characters
+            imbedded in them by entering a caret (^) followed
+            by the letter (upper or lowercase) of the corresponding
+            control character.  For example, to put a carriage
+            return at the end of a PRINT instruction, you would
+            use:
+
+                PRINT "Testing^M"
+
+            Creative use of control characters can produce some
+            very interesting displays.  Inverse and Normal video
+            modes can be turned on.  You can beep the speaker, etc.
+
+        6.  Text arguments which contain spaces must be put
+            between quotation marks, otherwise the program will
+            only recognize the first word in a series of words.
+
+        7.  A space character must separate a command from its
+            argument(s).
+
+Before a script can be used by IT, it must be compiled using the COMPILE
+program on the ModemWorks disk.  You can call up the compiler from IT by
+using the [C] command.
+
+The script language consists of these commands:
+
+        DO              TERM            GOTO            HOME
+        PRINT           SPEED           ECHO            DIAL
+        CONNECT         RETURN          WAIT            IF
+        SEND            HANGUP          SENDFILE        GETFILE
+        BREAK           PAUSE           DISK            RUN
+        END             PRINTER         EMULATE
+
+
+Each command is described next.
+
+
+____________________________________
+
+DO label
+____________________________________
+
+Causes script execution to begin executing instructions at a certain label.
+When a RETURN instruction is encountered, program flow resumes with the next 
+instruction following the DO command.  This is just like a GOSUB in
+Applesoft BASIC.
+
+
+____________________________________
+
+TERM
+____________________________________
+
+Temporarily pauses script execution and puts you into TERMINAL mode.  When
+you press Escape to exit terminal mode, script execution continues.
+
+
+____________________________________
+
+GOTO label
+____________________________________
+
+Diverts script execution to a certain label.  This is like GOTO in Applesoft.
+
+
+____________________________________
+
+HOME
+____________________________________
+
+Clears the screen and puts the cursor in the upper left corner.
+
+
+____________________________________
+
+PRINT "text"
+____________________________________
+
+Displays text on the screen, but is not sent to the modem.
+
+
+____________________________________
+
+SPEED bps
+____________________________________
+
+SPEED will set the bits per second rate for use with IT.  Values for "bps"
+are 300, 1200, 2400, and 9600.
+
+ 
+____________________________________
+
+ECHO mode
+____________________________________
+
+Sets up local or remote echo modes for terminal mode.  Arguments for "mode"
+are ON and OFF.  ECHO ON is half duplex (local echo).  ECHO OFF is full
+duplex (remote echo).
+
+
+____________________________________
+
+DIAL number
+____________________________________
+
+Dials a phone number.  See &CALL in the manual for details.
+
+
+____________________________________
+
+CONNECT
+____________________________________
+
+Attempts to connect with a host computer after dialing out.  Use of the IF
+statement is useful after executing CONNECT to determine if connection was
+successfully established.
+
+
+____________________________________
+
+RETURN
+____________________________________
+
+Causes script execution to RETURN to the line following the corresponding DO
+instruction.
+
+
+____________________________________
+
+WAIT "text"
+____________________________________
+
+Halts script execution until "text" has come in through the modem.  This is
+used for handshaking on incoming data.  Use the IF instruction to determine
+whether or not the string to handshake on was found.
+
+
+____________________________________
+
+IF condition GOTO label
+____________________________________
+
+IF is used to test the most recent function performed by the script, such as
+attempting to connect with a host computer, sending or receiving a file, or
+handshaking on incoming text.  Example conditions for use with IF are:
+
+        if FOUND goto ...               if OK goto ...
+        if CONNECT goto ...             if GOOD goto ...
+        if FAILED goto ...              if BAD goto ...
+        if TRUE goto ...                if SUCCESS goto ...
+        if FALSE goto ...               if NO goto ...
+        if YES goto ...
+
+Placing NOT or NO in front of a condition will test for a negative condition,
+such as IF NOT FOUND GOTO label.  The word THEN can be used in place of GOTO
+if you desire, although both GOTO and THEN are totally optional.  If the
+condition tested is true, the script will attempt to GOTO to the label name
+which is at the very end of the IF instruction line.  So if you had a label
+called "Stop" you could do this:  IF NO CONNECT Stop
+
+
+____________________________________
+
+SEND "text"
+____________________________________
+
+Works just like PRINT, except this will send text to the modem and not to the
+screen.  Remember, if you need to send a carriage return, use "^M" (caret
+followed by the letter M).
+
+
+____________________________________
+
+HANGUP
+____________________________________
+
+Disconnects the modem with the host, and hangs up the phone.
+
+
+____________________________________
+
+SENDFILE file options
+____________________________________
+
+Prepares to send the "file" using special "options."  If "option" is
+PROTOCOL, XMODEM will be used to send the file.  Example:
+
+        SENDFILE FOOBAR.COM PROTOCOL
+
+If "options" is not PROTOCOL, the file is sent as a regular text file, line
+by line.  You must specify two "option" arguments: an interline delay value,
+and a character which to use to handshake on each new line.  Example:
+
+        SENDFILE BLETCH.TXT 7 :
+
+This will send the file "BLETCH.TXT" line by line, with an interline delay of
+7, and will wait for a colon from the host before each line of the file is
+sent out.
+
+
+____________________________________
+
+GETFILE file PROTOCOL
+____________________________________
+
+Gets a "file" from the host computer using XMODEM protocol.  (Sorry, text
+receive-to-disk is not implemented).
+
+
+____________________________________
+
+BREAK
+____________________________________
+
+Sends a modem break tone.  (see &BREAK in the ModemWorks manual)
+
+
+____________________________________
+
+PAUSE seconds
+____________________________________
+
+Causes script execution to pause for so-many seconds, then execution will
+resume.
+
+
+____________________________________
+
+DISK command
+____________________________________
+
+Allows the script to execute a ProDOS BASIC disk command.  Examples:
+
+        DISK prefix /profile/mail
+        DISK delete /ram/temp
+        DISK cat,s6,d2
+
+
+____________________________________
+
+RUN script
+____________________________________
+
+Lets you run a different script file from within a script.
+
+
+____________________________________
+
+END
+____________________________________
+
+Causes a script to stop running.  If you're online, you're taken right to
+terminal mode.
+
+
+____________________________________
+
+PRINTER mode
+____________________________________
+
+Specifies whether any output which is shown inside the terminal mode window
+will be sent to the printer or not.  Values for "mode" are ON and OFF.
+PRINTER ON sends output to the printer, while PRINTER OFF does not.
+
+
+____________________________________
+
+EMULATE terminal
+____________________________________
+
+Initializes terminal emulation for the named terminal template file.  If the
+template does not exist in the current prefix, you should specify a fully
+qualified pathname to the file.  Terminal template files are those with a
+file type of $00 on the ModemWorks disk.
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+FILES
+
+On disk, you'll find a sample script source file named SCRIPT.SRC.  Use
+SCRIPT.SRC as an example of a typical "dial up and log-in" script.
+
+The program named COMPILE is the actual script compiler.  It can be invoked
+using the [C]ompile command from within IT, or from BASIC.
+
+
+BUGS
+
+The COMPILE program will not catch duplicate labels declared in a script
+file.  Be careful.

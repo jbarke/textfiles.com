@@ -1,0 +1,123 @@
+================================================================================
+Arrays in Batch Files by Jakash3
+================================================================================
+
+Written by Jakash3
+December 18,2009
+
+It is now possible to create arrays in  batch files.
+Of course you assign them like this:
+
+-----------------------------------------------
+set myarray[0]=butter
+set myarray[1]=lights
+set myarray[2]=orb
+-----------------------------------------------
+
+But to obtain the value of an array item by specifying 
+it's index by a variable would work by calling this function:
+
+-----------------------------------------------
+REM Example call: call :getitem myarray 1 value
+REM After that: 'echo %value%' outputs in this case "lights"
+:getitem
+set array.name=%1
+set array.index=%2
+set outputvar=%3
+for /f "delims=[=] tokens=1,2,3" %%a in ('set %array.name%[') do (
+if %%b==%array.index% set %outputvar%=%%c
+)
+goto :eof
+-----------------------------------------------
+
+The above function arguments when calling:
+%1 = Name of the array
+%2 = Index to get value from
+%3 = The name of a variable to output the value to
+
+I made a batch file 'library' to help you accomplish this.
+With this you can add new items to the end of arrays, get 
+their length, or get the value of an item index.
+
+array.bat
+-----------------------------------------------
+@echo off
+
+set array.return=goto :eof
+set array.func=%1
+set array.func.args=%2 %3 %4 %5 %6 %7 %8 %9
+call :%array.func% %array.func.args%
+goto :eof
+
+
+:add
+REM Adds a new item at the end of an array
+REM Arguments: (
+REM name As "Array Name",
+REM value As "New value"
+REM )
+set array.name=%1
+set array.value=%2
+for /f "delims=[=] tokens=1,2,3" %%a in ('set %array.name%[') do (
+set array.index=%%b
+)
+set /a array.index+=1
+set %array.name%[%array.index%]=%array.value%
+goto :eof
+
+
+:len
+REM Gets array length.
+REM Arguments: (
+REM name As "Array name"
+REM var As "Output Variable"
+REM )
+set array.name=%1
+set array.var=%2
+for /f "delims=[=] tokens=2" %%a in ('set %array.name%[') do (
+set %array.var%=%%a
+)
+goto :eof
+
+
+:getitem
+REM Get value of index in array.
+REM Arguments: (
+REM name As "Array Name",
+REM index As "Item Index",
+REM var As "Output Variable"
+REM )
+set array.name=%1
+set array.index=%2
+set array.var=%3
+for /f "delims=[=] tokens=1,2,3" %%a in ('set %array.name%[') do (
+if %%b==%array.index% set %array.var%=%%c
+)
+goto :eof
+-----------------------------------------------
+
+Let's see some application of this:
+
+-----------------------------------------------
+@echo off
+set book[0]=Avatar
+set book[1]=The Green Mile
+set book[2]=The Count of Monte Cristo
+call array.bat add book Babo
+call array.bat len book length
+echo I'm have %length% books you can borrow.
+echo Pick one:
+echo.
+echo 0) Avatar
+echo 1) The Green Mile
+echo 2) The Count of Monte Cristo
+echo 3) Babo
+echo.
+set /p pick=
+call array.bat getitem book %pick% title
+echo.
+echo You picked %title%.
+pause >nul
+exit
+-----------------------------------------------
+================================================================================

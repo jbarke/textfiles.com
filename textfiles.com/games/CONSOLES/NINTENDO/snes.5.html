@@ -1,0 +1,50 @@
+ ----------------------------------------------------------------------------
+| The sprites use a lookup table that contains info on their X and Y pos-    |
+| ition on the screen, their size, if they're flipped vertically or horiz-   |
+| ontally, their colour, and the actual data.                                |
+|                                                                            |
+| The format you need to make the table is as follows:                       |
+|                                                                            |
+|                                                                            |
+|Spr. #   Size   Offset        Explanation                                   |
+|----------------------------------------------------------------------------|
+|   0     Byte   0             xxxxxxxx           x: X-location.             |
+|         Byte   1             yyyyyyyy           y: Y-location.             |
+|         Byte   2             abcdeeeC           a: Vertical flip.          |
+|                                                 b: Horizontal flip.        |
+|                                                 c: Playfield priority.     |
+|                                                 d: Playfield priority.     |
+|                                                 e: Pallete #.              |
+|         Byte   3             CCCCCCCC           C: Character data.         |
+|                                                                            |
+|   1     Byte   4             xxxxxxxx           x: X-location.             |
+|         Byte   5             yyyyyyyy           y: Y-location.             |
+|         Byte   6             abcdeeeC           a: Vertical flip.          |
+|                                                 b: Horizontal flip.        |
+|                                                 c: Playfield priority.     |
+|                                                 d: Playfield priority.     |
+|                                                 e: Pallete #.              |
+|         Byte   7             CCCCCCCC           C: Character data.         |
+|... AND SO ON ...                                                           |
+|----------------------------------------------------------------------------|
+| Continue this table all the way down to sprite #127 (the SNES can handle   |
+| up to 128 sprites). Don't think you're finished quite yet: There is one    |
+| more table of data you have to make!                                       |
+|                                                                            |
+| 2 bits are defined for each sprite (eg. Byte #0 holds the info for Sprite  |
+| 0, 1, 2, and 3; Byte #1 holds the info for Sprite 4, 5, 6, and 7). There-  |
+| fore, 128/4 = 32 bytes of data for the following table:                    |
+|                                  ab                                        |
+|                                  ||____Size toggle bit.                    |
+|                                  |_____MSB of X-position bit.              |
+|                                                                            |
+| So, the 4 bytes/sprites + the block are put into the OAM table by consec-  |
+| utive writes to the OAM data register. You first should set the OAM add-   |
+| ress to $0, then shove your data into it.                                  |
+|                                                                            |
+| *** REMEMBER ***                                                           |
+| If you don't set the block after the OAM as well, the results are bad. All |
+| the data for the MSB stuff wouldn't be defined correctly, which would re-  |
+| sult in your entire sprite-table being wacko. Have atleast some 0's there  |
+| or a table which you really want to use in the longrun.                    |
+ ----------------------------------------------------------------------------

@@ -1,0 +1,601 @@
+America Online
+APPLE II DEVELOPMENT FORUM CONFERENCE LOG
+Tuesday, February 12, 1991  10:00 p.m. Eastern Time
+Topic:  Resource Programming
+Forum Leader:  Dave Sugar (AFL Dyfet)
+
+
+ShanoJ     <-- been programming since he got up this morning. Brain is
+           fried.
+ShanoJ     <-- Started using comments like "Now dispose of the shiny new
+           handle we just
+ShanoJ     allocated, so we won't start playing with it and get
+           distracted."
+AFL Dyfet  Just don't start using a 'naughty bit' flag :)
+AFA Gary J I wish I could work on my programming project that many hours at
+           once :)
+AFL Scott  Resources, Resources everywhere.
+AFA Gary J Natural Resources
+AFL Dyfet  I'm trying to perfect a financial resource genorator :)
+AFA Gary J :)
+AFA Gary J Anyone know where GSBug puts it's stack?  (Like maybe $000100
+           area???)
+ShanoJ     According to NiftyList it only owns one block, and it's not in
+           bank $00...
+A2GS       It probably pulls everything off the stack (ex. return address,
+           etc...) when
+A2GS       it first becomes activated.
+AFA Gary J I'll ask a question about it later.  I guess my problem is when I
+           switch to
+AFA Gary J emulation  mode :)
+Dave Lyons GSBug owns 1K in bank 0 while you're actually in GSBug; it keeps
+           the stack in that 1K some of
+Dave Lyons the time, but it also uses a bit of "your" stack.  It also doesn't
+           manage the $010100 byte right
+AFA Gary J That's the problem :)
+Dave Lyons when switching in and out of the page-1 stack, so if you're
+           tracing some code that has the stack
+Dave Lyons in page 1, try typing 01/0100:80 first; this way interrupts will
+           use 100..180, and your program
+Dave Lyons being traced can use 181..1FF.
+AFA Gary J Ah, exactly as I've been doing.  That seems to help :)
+AFA Gary J (I just wanted to confirm my suspicions)
+JWankerl   Okay, I made it.  We can start now.  :-)
+AFL Dyfet  We wouldn't start without you :)
+A2GS       slowly but surely the room fills....
+A2GS       Complaint: My user group has been trying for weeks to get an Apple
+           Rep. here
+A2GS       in N.Y. to come and answer questions regarding the II and we
+           always seem to
+A2GS       get the same old lines "sorry, the people here only know about
+           macs"...
+A2GS       I even made a couple of calls to Cupertino and still hit a brick
+           wall...
+A2GS       does Apple call that support???  I few years ago we had no trouble
+           getting
+A2GS       someone to show.
+Matt DTS   You called the User Group Connection people?
+A2GS       yes...they told me to call customer support (1-800....)
+Matt DTS   Waitaminnit - "does Apple call it support" that people in
+           Cupertino are busy doing things other than
+Matt DTS   flying around talking to User Groups?  Clearly, the problem is
+           that there should be someone in your
+Matt DTS   area qualified to talk about it.  If not, your next best bet would
+           be Tim Swihart (TIM.SWIHART on
+Matt DTS   AppleLink).
+A2GS       Read EVERYTHING I wrote above....we use to be able to get people
+           right from
+A2GS       Apple's N.Y. offices to show up...now no one knows anything about
+           II's or at
+A2GS       least not enough to answer questions regarding them and Apple.
+A2GS       It's not that their aren't qualified people to answer technical
+           questions....
+A2GS       we are trying to get someone to answer questions regarding Apple's
+           policies,
+A2GS       etc...  I assure you, we could easily have gotten someone from the
+           N.Y. offices
+A2GS       to talk about anything regarding Apple's Mac policies, etc....
+Matt DTS   Then you definitely need to talk to Tim Swihart.  GA.
+A2GS       I will try...thanx
+AFL Dyfet  The NY offices may have been 'downsized'...there can be other
+           reasons for not
+AFL Dyfet  being able to get people for that, too :)....
+A2GS       They're available for Mac questions....
+A2GS       (how convenient)
+AFA Gary J I have an idea.   Let's talk about resources :)
+AFL Dyfet  Okay, I guess we will move to our scheduled topic for tonight:
+           Resources!
+AFL Dyfet  Does anyone have any resource related questions to start with for
+           tonight?
+AFL DannyH yeah?
+AFL DannyH how big can the resource fork be?
+AFL Dyfet  Go ahead Matt...
+Matt DTS   Depends.  How big is your disk?
+AFL DannyH really?
+AFL DannyH no set upper limit?
+Matt DTS   (There is no GS/OS limitation to the size of a resource fork other
+           than that it must be less than
+Matt DTS   4 gigabytes to the EOF.  GA.)
+AFL Dyfet  Depends on your FST, and how large a legal file can grow (16m
+           under the ProDOS
+AFL Dyfet  FST)....
+Matt DTS   (But...oh, there's Dave to talk about the Resource Manager...)
+AFL Dyfet  GA Dave...
+Dave Lyons Yup, and I believe the Resource Manager will happily let you use
+           the whole 4 gigs, too.  ga
+A2GS       Never mind...Dyfet clarified the descrepency  :-)
+AFL DannyH I have noticed NDA's with empty resource forks...
+AFL DannyH is this an oversight on the author's part or is the 
+AFL DannyH compiler automatically adding a resoource fork...
+AFL DannyH in particular TML Pascal seems to do this
+AFL Dyfet  Go ahead Surak....
+Surak TFF  Well, resource forks aren't (as far as I know) required to have
+           anything in 
+Surak TFF  them... So it's probably just the particular compiler...
+AFL Dyfet  In the case of TML Pascal, I would guess the compiler
+           automatically creates an
+AFL Dyfet  extended file, just in case it needs to put resources
+           in....incidently, the
+AFL Dyfet  TML Pascal source files have a resource fork attached...
+ShanoJ     (making them a bitch to load into normal word processors... :)
+AFL Dyfet  Okay, MDW has the next question...Go ahead....
+MDW Flyer  Is there any limit to what type of structure can be stored as a
+           resource?...
+MDW Flyer  and what has been found to be unsuitable data to be stored as a
+           resource?
+AFL Dyfet  Go ahead Dave...
+Dave Lyons You can put whatever data you want into a resource, provided you
+           use a Resource Type in the
+Dave Lyons range $0001 to $7FFF.
+ShanoJ     <-- Off to define an armadillo resource... :)
+Dave Lyons I don't have anything
+Dave Lyons very clever to say about what
+Dave Lyons *shouldn't* be in a resource, except that you don't want
+           gazillions of *tiny* resources,
+Dave Lyons because each one takes up 20 bytes in the Resource Map (which is
+           always in memory while your
+Dave Lyons resource file is open), and each one takes up *another* 20 bytes
+           of overhead when you actually
+Dave Lyons load it (for the "master pointer record" (the handle)).  ga
+AFL Dyfet  Certainly configuration data you plan to update should NOT be
+           stored in the
+AFL Dyfet  resource fork, if your application plans to be ran from a file
+           server, since
+AFL Dyfet  all your users will then share the same configuration if they like
+           it or not :)
+MDW Flyer  Thanks, Dave. 8)
+MDW Flyer  Has the APW documentation been updated any for using Resources?
+AFL Dyfet  Okay :)...Go ahead Matt...
+Matt DTS   The tools that work with resources in the APW 1.1 Tools and
+           Interfaces certainly come with appropriate
+Matt DTS   documentation.  The other parts of APW that don't deal with
+           resources haven't been changed, including
+Matt DTS   the documentation.  GA.
+AFL Dyfet  Okay, any more comments?
+AFL Dyfet  I guess Danny has the next question...Go ahead, Danny, you have
+           the floor now.
+AFL DannyH what advantage(s) does a programmer gain by using an extended
+           file?
+AFL Dyfet  Go ahead Matt...
+Matt DTS   For what?
+AFL Dyfet  :)
+AFL DannyH Matt is that for me?
+Matt DTS   It's like asking "What advantages do I get for using memory" -
+           what do you want to do with it?
+AFL DannyH that's what I am asking
+Matt DTS   Nononononononononono...
+AFL DannyH why and when would a programmer choose to use
+AFL DannyH an extended file?
+Matt DTS   An extended file is just a different kind of file - one that has a
+           resource fork.  You use extended
+Matt DTS   files if you have resources, and you use normal files if you
+           don't.  If you mean to ask "what are
+Matt DTS   the advantages of RESOURCES, that's a different animal.  GA.
+AFL Dyfet  I assumed Danny meant the latter....GA MDW....
+MDW Flyer  SynthLab, or any program, might embed it's theme music as a
+           resource.  A use.
+AFL Dyfet  Resources are a generic way to provide customizable applications. 
+           They provide
+AFL Dyfet  a convient way to package sounds, pictures, and other useful data,
+           into a
+AFL Dyfet  single file that is part of the application, which can then be
+           copied or moved,
+AFL Dyfet  with all associated resources, as a single file....
+AFL DannyH thanks ga
+AFL Dyfet  At least I think that was the response Danny was looking for
+           :)..GA Andy :)...
+Andy Stein Very simple, stupid question: Can you make applications from
+           scratch with
+Andy Stein Gensys?
+AFL Dyfet  Go ahead Matt...
+Matt DTS   Yes, but they're not interesting.  You can make all the windows,
+           controls, menus and other structures
+Matt DTS   like that as you wish, but only you can write the code that does
+           something interesting when you choose
+Matt DTS   them.  GA.
+Andy Stein Thanks.  GA
+AFA Gary J :)
+AFL Dyfet  Okay, WankerL has the next question...Go ahead Wankerl....
+JWankerl   Is there a way to find out the host application's resource ID from
+           within a
+JWankerl   CDev?
+ShanoJ     (Hey, that sounds famaliar... :)
+AFL Dyfet  I think we had this question a few weeks ago :)..Go ahead
+           Matt...
+Surak TFF  (Yup... :)
+AFA Gary J :)
+Matt DTS   I'm still thinking, but I believe the answer is "no".  The
+           question is "why do you want to?"
+JWankerl   So Jonah can call DrawMenuBar for the application without it
+           causing a crash.
+ShanoJ     :)
+Matt DTS   Ah.  No, I can't think of one - it would require the Resource
+           Manager to turn a GS/OS reference
+Matt DTS   number into a resource file number, and it currently won't do
+           that.  GA.
+AFL Dyfet  Egads, that was sneaky :)...
+JWankerl   That's about it for me.... right now.
+AFL Dyfet  Okay who else has a resource related question for tonight?
+MDW Flyer  What is your combined opinion of the Resourse Editors available?
+ShanoJ     Genesys + LLRE + Rez rocks... :)
+JWankerl   Genesys, I think, is the best, but it still has a few
+           limitations.
+AFL Dyfet  I prefer Genesys....
+JWankerl   Genesys + Rez = everything you should ever need.
+MDW Flyer  I'm finished using the old TML Pascal Editor.
+AFL Dyfet  Well, okay, who else has a resource question for tonight :)?
+AFL Dyfet  Go ahead, Marty....
+AFL Marty  What kinds of resources are currently supported (resource
+           types)?
+JWankerl   Lots!  Pick up Nifty List 3.0 or better and do 0\rtype to see 'em,
+           or get TBIII
+JWankerl   ...and read the technotes, there are additional types defined
+           there, too.
+AFL Marty  Let me ask it this way then...
+AFL Dyfet  And will be many more appearing in technotes in the future
+           :)....
+ShanoJ     READ TECHNOTES!! READ TECHNOTES!!
+AFL Marty  What resource types are NOT supported?
+AFL Marty  For instance is there/will there be a FONT resource?
+JWankerl   Good question.  What cars are not defined?  I don't know until
+           they're defined.
+JWankerl   Your application can support a font resource, but I don't think
+           there's a 
+JWankerl   standard font resource.
+AFL Marty  I'm obviously not q programmer type.  Make up a good question from
+           my words and answer it.
+AFL Dyfet  Or ICON resources for Finder....in the case of a font resource,
+           one may have to
+AFL Dyfet  work a little with the font manager to actually use it....
+JWankerl   There ARE Icon resources, but they don't contain the finder
+           information.
+AFL Dyfet  In the case of Finder icons in resources (something I would like
+           to see 
+AFL Dyfet  someday) Apple will have to take the lead first...
+AFL Dyfet  GA MDW...
+MDW Flyer  The finder icon format differs from the Q II icon format....
+MDW Flyer  At least header information.
+Dave Lyons (The Finder Icon format *contains* icons in QD II icon format,
+           plus a lot of other stuff.)
+MDW Flyer  Why put a Finder Icon in as resource?
+AFL Dyfet  So you have the icon as part of the application instead of as a
+           seperate icon
+AFL Dyfet  file that has to be placed in the icon directory...just seems a
+           little cleaner
+AFL Dyfet  in my mind...
+JWankerl   So you can copy the application and not have to copy the icon
+           file, too.
+AFL Dyfet  Go ahead Surak...
+Surak TFF  In order for an icon in a file's resource fork to be of use to the
+           Finder, 
+Surak TFF  wouldn't the Finder have to open every single file's resource fork
+           to find
+Surak TFF  the icon? (or at least to check for one?) That would seem to be
+           very 
+Surak TFF  cumbersome...
+Matt DTS   (well, presumably it would only look in applications, and not in
+           everything.)
+AFL Dyfet  I was about to mention that, actually :)...
+MDW Flyer  Matt, Tech Note ?
+Surak TFF  GA
+Matt DTS   (huh?)
+Matt DTS   repeating:  "(huh?)"
+MDW Flyer  Finder Icons TN doesn't explicitly state the need for a small icon
+           image & mask
+MDW Flyer  or did I miss some part of it.
+MDW Flyer  I am writing a quick fix program to append the small icon info to
+           the output
+Matt DTS   Mine lists at offset +086 the normal size icon and right after it
+           the small icon.
+JWankerl   Anyone care to field a simple Memory Manager question?
+Dave Lyons sure
+Matt DTS   go for it
+AFL Dyfet  Sure, we can do that :)
+JWankerl   I wanna use InsertMItem2 to add an item to my menu, and I want my
+           reference to
+JWankerl   the menu item name to be a handle.  Do I have to maintain this
+           handle with
+JWankerl   my program, or does the menu manager take it over like the Window
+           manager does
+JWankerl   with menu titles?
+JWankerl   oops with window titles, not menu titles.
+ShanoJ     <-- 'nother MM question, for when Joe's done.
+Dave Lyons (BTW, this is a Menu Manager question, not a Memory Manager
+           question. :-)
+JWankerl   Shoot!  Did I say memory manager.  My fault.  My brain is dying. 
+           :-(
+Dave Lyons Checking; go ahead w/ next question in the mean time.
+AFL Dyfet  Okay, I guess that would be Jonah's MM Q :)...Whichever MM he
+           means :)
+ShanoJ     Do you still need an answer before I go, Joe?
+AFL Dyfet  Dave is checking...go ahead Jonah...
+ShanoJ     Or can I just rhyme some more? :)
+JWankerl   Nah, GA Jonah.  Dave'll get back to me one day.  :-)
+ShanoJ     Okay, I wanna know why the Memory Manager needs BOTH a fixed and a
+           locked bit?
+ShanoJ     Don't they do basically the same thing?
+Dave Lyons They're different.  (1) Fixed memory gets allocated down at the
+           bottom of the memory map, and
+Dave Lyons non-fixed gets allocated at the top.  This reduces fragmentation,
+           unless people do something
+Dave Lyons silly like allocate a lot of permanently-locked, non-fixed
+           handles.
+Dave Lyons You can lock and unlock handles at will, but you don't generally
+           fiddle with the fixed status (there
+Dave Lyons is no call for it).
+Dave Lyons (2) When the purge level is not zero, the handle can be purged if
+           it is NOT LOCKED.
+Dave Lyons That is, a fixed but purgable handle can go away but NOT move, if
+           it's locked.  (If it's locked,
+Dave Lyons it won't move or go away.)  ga
+ShanoJ     Okay, so if I want a memory block that's not going to EVER move, I
+           wanna
+ShanoJ     use.... ? I've always used attrFixed+attrLocked...
+Matt DTS   Fixed means it *never* moves; locked means it can't move until you
+           unlock it.
+Dave Lyons Jonah, if your handle will always have purge level 0, it makes no
+           different whether you make
+Dave Lyons it fixed, or fixed+locked.  You want to stay away from locked-only
+           if you're leaving it locked, since
+Dave Lyons it would be a fragmentation island up amongst a lot of unlocked
+           handles.
+Matt DTS   (by the way, Dave's implication aside, it's not OK for you to
+           fiddle with any bits in the attributes
+Matt DTS   except the locked bit, unless you're using Memory Manager calls to
+           do it.)
+ShanoJ     I know Matt, I took that stuff out... You'd be proud of me... :)
+Dave Lyons ! on Menu Manager
+ShanoJ     Okay, thanks a lot, guys! :)
+AFL Dyfet  GA Dave
+Dave Lyons I know at least this much:  When you InsertMItem2 by handle, it
+           *keeps* your handle, so you'd better
+Dave Lyons not mess up the data or dispose of that handle.
+JWankerl   Okay.  I call InsterMItem2 then never mess with that handle again.
+            Got it.
+Dave Lyons (It seems not to be disposing of it when the menu goes away;
+           safest thing is to start up the tools
+Dave Lyons with a $1xnn ID and do a DisposeAll on that derived ID when you're
+           quitting.  Not
+Dave Lyons a completely separate ID, but one derived from your main ID.)
+ShanoJ     (Is there any though of making a _CleanUpMyMemory call? Sure would
+           make things
+ShanoJ     a whole lot easier... :)
+JWankerl   Okay.  I'll add in code like that, too.
+ShanoJ     (It could be part of the DWIM toolbox... :)
+Dave Lyons What would CleanUpMyMemory do, other than DisposeAll on one or
+           more derived IDs?
+ShanoJ     It would DisposeHandle on all the stuff I don't need, and keep the
+           stuff I
+ShanoJ     do. Help a lot with error routines. (right, Matt? :)
+Matt DTS   No comment.
+ShanoJ     :)
+ShanoJ     Okay, I've got another ?
+JWankerl   What would happen if I changed the name of the item I inserted? 
+           Would I have
+JWankerl   to use another handle?  Or could I just keep the old handle and
+           change it
+JWankerl   instead, then call CalcMenuSize?
+Matt DTS   It would probably be best to pass the same handle to SetMItemName
+           again.
+JWankerl   I should use the same handle?
+Matt DTS   (unless the menu manager is disposing of the old one, which I kind
+           of doubt...)
+Matt DTS   Dave?
+Matt DTS   Oh Dave?
+Dave Lyons Hi...
+JWankerl   Should I use the same handle, Dave?
+Dave Lyons Yeah, cram the new stuff into the old handle.  Sounds like a
+           plan.
+Dave Lyons Of course, if it doesn't work, don't do it.  (I think it will, and
+           I will -not- break things by
+Dave Lyons making the Menu Mgr dispose of stuff it does not dispose of
+           now...that would be bad).
+JWankerl   Should I call SetMItemName with it, or just CalcMenuSize directly
+           since
+JWankerl   the reference is the same?
+Dave Lyons You should call SetMItemName.
+Matt DTS   (Ha.)
+JWankerl   Okay.
+Matt DTS   <-- as if he's accomplished something
+ShanoJ     Okay, my turn. Anyone know how to do a bitwise EOR in a constant
+           in APW? The
+ShanoJ     Lichty and Eyes book said that #attrLocked.EOR.$FFFF would do it,
+           but that
+ShanoJ     just makes #0, which works for them, but that's only a
+           coincidence. It sure
+JWankerl   Do $FFFF-attrLocked
+ShanoJ     don't work when you need to keep the status of other bits... :(
+ShanoJ     Okay, does anyone know a CLEAN way to do a bitwise EOR... :)
+JWankerl   If you just want to flip bits, subtraction does the same thing.
+Dave Lyons (Don't you have the manual??  I'd have to look it up....)
+Matt DTS   According to the APW manual (I have Dave's :), .EOR. should
+           work.
+ShanoJ     I looked it up. It was completely unclear. As far as I could tell,
+           it couldn't
+ShanoJ     do it, which really surprised me... 
+ShanoJ     No, look again Matt. The manual says that it returns 1 for true
+           and 0 for
+ShanoJ     false. All of those .xxx. operators operate on the whole
+           expression, not on the
+ShanoJ     individual bits... 
+Matt DTS   oh.
+Dave Lyons I think there's a character for it, but I forget.
+ShanoJ     I was kinda surprised that L & E were wrong (and that I found the
+           error! :)
+
+AFA Gary J I'm having trouble with the ORCA/M assembler barfing on the "&"
+           character in
+AFA Gary J comments and within quotes.  Is it supposed to do that?
+Matt DTS   It's a toss-up, but it does.
+Matt DTS   Something about being able to use &sysdate in comments, so it
+           always does that.
+AFA Gary J Oh yeah, the sysdate thingy.
+A2GS       Don't take the following 2 Q's personally...1) Why can't the GS
+           upload
+A2GS       fonts to an Apple Laser-printer?
+A2GS       2) Why doesn't GS/OS enjoy it's own FST...allowing the user to
+           take FULL
+A2GS       advantage of GS/OS' incredible potential and capabilities??
+Dave Lyons Do you *really* want another file system in the world?  I don't. 
+           This is a fair question, and
+Matt DTS   Haven't we gone through #2 about forty bazillion times?
+Dave Lyons the idea has certainly been considered around here.
+Dave Lyons (Good answer, Matt. :)
+AFA Gary J :)
+Matt DTS   Hey - "tact" is still my middle name.
+AFL Marty  "Prince of discretion"
+A2GS       To be honest...yes...I think this kind of FST really would make
+           the 
+A2GS       GS  more flexible (then it already is, hard to believe isn't it)
+           and would
+A2GS       allow users to get by the 32 meg partition pain with LARGE HD's.
+Matt DTS   Yes, but some already-existing file system (like HFS) for
+           example,
+Matt DTS   can give the same benefits without creating a new disk format
+           that's totally incompatible with
+Matt DTS   *EVERYTHING* else out there, eliminating any possibility of
+           interchange.
+JWankerl   Why wave the ability to do it under our nose and tell us that it
+           won't be done?
+AFA Gary J Yes!
+AFA Gary J The HFS would be a good one.
+Matt DTS   No one's arguing that something beyond ProDOS would be a Good
+           Thing.  We just don't think that 
+Matt DTS   creating something new from scratch is going to benefit
+           everyone.
+A2GS       The why don't we have an HFS Fst?  (please don't take these as
+           pressure Q's
+A2GS       or that I'm trying to needle you guy's....you do FANTASTIC
+           work...)
+A2GS       I'm just curious.
+Matt DTS   Why haven't you written a program to produce class 3 PostScript
+           fonts on the IIgs?
+Matt DTS   (Probably because you, like us, have limited resources.)\
+A2GS       Because I don't ACTIVELY use laser printers...
+A2GS       although I'm sure a lot more people would...if we had many of the
+           features 
+A2GS       other machines enjoy (who shall remain nameless)
+Matt DTS   As for #1, this is a subject that I've recently been
+           investigating.  It turns out to be about 3000%
+Matt DTS   more complicated than I originally thought.  Downloaded fonts can
+           be "coordinated" or "non-coordinated
+Matt DTS   ".  Characters like "tm" and "(C)" and others aren't necessarily
+           in PostScript font strikes, so
+Matt DTS   the font vector tables in PostScript must be adjusted to pick the
+           Symbol font for those characters,
+Matt DTS   even though the styles may be different (serif vs. sans serif, for
+           instance).  Then there is the issue
+Matt DTS   of renaming the downloaded font in the printer with the name
+           "|______fontname" so the printer drivers
+Matt DTS   can find it, as well as the issue of resolving font naming
+           conventions (such as "demi" vs. "bold", 
+Matt DTS   "italic" vs. "oblique" vs. "slant", etc.) so that the proper font
+           can be found, downloaded and used
+Matt DTS   when the matching (and how does it match?) screen font is used in
+           a printed document.
+Matt DTS   (in summary, there's a lot of issues to be worked out and retain
+           compatibility with the Macintosh
+Matt DTS   which is already doing it.)  <done>
+A2GS       Couldn't you use the Mac source as a "guide" on writing the proper
+           routines 
+A2GS       to handle the work?
+JWankerl   So your program will be ready tomorrow, Matt?  :-)
+Matt DTS   Sure, with an optional 68000 card.
+Matt DTS   Most of the necessary work is outlined in the "LaserWriter
+           Reference", actually, and of course we
+Matt DTS   could use the Mac's LaserWriter driver as a reference, but it's
+           still at least as complicated
+Matt DTS   as has briefly been mentioned here, and I'm sure I left out
+           several issues that would need to be
+Matt DTS   resolved.
+A2GS       To be honest: I would seriously consider getting a laser-printer
+           for my GS...
+A2GS       for several reasons...But I want to be able to use it to it's FULL
+           capacity 
+A2GS       without having to get a Mac Classic to do the "little"
+           things....
+A2GS       Seems like you guys are under-staffed.
+A2GS       Thanx for the responses.
+Matt DTS   It's not as simple as sending a PostScript file - we can do that. 
+           It involves a lot of PostScript
+Matt DTS   mechanics as well as considerable design on the IIgs or I'm sure
+           it would have been done by now.
+Matt DTS   We did get enough of it done to let you use fonts which have
+           already been downloaded, but not as far
+Matt DTS   as coordinating the fonts and downloading them.  The Mac uses a
+           demonic posession called the FOND
+Matt DTS   resource to keep all this straight, and it's a resource straight
+           from hell.  Trust me.
+Matt DTS   Next?
+A2GS       Sounds like the REAL headache is in coordinating the Font's not
+           just getting 
+A2GS       them to the Laser printer (would you be uploading to the LP or
+           Downloading?)
+A2GS       done
+Matt DTS   We refer to it as downloading.
+A2GS       isn't that backwards?
+A2GS       sort of?
+Dave Lyons (It depends on whether your computer has more or less RAM than the
+           printer. :-)
+A2GS       (I'm a perfectionist :-)
+A2GS       That's why I bought a GS...  :-)
+Matt DTS   By the way, A2, I now have a LaserWriter (Personal NT) at home,
+           hence the interest.  I also have a Mac
+Matt DTS   to download fonts with, but it's more fun to do it natively (or so
+           I thought!).
+A2GS       Keep working at it...I can guarentee Apple one more Laser Printer
+           sale if you
+A2GS       can get the dang thing working  :-)
+Matt DTS   Yeah, you'll probably buy an HP and let those other drivers not
+           work instead of ours.  :)
+A2GS       :)
+ShanoJ     Okay, question time. If I can't make TextEdit calls from within a
+           TextEdit hook
+ShanoJ     routine, do I have to step through the TE data structures MANUALLY
+           to retrieve
+ShanoJ     the text?! :(
+Dave Lyons Which hook routine, what operation?
+ShanoJ     "Keystroke filtler procedure"
+JWankerl   Why do you want to get text for a keystroke filtLer?
+JWankerl   :-)
+ShanoJ     Okay, okay, I used one too many "l"s I'll leave one out of a word
+           in a minute
+ShanoJ     to make up for it. Just answer the question... :)
+A2GS       "a minute" doesn't contain any L's
+AFA Gary J :)
+A2GS       I know, I know....it's a terrible joke...but I couldn't resist
+           :)
+Matt DTS   Why on God's Green Earth do you want to get the text from a record
+           in a keystroke fillllllter?
+ShanoJ     Hey, I said I'd leave it out of "a word", not "a minute".... Come
+           on... :)
+AFA Gary J Well, you did.
+ShanoJ     Well, I wanna do some fancy stuff, mainly including an undo
+           command...
+JWankerl   Hey, you can't do an undo command before I do.  :-)
+Matt DTS   (I was afraid you were going to say that.  Darn...)
+AFA Gary J (Not this again :)
+ShanoJ     Shut up. I'm cooler than you are. I wanna do it first... :)
+Dave Lyons Matt, I believe some people have managed to do auto-tabbing inside
+           the key filter (but maybe it
+Dave Lyons was a different hook).
+Matt DTS   Who?  TML?
+Matt DTS   TML did it because they weren't using TaskMaster and watched
+           everything they passed to TEKey.
+Dave Lyons I don't remember who (actually I don't remember for sure that they
+           got it working how they wanted).
+JWankerl   That's the way I was gunna handle my undo - just leave the pass
+           key events to
+JWankerl   controls bit off and call TEKey myself.
+A2GS       Suggestion: take up basket weaving and forget the whole thing
+           :-)
+ShanoJ     I've thought of that, Albert. Believe me, I've thought of that...
+           :)
+Dave Lyons Why TEKey rather than SendEventToCtl?
+JWankerl   Good question.  I dunno.  I guess that would be better.
+JWankerl   (I could have said that I was not using TextEdit as a control, but
+           that'd be
+JWankerl   a lie :-)
+Dave Lyons I think so, especially if you'll ever have other controls in your
+           window--it'll figure out who
+Dave Lyons to give it to (and who to give first shot at it).

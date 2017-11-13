@@ -1,0 +1,661 @@
+
+
+
+
+
+                An Introduction to Tape/MIDI Sync and the MQX-32
+
+                                  Dave Hocker
+
+                    Copyright (c) 1988 - All Rights Reserved
+                               Music Quest, Inc.
+
+
+  Overview
+
+  Since the introduction of the Music Quest MQX-32 Enhanced MIDI Co-processor
+  Card, we here at Music Quest have fielded a large number of questions about
+  the features of the MQX-32 and the various different forms of tape/MIDI
+  sync.  The purpose of this paper is to discuss the most common forms of
+  sync in use by computer/music/MIDI systems, with particular emphasis on
+  tape sync.  In doing so, we will look at how each sync method is
+  implemented.  Also, we will consider the relative strengths and weaknesses. 
+  After you complete reading this paper, you will have a basic understanding
+  of these different sync methods, and you will have a good perspective on
+  the sync features of the Music Quest MQX-32 PC MIDI interface.  Hopefully,
+  we will have answered many of your questions, while simultaneously
+  providing enough information so you can ask new ones.
+
+
+  Types of Sync
+
+  We're going to discuss four different types of sync.
+
+     MIDI sync
+     FSK (Frequency Shift Keying)
+     CLS (Chase Lock Sync)
+     SMPTE (Society of Motion Picture and Television Engineers)
+
+  In our discussions, we will treat MIDI sync differently than the other
+  three methods, mainly because it is not a tape sync technique, per se. 
+  Near the end of this paper we will discuss various converters that can
+  convert from one sync source to/from another.
+
+
+  Some Basic Concepts
+
+  Before getting into the details of sync methods, we need to get a few
+  basics under our belt.  First let's make sure we all understand the general
+  reason for sync.  The term sync is used to refer to various techniques that
+  allow multiple, time dependent devices to work together.  For MIDIists,
+  this usually means that you want to sync multiple MIDI devices together or
+  that you want to sync a tape recorder with one or more MIDI devices.  The
+  second reason is probably the most common circumstance, as it is used to
+  overcome a shortage of sound generators or synthesizers.  It allows you to
+  create a finished performance by reusing sound generators on separate
+  tracks.  That is, you make several passes on the tape, recording a new
+  track on each pass.
+
+  When you are synchronizing, you always have one master and one or more
+  slaves.  A good analogy is a conductor and an orchestra.  The conductor is
+  the master sync source who keeps all of the orchestra's musicians together.
+
+
+
+                                       1
+
+
+
+
+
+
+  There is another sync basic that we can draw from the conductor analogy, 
+  One of the roles of the conductor is to set the tempo for the orchestra. 
+  The conductor uses his/her baton as a "clock".  The faster the baton moves,
+  the faster the tempo, and vice versa.
+
+  Another concept we need to understand is the difference between sync
+  methods that are "tempo relative" and ones that are "fixed time".  With a
+  tempo relative sync method, the rate of the sync signals is directly
+  proportional to the tempo.  That is, the sync signals are generated at a
+  rate that is determined by the beats-per-minute tempo.  As we shall see,
+  MIDI sync, FSK, and CLS are tempo relative sync methods (our orchestra
+  conductor is also a tempo relative sync source).
+
+  A fixed time sync method uses signals that are not proportional to tempo. 
+  The sync signals are generated at a fixed rate.  Of the four sync
+  techniques we will discuss, SMPTE is the only one that uses fixed timing.
+
+  When we are synchronizing a tape recorder and MIDI devices, we use one of
+  the tape tracks to store the sync information.  The process of "striping a
+  tape" refers to the task of writing the sync information on the sync track. 
+  After the tape is striped, it becomes the master source of sync signals for
+  the system.
+
+
+  MIDI Sync
+
+  MIDI sync is most commonly used to allow one or more "slave" MIDI devices
+  to be synchronized to a "master" MIDI device.  Typically, these devices are
+  sequencers or devices with "sequencer like" capability (e.g. drum
+  machines).  MIDI sync uses a combination of MIDI messages to accomplish its
+  goal.  
+
+
+          ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿Out                  In ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+          ³              ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ>³                   ³
+          ³  Sequencer   ³     MIDI Sync ->       ³       Drum        ³
+          ³              ³                        ³      Machine      ³
+          ³              ³                        ³                   ³
+          ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ                        ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+                                                                  
+
+  The heart beat of MIDI sync is the MIDI clock message (simply known as the
+  MIDI clock).  The MIDI master sends MIDI clocks at a rate of 24 clocks per
+  quarter note.  Hence, MIDI sync is tempo relative.  MIDI devices need to
+  know when to play and when to stop playing.  The MIDI Start, Continue, and
+  Stop messages provides these signals.  When a MIDI device receives a MIDI
+  Start, it plays from the beginning of its current song.  When it receives a
+  MIDI Stop, it ceases play.  When a MIDI Continue is received, the MIDI
+  device plays from the current position within the current song.
+
+  This brings us to the MIDI Song Position Pointer (SPP) and MIDI Song Select
+  (SS) messages.  Simply, the SS message tells the device which song to play
+  from, and the SPP tells the device where to start within that song.  In
+  practical application, only the SPP is used.  Now, if you put the SPP
+  together with a MIDI Continue, you have a most useful way to synchronize
+  MIDI devices.  This combination of messages essentially says "Go to this
+  position within the current song and begin playing".  Most often this
+
+
+                                       2
+
+
+
+
+
+
+  technique is referred to as "chase sync".  Later, we will see how this
+  principle is applied to CLS tape sync.
+
+     [SPP]...[Continue] [Clock]...[Clock]...[Clock]...[Clock]..... 
+
+
+  FSK Sync
+
+  FSK is most commonly used to synchronize a tape recorder with MIDI devices,
+  such as a sequencer or drum machine.  Typically, FSK uses two distinctly
+  different tones to form a sync signal (e.g 1200 Hz and 2400 Hz).  One tone
+  is used to fill the tape, while the second is used to mark the occurrence
+  of a clock signal.  As the tape is read, the sync device generates a clock
+  signal every time it sees the transition from fill signal to mark signal. 
+  Hence, the two tones form a binary tape encoding.
+
+  FSK sync can be found on many of the MPU-type PC MIDI interfaces.  Some
+  stand alone sequencers and drum machines are also capable of the writing
+  and reading FSK.
+
+  One of the advantages of FSK is that it can be written at various degrees
+  of clock resolution.  For example, with the MPU-type FSK, you can write a
+  sync track at MIDI clock resolution (24 ticks per beat) or at the same
+  resolution as the MPU's internal clock (up to 192 ticks per beat).
+
+  In practical application, FSK sync has several draw backs.  Since it is a
+  purely binary signal containing no position information, you always have to
+  start at the beginning of the sync track.  FSK sync has no counterpart to
+  the MIDI Song Position Pointer.  FSK by its very nature is frequency
+  sensitive, and its reliability can be greatly affected by tape quality,
+  tape speed, and volume level.  Finally, since FSK contains no position
+  information, error recovery from tape drop outs is very difficult.
+
+
+
+  Chase Lock Sync
+
+  Quite simply, CLS can be described as the concept of MIDI sync applied to
+  tape.  That means that CLS is a tempo relative sync method.  Unlike FSK,
+  CLS does not use tones.  Instead it uses wave forms much like those used by
+  computer tape drives.  The sync information is written onto the tape as a
+  series of bits.  Included in the sync information are song position
+  pointers and MIDI clocks.  Thus, when the sync track is read back, it is
+  possible to locate exactly where the tape is positioned (starting from any
+  place on the sync track).  Usually, the sync device reads the position
+  information, forms it into a MIDI song position pointer message, and sends
+  it to the sequencer.  The sequencer responds to the SPP by "chasing" the
+  current sequence to the location indicated by the SPP (hence the term Chase
+  Lock Sync).  After allowing some time for the sequencer to "chase", the
+  sync device sends a MIDI continue which initiates sequencing.
+
+  CLS has one major short coming, namely its clock resolution of 24 ticks per
+  beat.  However, this draw back is greatly over shadowed by CLS's chase
+  capability.  When you use CLS with the appropriate sequencer, you can play
+  and record from any location on the tape.  Unlike FSK, you do not have to
+  start at the beginning of the tape.  Another plus for CLS is its encoding
+  technique which facilitates excellent recovery from tape drop outs.
+
+
+                                       3
+
+
+
+
+
+
+  In summary, CLS is a significant step forward from FSK.
+
+
+
+  SMPTE
+
+  Of all the three tape sync methods being discussed, SMPTE is the only one
+  for which a true standard exists (of course, MIDI is also a true standard). 
+  It is also the only fixed time sync method.  Originally, SMPTE was
+  developed for motion picture and television work.  However, as we shall
+  see, its utility has widened its application.
+
+  SMPTE uses electrical signals that are similar to CLS.  That is, the sync
+  information is written as a string of bits.  However, SMPTE uses the
+  concept of a "frame" instead of MIDI concepts such as song position pointer
+  and MIDI clocks.  A SMPTE frame is a group of bits that describe a single
+  location on the tape (called the frame address).  The number of bits that
+  make up the frame, the rate at which the bits are written to tape, and the
+  number of frames per second are dependent on the SMPTE format.  In the US,
+  the two 30 frame formats (30 frames per second) are used most of the time. 
+  These formats use a frame that is 80 bits long, written at a rate of 2400
+  bits per second.  Each frame address contains a complete time stamp in
+  terms of hours, minutes, seconds, and frame number.  Most often, you see
+  this written in the form:
+
+     HH:MM:SS:FR
+
+  Thus 01:37:22:19 identifies the frame address as frame 19, at 1 hour, 37
+  minutes, 22 seconds.  (If you are completely new to this topic and you
+  watch MTV, you can occasionally see videos with SMPTE consoles showing a
+  rolling frame address.  The Cheap Trick video "The Flame" is a good
+  example).
+
+  Overall, there are four standard SMPTE formats:
+
+     24 frame                 used by motion pictures.
+     25 frame                 used in Europe for video work because the
+                              television scan rate is 25 frames per second.
+     30 frame non-drop format used world wide for audio sync.
+     30 frame drop format     used in the US for video work.  US color
+                              television uses a scan rate 29.97 frames per
+                              second.  The term "drop" format comes from the
+                              fact that this format is identical to 30 frame
+                              non-drop, except that selected frames are
+                              periodically dropped to yield an overall scan
+                              rate of 29.97 frames/second.
+
+  As previously mentioned, in the US, the 30 frame formats are most
+  prevalent.  The 30 frame non-drop format is predominantly used for audio
+  sync.  The 30 frame drop format is used for video/audio sync work, such as
+  scoring a video tape.  
+
+  Practically speaking, SMPTE offers more advantages than any other form a
+  synchronization.  This may not be immediately obvious, since we haven't
+  said anything about how SMPTE can be used.  However, it is clear that SMPTE
+  is wave of the future.
+
+
+
+                                       4
+
+
+
+
+
+
+  Several aspects of SMPTE give it a distinct advantage over all of the other
+  forms of tape sync.  First, SMPTE is a standard that has been in use for
+  some time.  A tape written by a SMPTE writer can be read by any SMPTE
+  reader that supports the given format.  For example, if you write a tape in
+  30 frame non-drop format, then any reader capable of reading 30 frame non-
+  drop format can read the tape.  While MIDI sync is a standard, FSK and CLS
+  are not.  Every manufacturer's FSK and CLS formats are proprietary
+  (although Roland's FSK sync has been used by other manufacturers), and
+  hence interchange of tapes is generally not practical.
+
+  As further evidence of the value of this standard, SMPTE has been adopted
+  into the world of MIDI through the MIDI Time Code extension.  With out
+  going into too much detail, MIDI Time Code messages allow SMPTE frame
+  addresses to be sent over MIDI cables, in real time.  Thus, there is
+  already a tight binding between SMPTE and MIDI.  We'll talk more about
+  SMPTE and MIDI when we look at SMPTE to MIDI Time Code converters.
+
+  Second, SMPTE's fixed time format gives it more flexibility than FSK or CLS
+  tape sync.  If you stripe a tape with FSK or CLS, and then decide you want
+  a different tempo or set of tempos, you must rewrite the tape.  With SMPTE
+  and the appropriate sequencer, you can change tempos at any time without
+  the necessity of rewriting the sync track.
+
+  Third, like CLS tape sync, you can start reading a SMPTE track at any
+  location.  SMPTE's encoding scheme also greatly facilitates recovery from
+  tape drop outs.
+
+  Finally, SMPTE can be used as a trigger mechanism with power and
+  simplicity.  For example, using SMPTE it is easy to visualize starting a
+  sequence at location 00:03:02:00 (i.e. 3 minutes, 2 seconds into the tape). 
+  It is just as easy to visualize that at that location on a video is a car
+  crash and that you want your sequencer to fire a set of notes to a sampler
+  which in turn will play the sound of the crash.  
+
+  With all of these advantages it is difficult to see any short comings with
+  SMPTE.  Probably the only draw back is the current shortage of SMPTE
+  applications for the IBM PC world.  However, with the introduction of the
+  Music Quest MQX-32 PC MIDI interface and the Yamaha C-1 music computer
+  (which both have SMPTE), many developers are quickly moving to fill this
+  void.
+
+
+  Sync Converters
+
+  A sync converter is an external "box" that translates one form of sync into
+  another.  For the most part, sync converters are used to translate a tape
+  sync format into some form of sync that is recognized by MIDI (either MIDI
+  sync or MIDI Time Code).
+
+
+
+
+
+
+
+
+
+
+
+                                       5
+
+
+
+
+
+
+  FSK to MIDI Sync
+
+  An FSK to MIDI sync converter can produce FSK tape sync from MIDI sync
+  messages (the striping process).  Conversely, as it reads an FSK sync
+  track, it produces MIDI sync.  The Yamaha YMC-10 is an example of an FSK to
+  MIDI sync converter.
+
+
+          ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿Out                  In ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+          ³              ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ>³                   ³
+          ³     MIDI     ³                        ³ FSK to MIDI Sync  ³
+          ³    Device    ³    <- MIDI Sync ->     ³    Converter      ³
+          ³              ³<ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´                   ³
+          ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙIn                   OutÀÄÄÄÄÂÄÄÄÄÄÄÄÄÄÂÄÄÄÄÙ
+                                                     In³    ^    ³Out
+                                                       ³   FSK   ³
+                                                    Out³    v    ³In
+                                                    ÚÄÄÁÄÄÄÄÄÄÄÄÄÁÄÄ¿
+                                                    ³     Tape      ³
+                                                    ³     Deck      ³
+                                                    ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+                                                 
+
+
+  Chase Lock Sync
+
+  There are several Chase Lock Sync devices on the market, such as the J.L.
+  Cooper PPS-1, Synhance MTS-1, and Tascam MTS-30.  The Music Quest MQX-32 PC
+  MIDI interface features built in CLS.
+
+  CLS boxes perform just like FSK to MIDI sync converters.  Their distinct
+  advantage lies with the advantages of CLS, namely the ability to use song
+  position pointer to play from any tape location.
+
+
+
+          ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿Out                  In ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+          ³              ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ>³                   ³
+          ³     MIDI     ³                        ³     CLS Sync      ³
+          ³    Device    ³    <- MIDI Sync ->     ³       Box         ³
+          ³              ³<ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´                   ³
+          ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙIn                   OutÀÄÄÄÄÂÄÄÄÄÄÄÄÄÄÂÄÄÄÄÙ
+                                                     In³    ^    ³Out
+                                                       ³   CLS   ³
+                                                    Out³    v    ³In
+                                                    ÚÄÄÁÄÄÄÄÄÄÄÄÄÁÄÄ¿
+                                                    ³     Tape      ³
+                                                    ³     Deck      ³
+                                                    ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+                                                 
+
+
+  SMPTE to MIDI Sync
+
+  SMPTE to MIDI sync converters provide capabilities similar to CLS sync
+  converters.  However, they offer distinct advantages by virtue of their use
+  of SMPTE as the tape sync method.
+
+
+                                       6
+
+
+
+
+
+
+
+          ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿                        ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+          ³              ³                        ³                   ³
+          ³     MIDI     ³                        ³ SMPTE to MIDI Sync³
+          ³    Device    ³    <- MIDI Sync        ³    Converter      ³
+          ³              ³<ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´                   ³
+          ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙIn                   OutÀÄÄÄÄÂÄÄÄÄÄÄÄÄÄÂÄÄÄÄÙ
+                                                     In³    ^    ³Out
+                                                       ³  SMPTE  ³
+                                                    Out³    v    ³In
+                                                    ÚÄÄÁÄÄÄÄÄÄÄÄÄÁÄÄ¿
+                                                    ³     Tape      ³
+                                                    ³     Deck      ³
+                                                    ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+                                                 
+
+  Because SMPTE is a fixed time sync method, it does not require an input
+  signal to stripe a tape.  Thus, SMPTE to MIDI sync converters do not
+  require MIDI sync input during the striping process.
+
+  The playback process is somewhat more complicated; however, it is
+  correspondingly more flexible.  Most SMPTE to MIDI converters require that
+  you give them sort of a tempo map.  There are several ways that this can be
+  accomplished.  One way is to tell the converter what MIDI sync tempos
+  should be in effect at what SMPTE frame addresses.  For example at frame
+  00:00:00:00, you might want to start with a tempo of 120 beats/minute. 
+  Then, at frame 00:01:00:00 (one minute into the sync track), you might want
+  the tempo to change to 140 beats/minute.
+
+  A second way to enter a tempo map is to tell the converter box pertinent
+  operating parameters so that the converter can determine the appropriate
+  tempo.  For example, you could tell the converter that you want to play
+  measure 1 starting at 00:00:00:00 and that you want measure 30 to finish at
+  00:01:00:00.  Assuming 4 beats/measure, the converter would calculate that
+  a tempo of 120 beats/minute would be the appropriate tempo.
+
+  The necessity of entering a tempo map into an external converter box
+  illustrates one of the potential draw backs of such a device.  If the MIDI
+  software you use is not capable of automatically loading the tempo map
+  information into the converter box or if the converter box is not capable
+  of being totally set up via MIDI, you may find that you have to do it
+  manually.
+
+  Two examples of SMPTE to MIDI converters are the Roland SBX-80 and Imagine
+  Computer's SMPTE City.  The Music Quest MQX-32 PC MIDI interface in
+  combination with the appropriate software can perform the same functions as
+  any of these products, including the management of the tempo map.
+
+
+
+  SMPTE to MIDI Time Code
+
+  A SMPTE to MTC converter is capable of reading and writing SMPTE tape sync
+  and translating the frame addresses into MIDI Time Code messages.  Because
+  MIDI Time Code is relatively new, not too many products of this nature are
+  available.  The value of such a product is to broadcast the equivalent of
+  SMPTE sync over a MIDI network.
+
+
+                                       7
+
+
+
+
+
+
+
+
+          ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿                        ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+          ³              ³                        ³                   ³
+          ³     MIDI     ³                        ³   SMPTE to MTC    ³
+          ³    Device    ³  <- MIDI Time Code     ³    Converter      ³
+          ³              ³<ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´                   ³
+          ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙIn                   OutÀÄÄÄÄÂÄÄÄÄÄÄÄÄÄÂÄÄÄÄÙ
+                                                     In³    ^    ³Out
+                                                       ³  SMPTE  ³
+                                                    Out³    v    ³In
+                                                    ÚÄÄÁÄÄÄÄÄÄÄÄÄÁÄÄ¿
+                                                    ³     Tape      ³
+                                                    ³     Deck      ³
+                                                    ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+                                                 
+  The use of MTC converters in the IBM PC world has been limited until
+  recently.  This is mostly because widely extant MPU chip set based
+  interfaces do not recognize MIDI Time Code messages.  As a result, most IBM
+  PC software developers have not been able to take advantage of SMPTE to MTC
+  converters.  However, the Music Quest MIDI Co-processor Card and the MQX-32
+  Enhanced MIDI Co-processor Card are fully capable of handling MTC messages.
+
+  The J.L. Cooper PPS-1 is an example of a converter that is capable of
+  producing MIDI Time Code while reading SMPTE.  The Music Quest MCC is
+  capable of receiving MTC messages from a SMPTE to MTC converter.  The Music
+  Quest MQX-32 PC MIDI interface can produce MIDI Time Code while writing and
+  reading SMPTE, and it is capable of receiving MIDI Time Code from an
+  external MTC source (such as a PPS-1 or another MQX-32).
+
+
+  The Future for Tape Sync
+
+  As we have seen, tape sync has gone from the basic capability of FSK sync
+  to the power of CLS and SMPTE.  The popularity of SMPTE is on the rise, and
+  it appears that over the next year it will become THE tape sync method. 
+  The introduction of inexpensively priced SMPTE capable interfaces to the
+  broad based world of the IBM PC should further speed this movement.  Look
+  for a wide variety of new SMPTE based products to be introduced into the PC
+  world over the next 12-18 months, as software developers rush to fill the
+  current void.
+
+  You can expect to see mainstream software companies such as Twelve Tone
+  Systems, Magnetic Music, and Voyetra introduce new or enhanced products
+  based on their current sequencer product line.  All of these products will
+  exploit SMPTE to some degree.  It is likely that you will see the
+  introduction of totally new products for use with SMPTE.  A product based
+  on the concepts of Digidesign's Cue Sheet is almost certain to appear.
+
+
+
+
+
+
+
+
+
+
+
+                                       8
+
+
+
+
+
+
+
+
+  The Music Quest MQX-32 PC MIDI Interface
+
+  The MQX-32 is the latest addition to the Music Quest PC MIDI interface
+  product line.  As the preceding discussion has illustrated, it provides a
+  significant set of sync features.  Furthermore, the MQX-32 is upward
+  compatible with the MIDI Co-processor Card, as well as interfaces based on
+  the Roland MPU chip set.
+
+  MQX-32 Features
+
+  The MQX-32 incorporates many new features not found in current PC
+  interfaces.
+
+     Two separate MIDI-out ports allowing PC software to support two separate
+     MIDI paths or a total of 32 MIDI channels.
+
+     Chase Lock Tape Sync.  The MQX-32 can "stripe" a tape so that it can be
+     started from any location.  When the tape is played, the MQX-32
+     generates a Song Position Pointer which allows a PC sequencer to "chase"
+     to the current tape location.  Unlike ordinary FSK sync, CLS allows you
+     to start from any place on the tape.
+
+     SMPTE.  The MQX-32 can write and read 30 frame drop and non-drop SMPTE
+     format.  The MQX-32 is capable of generating MIDI Time Code during SMPTE
+     reading, so that outboard MIDI devices can respond to the MIDI Time Code
+     messages.  SMPTE support includes a "cue point" facility which
+     simplifies the development of PC based SMPTE software.
+
+     MIDI Time Code support.  The MQX-32 can receive MIDI Time Code messages
+     from MIDI-in.  MIDI Time Code and SMPTE are implemented so that PC
+     software sees them as identical sync sources (i.e. the "cue point"
+     facility works with both).
+
+  Software Support
+
+  All software that runs on the current MIDI Co-processor Card will run on
+  the MQX-32.  All existing PC sequencers that support Song Position Pointer
+  based MIDI sync will work with the MQX-32's Chase Lock Sync.  This
+  includes:
+
+     Cakewalk
+     Forte
+     Sequencer Plus
+
+  The following companies have made commitments to support the MQX-32's new
+  features:  
+
+     Twelve Tone Systems (Cakewalk)
+     Magnetic Music (Texture)
+     LTA Productions (Forte)
+     Imagine Group (Master Series)
+     Club MIDI (ProLib)
+     The MIDI Connection (Tape 'n' Step).
+
+
+
+
+                                       9
+
+
+
+
+
+
+  Trademarks
+
+  All trademarks are the property of their respective companies.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                       10
+
+

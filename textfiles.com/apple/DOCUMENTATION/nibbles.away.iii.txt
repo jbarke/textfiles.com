@@ -1,0 +1,736 @@
+                     **************************************
+                    *                                      *
+                   *             NIBBLES AWAY III           *
+                  *                                          *
+                 *            Complete Documentation          *
+                  *                    by                    *
+                   *                Mr.  Wiz                *
+                    *                                      *
+                     **************************************
+
+     Nibbles Away III utilizes a unique programming language called NADOL, the Nibbles Away Disk Optimized Language.  This program can be modified by the user at will.  This allows NAIII to remain current, no matter what new developments in copy-protection take place.  An added benefit is that users can create their own programs under this powerful language.  A few examples would be programs which can convert DOS 3.3 files to CP/M, or one which could display a color disk map of files on a disk.  NADOL is used in much the same way as Applesoft, so, if you can program in Applesoft, you should feel comfortable with NADOL.
+     All of the screens, menus and prompts you will use with NAIII were created with the NADOL language.
+
+Using NADOL
+-----------
+     NADOL is an interactive language that can have 2 distinct modes.  The first is "immediate" mode where commands are executed as they are typed in.  The second is "deferred" mode, where a series of commands is typed in and executed later.  From the Main Menu prompt choose the NADOL option.  This will display a period (.), which is the prompt for the NADOL immediate mode.  Try this command:
+                    PRINT "HELLO" <return>
+The word HELLO is printed on the screen.  Numeric expressions work in the same manner, such as:
+         PRINT 5*4 <return> which will print 20 on the screen.
+     Some commands require variables be passed to their parameters.  The variables must first be defined.  In this example, the following sequence of commands will read in and display data from sector 5 on track 4:
+
+DEFINE INTEGER TRACK,SECTOR,COUNT,ERR
+TRACK=4
+SECTOR=5
+COUNT=1
+RSECT(RBUF,TRACK,0,SECTOR,COUNT,6,1,ERR)
+DISPLAY(RBUF,256)
+
+The DEFINE statement creates the four variables which are needed to pass to the RSECT routine.  Then the track and sector numbers are assigned to the variables with the "=" operator.  The variable COUNT is set to 1 since only one sector is to be read.  The RSECT procedure is called to perform the actual read operation.  Then the DISPLAY procedure is called to show the data which was just read in.  The predefined variable RBUF is a section of memory normally used for raw data reads, but it can be used for any other purpose.  In this case, we used it for a temporary storage buffer for the data that was read and displayed.
+     At any time NADOL is waiting for a response (with the blinking cursor), the CTRL-P key will print the contents of the screen to the printer.  The predefined variable PRTSLOT (printer slot) is set to 1 but may be changed with the configuration menu.
+     Integer variables can range from -32767 to +32768.  For some operations, byte variables are desirable.  They range from 0 to 255.  Integers occupy 2 bytes in memory, bytes occupy 1 byte.
+     NADOL also allows the use of arrays or groupings of variables.  They are referred to by the same name, with the "subscript" distinguishing them.  Below is an example of how to create and use an integer array:
+
+DEFINE INTEGER[10] MINE
+MINE[0]=1
+MINE[4]=5
+PRINT MINE[0]+MINE[4]
+
+This would print 6, since the 2 values would be added together. Note that on the Apple II and II+ the right bracket can be entered with shift-M and the left bracket with shift-N from NADOL.
+     All data managed by NADOL is stored in either integers or bytes or arrays.  Many times it is desired to store text data in a program.  NADOL has provisions for handling this.  Text is stored in byte arrays in a special format.  The text starts at element 0, with each additional character in the next sequential location.  The last element should be zero indicating the end of the text string.
+     Normally when an array variable is specified in a PRINT statement, the value of the first element is displayed.  In order to print the text contained in a byte array, an exclamation point should be placed in front of its name in the PRINT statement:
+
+DEFINE BYTE[30] STRING
+STRING[0]="H"
+STRING[1]="I"
+STRING[2]=0
+PRINT !STRING
+
+Would print HI on the screen.
+     NADOL uses a number of built-in mathematical expressions including addition (+), subtraction (-), multiplication (*), and division (/); as well as logical operators, <>, <=, =>, =, etc.  The order of precedence means that the expression:
+
+5*6+3*4
+
+will result in 42.  NADOL first evaluates the 2 multiplcations, since they have highest precedence, then the addition will be performed.  Parentheses may also be used in mathematical operations.  Logical operators include: AND, OR, XOR.  The comparison will return a 1 or 0 depending on the result of the logical operation.
+     The ASCII value of a character can be used in an expression or comparison.  This is accomplished by enclosing the ASCII character in double quotes ("), such that "A" would result in the hexadecimal value 65 being used.
+
+The Editor
+----------
+     NADOL's built-in editor allows scanning of a program as well as insertion and deletion of lines or characters.  The editor can handle lines up to 250 characters in length and supports horizontal scrolling to allow long lines to be displayed.  The standard editor uses the 40-column display but versions are included to support many 80-column displays.
+     If no program is in memory, the cursor will be at the top of the screen with [END OF PROGRAM] displayed.  This shows that there are no lines of program currently stored. 
+     The editor is invoked by typing EDIT at the '.' prompt.  This will display the current program and place the cursor at the top of the screen.  The commands of the editor and their descriptions follow:
+
+left arrow  Move cursor left one space
+right arrow Move cursor right one space
+ctrl-A      Selects Add mode.  All subsequent characters will be
+            inserted into the current line.
+ctrl-B      Move to Beginning of line.
+ctrl-C      Page downwards.
+ctrl-D      Delete character to right of cursor.
+ctrl-E      Cursor up one page.
+ctrl-F      Restores previous contents of line.  Undo any changes.
+ctrl-I      Tab to next tab stop.  Tab stops are set every 2 characters.
+ctrl-L      Insert a new Line at cursor position.
+ctrl-N      Moves to End of line.
+ctrl-Q      Quit editor and return to NADOL.
+ctrl-R      Scroll page upwards.
+ctrl-W      Move cursor upwards.
+ctrl-X      Move cursor downwards.
+ctrl-Y      Deletes the line which the cursor currently occupies.
+ctrl-Z      Scroll downwards.
+
+NADOL
+-----
+     NADOL is a structured language borrowing from Pascal, Basic, and C.  Programs are arranged as one statement per line.  Branching is allowed to another part of the program.  Programs are entered using the Editor function and executed with the RUN command.
+     There are 4 options that NADOL can use depending upon the program line contents:
+
+1. Statement - "PRINT (5*6)/3"
+2. Assignment - "I=5"
+3. Procedure call - "DISPLAY($800,40)"
+4. Flow control - IF/ELSE/ENDIF, GOTO, WHILE/ENDWHILE, etc.
+
+Entering the following sample program:
+
+DEFINE INTEGER ME
+ME=0
+WHILE ME<5
+   PRINT ME
+   ME=ME+1
+ENDWHILE
+PRINT "DONE"
+
+and running it with RUN would procduce:
+
+0
+1
+2
+3
+4
+5
+DONE
+
+The WHILE/ENDWHILE lines are called a block.  As long as the contents of the block remain true, the program will stay within the block.  In the above example, when ME became greater than 5, the program jumped out of the block.  Multiple blocks, or nesting of blocks, are allowed with 8 blocks deep being the maximum.
+     Several sample programs are contained on the disk.  Try running them and changing them to see how the editor and NADOL work together.
+
+Procedures and Functions
+------------------------
+     NADOL has 2 different ways to create subroutines in a program.  Procedures perform a set of instructions and return to the main program.  Functions pass back a value to the main program.
+     A sample of a Procedure follows:
+
+DEFINE INTEGER J
+
+PROCEDURE TIMESTWO
+   J=J*2
+ENDPROC
+
+J=8
+PRINT J
+TIMESTWO
+PRINT J
+
+When RUN the results 8 and 16 would be printed.
+     Functions operate in much the same way as Procedures, except they act as expressions rather than statements.  Example:
+
+DEFINE INTEGER J
+
+FUNCTION OURS
+   %1 = %1 + 1
+   RESULT = %1 * %1
+ENDFUNC
+
+PRINT OURS(7)
+J=OURS(6)
+PRINT J
+
+As shown, a function is used on the right side of an equate, and returns a value.
+
+NADOL Built-In Statements
+-------------------------
+The following layout will help explain each statement:
+
+NAME                    TYPE
+---------------------------------------
+ Purpose
+ Syntax (optional fields in parentheses)
+
+
+AUXMOVE                  Procedure
+ To move data to or from auxiliary memory in a IIe or IIc.
+ AUXMOVE(apple addr,aux addr,length,direction)
+
+BEEP                     Procedure
+ Sounds a tone.
+ BEEP(tone,time) range 0-255
+
+CALL                     Procedure
+ Executes a machine-language subroutine.
+ CALL(address,accumulator,X-reg,Y-reg,status)
+
+
+CATALOG                  Statement
+ Display the catalog of a data disk and free space remaining.
+ CATALOG
+
+CLEAR                    Statement
+ Clears all variables.
+ CLEAR
+
+CLREOL                   Statement
+ Clears all text to right of cursor.
+ CLREOL
+
+CLREOP                   Statement
+ Clears all text to right of cursor to end of current page.
+ CLREOP
+
+COLOR=                   Statement
+ Sets the color used in lo-res graphics.
+ COLOR=expression (0-15)
+
+CONVERT                  Procedure
+ Convert a byte array containing ASCII text into an array of hex or              decimal values.
+ CONVERT(source,destina,type,size,count1,count2)
+
+COPY                     Procedure
+ Copies a block of data from one location to another.
+ COPY(source,destina,length)
+
+DEFINE                   Statement
+ Allocates space for one or more variables.
+ (DEFINE) type (n) name (,name)..
+
+DELAY                    Statement
+ Pauses for a specific amount of time.
+ DELAY(expression) in milliseconds
+
+DELETE                   Command
+ Removes a file from work disk.
+ DELETE filename
+
+DISASM                   Statement
+ Displays a disassembled listing of machine code.
+ DISASM(start,label,lines,offset)
+
+DISPLAY                  Procedure
+ Displays a block of data in hex.
+ DISPLAY(start,length)
+
+EDIT                     Command
+ Invokes the built-in program editor.
+ EDIT
+
+FILL                     Procedure
+ Fills a section of memory with a value.
+ FILL(start,length,value)
+
+FIND                     Procedure
+ Finds a specified pattern with the ability to ignore bit 7 and
+ perform wildcard matching.
+ FIND(start,length1,pattern,length2,7 flag,wild flag,offset)
+
+FLASH                    Statement
+ Sets flash mode for printed characters.
+ FLASH
+
+FILTER                   Procedure
+ Copies data into a write buffer, passing it through a 'filter' to
+ remove unwanted values.
+ FILTER(start,length,table,number)
+
+FORMAT                   Procedure
+ Formats a range of tracks.  FORMAT(first,last,volume,interleave,nsect,slot,drive,error)
+  interleave=name of byte array containing numbers for sectors on tracks
+  to be formatted
+
+FREE                     Function
+ Returns the amount of space available for programs and data.
+ variable=FREE(x) where x is a dummy expression, usually 0.
+
+GOTO                     Statement
+ Transfers program execution to another location.
+ GOTO labelname
+
+GOTOXY                   Procedure
+ Moves cursor to a new location on screen.
+ GOTOXY(x,y)
+
+HCOLOR                   Procedure
+ Sets color for high-res plotting.
+ HCOLOR=expression   (0-7)
+
+HEXPACK                  Statement
+ Reads HEX data into byte array, with optional checksum.
+ HEXPACK name WITH "text" (,checksum)
+
+HIRES                    Statement
+ Initializes hi-res graphics mode.
+ HIRES
+
+HLINE                    Procedure
+ Draws a line on lo-res screen.
+ HLINE(x1,y1,x2)
+
+HOME                     Statement
+ Clears screen and places cursor in upper left corner.
+ HOME
+
+HPLOT                    Statement
+ Plots points or draws lines on hi-res screen.
+ HPLOT(x,y) (TO x,y)...
+
+HSCRN                    Function
+ Returns value of a dot on hi-res screen.
+ variable=SCRN(x,y)
+
+IF, ELSE, and ENDIF      Statement
+ Alters program flow based on a condition.
+ IF expression
+   .
+   (statement executed on true)
+ (ELSE)
+   .
+   (statement executmd on false)
+   .
+ ENDIF
+
+IN#                      Statement
+ Takes program input from a peripheral slot.
+ IN#expresion (1-7)
+
+INIT                     Command
+ Formats a blank disk for storage.
+ INIT name
+
+INPUT                    Procedure
+ Reads ASCII data from keyboard into a byte array.
+ INPUT(name,max,count)  where max is maximum characters allowed, and
+ count is name of variable.
+
+INVERSE                  Statement
+ Sets inverse mode for all printed characters.
+ INVERSE
+
+LABEL                    Statement
+ Sets a location which can be branched to with a GOTO statement.
+ LABEL name
+
+LCMOVE                   Procedure
+ Moves data to or from the language card.
+ LCMOVE(mem address,lc address,length,,direction)
+ where if direction=0 then from LC, if 1 then to LC
+
+LENGTH                   Function
+ Returns the length of the text in a byte aray.
+ variable=LENGTH(name)
+
+LIST                     Command
+ Displays the current program.
+ LIST
+
+LOAD                     Command
+ Loads a file from current workdisk.
+ LOAD filename (AT address)
+
+LORES                    Statement
+ Initializes lo-res graphics.
+ LORES
+
+LSCRN                    Function
+ Returns the color of a point on screen.
+ variable=LSCRN(x,y)
+
+MAKE                     Procedure
+ Creates a filter in the specified array.
+ MAKE(address,length,start,num zeroes,bit length)
+
+MASK                     Procedure
+ Sets and clears bits in range of memory.
+ MASK(start,length,or value, and value)
+
+NEW                      COMMAND
+ Erases current program and clears variable space.
+ NEW
+
+NOT                      Function
+ Returns the logical inverse of a value.
+ variable=NOT(expression)
+
+NORMAL                   Statement
+ Returns text display to normal characters.
+ NORMAL
+
+PACK                     Procedure
+ Places a text string into a byte array.
+ PACK name WITH "text"
+
+PDL                      Function
+ Reads a game paddle.
+ variable=PDL(expression)
+
+PLOT                     Procedure
+ Plots a dot on lo-res screen.
+ PLOT(x,y)
+
+PR#                      Command
+ Sends all text output to perpherial slot.
+ PR#expression (1-7)
+
+PRBLOCK                  Procedure
+ Displays a section of memory in a variety of formats.
+ PRBLOCK(start,length,label,digits,format,count1,count2,space)
+ where:
+  length=# of bytes to display
+  label=first # to show on left margin of screen
+  digits=# of digits to show of label above (0-4).
+  format-0=ASCII, 1=HEX, 2=HEX with bytes <$80 in inverse.
+  count1=# of bytes displayed per line.
+  count2=# of bytes displayed per grouping on line.
+  space=# of bytes displayed between groupings on a line.
+
+PRINT                    Procedure
+ To display data on screen.
+ PRINT (expression)(,)(;)(expresion)(,)(;)...
+
+PRINTBYTE                Statement
+ Prints 8 bit hex values.
+ PRINTBYTE(expression)(,)(;)...
+
+PRINTHEX                 Statement
+ Print 16 bit hex values.
+ PRINTHEX(expression)(,)(;)...
+
+PROCEDURE                Statement
+ Defines a user subroutine.
+ PROCEDURE name
+
+RECAL                    Procedure
+ Moves read/write disk head to track 0.
+ RECAL(slot,drive)
+
+RENAME                   Command
+ Changes name of disk file.
+ RENAME oldname,newname
+
+READ                     Function
+ Reads a character from keyboard.
+ variable=READ(expression)
+
+RBLOCK                   Procedure
+ Reads 1 or more blocks from a ProDOS format disk.
+ RBLOCK(address,block,count,slot,drive,error)
+
+RESULT                   Statement
+ Evaluates expression to be returned as the result of a user defined
+ function.
+ RESULT=expression
+
+RSECT                    Procedure
+ Reads 1 or more sectors from a disk.
+ RSECT(address,track,half,sector,count,slot,drive,error)
+
+RTRACK                   Procedure
+ Reads raw data from a specified track into the read buffer.
+ RTRACK(address,track,half,slot,drive)
+
+RSYNC                    Procedure
+ Functionally identical to RTRACK, except that a reference mark on
+ track 0 is checked before reading.
+ 
+WSYNC                    Procedure
+ Functionally identical to RTRACK, except a reference mark on track 0
+ is checked before writing.
+
+WTRACK                   Procedure
+ Writes a section of raw data to a disk from write buffer.
+ WTRACK(sync size,pre fill,track,half,slot,drive,error)
+ where pre fill=# of sync bytes to write prior to data.
+
+RUN                      Command
+ Begins the execution of a user program.
+ RUN
+
+SAVE                     Command
+ Stores programs or data on disk.
+ SAVE filename (AT address,length)
+
+SETFORMAT                Procedure
+ Selects the format, address header, data header, and interleave for
+ RSECT, WSECT and FORMAT procedures.
+ SETFORMAT(type,address header,data header,interleave)
+
+SIZEOF                   Function
+ Determines size of a NADOL disk file.
+ variable=SIZEOF(filename)
+
+STOP                     Statement
+ Terminates a program.
+ STOP
+
+TEXT                     Statement
+ Switches off graphics mode and return to full screen text.
+ TEXT
+
+VLINE                    Procedure
+ Draws a vertical line on lo-res screen.
+ VLINE(x1,y1,y2)
+
+WBLOCK                   Procedure
+ Writes 1 or more blocks to a PorDOS disk.  WBLOCK(address,block,count,slot,drive,error)
+
+WHILE/ENDWHILE           Statement
+ Causes a section of a program to be executed repeatedly until a
+ condition is met.
+ WHILE expression
+   .
+   .
+   (executable statement)
+   .
+   .
+ ENDWHILE
+
+WORKDRIVE                Statement
+ Defines drive for file operations.
+ WORKDRIVE(slot,drive)
+
+WSECT                    Procedure
+ Writes 1 or more sectors to a disk.  WSECT(address,track,half,sector,count,slot,drive,error)
+
+
+Predefined Variables
+--------------------
+These are predefined and always avaliable for the user in immediate mode.
+
+MEMORY                   Byte Array
+ An array which encompasses the entire Apple memory range. MEMORY[0] is
+ memory location $0. MEMORY[4000] is memory location $4000.
+
+BREAK                    Byte
+ Controls operation of Ctrl-C.  If set to 0 then Ctrl-C will halt a
+ program. If set to 1, will not halt and reset will cause current
+ program to start executing from beginning.
+
+ERROR                    Byte
+ Contains number of any error that occurred. 0=no errors.
+
+PRTSLOT                  Byte
+ Slot number of printer interface card.
+
+MACHID                   Byte
+ Indicates type of Apple used, set during boot:
+ 0=Apple II     1=Apple II+     2=AppleIIe     3=Apple IIc
+
+HASLC                    Byte
+ Indicates presence of 16K RAM card in slot 0.
+
+HASAUX                   Byte
+ Indicates presence of additional 64K memory in IIe or IIc.
+
+RBUF                     Byte Array
+ Read buffer used for raw nibble reads.  $3FFF in length.
+
+WBUF                     Byte Array
+ Write buffer used for raw data writing. $29FF in length.
+
+ADDR16                   Byte Array
+ Contains normal address mark for 16-sector disks (D5 AA 96 DE AA EB)
+
+DATA16                   Byte Array
+ Contains normal data mark for 16-sector disks (D5 AA AD DE AA EB)
+
+ADDR13                   Byte Array
+ Contains normal address mark for 13-sector disk (D5 AA B5 DE AA EB)
+
+DATA13                   Byte Array
+ Contains normal data mark for 13-sector disk (D5 AA AD DE AA EB)
+
+FORM16                   Byte Array
+ Contains the numbers for the sectors on a normally interleaved
+ 16-sector disk. (00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F)
+
+FORM13                   Byte Array
+ Contains the numbers for the sectors on a normally interleaved
+ 13-sector disk. (00 0A 07 04 01 0B 08 05 02 0C 09 06 03)
+
+WNDLEFT                  Byte
+ Value of left margin of screen, normally 0.
+
+WNDWIDTH                 Byte
+ Value of width of screen, normally 40.
+
+WNDTOP                   Byte
+ Value of upper line of screen, normally 0.
+
+WNDBOT                   Byte
+ Value of bottom line of screen, normally 23.
+
+
+
+                                Nibbles Away III
+                                  Docs Part  2
+                                       by
+                                     Mr. Wiz
+
+Using Nibbles Away III Copier
+-----------------------------
+     Option #1 from the Main Menu enters the Bit Copier.  A menu if presented to allow toggling or changing items.  They are self-explanatory.  At any time, pressing Ctrl-P will cause the screen to be sent to your printer VIA whatever slot you have specified in the Configuration section (default=slot 1).
+     During the copy process, several keys can be pressed to invoke special functions.  They are:
+
+Q - Abort current copy process
+S - Skip to next track
+G - Enable hi-res graphics display mode
+T - Disable hi-res graphics, back to text screen
+
+     Included in NAIII is a Fast Sector Copy program to copy standard DOS 3.3, Pascal, and CP/M disks.  If you have an Apple IIe or IIc with additional memory, then the additional memory will be used to speed up the copy process.
+
+Track Editor
+------------
+     This option is used to view raw data present on any track.  Several options are available to allow the data to be scanned or modified, and then written back to disk.
+     When first selected, this function will display several hundered bytes of information from the start of the read buffer.  A blinking cursor will appear in the upper left corner of the data.  In the upper right corner is the track number.
+     Different keys invoke different functions.  They are:
+
+arrows - Move cursor in appropriate direction.
+     I - Move cursor up 1 line.
+     J - Move cursor left 1 byte.
+     K - Move cursor right 1 byte.
+     M - Move cursor down 1 line.
+     > - Move cursor down 1 page.
+     < - Move cursor up 1 page.
+     + - Increment track number.
+     - - Decrement track number.
+     T - Asks for a new track number to be entered.
+     O - Shows Options page for different slot/drive.
+     F - Asks for HEX string to Find.  The cursor will move to that
+         location if found.
+     C - Shows count of the number of bytes to next occurence of bytes
+         at cursor location.
+     P - Shows print menu.
+     S - Sets the 'Track Start' value to the cursor location.
+     E - Sets the 'Track End' value to the current location.
+     M - Moves the currently marked track into the write buffer.
+     / - Toggles between read and write buffers.
+     G - Prompts for new location for cursor.
+     R - Reads current track into buffer.
+     W - Writes data in write buffer to disk.
+     Q - Quit track editor.
+ SPACE - Enters modify mode.  Once entered:
+           Typing HEX values will change value of byte.
+           Space Bar will move to next value.
+           RETURN will accept current value.
+           Arrows move cursor.
+           ESC will abort modify function.
+
+Data which has its high bit clear will be written as SYNC bytes, and will display as inverse on screen.
+
+Sector Editor
+-------------
+     Option #4 will invoke the Sector Editor.  DOS 3.2, DOS 3.3, Pascal, and CP/M disks can be viewed and modified.  A disassembly of the data may be presented.
+     The following keys will perform certain functions:
+
+arrows - Move cursor in appropriate direction.
+     I - Move cursor up 1 line.
+     J - Move cursor left 1 byte.
+     K - Move cursor right 1 byte.
+     M - Move cursor down 1 line.
+     + - Increment sector number
+     - - Decrement sector number.
+     > - Increment track number.
+     < - Decrement track number.
+     / - Toggle between HEX and ASCII display.
+ SPACE - Enter modify mode:
+           HEX digits are accepted on HEX side, space moves to next
+           value.
+           ASCII characters may be entered directly on ASCII side.
+           Arrows move cursor.
+           RETURN accepts current value.
+           ESC aborts modify mode.
+      R - Read current sector.
+      W - Write current sector.
+      D - Disassemble data in buffer from cursor. RETURN to abort.
+      T - Prompt for new track number.
+      S - Prompt for new sector number.
+      F - Selects Find mode.
+           1 - Prompt for start track.
+           2 - Prompt for starting sector.
+           3 - Prompt for end track.
+           4 - Prompt for ending sector.
+           5 - Toggle HEX/ASCII searching.
+           6 - Switches search direction between ascending and
+               descending.
+           7 - Prompt for search string (32 characters maximum)
+               RETURN to start search.
+               Q to abort search.
+       O - Display Options screen.
+       Q - Quit sector editor.
+
+NADOL Error Messages
+--------------------
+ 1 - Syntax error
+ 2 - ()Mismatch error
+ 3 - Parameter count error
+ 4 - Stack overflow error
+ 5 - Duplicate variable error
+ 6 - Duplicate Proc/Func error
+ 7 - Symbol table full error
+ 8 - Undefined symbol error
+ 9 - Unexpected end of file error
+11 - Value range error
+13 - Nested label error
+14 - Subscript error
+15 - No begin error
+16 - Wrong type of parameter error
+17 - Read only error
+19 - Immediate only error
+20 - No language card error
+21 - No auxiliary memory error
+22 - IF/ENDIF mismatch error
+23 - WHILE/ENDWHILE mismatch error
+24 - Program too large error
+25 - I/O error
+26 - Disk full error
+28 - File not found error
+29 - No Applesoft error
+
+                                NADOL Memory Map
+---------------------------------------------------------------------$FFFF
+                                    Monitor                          $F800
+---------------------------------------------------------------------$F7FF
+                                                                         .
+                                   Applesoft                             .                                                                               .
+---------------------------------------------------------------------$D000
+                                   System I/O                        $C000
+---------------------------------------------------------------------$BFFF
+                                                                         .
+                                                                         .
+                               NADOL Program Code                        .
+                                                                         .
+                                                                         .
+---------------------------------------------------------------------$8000
+
+                                   Read Buffer
+
+---------------------------------------------------------------------$4000
+
+                                  Write Buffer
+
+---------------------------------------------------------------------$2700
+
+                                  User Program
+
+---------------------------------------------------------------------    .
+
+                               Data for Variables
+
+---------------------------------------------------------------------    .
+
+                                   Free Space
+
+---------------------------------------------------------------------
+
+                                  Symbol Table
+
+---------------------------------------------------------------------$0C00
+                                 NADOL Workspace
+---------------------------------------------------------------------$0800
+                          Zero page, Stack and Screen
+---------------------------------------------------------------------$0000
+

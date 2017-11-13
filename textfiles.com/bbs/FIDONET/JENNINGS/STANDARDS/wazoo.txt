@@ -1,0 +1,133 @@
+I think I have a first pass at a solution to Wazoo protocol standardizationç
+that solves all of our problems:
+
+1. No or trivial change to existing programs
+2. Existing programs will not become obsolete
+3. No or little impact on new designs.
+
+Also there is a simple way to choose amongst the many protocols potentiallyç
+available with this scheme. The bit definitions below are arbitrary, I justç
+chose them for my convenience in this document:
+
+Y_DIETIFNA	0000 0000 0000 0001	XMODEM w/ TELINK block
+Y_SEALINK	0000 0000 0000 0100	base-level SEALINK
+ZED_ZAPPER	0000 0000 0000 1000	ZMODEM/8K blocks
+DOES_IANUS	0000 0000 0001 0000
+Y_ZMODEM	0000 0000 0010 0000	Forsberg ZMODEM
+Y_SEA_OVD	0000 0000 0100 0000	SEALINK Overdrive
+
+Change #1: Define DIETIFNA as XMODEM-with-a-TELINK-block, not as SEALINK.
+
+Change #2: Make this bit MANDATORY for Wazoo compatibility.
+
+This is the biggest change I'm proposing. Please bear with me -- thisç
+enhances SEALINK not minimize it. It allows choosing SEALINK OVERDRIVE ifç
+both systems support it (instead of only finding that out when you get theç
+bit set in the SEALINK block 0). It allows DIETIFNA/ZMODEM systems toç
+choose ZMODEM in that case.
+
+These bits aren't PROTOCOLS, they are CAPABILITIES; what protocol moduleç
+you invoke in your program is another issue, as will become clear later.
+
+Y_DIETIFNA: Defined as Telink-without-the-Modem7-filename, ie. the stuff inç
+FSC006. Xmodem-with-the-Telink-block. Since you need to have XMODEM to doç
+FSC001, this shouldn't be a problem.
+
+Y_SEALINK: Defined separately because SEALINK does things above and beyondç
+DIETIFNA -- file update, file restart, etc. Upward compatible with SEALINKç
+OVERDRIVE.
+
+Y_SEA_OVD: Full streaming SEALINK. 
+
+ZED_ZAPPER: No change.
+
+Y_ZMODEM: Simply Forsberg's "standard" Zmodem, ie. block size never goesç
+over 1024 bytes. Though it's not exactly "standard" because of the need toç
+be able to do a null session.
+
+CHOOSING A PROTOCOL AT CONNECT TIME:
+
+Here's where the separate DIETIFNA/SEALINK/SEALINK OVERDRIVE bits come in.ç
+The procedure is, the calling node sends its Hello packet, which containsç
+the bits that say what it is capable of; the receiver responds with its ownç
+Hello packet, which specifies which protocol will be used that session (andç
+it was here that the trouble happens if there is no protocol in common.) 
+
+The idea is that the receiver should choose one protocol amongst the many.
+
+If both our systems do DIETIFNA and ZEDZAP, the obvious choice is ZEDZAPç
+(assuming good performance is desired.) If mine does the above, but yoursç
+DIETIFNA, SEALINK, SEALINK OVERDRIVE, then we have no choice but to chooseç
+DIETIFNA. 
+
+The actual protocol choice, done by the receiver, is by ANDing with a bitç
+mask that contains the protocols your program does, then choosing one ofç
+the remaining bit(s) according to a method chosen by the programmer orç
+sysop. 
+
+You could then also have a sensible way to refuse a connection -- say youç
+have a zillion byte file to send, and the receiver can only do DIETIFNA.
+
+For example, a program that does SEALINK and it's variants will maskç
+incoming bits with (Y_DIETIFNA | Y_SEALINK | Y_SEA_OVD); my Fido/FidoNetç
+program would use (Y_DIETIFNA | Y_SEALINK | ZEDZAPPER | Y_ZMODEM). Then, inç
+my particular program, I would choose the left-most bit remaining and setç
+that in the returned Hello packet. Other programs could use other methods,ç
+either an install-time option (ie. I want SEALINK over ZMODEM) or someç
+other criteria. (Fido doesn't do SEALINK yet but it will "soon".)
+
+EXISTING PROGRAMS:
+
+There is no impact in all four combinations of "new" vs. "old" programs --ç
+if "new" programs simply tolerate more than one bit set when they receiveç
+the (edited) Hello packet back from the receiver. For example, you couldç
+get back both ZEDZAP and DIETIFNA bits set. Which bit you'd choose dependsç
+on what protocols your program supports. For Fido, the choice would clearlyç
+be ZEDZAP, as Fido doesn't support SEALINK OVERDRIVE. For SEADOG, theç
+choices would be reversed.
+
+So this would be Change #3, if so desired. I think I read that Bink nowç
+does this. I am going to make Fido do this also -- have the response Helloç
+packet contain only the protocol bit that will be used.
+
+IMPORTANT (NOT SO) SUBTLETY:
+
+Most implementations that do the xmodem variants do it all with one "smart"ç
+module -- therefore most of this protocol switching doesn't really exist --ç
+DIETIFNA, TELINK, SEALINK and SEALINK OVERDRIVE probably mean the sameç
+module. For programs that do this, all that need be done is set theç
+capability bits and go.
+
+Here are some sample scenarios for you.
+
+Scenario #1: My Fido calls your Binkley. (Existing programs.) My helloç
+packet says DIETIFNA, ZEDZAP. Bink replies with DIETIFNA, ZEDZAP. Bothç
+choose ZEDZAP.
+
+Scenario #2: My Fido calls your Tabby. Tabby responds with DIETIFNA. We doç
+DIETIFNA.
+
+Scenario #3: ProgramX calls a Binkley; it does DIETIFNA, SEALINK andç
+ZEDZAP. Existing Bink doesn't recognize SEALINK (bit set) so choosesç
+ZEDZAP. 
+
+Scenario #4: "New" Binkley calls SEADOG. Bink does DIETIFNA, SEALINK,ç
+SEALINK OVERDRIVE, ZEDZAP. SEADOG chooses SEALINK OVERDRIVE.
+
+Scenario #5: "Old" SEADOG calls Binkley. DIETIFNA is the only bit set, andç
+so is chosen. In real life SEALINK, then SEALINK OVERDRIVE is used.
+
+Scenario #6: "New" Binkley calls "new" Fido. Bink does ZEDZAP, SEALINKç
+OVERDRIVE, SEALINK, DIETIFNA. Fido does ZMODEM, ZEDZAP, SEALINK, DIETIFNA.ç
+ZEDZAP is chosen.
+
+---------- ON A DIFFERENT BUT RELATED SUBJECT: 
+
+Though "more bits" is never a long-term solution (witness .MSG fileç
+attribute bits...) more at least helps the short-term. Therefore: in theç
+definition of struct _Hello, in YOOHOO.DOC, make 'capabilities' a LONG, byç
+shortening 'reserved[12]' to 'reserved[10]'. They are not needed now -- andç
+by definition existing programs do not use any "features" specified byç
+those bits in the future. Hence it's fully compatible, backwards andç
+forwards.
+

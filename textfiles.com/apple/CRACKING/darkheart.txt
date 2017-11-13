@@ -1,0 +1,58 @@
+
+Become Master of the Game!
+
+Breaking into The Dark Heart of Uukrul
+
+by Jeff Hurlburt
+
+
+     When I found Broderbund's Dark Heart of Uukrul for sale at a recent swap meet, it was snapped up without a second thought. Long on my "Must Try" list, the game has proved to be a fine multi-character adventure, playing much like such D&D greats as Champions of Krynn.
+
+     Inevitably, there came a time when it seemed that "'Uukrul" had 'done me wrong'. Expensive armor and weapons were destroyed, rare artifacts were used up, etc. due to what seemed to be inordinately bad luck and/or an unfair lack of information. Then, my party came upon a message etched into a Temple wall: "When all else fails, cheat!" That was the last straw.
+
+     The ultimate "game crack" is to have control of character attributes, items, money, etc.. One tactic is to use a block editor (such as the one included with ProSel)  to search the Save diskette for a character's name and, then, edit on-diskette Game Save info. This did not work with 'Uukrul. The changes were made with no great difficulty but detected by the game as invalid. Evidently, Game Save data is protected via some kind of check sum.
+
+     You can, often, get around such schemes on the GS by doing an OA-CTRL-ESC, going to Visit Monitor, finding the character info stuff in memory, and doing the changes there. (If, after starting System 6, Visit Monitor does not show up as an option, go to the SetStart control panel, click "Enable Programmer CDA's", and reboot.)
+
+    'Uukrul is supposed to be "uncrackable"; so, naturally, it disables interrupts during key accesses. OA-CTRL-ESC is ignored. (Foiled again!)
+
+     Happily, there is more than one way to skin a dragon. If the game shuts down OA-CTRL-ESC access, then, perhaps, we should change the game program! A good start is to search the on-diskette copy of the main program for instances of AD 00 C0, a machine code instruction often used to read the keyboard. There are very few of these in Uukrul; so, it was easy to isolate the main KB input routine.
+
+      On my 5.25" version of the game, I found the routine beginning at byte $110 in block $A5 on the Boot diskette:
+
+2C 00 C0
+10 FB
+AD 00 C0
+
+     On a copy of the Boot diskette, this became ...
+
+58
+AD 00 C0
+10 FB
+78
+EA
+
+     The new routine enables interrupts, waits for a keypress, and, then, disables interrupts. This, essentially, "cracks" the game. The GS user can interrupt the program at practically any moment, do a Visit Monitor, make desired changes, and exit back to the game.
+
+     Although you will need to start System 6 in order to mount the Visit Monitor CDA, 'Uukrul, at least the 5.25" version, does not launch from GS/OS. It is a Pascal-based game which boots from its own diskette. This is nice because it means that you will not need to hunt for the program in GS memory. It will reside in memory Bank $00.
+
+     In 'Uukrul, you find the party's Food, as a two-byte hexadecimal value, at address $976E.  As usual, the low byte is first; so, for example, 5E 01 means you have $15E, or, in decimal, 350 Food packets. (By the way, a cheapo Radio Shack calculator which does hex-to-decimal conversions is very handy for this kind of work!)  The Party's Money is saved as decimal, lower bytes first, starting at address $9770.
+
+     If, while in the monitor in 80-column mode, you enter 97E0.98EF (RETURN), you will see that character names show up in the right side of the display. As in most such adventures, 'Uukrul stores data for individual characters beginning with Name followed soon by Experience (in decimal)  and values of attributes, like Dexterity, Piety, ...,  in hexadecimal. To make it easier to see what's where, it's a good idea to jot down attributes, hit points, spell points, experience, etc. before going to Visit Monitor.
+
+     Toward the end of a character's entry are his/her possessions (weapons, armor, healing salve, etc.)  stored as two-byte codes. For instance, if a magic user is wearing Silken Robes, you will find 02 55. A charged-up Wand of Potency is 58 D0 and one which is worn out is 58 D8. (To recharge any charged item, you just change the final "8" to "0".)  Figuring out what code goes with which item is fun and, as you can see, very useful!
+
+     The best time to interrupt most adventures is during some non-special situation, such as while your party is exploring a maze. Once the mods (e.g. more Money, more Food, etc.)  are done, you return to the game.
+
+     Your changes may not, immediately, be reflected in the display. No problem. Walking around a bit, battling some monsters, or visiting a shop will usually force a display update. (This also lets the program reinit pointers and other values which may have been affected.)  Once it's clear that your mods have taken affect, do a Save.
+
+     When making changes, a good 'rule of thumb' is to avoid extremes. For example, if you need food, give yourself 400-500 packets, not 65535! Few D&D style adventures allow attribute values much above 18 (12 in hex); setting Strength to something like 127 ($7F) could bomb the program.
+
+     If increasing a character's Experience, it is best to set a value just below the point at which the next Level increase occurs. Otherwise, your higher Level may be recognized; but, you may get none of the Hit Point, Attribute, etc. boosts which go with advancement!
+
+    Similarly, when you decide to add some item to a character's inventory, do it by overwriting some other, roughly similar item. For instance, add a Healing Potion by replacing, say, a Flask of Poison, not a 75 lb Mace! This reduces the chance of problems in games which maintain a separate item count for each character or keep track of total weight of items carried.
+
+     Perhaps most important, you do not want to spoil the game's challenge. Giving your party enough money to replace a valuable suit of Elfin Chain Mail destroyed by a lucky hit from an Acid Lizard may make sense; but, awarding your party 100,000 gold would ruin the value of many rewards supplied by the game for completing difficult quests. The same principle applies to Hit Points, Spell Points, etc..
+
+     In fact, 'breaking into' any game produces a new challenge: win with the minimum use of the powers at your disposal. Others, lacking such arcane knowledge, are free of this dilemma. Alas, it is a burden you must bear once becoming Master of the Game!
+

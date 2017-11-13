@@ -1,0 +1,842 @@
+     12-Apr-88   Page   
+          ====================================
+          Davex v1.23     ProDOS command shell
+ 
+          12-Apr-88             David A. Lyons
+          ====================================
+ 
+          [See the last page of this document for trademarks and other 
+          notices.]
+ 
+          Davex is ShareWare.  It is NOT in the public domain.  
+          Please copy Davex and give copies to everyone you know.  If 
+          you decide to use Davex after a ten-day evaluation period, 
+          you must send $25 to DAL Systems at the address below [IA 
+          residents add 4% sales tax].  In exchange, you will receive 
+          the latest version of Davex and a registration number.  This 
+          number will entitle you to technical support (on CompuServe, 
+          GEnie, or by mail), and you will be notified when updates 
+          are available.
+ 
+          It will be helpful if you include a brief description of 
+          your hardware when you send in your registration fee.  Also, 
+          specify whether you need a 3.5" disk or 5.25" disks, and 
+          REPORT THE SERIAL NUMBER ON YOUR COPY WHEN YOU REGISTER.
+ 
+                         DAL Systems
+                         P.O. Box 287
+                         North Liberty, IA 52317
+ 
+                         [CompuServe 72177,3233]
+                         [GEnie:       D.LYONS2]
+ 
+ 
+          REDISTRIBUTION PERMITTED
+ 
+          Please distribute Davex widely!  Permission is hereby 
+          granted for Davex to be uploaded to electronic bulletin 
+          board systems.  It may also included in user group libraries 
+          and other collections of Shareware, PROVIDED THAT NO MORE 
+          THAN $5.OO IS CHARGED FOR ANY DISK CONTAINING DAVEX, unless 
+          special arrangements are made with DAL Systems in advance.
+          MODIFIED COPIES OF DAVEX SHALL NOT BE REDISTRIBUTED, and 
+          THIS DOCUMENT AND THE ONLINE HELP SHALL BE INCLUDED WHENEVER 
+          DAVEX IS REDISTRIBUTED.
+ 
+          Davex can be licensed for inclusion with your own programs; 
+          contact DAL Systems for details.
+ 
+          DAVEX ON MULTIPLE COMPUTERS:  You should pay $25 for every 
+          copy of Davex that could be in use at the same time, up to a 
+          maximum of $200 for all computers owned by one company (or 
+          school district).  For example, several people using Davex 
+          on one machine (or one person using Davex on several 
+          machines in different places) should pay only $25; but two 
+          people on two machines should pay $50.
+ 
+ 
+          COMMENTS AND SUGGESTIONS ARE WELCOME
+ 
+          DAL Systems will do its best to correct bugs and make 
+          updates available.  Davex is a continually evolving package, 
+          and you can help shape its future.  (Once you send in $25, 
+          you are entitled to use later versions without sending in 
+          more money.  However, updates ordered directly from DAL 
+          Systems will cost $3.)
+ 
+ 
+          KICKBACKS TO ENCOURAGE WIDER DISTRIBUTION
+          Starting with Davex v1.2
+ 
+          As a registered Davex user, you will receive a $5.OO 
+          "kickback" for every new user who registers a copy Davex 
+          containing your serial number.
+ 
+          Your serial number is the same as your registration number.  
+          To put your serial number on your copy of Davex (if it isn't 
+          already there, or if you get an update from a bulletin 
+          board), use the "filetype" command to change the auxiliary 
+          type of Davex:
+ 
+               filetype %davex sys -x99   [use your serial #, not 99]
+ 
+          Then type "$" to make sure it worked.
+ 
+ 
+     INTRODUCTION
+ 
+     Davex is a command shell for ProDOS.  ProDOS has no way to accept 
+     commands from you directly, so some sort of command interpreter 
+     is required.  Davex includes a large number of "housekeeping" 
+     commands for managing your disks, directories, and files.
+ 
+     Davex is also a starting place for using other ProDOS programs.  
+     When you run another program from Davex (just by typing its 
+     name), you will normally be returned automatically to Davex when 
+     you Quit the other program.
+ 
+ 
+     Note:  This document is not a ProDOS tutorial.  Please refer to 
+            reference manuals or other introductory ProDOS texts for 
+            explanations of ProDOS basics like volume, file, pathname, 
+            directory, prefix, and filetype.
+ 
+ 
+     HARDWARE REQUIREMENTS
+ 
+     Any Apple II system that can run ProDOS and display lower case 
+     can run Davex.  Davex will be much more convenient for you if you 
+     have at least one of the following:  a hard drive, a large RAM 
+     drive, two 5.25 inch drives, or at least one 3.5 inch drive.
+ 
+     Davex has been tested extensively on a variety of hardware.  If 
+     you find that your hardware is not supported, contact me to see 
+     what can be done, or whether an updated version is already 
+     available to support your hardware.
+ 
+ 
+     OPTIONAL HARDWARE
+ 
+     Davex supports the Echo II and SlotBuster II speech synthesizers, 
+     using the TEXTALKER or SCAT software that you should already have 
+     if you own one of these boards.  To use TEXTALKER, just put a 
+     copy of PT.OBJ in the same directory as Davex.  PT.OBJ is part of 
+     the Textalker software which has been licensed from Street 
+     Electronics Corporation, the designers of the Echo, for 
+     distribution with Davex.
+ 
+     For the SlotBuster, ProSCAT must already be installed; Davex will 
+     recognize it but will not install it.
+ 
+     (Note to SlotBuster users:  SCAT support is currently flawed.  
+     Use "config -4y" to force a 40-column display, or "review" will 
+     be garbled.)
+ 
+ 
+     FILES NEEDED FOR DAVEX
+ 
+     When you install Davex on a hard disk or RAM disk, you should 
+     create a subdirectory for Davex.  The name of the subdirectory 
+     doesn't matter, but "DAVEX" is the obvious choice.  From within 
+     Davex, this directory's name can always be abbreviated as "%".
+     Davex itself is a SYS file in the % directory and is usually 
+     called DAVEX, although the name does not matter to Davex.  
+     %CONFIG is a BIN file; it stores configuration options like 
+     printer slot, your scan list, and a file type table.  %HELP is a 
+     directory containing help files for individual commands.  If you 
+     are short on disk space, you may want to leave %HELP off of your 
+     work disk.  If you do, the "help" command will report "directory 
+     not found" when you ask for help on a specific command.  (You can 
+     also put the help directory on another disk; use the 'config' 
+     command to tell Davex the pathname of your help directory.)
+ 
+     No other files are required in the % directory.  Typically there 
+     will be external commands (BIN files) and SYS files there.  If 
+     you are using any aliases, there will be a TXT file called 
+     "aliases" in your % directory (see "help alias").  If you are 
+     using the Echo speech synthesizer, there should also be a copy of 
+     PT.OBJ in the % directory.
+ 
+ 
+     RECOMMENDED HARD DRIVE SETUP
+ 
+     Copy the entire "%" directory onto your hard drive.  Then, if you 
+     want your system to to boot up directly into Davex, use the 
+     "sysalias" command (try "help sysalias") to create a one-block 
+     SYS program, with a name ending in ".SYSTEM", in your top-level 
+     directory.
+ 
+     For example:
+ 
+          copy % /hard1/davex
+          sysalias /hard1/davex/davex /hard1/davex.system
+ 
+     (If there are other ".SYSTEM" files earlier in the directory than 
+     davex.system, copy the first one to another disk, delete it, 
+     create davex.system using the 'sysalias' command, and finally 
+     copy the ".SYSTEM" file back onto the disk.  This way, 
+     davex.system will be the first program ProDOS sees when it looks 
+     for a program to run.)
+ 
+ 
+     RAM DISKS
+ 
+     If your RAM disk is backed up by a battery, the instructions for 
+     hard disks apply to you.  Just install it once, and you're all 
+     set.
+ 
+     To set up a disk that will copy Davex to the RAM disk and execute 
+     it there, first you need to understand the "copy" and "exec" 
+     commands.  If there is a %autoexec file, it will be executed 
+     automatically when you boot Davex.  A typical %autoexec file 
+     contains something like this:
+ 
+          copy %=:sys /ram/davex
+          copy %=:bin /ram/davex
+          copy %aliases /ram/davex
+          copy %help /ram/davex/help
+          /ram/davex/davex
+ 
+     The first line copies all SYS files from the % directory to the 
+     RAM disk, and the second line copies BIN files.  The third line 
+     copies the help directory (if you have a small RAM disk, you may 
+     not want to copy the help).  The last line simply runs the copy 
+     of Davex from the RAM disk.
+ 
+     (Note that it would be simpler to just "copy % /ram/davex".  But 
+     this is a problem because the %autoexec file will be in use, 
+     causing the copy to fail.)
+ 
+     Once you are running the copy of Davex from the RAM disk, your 
+     "%" directory is "/ram/davex".
+ 
+ 
+     APPLE IIGS USERS
+ 
+     See your dealer for the most recent version of the System Disk.  
+     The most recent version (as of February, 1988) is 3.1.  Davex 
+     will work with older versions, but keeping up to date is always a 
+     good idea for maximum compatibility with new software.
+ 
+     If you have an Apple IIgs and wish to have your system boot into 
+     Davex through ProDOS 16 (so you can run S16 and EXE programs  
+     without rebooting), the above instructions still apply to you.
+ 
+     You will also need to delete or rename the START file in your 
+     SYSTEM directory.  This will force the ProDOS loader to scan your 
+     root directory for a startup application instead of running START 
+     (which just runs Finder or Launcher).  You may want to type
+ 
+         scan -a /your.boot.disk/system
+ 
+     so that you can run FINDER and LAUNCHER (in the SYSTEM directory) 
+     just by typing their names.
+ 
+ 
+     USING DAVEX
+ 
+     When you enter Davex, you see (in 80 columns if your system 
+     supports it):
+ 
+          Davex vX.XX (Serial #xxx)
+          Type ? for help, $ for ShareWare notice.
+          current_date_and_time
+ 
+          prefix:
+ 
+ 
+     Your current ProDOS prefix (the directory you're "in"), followed 
+     by a colon (:), is your prompt.  Davex expects you to type a 
+     command and press RETURN.  (If you press RETURN without typing 
+     anything, you just get the current date and time and another 
+     prompt.)  [You can use the 'setdate' command to set the date and 
+     time if your machine doesn't have a clock.]
+ 
+     Some commands can be executed just by typing their names.  For 
+     example:
+ 
+          help
+          online
+          quit
+ 
+ 
+     Other commands require additional information (called 
+     "parameters") after the command name.  You must type at least one 
+     blank space between a command name and the parameters that follow 
+     it.  Examples:
+ 
+          delete that.file
+          lock /disk3/standard.ltr
+ 
+ 
+     For some commands, parameters are optional.
+ 
+          help
+          help copy
+          info
+          info /my.disk/my.file
+ 
+ 
+     You may put more than one command on a line if you separate the 
+     commands with semicolons (;).  If an error occurs during one 
+     command, the remaining commands will not be executed.
+ 
+ 
+     WHAT IS A COMMAND?
+ 
+     There are three kinds of commands:
+ 
+     1.  built-in commands
+ 
+          Built-in commands are part of Davex and are always 
+          available.  When you type a command, Davex always checks 
+          first to see if it's an internal command.  (The '?' or 
+          'help' command displays a list of all internal commands.)
+ 
+          If the command you typed is not internal, it looks on your 
+          disks, trying to find a file with the same name.  You can 
+          tell Davex what directories to look in by using the 'scan' 
+          command.  (See "help scan".)
+ 
+     2.  external commands
+ 
+          If the non-internal command is found to be a BIN file, Davex 
+          attempts to execute the file's contents as an external 
+          command.  These files are usually found in the same 
+          directory as Davex, although they can be in any directory on 
+          your scan list.
+ 
+          Davex features such as wildcards and shorthand pathnames are 
+          available with external commands.
+ 
+          A few external commands are supplied with Davex; an appendix 
+          describes how assembly language programmers can write more 
+          external commands.
+ 
+     3.  SYS, S16, and EXE programs
+ 
+          If a non-internal command is found to be a SYS or S16 
+          program, Davex runs the program.  When you quit the other 
+          program, you will be automatically returned to Davex.
+ 
+          [You need the file BRIDGE.S16 in the same directory as Davex 
+          to run S16 and EXE programs directly from Davex.  These work 
+          only on the Apple IIgs, and you need to boot through 
+          ProDOS16 to run them.]
+ 
+ 
+ 
+     SHORTHAND FOR PATHNAMES
+ 
+     '%' is shorthand for the name of the directory Davex is in.  A 
+     '/' after the '%' is optional.  Examples:
+ 
+        cat %
+        cat %help
+        cat %/help
+        info %davex
+ 
+ 
+     You can specify a volume by slot and drive number like this:
+ 
+        info .61/prodos   <==>  info /xxx/prodos, where /xxx is the 
+                                name of the ProDOS volume in slot 6, 
+                                drive 1
+ 
+        prefix .32        <==>  prefix /xxx, where /xxx is the name of 
+                                the ProDOS volume in slot 3, drive 2 
+                                (usually /RAM)
+ 
+ 
+ 
+     WILDCARDS
+ 
+     It is often convenient to execute one command (for example, 
+     delete, lock, or copy) on a group of files all at once, rather 
+     than on one file at a time.  Davex provides wildcards as a 
+     convenient way to work with groups of files.
+ 
+     '=' and '?' are wildcard characters; they "match" any number of 
+     characters in a file's name.  You can use wildcards in the last 
+     segment of pathnames for many commands.  Only one wildcard per 
+     pathname is permitted.
+ 
+     Examples:
+ 
+        lock =        Locks all files in the current directory
+ 
+        delete =.old  Deletes all files ending in ".old" from the 
+                      current directory
+ 
+ 
+     '?' is like '=', but Davex asks you whether or not to operate on 
+     each matching file.  Examples:
+ 
+        lock ?        For each file in the current directory, asks you 
+                      "lock xxxxx? (Y/N)".  Type Y to lock the file, 
+                      or N to skip to the next one.
+ 
+        delete ?.old  For each file in the current directory whose 
+                      name ends in ".old", asks whether or not to 
+                      delete it.
+ 
+ 
+     You can restrict a wildcard to match files only if they are of a 
+     particular type.  Examples:
+ 
+        pg part?:txt     For each "txt" file in the current directory 
+                         beginning with "part", ask whether or not to 
+                         "pg" the file ("pg" displays a file one 
+                         screenful at a time)
+ 
+ 
+     ALIASES (ABBREVIATIONS)
+ 
+     Starting with Davex 1.2, there is a primitive "alias" mechanism 
+     available.  Before Davex tries to find your commands (in the 
+     built-in list, or on disk), it first checks your aliases.  If 
+     there is an alias for a command word you typed, Davex replaces 
+     the word with what it stands for, and continues process the 
+     command line.
+ 
+     Type "alias" to see what aliases are defined.
+ 
+     The aliases are stored in the TXT file %aliases.  See Appendix C 
+     for an explanation of the aliases that come on the disk as 
+     shipped from DAL Systems.  (Of course, you can change the 
+     supplied aliases and add your own--just edit the %aliases file 
+     with a text editor.)
+ 
+     Note:  If you use wildcards with an alias, you may be surprised 
+     to see Davex refer to the command by its real name.  For example:
+ 
+       /my.disk: kill a?
+       delete /my.disk/apple? (y/n)
+       delete /my.disk/apricot? (y/n)
+ 
+     (Davex's alias mechanism does not currently support parameters.  
+     If it did, the 'move' command would simply have been implemented 
+     as the alias "move  copy #1 #2 -d", for example.)
+ 
+ 
+     PAUSING AND ABORTING
+ 
+     If you press SPACE while the screen is scrolling, it will freeze.  
+     Each SPACE press will generally advance the display by one line.  
+     Press RETURN to continue scrolling.
+ 
+     Ctrl-C or Apple-period will print "***aborted" and will always 
+     return you to the command line prompt.
+ 
+     ESC aborts the current operation, but does not necessarily return 
+     you to command level.  For example, if you are executing "pg =", 
+     ESC will abort paging the current file, but pg will begin 
+     executing on the next file matching the wildcard.
+ 
+ 
+     CONTROL CHARACTERS AVAILABLE WHILE TYPING A COMMAND LINE
+ 
+     (from "help cmdline")
+ 
+          Ctrl-B = move to beginning of line
+          Ctrl-D = delete character at cursor
+          Ctrl-E/Ctrl-N = move to end of line
+          Ctrl-F = find forward; press ESC to exit
+          Ctrl-H (left arrow) = move left
+          Ctrl-I = insert (cancelled by arrows or Ctrl-D)
+          Ctrl-J (down arrow) = move down on the list of previous 
+                   commands
+          Ctrl-K (up arrow) = move up on the list of previous commands
+          Ctrl-L = toggle Caps-lock on/off for Apple II+
+          Ctrl-M = return (accept whole line, even the part after the 
+                   cursor)
+          Ctrl-O = if the following character is a control character, 
+                   inserts it (control characters can't normally be 
+                   entered).  If the following character is "K" to "O" 
+                   or "k" to "o", a special character is inserted 
+                   (useful only on the II+ keyboard):
+ 
+                      K L M N O k l m n o
+                      [ \ ] ^ _ { | } ~ DEL
+ 
+          Ctrl-Q = accept portion of line before cursor
+          Ctrl-R = re-edit previous input
+          Ctrl-U (right arrow) = move cursor right
+          Ctrl-X = cancel input
+          Ctrl-Y = erase from cursor to end of line
+          DELETE = erase character to left of cursor
+ 
+          Apple-Y = same as Ctrl-Y
+          Apple-H = Hardcopy of screen (set printer slot with config)
+                    (beeps twice if priner is busy) [doesn't work on
+                    the Apple II+]
+ 
+ 
+ 
+     MUCH MORE INFORMATION ONLINE
+ 
+     This document is intentionally short.  Information on each 
+     command and on other topics can be found using the 'help' 
+     command.  Type 'help help' (or '??') to get started.
+ 
+     The first line of each help file shows alternative names for the 
+     command, if there are any.  Then the command's syntax is given, 
+     using square brackets around the parts you can leave out.
+ 
+     DON'T IGNORE THE ONLINE HELP!  Even if a command's purpose and 
+     use seem obvious, take a quick look at the help.  Most of the 
+     commands have handy options that you won't know about if you skip 
+     the help.
+ 
+ 
+     "DASH" PARAMETERS
+ 
+     Many commands take optional parameters following a "-".  A letter 
+     identifying the parameter follows the "-".  In some cases, a 
+     value (a number, or string, for example) is expected after the 
+     letter, and in other cases nothing more is required.
+ 
+     Examples
+ 
+          cat /xyz -t      The "-t" stands for "tree"; when a DIR 
+                           appears in the listing, "-t" tells the 
+                           catalog command to indent two spaces and 
+                           list the contents of the directory.  No 
+                           value is expected after the "-t".
+ 
+          cat /x -fsys     The "-f" stands for "filetype"; a filetype 
+                           must be specified after the "f".  (In this 
+                           example, files not of type SYS will not 
+                           appear in the listing.)
+ 
+ 
+     Internal commands
+ 
+     This is just a list of commands.  It tells you what commands are built 
+     into Davex, but it does not explain them.  Consult the online help to 
+     find out how to use a specific command.
+ 
+          help | ?    display command information
+ 
+          cat         display directory
+          prefix      change prefix
+ 
+          top         set prefix to parent volume
+          up          change prefix to parent directory
+          over        move to another directory
+          online      print names of online volumes
+ 
+          copy        copy files or trees of files
+          update      replace outdated files
+          pg          display files a screenful at a time
+          type        display files
+ 
+          rename      change name
+          delete      destroy files
+          create      create a directory or other file
+          filetype    change file's type (and auxiliary type)
+ 
+          alias       show or change aliases (abbreviations)
+          config      show or set various Davex options
+          ftype       display or update filetype table
+          dev         list, add, or remove ProDOS devices
+          scan        examine or change the scan list
+ 
+          exec        get keyboard input from a TXT file
+          como        redirect command output to file or printer
+          size        show size of file or directory
+          info        print info on file
+          lock        make a file read-only
+          unlock      allow read, write, rename, delete
+          prot        protect file
+          spool       spool files for later printing
+          eject       eject a volume or all volumes from SmartPort
+          touch       touch a file, updating its modification date/time
+                      (or set/clear backup bit)
+ 
+          bye         quit Davex
+          cls         clear screen (or send Ctrl-L to file/printer)
+          rep         repeat:  execute a command several times
+          err         print ProDOS error message from code
+          num         convert numbers between decimal and hex
+          dt          print date and time
+          boot        boot the system
+          mon         enter the Monitor
+          echo        echo string
+          =           print pathnames
+          wait        wait for spooled files to finish printing
+ 
+ 
+     External commands
+ 
+     These commands are supplied with Davex.  Other external commands can 
+     be written by an assembly language programmer.
+ 
+          blist           list a BAS file in ASCII
+          brun            run a BIN file ['brun' is actually a small SYS 
+                              file, not an external command]
+          chkmod          compare modification dates on pairs of files
+          conp            set IIgs control panel options
+          deschw          describe system hardware
+          du              summarize disk usage
+          ffind           search directories or volumes for files (find by 
+                              name, type, auxiliary type, need-backup)
+          find            search files for lines containing a given string
+          gsbuff          set Apple IIgs printer/modem buffer sizes
+          hdr             print lines from the beginning of a file
+          init            initialize (format) any ProDOS block device (or 
+                              just write Boot blocks to a volume)
+          iw2             set up print options for ImageWriter II
+          mx80            set up print options for Epson MX80
+          pset            set up print options for NEC8023 / ProWriter / 
+                              Imagewriter
+          setdate         sets date and time (only if no clock available)
+          setstart        examine or set the startup path of a SYS 
+                              application
+          sysalias        create an alias for a SYS file
+          what            determine what a file is (this can be really 
+                              handy!)
+ 
+ 
+     TRICKINESS
+ 
+          If a non-internal command is found to be of type DIR 
+     (subdirectory or volume), Davex simply sets your prefix to that 
+     directory.  This is similar to using the 'prefix' command, except that 
+     the scan list is used.
+ 
+          After an optional parameter that accepts no parameter value, 
+     additional parameters can follow without another "-".  For example,
+ 
+                         copy this that -fb
+     is the same as
+                         copy this that -f -b
+ 
+     and
+                         cat .61 -ta
+     is the same as
+                         cat .61 -t -a
+ 
+     HOWEVER,
+                         cat .61 -at
+     is NOT the same as
+                         cat .61 -a -t
+ 
+     because the "-a" parameter takes a string value (in "cat .61 -ta" the 
+     string value following "-a" consists of 0 characters).
+ 
+ 
+          Some SYS files can take a pathname parameter; BASIC.SYSTEM, for 
+     example, will run whatever BAS file you specify as its parameter 
+     (actually it does a '-' command, so you can also BRUN a BIN file, EXEC 
+     a TXT file, or launch a SYS file).  If BASIC.SYSTEM is available in 
+     one of your scan directories, you can type
+ 
+          BASIC.SYSTEM MYPROGRAM
+ 
+     to run MYPROGRAM under BASIC.SYSTEM.  To Davex, the parameter 
+     following the name of a SYS file is a STRING, not a pathname.  This 
+     means you can't use the "%" or ".xx" shorthand notations in the 
+     parameter.
+ 
+     (Note that BASIC.SYSTEM does not always preserve your prefix.  If your 
+     prefix refers to a subdirectory, BASIC.SYSTEM will preserve it; 
+     otherwise it sets the prefix to be EMPTY and behaves like DOS 3.3--it 
+     goes by slot and drive numbers and defaults to the slot/drive that 
+     BASIC.SYSTEM was loaded from.)
+ 
+     The 'info' command will tell you whether a particular SYS file has a 
+     startup buffer.
+ 
+ 
+                      Appendix A:  Hardware Compatibility
+ 
+ 
+     Davex has been tested with the following Apple IIs:  Apple II+ 
+     (SmarTerm 80-column, shift-key mod), Apple //e (original and 
+     enhanced), Apple //c (original and UniDisk 3.5 ROM), and Apple IIgs.
+ 
+ 
+     IIgs Support
+ 
+     Davex is compatible with the IIgs but does not behave much differently 
+     than on an eariler Apple.  Since Davex does not disable interrupts, 
+     you can use Classic Desk Accessories (including the Control Panel) 
+     with no problem.  If you launch Davex from a ProDOS 16 controlling 
+     program (like the Launcher, APW, or ECP16), you will be returned to it 
+     when you quit Davex.  You can launch a ProDOS 16 application (a file 
+     with type S16) by typing its name (assuming the directory it's in is 
+     in your scan list), and you be automatically returned to Davex when 
+     you quit.  (The file %BRIDGE.S16 is a tiny ProDOS 16 application that 
+     makes this possible.)
+ 
+ 
+                     Appendix B:  AppleWorks Compatibility
+ 
+ 
+     The pg and type commands recognize AWP files.  In future Davex 
+     versions, 'spool' and 'exec' will probably recognize AWP files. 
+ 
+     The 'cat' command displays AWP, ADB, and ASP filenames using the 
+     capitalization you used when naming the files in AppleWorks.  (This 
+     information is stored in the files' auxiliary type fields.)
+ 
+ 
+                          Appendix C: Standard Aliases
+ 
+     This appendix lists and explains the aliases provided in the 
+     "%aliases" file.  You can use a text editor to remove or change these 
+     aliases, and you can add your own.  The maximum size of the %aliases 
+     file is currently 512 bytes (one block); if your %aliases file is 
+     longer than 512 bytes, Davex simply ignores the excess.
+ 
+     q bye
+     quit q
+       Explanation:  "q" and "quit" stand for "bye" (leave Davex).
+ 
+     > como
+     < exec
+       Explanation: ">" stands for "como" (send output to a file or slot) 
+       and "<" stands for "exec" (get command input from a file)
+ 
+     cd prefix
+     pfx cd
+     down cd
+       Explanation: "cd" (change directory), "pfx", and "down" all stand 
+       for "prefix".  "down" is appropriate because the 'prefix' command 
+       takes you down to a subdirectory if you use a partial pathname 
+       (example: "down mydir" or "down firstdir/xyz/abc").
+ 
+     \ up
+       Explanation: "\" stands for "up", which takes you to the directory 
+       above.
+ 
+     over up;down
+       Explanation:  "over" stands for "up" followed by the directory name 
+       you type.  Example:  If your prefix is "/mydisk/dir1" and you type 
+       "over dir2", your prefix will then be "/mydisk/dir2".  Wildcards are 
+       allowed, because they are not expanded until the "prefix" ("down") 
+       command is executed.
+ 
+     or %;top
+     origin or
+       Explanation:  "origin" or "or" takes you to the top level directory 
+       of the disk Davex is running from.  "%" takes you to the Davex 
+       directory, and then "top" takes you to the top level directory.
+ 
+     o online
+       Explanation:  "o" stands for "online", which shows a list of all 
+       disks in your drives.
+ 
+     home cls
+       Explanation:  "home" stands for "cls", which clears the screen (or 
+       starts a new page on the printer).
+ 
+     slist type
+     tlist type
+       Explanation:  "slist" and "tlist" stand for "type", which displays 
+       the contents of a file.
+ 
+     more pg
+       Explanation:  "more" stands for "pg", which displays the contents of 
+       a file one screenful at a time.
+ 
+     mv rename
+     cname mv
+       Explanation:  "mv" (move) and "cname" (change name) stand for 
+       "rename", which changes the name of a file, directory, or volume.
+ 
+     ctype filetype
+       Explanation:  "ctype" stands for "filetype", which is used for 
+       changing the type or auxiliary type of a file.
+ 
+     mkdir create
+     md create
+       Explanation:  "mkdir" and "md" (make directory) stand for "create", 
+       which can be used to create subdirectories (as well as other files).
+ 
+     rm delete
+     del rm
+     kill rm
+       Explanation:  "rm", "del", and "kill" all stand for "delete", which 
+       erases files and directories.
+ 
+     catalog cat
+     dir cat
+     ld cat
+     ls cat
+       Explanation:  "catalog", "dir" (directory), "ld" (list directory), 
+       and "ls" (list) all stand for "cat", which displays catalog 
+       listings.
+ 
+     cp copy
+       Explanation:  "cp" stands for "copy", which copies files and 
+       directories.
+ 
+     e echo
+       Explanation:  "e" stands for "echo", which prints the strings you 
+       feed it (useful from "exec" files).
+ 
+     ej eject
+       Explanation:  "ej" stands for "eject", which ejects 3.5" disks from 
+       their drives.
+ 
+     print > &;
+       Explanation:  "print" stands for redirecting output to the printer, 
+       and the semicolon between commands is included in the alias, so you 
+       don't need to type one when you use it.  Example:  "print help 
+       rename", or "print cat -t", but NOT "print filename".
+ 
+     page > &;cls
+       Explanation:  "page" does a clear-screen after sending output to the 
+       printer.  Result:  the printer advances to the top of the page.
+ 
+ 
+                           The Conspicuous Last Page
+ 
+ 
+          WARRANTY AND LIMITATION OF LIABILITY.  DAL Systems warrants that 
+     Davex can be a useful tool for some people in some situations, but not 
+     necessarily for you.  The author uses Davex all the time and is 
+     reasonably sure it won't do anything destructive to your data.  But he 
+     DOES keep BACKUP COPIES of all important data, and so should you.  DAL 
+     SYSTEMS AND DAVID A. LYONS SHALL HAVE NO LIABILITY OR RESPONSIBILITY 
+     TO THE PURCHASER OR ANY OTHER PERSON OR ENTITY WITH RESPECT TO ANY 
+     LIABILITY, LOSS OR DAMAGE CAUSED OR ALLEGED TO BE CAUSED DIRECTLY OR 
+     INDIRECTLY BY DAVEX.  THE EXCLUSION OF IMPLIED WARRANTIES IS NOT 
+     PERMITTED BY SOME STATES.  THE ABOVE EXCLUSION MAY NOT APPLY TO YOU.  
+     THIS WARRANTY PROVIDES YOU WITH SPECIFIC LEGAL RIGHTS.  THERE MAY BE 
+     OTHER RIGHTS THAT YOU MAY HAVE WHICH VARY FROM STATE TO STATE.
+ 
+ 
+     The following are registered trademarks of Apple Computer, Inc.:  
+     Apple, AppleTalk, AppleWorks, Disk II, ImageWriter, LaserWriter, 
+     ProDOS.
+ 
+     The following are Apple trademarks pending registration:  ProFile, 
+     UniDisk, Apple IIgs.
+ 
+ 
+          APPLE COMPUTER, INC., MAKES NO WARRANTIES, EITHER EXPRESS OR 
+     IMPLIED, REGARDING THE ENCLOSED COMPUTER SOFTWARE PACKAGE, ITS 
+     MERCHANTABILITY OR ITS FITNESS FOR ANY PARTICULAR PURPOSE.  THE 
+     EXCLUSION OF IMPLIED WARRANTIES IS NOT PERMITTED BY SOME STATES.  THE 
+     ABOVE EXCLUSION MAY NOT APPLY TO YOU.  THIS WARRANTY PROVIDES YOU WITH 
+     SPECIFIC LEGAL RIGHTS.  THERE MAY BE OTHER RIGHTS THAT YOU MAY HAVE 
+     WHICH VARY FROM STATE TO STATE.
+ 
+ 
+          ProDOS and the ProDOS volume formatter are copyrighted programs 
+     of Apple Computer, Inc., licensed to DAL Systems to distribute for use 
+     only in combination with Davex.  Apple Software shall not be copied 
+     onto another diskette (except for archive purposes) or into memory 
+     unless as part of the execution of Davex.  When Davex has completed 
+     execution Apple Software shall not be used by any other program.
+ 
+     (The ProDOS volume formatter is incorporated into the "init" external 
+     command.)
+ 
+     ----------
+     Mike Lutz suggested the name "Davex."  If you don't like it, blame 
+     him.
+ 

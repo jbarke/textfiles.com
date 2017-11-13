@@ -1,0 +1,84 @@
+MiniSport Laptop Hacker - Vol 9              6 Mar 1993
+
+>>> POOR MAN'S PACKET (PMP) ON THE MINISPORT.
+Here's the schematic for the Poor Man's Packet on the Zenith ZL1 or ZL2
+MiniSport Notebook computers.  The notations on this schematic are styled
+after schematics provided by VE3SYB or VE3RJO (the reference wasn't clear)
+in WB9BBC's PMP Newsletter Volume 2 Number 5.
+
+                              RX       CARRIER
+                             BIAS       DETECT
++5v  1 o-----------------------+-----+-----+
+                              /     |     /
+                              \<-+  |  +->\ 2x100K TRIM-POTS
+                              /  |  |  |  /
+                              #  |  |  |  #
+                                 |  |  |
+                              -------------
+                              |  7  1 10  | XTAL
+CTS 14 o----------------------|8        16|---+---|(--+
+                              |           |  === 33pf |
+DTR 13 o----------------------|14       15|---+---|(--+
+                              |    TCM    |           #
+DSR 16 o----------------------|3         4|----|(----------+--+--+--o RX
+                              |  3105     |    .47         |  |  |
+GND 8&4 o--+    +--/\/\/\-----|2          |       2x1N914 /\ /\  /
+           |    | 18k         |           |                |  |  \ 33
+           #    |     +5v  +--|5        11|----|(--/\/\/+  |  |  /
+                |      o   |  |  9 12 13  |    .1   39K |  +--+--+
+                |      |   |  -------------             |     #
+                |      \   |     |  |  |                |
+                |  10k /   |     +--+--+                /
+                |      \   |        #               20K \<---|(-----o TX
+                |      /   |                            /    .1
+                |    C +---+                            #
+                |      |                                      +-----o PTT
+                |     /                                       |
+                | B |/                                        |
+                +---|  2N3904                                 / C
+                    |\                           4K7      B |/
+                      \ E                  -----/\/\/---+---|    2N3904
+                      |                   /             |   |\
+                      #                  /              /     \ E
+                                        /           22K \     |
+RTS 15 o--------------------------------                /     #
+                                                        #
+
+
+ CONNECTION = o or +                           /
+                      /                      |/
+ RESISTORS = /\/\/ or \      TRANSISTORS = --|     B, E and C are marked
+                      /                      |\
+ CAPACITORS = |( or =                          \
+
+ DIODES = /\ or \/      GROUND = #
+
+Other PMP schematics show how you can hook LED monitors onto pin 3 of the
+3105 (a Packet DCD indicator), and the PTT line (transmit light).  The PTT
+line goes into my Kenwood TH21AT, which requires no pullup resistor on the
+collector of the transistor.  YOUR RADIO MAY REQUIRE A PULLUP OR MAY RE-
+QUIRE PTT TO PULL THE DC LEVEL OF THE TX LINE.  See other PMP documentation
+for these complications.
+
+I used 1Mohm pots instead of the two 100k pots.  These two must be 10 or 15
+turn precision.  The 39kohm resistor added in line with the TX audio is
+shown on no other schematics I've seen;  I needed it to cut the audio down
+so that the 20kohm pot could be run about mid-range with my Kenwood TH21AT.
+I used some old junky GE-10 transistors.  These worked fine except on the
+PTT line.  I substituted in a 2N2222 on the PTT line.
+
+Using this hardware, some changes to the "PMP.CFG" file have to be made to
+direct software to the ZL2 COM2 port.  In a nutshell, we need to aim PMP at
+the 8250-compatible registers and bits I spoke about in the last newslet-
+ter.  Look at the previous two issues and compare to these necessary lines
+in PMP.CFG:
+
+  pttport 0x2fc 2 0
+  txport  0x2fc 1
+  cdport  0x2fe 0x20 0
+  rxport  0x2fe 0x10
+
+No "init" lines are necessary because of the availability of *real* power
+on the MiniSport COM2 header (see last issue of MLH).
+
+73, Brian, ka9snf@wb7nnf.#spokn.wa or Internet ka9snf@jupiter.spk.wa

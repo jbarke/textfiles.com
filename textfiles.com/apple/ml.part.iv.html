@@ -1,0 +1,166 @@
+
+***************************************
+*   MACHINE LANGUAGE TUTORIAL PART IV *
+***************************************
+
+The CMP command
+
+CMP stands for CoMPare accumulator. It 
+has an immediate mode. In immediate    
+mode, what happens is this: the value  
+of the arguement is subtracted from the
+contents of the accumulator and this   
+result is dicarded except for the      
+effects on the zero, negative and carry
+flags. English translation immediately 
+following.
+
+We'll take it slowly. The value of the 
+arguement is the byte following the    
+operator. This value is subtracted from
+the contents of the accumulator. Say   
+the arguement is $40 and the           
+accumulator holds $60. $40 is          
+subtracted from $60 and you get $20.   
+Now supposing the arguement value is   
+greater than the value in the          
+accumulator, that is $60 is subtracted 
+from $40. Doing this algebraicly, you  
+would get -$20, but the accumulator can
+only hold numbers from zero to 255. So 
+what happens is that the microprocessor
+adds $100 to it. -$20+$100=$D0. And    
+from this number, the flags take thier 
+cues. By the way, this resulting number
+is thrown out and forgotten about.
+
+What are flags??
+
+The flags that were mentioned live in  
+the status register. Also called the   
+'p' register. This register is an 8-bit
+register and a flag is one of these    
+bits. However, even though there are   
+eight bits in the register, there are  
+only seven flags. These flags are:
+1> Carry
+2> Zero
+3> Interupt disable
+4> Decimal mode
+5> Break command
+6> Overflow
+7> Negative.
+
+For now, we will deal only with the    
+zero, and negative flags. The zero flag
+is set to 1 whenever a zero is loaded, 
+stored, or gotten as a result in an    
+arithmatic command, such as the CMP.   
+The negative flag is set to one        
+whenever a negative number is loaded,  
+stored, or gotten as a result in an    
+arithmatic command. This machine of    
+ours defines a negative number as any  
+number that has its highest bit set to 
+1. That is, any number greater than    
+$7F.
+
+Branching.
+
+In essence, what the branching         
+statements do is this. They check a    
+specific flag and then depending on    
+whether that flag is a 1 or a zero, go 
+to a location specified by the         
+arguement. For example, BEQ branches   
+when the zero flag is set to 1. (If the
+flag is a 0, program flow continues on 
+with the statement following the branch
+command.
+
+Let's take a look at a short little    
+program.
+
+300:A2 00        LDX #$0
+302:BD 11 03     LDA $0311,X
+305:C9 00        CMP #$0
+307:F0 07        BEQ OUT
+309:20 ED FD     JSR $FDED
+30C:E8           INX
+30D:4C 02 03     JMP $0302
+310:60       OUT RTS
+311:C4 D2 AE ...  (This is hex         
+representation of text and ends with a 
+$0)
+
+This program will print out whatever   
+the text says (text is at $311 and is  
+in ASCII chrs) using a ROM routine at  
+$FDED which prints characters onto the 
+screen. The text must end with a $0 and
+be less than 255 bytes long, otherwise 
+you will either hang the system or fuck
+it up royally.
+
+Even though there are quite a few new  
+commands in the program, we will only  
+focus on the role of the BEQ command.
+
+The second byte of the command (BEQ is 
+a 2-byte command) is the arguement and 
+determines where the program branches  
+to, if it branches.
+
+The way which the address of the branch
+is determined is this. The M.P.U takes 
+the address of the next command after  
+the branch statement (in our program   
+above, this address would be $309) and 
+adds the value of the arguement to it. 
+In our program, the arguement for the  
+branch statement is $7. $7+$309=$310.  
+Which is what we want to happen. But,  
+all number from $80 up are negative!   
+So if the arguement had been $F8, $F8  
+is equal to -$8 and $309-$8=$301. The  
+program would have jumped to $301.
+
+BNE
+
+BNE is a branch command that branches  
+when the Z flag=0, that is a non-zero  
+number is stored, loaded or gotten in  
+an arithmetic operation. This command  
+works in exactly the same way as the   
+BEQ to generate the 'branch-to'        
+addresses.
+
+A word on the other commands.
+
+In the program, there were a lot of new
+commands used, i will cover them in the
+near future, but just to give you an   
+idea, here are some quick defenitions.
+
+JMP: this is much like a BASIC 'goto'.
+
+JSR: this is much like a BASIC 'gosub'.
+
+INX: increment X by 1. (add 1 to the value in the X register)
+
+RTS: this is a general 'end-of program'
+statement. there are some better uses  
+which we will cover.
+
+Well, that's all folks!
+
+***************************************
+*                                     *
+*       Dr. Firmware's M.L            *
+*            tutorial                 *
+***************************************
+*                                     *
+* TESTAMENT:(514)-332-6852            *
+* TRANSFERS AE:(514)-738-1247         *
+*                                     *
+***************************************

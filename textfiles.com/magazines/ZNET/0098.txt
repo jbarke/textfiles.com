@@ -1,0 +1,943 @@
+
+______________________________________
+|////////////////////////////////////|
+|////////////////////////////////////|
+|//SYNDICATE ZMAGAZINE   Issue #100//|
+|//================================//|
+|//Publisher/Editor| April 4, 1988 //|
+|//   Ron Kovacs   | Vol 3, No. 1  //|
+|//================|===============//|
+|//Asst Publisher  |Managing Editor//|
+|// Ken Kirchner   | Mr. Goodprobe //|
+|//================================//|
+|////////////////////////////////////|
+|////////////////////////////////////|
+|____________________________________|
+|SPC                                 |
+|Post Office Box 74                  |
+|Middlesex, New Jersey 08846-0074    |
+|____________________________________|
+|BBS #1: Syndicate (201) 968-8148    |
+|BBS #2: Stairway  (216) 784-0574    |
+|____________________________________|
+|Contents                            |
+|____________________________________|
+|*|Editors Desk                      |
+|*|Communicating With Turbo Basic    |
+|*|XEP80 Review (Yes Another One)    |
+|*|Carina Update                     |
+|*|Commentary on Atari               |
+|*|SPC Newswire                      |
+|_|__________________________________|
+______________________________________
+Editors Desk
+______________________________________
+by Ron Kovacs
+
+We are into the 4th month of 1988 and
+time seems to be flying past faster
+then ever.  There never seems to be
+enough time to do anything!!
+
+Spring is here, Baseball season begins
+today and I am hoping the Mets go for
+it all in 1988!
+
+We have reached our first milestone
+with this weeks issue. Close to our
+second year and 100 issues later. I
+hope we have improved our style since
+our debut in May 1986. After doing
+this weekly for two years, one would
+think this would have to stop, well
+to comfort the many thinking we are
+going to quit, Forget it!  We are
+going to cover the 8 bit till there
+are 3 users left!  (Lets just hope I
+dont have to eat my words next month)
+
+In other news this week, CompuServe's
+SIG*Atari and given Zmag it's own
+Data Library.  In this new area, you
+will find reprints of past articles,
+past issues, utilities, and other
+items of interest. We encourage the
+User Group Editors out there to
+download the articles and use in your
+local newsletters!  Many thanks to
+Ron Luks and Mike Schoenbach for their
+assistance!
+
+We are currently discussing plans for
+a Zmag contest, good prizes are being
+located and details will be released
+in about 2 weeks. Stay Tuned!!!!
+______________________________________
+Communicating with Turbo-Basic XL
+______________________________________
+by Art Horan
+
+When I heard that people were having
+trouble getting an R: handler to work
+with Turbo-Basic XL, I figured,
+-What's the problem? R: handlers are
+relocatable so it should be easy
+getting one to work with Turbo.- Well,
+I eventually did manage to get the
+handler installed and working, and the
+solution did turn out to be simple,
+but not so easy.
+
+First, I thought, why not just tack
+the handler onto the end of the Turbo-
+Basic XL binary load file using the
+DOS copy-with-append function? But I
+rejected that notion, figuring that
+Turbo-Basic would not return control
+to the DOS binary load routine. (Later
+I tried this and found that not only
+doesn't the handler load, but Turbo-
+Basic wouldn't run either and I wound
+up back at the DOS menu.)
+
+Okay, the R: handler doesn't need to
+load _chronologically_ after Turbo,
+only after it in memory. The handler
+always tries to load in at the lowest
+unused memory location, and Turbo-
+Basic XL also loads into low memory,
+so we have to find a way to keep them
+from using the same memory area. The
+OS has a variable called MEMLO which
+keeps track of the lowest free byte in
+memory. MEMLO is at memory location
+743. If we PRINT DPEEK(743) from
+Turbo-Basic, we get a value of 13865,
+which translates to $3629 hex. So, I
+thought, let's create a binary header
+to load 2 bytes into MEMLO, and the 2
+bytes will be $29 and $36 - the low-
+byte, high-byte way of expressing the
+value $3629. Next append RS232.SYS to
+this, and we'll have a new handler
+which will install itself above Turbo-
+Basic's memory area. Now, I thought,
+we can load Turbo from DOS, or append
+it to the altered RS232.SYS and rename
+the whole thing to AUTORUN. Well, it
+seemed like a good idea, so I tried
+it. And the system crashed. Although I
+did hear the whine of the handler
+downloading just before the system
+locked.
+
+Turbo-Basic XL has a statement called
+-BRUN-, which will load and run any
+binary file. So why not BRUN
+-D:RS232.SYS-. I tried it. The system
+crashed.
+
+Ah-hah! I thought. I bet I'm trying to
+load the handler into Turbo-Basic's
+program area. So I did a DPEEK(128),
+which is where we find BASIC's LOMEM
+variable (in both the Atari and Turbo-
+XL versions). This points to the
+beginning of the program area. It read
+$3629. So, I thought let's see what
+happens to LOMEM if I change MEMLO. I
+DPOKEd 743,$5000. LOMEM still read
+$3629. So then I typed NEW. Voila!
+LOMEM now read $5000. The Basic
+program area was now safely out of the
+way. Now, let's put MEMLO back to
+$3629 and BRUN the handler. The system
+didn't crash. I even heard the whine
+of the handler downloading from my P:
+R: Connection, but when I tried to
+open the R: device, the system
+crashed! I was mystified.
+
+I disassembled RS232.SYS and modified
+it so the first thing it would do is
+change MEMLO to read $3629. Then I
+tried to boot Turbo with the handler.
+The system crashed! So I tried to boot
+this handler with Atari Basic. You
+guessed it - the system crashed! Hmmm,
+why did it crash with Atari Basic? I
+took another look at the disassembled
+RS232.SYS and figured it out. With
+Memlo at $3629 the RS232.SYS code was
+trying to download the handler on top
+of itself - a definite no-no. So I
+changed RS232.SYS to bump MEMLO up to
+$4000, safely above both T-Basic and
+itself. This worked fine with Atari
+Basic, so at least I knew I had solved
+that part. After BASIC loaded with the
+handler, MEMLO was up to $4715. (This
+is with my P:R: Connection, with the
+850, it might be something else.)
+
+Next came what I thought would be the
+hard part - changing Turbo Basic to
+set the new higher MEMLO. But it was
+very easy. The first 8 bytes of the
+Turbo BASIC file are the 6-byte header
+to load into MEMLO and then a value of
+(surprise) $3629. All you have to do
+is use a disk editor to change the 7th
+and 8th bytes of the file to point to
+the desired new MEMLO ($4715 for my
+P:R:C -- but do it lo-byte, hi-byte of
+course). It worked. So simple, yet so
+elusive.
+
+We could just quit here with a working
+R: handler, but let's try some other
+things. First let's see if we can BRUN
+the revised handler. Yup, if we reset
+the program area as above, all we have
+to do is -BRUN D:RS232TB.SYS- (which
+is what I named the revised handler).
+It works fine, but for some reason
+doesn't survive Reset. As a matter of
+fact, our earlier procedure with the
+stock RS232.SYS also works if we reset
+the program area and then reset MEMLO
+to $4000 instead of $3629.
+
+But do we really have to set MEMLO
+that high to get the handler to
+download? Let's try $3900, the next
+memory page after the RS232 download
+code. That works too, and our eventual
+MEMLO with Turbo-Basic is $4015,
+saving almost 2K. Not only that but we
+can create a binary header which loads
+$3900 into MEMLO as I tried to before
+and append the regular RS232.SYS file
+to it. And one last change: let's not
+alter the value that Turbo-Basic loads
+into MEMLO, let's leave that alone and
+instead change the address into which
+the value loads (bytes 3-7 of the
+Turbo-Basic XL file). If we load $3629
+into location 711, all we are changing
+is 2 color registers. We don't need to
+change MEMLO because the handler
+already changed it to $4015 when it
+downloaded. This way we will know by
+the orange border color that we are
+loading the R: version of Turbo-Basic
+XL.
+
+Here is a short program in Turbo-Basic
+XL which you can use to produce an R:
+version of Turbo which will use the
+filename RTBASIC.COM:
+
+100 DATA 255,255,231,2,232,2,0,57
+110 DATA 199,2,200,2
+120 DIM RTB$(24000),PATCH$(4)
+130 ? CHR$(125);- RTBASIC.COM CREATOR  by Art Horan  -:?
+140 ? -THIS PROGRAM CREATES AN R: VERSION    OF TURBO-BASIC XL.-:?
+150 FOR I=1 TO 8:READ A:RTB$(I,I)=CHR$(A):NEXT I
+160 FOR I=1 TO 4:READ A:PATCH$(I,I)=CHR$(A):NEXT I
+170 PRINT -INSERT DISK WITH RS232.SYS IN DRIVE 1 AND PRESS A KEY-:GET A
+180 TRAP 200:CLOSE #1:OPEN #1,4,0,-D:RS232.SYS-
+190 BGET #1,ADR(RTB$)+8,1024
+200 CLOSE #1:BYTES=DPEEK(856):IF ERR<>136 THEN ? CHR$(253);-ERROR -;ERR:END 
+210 ? :? BYTES;- BYTES IN RS232.SYS READ.-
+220 RTB$(LEN(RTB$)+BYTES+1)=--
+230 ?: ? -INSERT DISK WITH TBASIC.COM IN DRIVE 1AND PRESS A KEY-:GET A
+240 TRAP 260:OPEN #1,4,0,-D:TBASIC.COM-:START=LEN(RTB$)
+250 BGET #1,ADR(RTB$)+START,21000
+260 CLOSE #1:BYTES=DPEEK(856)
+270 IF ERR<>136 THEN ? CHR$(253);-ERROR -;ERR:END 
+280 ? :? BYTES;- BYTES IN TBASIC.COM READ.-
+290 RTB$(LEN(RTB$)+BYTES+1)=--
+300 RTB$(START+3,START+7)=PATCH$
+310 ? :? -INSERT DISK IN DRIVE ONE TO RECEIVE   RTBASIC.COM AND PRESS A KEY.-:GET A
+320 TRAP 340:OPEN #1,8,0,-D1:RTBASIC.COM-
+330 BPUT #1,ADR(RTB$),LEN(RTB$)
+340 CLOSE #1:IF ERR<>136:? CHR$(253);-ERROR -;ERR:ELSE :? :? -FINISHED!-:ENDIF 
+350 END 
+______________________________________
+XEP80 Review
+______________________________________
+by John Castravet
+
+I have waited a long time for the
+release of the XEP80 card for the
+Atari computers. For all of this time
+I kept on feeding on various
+speculative articles that appeared in
+ANALOG Computing and Antic, The Atari
+Resource. All that talk about a built-
+in 16K or 32K of memory, increased
+horizontal resolution that would have
+made the 8 bit GEM a possibility.
+
+Finally, a few days ago I have
+received mine via UPS. And was I
+disappointed.
+
+Well, no 32K memory built-in, not even
+16K.
+
+The horizontal resolution is still
+kept at 320 in graphics mode, while in
+text mode a matrix of 5X9 including
+descenders makes itself barely
+noticeable. That means that text looks
+almost the same as any good public
+domain 80 column simulator software in
+the public domain and on most bulletin
+boards. Well, maybe a little better.
+All this on a monochrome monitor. On a
+color monitor the quality is somewhat
+less, but the difference is not
+dramatic. If the signal is fed into
+the luminance input of a monitor with
+separate luminance and chroma inputs,
+versus the composite NTSC input of a
+color monitor, the quality is a little
+better with the former monitor. But
+still the picture is white on black.
+Oh, yes, or black on white.
+
+There was a hand written note in the
+package attesting to the fact that
+only software that uses the legal CIO
+vector to the E: and S: devices will
+work with the XEP80. This sounds like
+passing the blame to software authors.
+Of the little software that's left and
+supposed to be working with the XEP80
+(software that does legal screen or
+editor access), most of it will still
+not work, at least properly. Why? Gone
+are all the features that made the
+Atari computer a superior 8 bit
+machine. Features as Display List
+Interrupts, Vertical Blank Interrupts
+and Player/Missile Graphics are all
+gone. They probably went to join the
+SETCOLOR and DRAWTO commands. All
+these are still accessible in the 40
+column mode, but... Also gone is the
+<BELL>, CHR$(253) sound.
+
+The above mention note also said
+something about having to readjust the
+horizontal hold of the monitor. I had
+to readjust the vertical hold, while
+the horizontal hold just moved the
+picture to the right of the screen to
+bring in the 2 characters that were
+otherwise missing. The display is
+supposed to be 80 columns by 25 lines.
+A simple count revealed that it
+displayed about 74 columns by 23
+lines. Now, this cannot be a problem
+with the monitor itself, since it
+displays the standard Atari video
+output in 40 column by 24 lines with
+ample amount of border around. Even
+when the 25 line from ICD's RTime 8 is
+displayed there is still border left
+on the top and bottom of the picture.
+So the XEP80 is over-scanning.
+Incidentally, forget about the
+familiar time and date display if you
+are using SpartaDos and RTime 8.
+
+Then there is the built in printer
+interface. I wonder how many Atari
+users out there who own a standard
+printer (parallel Centronics) do not
+have some kind of Atari 850, ICS's P:R
+}
+Connection or some other type of
+printer interface. This feature alone
+will not probably make somebody look
+into the XEP80 more deeply. They might
+as well stuck on the front of the box
+an LCD watch, the type that one is
+used these days on seeing on almost
+everything.
+
+In conclusion I view the XEP80 more
+like a gimmick.  Atari should have
+used the parallel port instead of the
+joystick port, and design it in such a
+way that it keeps up with the
+reputation the Atari computers have
+gained based on their graphics
+capability. It should have also a
+separate chroma/luma output as well as
+the composite NTSC one. Before I build
+some kind of a switching box, I would
+have to do quite a lot of plugging and
+unplugging of video cables.
+
+It is true, Atari makes great
+computers, but when it comes to
+peripherals you should better look at
+somebody else's product line. Just
+look at the Percom, Indus and Rana
+disk drives, drives that support true
+double density and were available
+before Atari introduced their own
+-double density- 1050 drives. Now they
+came out with the XF-551. Isn't it a
+little too late?
+
+Luckily for third party developers
+like ICD, OSS and Batteries Included,
+or just simple, regular computer
+hackers, who made possible 256K, 576K
+and even 2Meg available, we have one
+of the most powerful 8 bit machine
+there is. We, Atari users brag about
+our systems everywhere, trying to
+attract new people, while Atari comes
+out with something like the XEP80 or
+even the XE GS (a full fledged 65XE
+computer without the keyboard that
+sells for more). Come on Atari, give
+us a break.
+
+Let's just hope that the XF-551 drive
+and the SX212 modem are worth their
+while.
+______________________________________
+Carina Update
+______________________________________
+by Ron Kovacs
+
+In a near future edition, We are
+going to take another look at the
+Carina BBS software.  Beta test site,
+The Lions Den BBS will be visited and
+we will capture and include commentary
+and update information.
+
+The reason we have choosen to do
+another review is because each Carina
+System can be different and highly
+modified.
+
+The Lions Den BBS, well known in modem
+land, has been helpful in the
+development of the Carina Software,
+and another view looks exciting.
+
+Stay tuned for more information in the
+weeks ahead.
+______________________________________
+Commentary
+______________________________________
+Reprinted from the April issue of the
+CLAUG Newsletter.
+
+Behind the 8-Bit
+----------------
+by Dirk VandenHeuvel
+
+This month I will finally tackle the
+subject I have been putting off for so
+long and tear into Atari for their
+lack of marketing and support. So
+without further ado..
+
+Atari has stabbed all of us Atari
+8-bit owners in the back. From the
+looks of things, Atari's motto should
+be changed from -Power without the
+Price- to -Power without the Support.-
+Atari makes the most powerful home
+computers on the market, both 8-bit
+and 16-bit alike. When it comes to the
+hardware, we are in a class by
+ourselves. This is what makes their
+lack of support all the more
+frustrating. Unlike the Coleco Adam,
+or Timex Sinclair, or a host of other
+orphaned and unsupported computers, we
+cannot upgrade to a better made and
+better supported machine. There is no
+machine that is better made, only ones
+better supported. So we are forced to
+compromise, either stay with your
+superior Atari computer with lousy
+support or switch to an inferior
+computer with better support.
+
+It is unfortunate that Atari has put
+us in this akward position.
+Unfortunate because with the proper
+support and marketing Atari could be
+at the top of the heap. There is
+simply no real reason for us to have
+to switch machines. We already have
+the best made machine, we only need
+support and marketing for it to simply
+be the best. Atari needs to sport a
+higher profile and advertise more.
+Advertising is needed so that people
+who don't know about Atari or Atari
+computers will consider them when
+making a purchase.
+
+In regards to marketing Atari needs to
+remember that when it comes to game
+machines Atari needs to compete not
+only with Sega and Nintendo, but also
+with Commodore. And there is much to
+be learned, if Atari is listening,
+from all three of those companies.
+
+For one, look at how Sega and Nintendo
+are operating. They are marketing
+themselves as being on the cutting
+edge, both with their hardware and
+their software. They are selling games
+that are new and exciting, many fresh
+from the arcades, others quickly
+licensed from the big software
+companies. What does Atari do? It goes
+back and re-releases old programs,
+some over five years old. The art of
+game design has progressed
+considerably in just the last two
+years, to go back to games written
+earlier than that seems a foolish way
+to showcase and sell your machine.
+Furthermore where Sega and Nintendo
+have been quick to develop, release,
+and support hardware for their
+machines Atari has not. Witness the
+multitude of controllers, including
+the light gun and 3-D glasses
+available for those other systems
+contrasted with the meager offerings
+from Atari. The Atari Light Gun should
+have been available seperately, along
+with the Bug Hunt cart, from day one.
+By not doing so Atari turned its back
+on all the loyal Atari owners who
+would have liked to buy one.
+
+But, in the area where Atari has an
+edge it has failed to exploit it. This
+is a lesson that Atari would be well
+to learn from Commodore. That lesson
+is that just like the C64, the Atari
+XEGS is not just a game machine, but
+also an advanced computer. This is a
+strength not a weakness, and it should
+be played up, not pushed under the
+rug. Commodore has seen this and their
+ads emphasize not only the games you
+can play on the C64 (more numerous
+than on ANY other system), but also
+all the OTHER things you can do with
+it. I have yet to see a similar Atari
+commercial or ad (if Atari's
+interested I have an idea for just
+such a commercial). But, Atari much
+more than Commodore needs to do
+something. The Commodore is still the
+first machine to get new games
+released for it, and its software base
+is still growing and going strong,
+unlike Atari's which is getting
+smaller. Sega and Nintendo have seen
+this and are playing a good game of
+catch up. Atari should realize that it
+must do the same. By adopting the
+strategy of getting the licenses for
+the best new games and developing
+their own, rather than releasing old
+and often dated ones. Atari should
+then go on to sell their machines like
+Commodore does, as both a game machine
+and computer all wrapped up in one.
+
+Atari could take another cue from
+Commodore when it comes to support.
+Commodore has released a large amount
+of hardware for its 8-bit line, from
+their 3 1/2- disk drive for the C64,
+and plug-in RAM expanders, to their
+most recent release, a new 8-bit
+computer, the C128D. The C128D besides
+sporting a built-in disk drive has
+also a built-in 80 column board.
+However, unlike Atari they decided to
+give it 64k of dedicated RAM, whereas
+our vaunted XEP80 has only 8k. And the
+XEP80 costs about a 1/5 of what a
+C128D does. Furthermore unlike the 80
+column display on the Commodore, which
+actually has programs to use it, the
+Atari as of now has no commercial
+programs designed for the XEP80.
+
+But, maybe I should have expected this
+from a company that two years ago when
+asked about GEOS, called it an
+interesting novelty. Well, that
+novelty has gone on to found a major
+software company (now planning to
+expand into Apple products, NOT Atari)
+and has breathed new life into the
+Commodore 64. When I asked John Skruch
+two years ago why Atari was not
+developing something like GEOS he
+replied that Atari was waiting for the
+neccesary hardware. They had the
+mouse, but they needed the 80 column
+board and a higher capacity disk
+drive. No matter that GEOS waited for
+neither on the Commodore. But, wait,
+here we are two years later, with the
+80 column board and the new drive and
+we still have no program like GEOS. In
+fact we don't even have an Atari DOS
+that supports the new DD/DS drive to
+its full potential because ADOS is not
+ready yet. Never mind the delay with
+the release of the official version of
+SX-Express for the SX212 modem. Atari
+is obviously doing something wrong.
+
+The question is, where is Atari going
+astray. Are we the users not making
+our preferences and our concerns
+known? I don't think so. All one has
+to do is read the messages on GEnie or
+Compuserve or the articles in the User
+Group Newsletters across the country
+and you can see that the 8-bit Atari
+owners feel like they have been left
+out in the cold. Atari for too long
+has depended on us, the users, and the
+nebulous -third party- companies, to
+do their job for them. To do their
+advertising, their selling, and even
+their job of support. Forget the loss
+of the toll-free customer service
+line, that was no big deal, but when
+the Atari authorized service center
+became a thing of ancient mythology
+we've got problems- right here in
+River City.
+
+What does Atari need to do? First,
+Atari needs to be advertising their
+products more vigorously. Then they
+need to make sure that those products
+are available- all around the country.
+The average consumer should not have
+to be Ellery Queen to find the nearest
+Atari dealer. Next Atari needs to
+ready and release all the hardware and
+software that has been promised up to
+now. It should then start work on
+releasing the kinds of products we
+Atari owners need and want, both
+hardware and software. Next Atari
+should be getting the licenses to the
+newest and hottest games out now,
+instead of looking through the bargain
+bins for last year's has beens. This
+would also save them money in
+advertising, as these are the games
+that are advertised by their
+publishers anyway. All Atari would
+need to do is let people know that the
+program is available on the Atari as
+well.
+
+Atari also needs to be getting on the
+phone with the big software companies
+and letting them know Atari is still
+around. When I talked to Origins about
+Ultima V they told me they wanted to
+release an Atari version, but had no
+inside programmers to spare for the
+project and they were looking for an
+outside programmer to do the port.
+Where is Atari? When I talked to
+Interstel about an Atari version of
+Star Fleet II they said sales had been
+very disappointing on Star Fleet One
+and they were going to pass. But, why
+doesn't Atari offer to port it?
+Finally, when I talked to Microprose
+last year about an Atari version of
+Gunship they complained that most
+Atari owners only had 48k and they
+couldn't do the game in that little
+space. They were going by figures they
+had from some survey over a year old.
+Why didn't Atari set them straight
+with some CURRENT figures? Atari needs
+to be needling, pleading, and cajoling
+these software companies into
+supporting the Atari. They need to do
+more.
+
+It's not my job to do for Atari what
+other computer companies do for
+themselves. Atari has the best
+computers around, and in my opinion
+they also have some of the best users.
+Atari has some of the best businessmen
+around running the show, but if they
+want to be the best computer company
+around they need to work harder on
+marketing and supporting their
+products. Only then can the Atari
+computer truly be called the best-
+without qualification.
+
+Next month, my last column and a wrap
+up of some of the new PD and
+commercial software out and my long
+awaited review of Quickcode. Have a
+nice month!
+______________________________________
+SPC Newswire
+______________________________________
+SOFTWARE PIRATES FACE NEW SUITS
+===============================
+By Don Clark  Chronicle staff writer
+
+(reprinted from the San Francisco
+ Chronicle)
+
+Oakland,Ca--  Top software publishers
+are vowing an agressive new round of 
+joint piracy lawsuits against U.S.
+corporations and others that make
+unauthorized copies of programs.
+
+A joint anti-piracy campaign,
+announced Sunday, is being pushed and
+largely funded by industry giants
+Microsoft, Lotus Development, Ashton-
+Tate and Word Perfect.  It includes a
+litigation fund of undisclosed size
+that will be coordinated by the 320
+member Software Publishers
+Association, which is having an annual
+conference at the Claremont Hotel here
+this week.
+
+The SPA says it has already identified
+several offenders.  They range from
+mail-o}
+rder firms that have made a
+business of pirating software to
+companies and universities that buy
+one copy of a program and illegally
+make multiple copies for internal use.
+
+-I think we've found some good
+targets,- said Ken Wasch, the SPA's
+executive director.  -You'll see some
+suits very soon.-
+
+The joint effort parallels similar
+actions taken in recent months to
+crack down on foreigh sellers of
+pirate software. The focus on
+copyright issues also coincides with a
+raging controversy triggered by Apple
+Computer Inc., which filed a lawsuit
+on March 17 that accuses Hewlett-
+Packard Co. and Microsoft Corp. of
+illegally copying the visual displays
+of Apple's Macintosh computer.
+
+Though unauthorized duplication is
+believed to be widespread at large
+U.S. companies, software publishers
+have been reluctant to go after them
+in court.  For one thing, those
+companies may be large software
+customers.  They also have ample
+resources to fight a lawsuit.
+
+That reluctance has ended, Wasch said.
+
+One key reason is the phasing out of
+copy protection built into program
+diskettes, due to the widespread
+opposition of software customers.
+Lotus, for example, has announced
+plans to remove the electronic
+protection from a new version of its
+top selling 1-2-3 program being
+released next fall.
+
+-Since copy protection has been
+removed, the entire industry is at the
+mercy of an honor system of users,-
+Wasch said.
+
+The SPA named Joe Bainton, a New York
+attorney with a reputation for
+agressive litigation, to carry out the
+suits against the pirates.  R. Duff
+Thompson, general counsel of the Utah
+based Word Perfect, will serve as
+chairman of the association's
+litigation fund.
+
+Major software companies banded
+together once before on domestic
+piracy under the auspices of ADAPSO,
+the computer software and services
+industries association.  It also set
+up a litigation fund, but brought only
+one suit in 1985 before focusing
+mainly on educating corporations about
+software piracy laws.
+
+In other matters, software industry
+executives said Apple's suit casts a
+cloud over future development of
+software based on Microsoft's Windows
+program for IBM-compatible computers. 
+Phillipe Kahn, chief executive of
+Scotts Valley based Borland
+International, was roundly applauded
+for proposing that the SPA set up an
+arbitration system so that copyright
+disputes between companies are not
+settled by judges and juries.
+
+-Apple's telling us Microsoft Windows
+has AIDS,' Borland said. -We're
+anxiously waiting to hear that the
+tests come back negative.-
+
+SPA TO SETTLE SUIT
+==================
+Online Today reported this week that
+Apple Computer's recent -look-and-
+feel- lawsuit should be settled, not
+in the courts, but by the Software
+Publishers Association, Borland
+International founder/President
+Phillipe Kahn said in his keynote
+address at the SPA's spring symposium
+here.
+
+MICROSOFT SAYS APPLE COMPUTER'S
+COPYRIGHT LAWSUIT HAS NO MERIT
+===============================
+REDMOND, Wash. (MARCH 21) BIZWIRE -
+Thursday, Apple Computer filed suit
+against Hewlett-Packard and Microsoft
+Corp. for alleged copyright
+infringement. 
+
+As to Microsoft, the complaint alleges
+that the visual displays of Microsoft
+Windows 2.03 violate Apple copyrights.
+
+After careful review of the complaint
+and a 1985 license agreement between
+Apple and Microsoft, Microsoft is
+convinced that the case has no merit.
+
+Microsoft has not exceeded the license
+agreement, nor has it infringed any
+Apple copyrights or patents.
+Specifically, no visual displays in
+Microsoft Windows 2.03 exceed the 1985
+agreement.
+
+William H. Neukom, vice president of
+law and corporate affairs, said ''We
+are puzzled that Apple has brought
+this suit in light of the 1985 license
+agreement between us. 
+
+''That agreement covers visual
+displays, and we are in full
+compliance with that agreement. We
+have not infringed any copyright or
+patent held by Apple.''
+
+Microsoft Corp. (NASDAQ:MSFT)
+develops, markets and supports a wide
+range of software for business and
+professional use, including operating
+systems language, and application
+programs, as well as books and
+hardware for the microcomputer
+marketplace. 
+
+APPLE COMPUTER CO-FOUNDER STEVE JOBS
+DODGES QUESTIONS ON NEW COMPUTER
+====================================
+BERKELEY, Calif. (MARCH 29) UPI -
+Steve Jobs, the mercurial entrepreneur
+who co-founded Apple Computer Inc.,
+dodged questions Tuesday about a new
+computer he has promised to deliver to
+the market in early 1988.
+
+''I wish I could tell you about our
+product today,'' Jobs told an annual
+meeting of the Software Publishers
+Association in Berkeley. ''I cannot,''
+Jobs said, telling an audience of
+approximately 200 that he will
+introduce what is expected to be a
+computer workstation for use in
+colleges ''when it's ready''. 
+
+Jobs, who has founded a new company
+called NeXT Inc. to produce a machine
+to fit his vision of the needs of
+academia, explained his silence by
+saying, ''a young company needs the
+advantage of surprise.'' But he
+described the machine under production
+as ''the best product that I've ever
+seen in my life. The product that
+we're working on will speak louder
+than anything I can say.'' 
+
+Jobs also expressed puzzlement over a
+copyright infringement lawsuit
+recently filed by Apple Computer
+against two other computer companies,
+Microsoft Corp., of Redmond, Wash.,
+and Hewlett-Packard Co., of Palo Alto,
+Calif. 
+
+The suit alleges that Microsoft and
+Hewlett-Packard illegally copied the
+audio-visual display of Apple's
+Macintosh computer in designing their
+own software. 
+
+Jobs urged software developers in the
+audience to ''express themselves'' on
+the subject, saying the issue of
+copyrights and computer software is
+vital to innovation in the industry. 
+______________________________________
+ZMagazine Issue #100     April 4, 1988
+(c)1988 SPC/Ron Kovacs
+______________________________________

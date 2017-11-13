@@ -1,0 +1,1294 @@
+*::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*
+*                                                                *
+*                      RWTSDRVR using READ                       *
+*                                                                *
+*----------------------------------------------------------------*
+*                                                                *
+*      Just as the file manager is used to manipulate entire     *
+* files at once, RWTS reads or writes disk data one sector at a  *
+* time.  The software interface between these two levels of DOS  *
+* management is represented by the RWTS driver routines          *
+* (RWTSDRVR, $B052 and RWTSDRV1, $B058).  RWTSDRVR is called any *
+* time the file manager wants to seek a given track or read or   *
+* write a sector of disk data.  This routine is always entered   *
+* with the accumulator containing the RWTS opcode ($00=seek,     *
+* $01=read, $03=write) and the x- and y-registers housing the    *
+* target track and sector values.  Although RWTSDRV1 is only     *
+* directly called via the INIT function handler (with the        *
+* accumlator containing the format ($04) opcode), execution      *
+* falls into RWTSDRV1 from RWTSDRVR.  The driver routines check  *
+* to see if data are to be output to the disk and condition the  *
+* carry flag accordingly.  The carry is set if the format or     *
+* write opcodes are detected.  After setting up RWTS's parameter *
+* list (also known as an input/output block, IOB), the driver    *
+* calls ENTERWTS ($B7B5).                                        *
+*      ENTERWTS preserves the conditioned carry flag by pushing  *
+* the status register on the stack.  Next the interrupt disable  *
+* flag is set to prevent any maskable interrupts from interfer-  *
+* ring with the real-time subroutines employed by RWTS.          *
+* Finally, ENTERWTS calls RWTS proper ($BD00) to do the desired  *
+* function.                                                      *
+*      RWTS selects the appropriate drive and moves the disk arm *
+* to the desired track.  Next the opcode is checked to determine *
+* what function is to be performed (BEGINCMD, $BDAB).  When a    *
+* read opcode ($01) is detected, the carry flag is set and       *
+* saved on the stack.  The actual read process begins after the  *
+* read counter is initialized and the x-register is set to a     *
+* value = slot*16.                                               *
+*      The RDADDR routine ($B944) is called to read the first    *
+* address header encountered.  If the disk is flawed or          *
+* "protected" with altered header or checksum bytes, 772         *
+* attempts are made to locate the correct address prologue       *
+* before a re-read is attempted.  Similarly, up to 48 tries to   *
+* read the entire address header are allowed between             *
+* recalibrations.  Two recalibrations are premitted before a     *
+* I/O error message is generated.  Once an address header is     *
+* successfully read, the volume, track and sector numbers of the *
+* address header are compared to the values wanted.  If the      *
+* volume number found does not correspond to the volume number   *
+* wanted, the read function is aborted with a volume-mismatch    *
+* error message.  Failure to find the expected track or sector   *
+* numbers causes an attempt to locate another address header.    *
+* If the track numbers did not match, a re-seek is performed     *
+* before the next read is attempted.                             *
+*      Once the correct address header has been read, the        *
+* READATA routine ($B8DC) is used to read in the disk data bytes *
+* in two different stages.  During the first stage, 86 bytes of  *
+* 2-encoded nibbles are stored in RWTSBUF2 from higher memory    *
+* down ($BC55-$BC00).  The second stage reads 256 bytes of six-  *
+* encoded nibbles into RWTSBUF1 ($BB00-$BBFF).  The data bytes   *
+* are followed by a checksum byte.  As the data are read in, a   *
+* running checksum is calculated.  If the calculated checksum    *
+* does not agree with the checksum read off the disk, an error   *
+* was located.  As a result, an attempt is made to re-read the   *
+* sector.  If the checksums match, the first two bytes of the    *
+* data epilogue are read.  Next, POSTNB16 ($B8C2) is used to     *
+* convert the 6-and-2 encoded bytes in the RWTS buffers to       *
+* normal memory bytes.  The post-nibbled data are USUALLY stored *
+* in the DOS data sector buffer.  Execution finally returns to   *
+* the ENTERWTS routine at $B7BA.                                 *
+*      After the saved status byte is thrown off the stack, the  *
+* carry flag is cleared or set (depending on whether or not RWTS *
+* encountered an error).  Execution then returns to the caller   *
+* of ENTERWTS.                                                   *
+*      After updating the last-used volume value in the FM       *
+* parameter list, the RWTSDRV1 routine checks the carry flag to  *
+* see if RWTS detected an error.  If an error was encountered,   *
+* the carry is reset and execution returns to the calling        *
+* routine via ERRWTSDR ($B0A1).  If no error was detected, the   *
+* "BCS ERRWTSDR" instruction at $B09E is skipped and execution   *
+* returns to the caller of the driving routine with the carry    *
+* clear.                                                         *
+*      Note that ENTERWTS is the one and only DIRECT caller of   *
+* RWTS.  THE DOS MANUAL recommends the following procedure be    *
+* employed to call RWTS from an assembly language program:       *
+*      1) Set up the IOB and DCT tables accordingly.             *
+*      2) Load the y-register and accumulator with the low and   *
+*         high bytes (respectively) of the address of the IOB.   *
+*      3) JSR to $3D9.  (The instruction at $3D9 normally        *
+*         contains a jump to ENTERWTS.)                          *
+*      The execution pattern of RWTS and its associated sub-     *
+* routines is long, but not particularly complex.  On the one    *
+* hand RWTS is rather simple because it can only perform four    *
+* types of functions (seek, read, write or format).  However,    *
+* many people find RWTS difficult to understand because:         *
+*      1) It is the only portion of DOS that uses time-critical  *
+*         code.                                                  *
+*      2) Two different methods are used to encode information   *
+*         on the disk.                                           *
+*      3) The actual method by which the read/write head is      *
+*         moved to different track positions on the disk is not  *
+*         well publicized.                                       *
+* Time-critical code and data encoding information are only      *
+* briefly described below.  However, these concepts are clearly  *
+* explained in chapter 3 of BENEATH APPLE DOS.  (When reading    *
+* this reference, you may find it elcudiating to keep in mind    *
+* that some protected disks (such as LOCKSMITH by ALPHA LOGIC    *
+* BUSINESS SYSTEMS) modify the read/write routines to EOR each   *
+* sector of data with its sector number.)                        *
+*      The positioning of the read/write head is the sole        *
+* responsibility of the SEEKIT routine ($BE6B).  This routine is *
+* highly commented in the disassembly given below.  The follow-  *
+* ing comments are applicable to the SEEKIT routine and RWTS in  *
+* general:                                                       *
+* - Data are written on the disk in 35 circular paths or         *
+*   concentric circles called tracks.  Track $00 is located at   *
+*   the outer edge of the disk, whereas track $22 (#34) is       *
+*   represented by the innermost concentric circle.  Each track  *
+*   is divided into 16 segments ($00 to $0F) called sectors.     *
+* - A disk controller card can be used in any peripheral slot    *
+*   except slot $00.  Each of the remaining seven slots ($01 to  *
+*   $07) can contain a controller card.  Two different drives    *
+*   can be operated from one controller card.  Therefore, you    *
+*   can hang up to 14 different drives from a single Apple II,   *
+*   II+ or IIe machine.                                          *
+* - The disk controller ROM is relocatable and is copied into    *
+*   the computer's memory at $Cs00 to $CsFF (where s = slot      *
+*   number).  All drive functions are performed by indirectly    *
+*   referencing base addrs $C000 to $C00F.  The motor-on-off,    *
+*   drive selection and read-write switches are indexed with an  *
+*   offset equal to slot * 16.  The four different stepper motor *
+*   magnets are all referenced via the $C080 base addr.  The     *
+*   index used = (slot*16)+bits0and1 of halftrack# + carry.  The *
+*   slot and bit portions of the index are used to select the    *
+*   desired magnet.  The added carry is used to make the         *
+*   effective addr even or odd in order to turn the magnet off   *
+*   or on.  The EFFECTIVE addresses for all drive functions are  *
+*   shown below:                                                 *
+*   MAG0FF   = $C0s0  ;Turn stepper motor magnet 0 off.          *
+*   MAG0N    = $C0s1  ;Turn stepper motor magnet 0 on.           *
+*   MAG1OFF  = $C0s2  ;Turn stepper motor magnet 1 off.          *
+*   MAG1ON   = $C0s3  ;Turn stepper motor magnet 1 on.           *
+*   MAG2OFF  = $C0s4  ;Turn stepper motor magnet 2 off.          *
+*   MAG2ON   = $C0s5  ;Turn stepper motor magnet 2 on.           *
+*   MAG3OFF  = $C0s6  ;Turn stepper motor magnet 3 off.          *
+*   MAG3ON   = $C0s7  ;Turn stepper motor magnet 3 on.           *
+*   MTR0FF   = $C0s8  ;Wake up controller and spin disk.         *
+*                     ;This switch must be thrown before a       *
+*                     ;specific drive (1 or 2) is selected.      *
+*   MTR0N    = $C0s9  ;Turn disk drive motor off.                *
+*   SELDRV1  = $C0sA  ;Select drive number 1.                    *
+*   SELDRV2  = $C0sB  ;Select drive number 2.                    *
+*      The following addresses are used to read or write data    *
+* bytes or to check the status of the write protect switch.      *
+* As shown below, they are always used in specific combinations  *
+* to evoke a certain range of responses from the controller      *
+* card.  The firmware affected on the controller card is called  *
+* a logic state sequencer.  It is a nibble-based language that   *
+* only contains six different instructions and is transparent to *
+* the monitor ROM disassembler.  (See UNDERSTANDING THE APPLE II *
+* by Jim Sather for further explaination.)                       *
+*   Q6L      = $C0sC  ;Shift byte in or out of data latch.       *
+*   Q6H      = $C0sD  ;Load latch from data bus.                 *
+*   Q7L      = $C0sE  ;Prepare to read.                          *
+*   Q7H      = $C0sF  ;Prepare to write.                         *
+* When used in combinations:                                     *
+*   Q7L plus Q6L = select read sequence and then read a byte.    *
+*   Q6H plus Q7L = check write protect switch and select write   *
+*                  sequence.                                     *
+*   Q7H plus Q6H = select write sequence and load data register  *
+*                  with output byte.                             *
+*   Q6H plus Q6L = load latch from data bus and write byte.      *
+*                  (Must have previously selected Q7H.)          *
+* - Each disk drive contains two motors.  One motor (usually     *
+*   referred to as the "drive motor") spins the disk at a        *
+*   constant speed.  (When the drive motor is first turned on, a *
+*   delay is used to wait for the drive to come up to speed      *
+*   before attempting to read or write disk bytes.)  Another     *
+*   motor (called a "stepper motor") moves the read/write head   *
+*   across the disk to position the head at different track      *
+*   positions.                                                   *
+* - The stepper motor can be envisioned as containing a central  *
+*   magnet on a rotatable shaft and a circle of four fixed       *
+*   magnets (magnets 0 to 3) surrounding the shaft.  Each time a *
+*   peripheral magnet is enegized, the central shaft is rotated  *
+*   until its magnet is in line with the energized peripheral    *
+*   magnet.  By turning the fixed peripheral magnets on and off  *
+*   in sequence, we can spin the shaft of the stepper motor.     *
+*   Movement of this shaft causes the read/write head to "step"  *
+*   across the disk.  Each time the next magnet in sequence is   *
+*   turned on, the shaft is rotated one quarter turn.  One       *
+*   quarter turn of the shaft moves the read/write head half a   *
+*   track width.                                                 *
+* - Normally, DOS only writes data at even magnet positions      *
+*   because the drive head does not have good enough resolution  *
+*   to distinguish information in adjacent half-track positions. *
+*   The drive head is stepped to a higher track position as the  *
+*   magnets are turned on and off in ascending order.            *
+*   Similarly, a descending reference to the magnets causes      *
+*   movement to a lower track position.  Each time a magnet is   *
+*   turned on or off, a delay is used to give the shaft magnet   *
+*   time to properly align with a peripheral magnet.  The amount *
+*   of delay used is inversely proportional to the acceleration  *
+*   of the motor.  An example of the on/delay/off sequence used  *
+*   to step the head from track $02 to track $04 is shown below: *
+*      1on - delay - 0off - delay - 2on - delay - 1off - delay - *
+*      3on - delay - 2off - delay - 0on - delay - 3off - delay - *
+*      0off - delay.                                             *
+*   Similarly, moving the head from track $04 to track $02       *
+*   requires the following sequence:                             *
+*      3on - delay - 0off - delay - 2on - delay - 3off - delay - *
+*      1on - delay - 2off - delay - 0on - delay - 1off - delay - *
+*      0off.                                                     *
+*   Note that the last-energized magnet is always turned off.    *
+*   This is done as a safety measure because magnet-1-on is      *
+*   hard wired into the write protect switch.  (The boot process *
+*   is an exception to this rule.  The controller ROM leaves     *
+*   magnet0 energized.)                                          *
+* - Some protected programs modify DOS to skip entire tracks or  *
+*   write data at odd-numbered magnet positions.  However,       *
+*   because the controller ROM always uses track $00 and because *
+*   crosstalk occurs when data is less than one full track width *
+*   apart, the data is actually written on a half-track disk at  *
+*   the following track positions:  0, 1+1/2, 2+1/2, 3+1/2, ..., *
+*   31+1/2, 32+1/2, 33+1/2.  For instance, if you wanted to move *
+*   the head from track $02 to track $04+1/2, you could add the  *
+*   following sequence to that described above:                  *
+*      - delay - 1on - delay - 0off - 1 off -delay.              *
+* - Data can even be written on quarter track positions (that    *
+*   is, tracks 0, 1+1/4, 2+1/4, ..., 31+1/4, 32+1/4, 33+1/4) by  *
+*   turning on two adjacent magnets almost simultaneously in     *
+*   order to position the head between the two magnets.  For     *
+*   instance, if you wanted to move from track $02 to track      *
+*   $04+1/4, you could patch DOS to automatically add the        *
+*   following instructions to the normal sequence described      *
+*   above:  - 1on - no delay - 0on - very short delay - 1off -   *
+*             no delay - 0off - delay.                           *
+* - Assembly language programmers that want to write their own   *
+*   copy programs, may appreciate the following tidbits:         *
+*   - Self-sync $FF's are not the only bytes in town that can be *
+*     used to put a bit stream in sync.  As a matter of fact,    *
+*     almost any bit stream will do if it is long enough.        *
+*   - Believe it or not, DOS can actually "read" an unformatted  *
+*     disk.  If you use a track dump program on an unformatted   *
+*     disk, the computer will obligingly produce a magic stream  *
+*     of data.  This occurs because the logic state sequencer    *
+*     only waits so long for a valid bit stream.  After a while, *
+*     the sequencer gets impatient and generates its own         *
+*     spurious bytes.  Because a read strobe (Q6L) is always     *
+*     followed by a "BPL" instruction, the invented bytes have   *
+*     their hi bits set.  However, valid disk bytes can only     *
+*     take on certain negative values.  Therefore, the presence  *
+*     of illegal values can be used to detect unformatted        *
+*     portions of a disk.  Some disk copying programs use this   *
+*     technique to copy disks that are "protected" by one or     *
+*     more unformatted tracks.                                   *
+*                                                                *
+*::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*
+
+
+(B052)
+RWTSDRVR STX IBTRK    ;Enter with (x) = trk wntd.
+         STY IBSECT   ;           (y) = sector wntd.
+RWTSDRV1 STA IBCMD    ;           (a) = opcode for RWTS.
+(B058)                ;RWTSDRV1 is the entry point used by the
+                      ;Init function handler.
+(B05B)   CMP #2       ;Is cmd a write?
+(B05D)   BNE SKPWRSET ;No, so branch.  Note:  "CMP" conditions:
+                      ;    (c)=0 if seek ($00) or read ($01).
+                      ;    (c)=1 if write ($02) or format ($03).
+(B05F)   ORA UPDATFLG ;Condition UPDATFLG to designate that
+(B062)   STA UPDATFLG ;last operation was a write for next
+                      ;time around. 
+ 
+* Finish setting up RWTS's
+* input/output block (IOB).
+(B065)
+SKPWRSET LDA VOLWA    ;Put complimented vol in IOB.
+         EOR #$FF
+         STA IBVOL
+         LDA SLOT16WA ;Put slot*16 in IOB.
+         STA IBSLOT
+         LDA DRVWA    ;Put drive in IOB.
+         STA IBDRVN
+         LDA SECSIZWA ;Put sector length in IOB
+         STA IBSECSZ  ;(standard size of dec. 256
+         LDA SECSIZWA+1 ;or hex $0100 bytes).
+         STA IBSECSZ+1
+         LDA #1       ;ALWAYS designate table type as 1.
+         STA IBTYPE
+         LDY ADRIOB   ;Set (y) & (a) to point
+         LDA ADRIOB+1 ;at RWTS's IOB.
+(B090)   JSR ENTERWTS ;Go call RWTS.
+
+                      * Route execution to RWTS.
+                      * (Normal entry route to RWTS for custom
+                      * assembly language programs.  See preamble
+                      * for required entry conditions.)
+                      (B7B5)
+                      ENTERWTS PHP          ;Save status reg (with conditioned carry) on stk.
+                                            ;(c) = 0 if doing seek ($00) or read ($01).
+                                            ;(c) = 1 if doing write ($02) or format ($03).
+                      (B7B6)   SEI          ;Set interrupt disable flag to prevent
+                      (B7B7)   JSR RWTS     ;any further maskable interrupts
+                                            ;when doing real-time programming.
+
+                                            * Read/Write Track/Sector (RWTS).
+                                            * Enter with (y)/(a) pointing at
+                                            * RWTS's input/output block (IOB).
+                                            (BD00)
+                                            RWTS     STY PTR2IOB  ;Set up a zero page
+                                                     STA PTR2IOB+1 ;pointer to RWTS's IOB.
+                                                     LDY #2       ;Initialize cntr for max of 2 recalibs.
+                                                     STY RECLBCNT
+                                                     LDY #4       ;Initialize cntr for # or re-seeks betwn recalibs.
+                                                     STY RSEEKCNT
+                                                     LDY #1       ;Get slot*16 from IOB & put it
+                                                     LDA (PTR2IOB),Y ;in (x) so can use it to index
+                                            (BD12)   TAX          ;base addresses for drive functions.
+
+                                            * Check if wanted slot*16 = last slot*16.
+                                            (BD13)   LDY #15      ;Index to get val of last slot used.
+                                                     CMP (PTR2IOB),Y ;Compare wanted vs last.
+                                            (BD17)   BEQ SAMESLOT ;Take branch if using same slot.
+
+                                            * Want to use different slot so reset (x)
+                                            * back to index old slot so can test old motor.
+                                            (BD19)   TXA          ;Save slot*16 wanted on stk.
+                                                     PHA
+                                                     LDA (PTR2IOB),Y ;Get old slot*16 back and
+                                                     TAX          ;stick it in (x) to index base addrs.
+                                                     PLA          ;Get slot*16 wanted into (a) from stk
+                                                     PHA          ;and keep it saved on stk.
+                                            (BD20)   STA (PTR2IOB),Y ;Update last-used slot*16 for next time.
+
+                                            * Check to see if last-used drive assoc with last-
+                                            * used slot is still spinning.  If it is, wait for
+                                            * it to stop.
+                                            (BD22)   LDA Q7L,X    ;Prep latch for input.
+                                            CKSPIN   LDY #8       ;Set cntr to insure at least 8 chks.
+                                                     LDA Q6L,X    ;Strobe latch to read.
+                                            CHKCHNG  CMP Q6L,X    ;Read again & cmp to last read.
+                                                     BNE CKSPIN   ;Data changed, so still spinning.
+                                                     DEY          ;No change, so chk with some
+                                            (BD30)   BNE CHKCHNG  ;delays just to make sure.
+
+                                            * Get index for slot wanted.
+                                            (BD32)   PLA          ;Get slot*16 back off stk
+                                            (BD33)   TAX          ;and put it in (x).
+
+                                            * Chk to see if a drive assoc with slot wanted
+                                            * is still spinning.  (As soon as get a change then
+                                            * know it's spinning.  If no change, chk at least
+                                            * 8 times to be certain it is off.)
+                                            (BD34)
+                                            SAMESLOT LDA Q7L,X    ;Set read mode.
+                                                     LDA Q6L,X    ;Strobe latch to read.
+                                                     LDY #8       ;Set cntr for 8 chks if needed.
+                                            STRBAGN  LDA Q6L,X    ;Strobe latch again.
+                                                     PHA          ;Delay 14 machine cycles.
+                                                     PLA
+                                                     PHA
+                                                     PLA
+                                                     STX SLOTPG5  ;Save slot*16 wntd in page 5.
+                                                     CMP Q6L,X    ;Has data changed yet?
+                                                     BNE DONETEST ;Yes - data changed, so disk spinning.
+                                                     DEY          ;No - no change, see if chkd enough times.
+                                                     BNE STRBAGN  ;Chk at least 8 times.
+                                            DONETEST PHP          ;Save test results on stk so can later
+                                            (BD4E)                ;chk if need extra delay or not.
+
+                                            * Turn motor on in a drive assoc with slot wanted
+                                            * (just in case it wasn't already spinning).
+                                            * Note:  This uses drive with same # as last
+                                            * drive used.  This may or may not be the
+                                            * specific drive # we want.  However, we must use
+                                            * this instruction to send power via the controller.
+                                            * Once this switch is thrown, we can later re-route
+                                            * that power to whichever drive we want by throwing
+                                            * another switch to select drive1 or drive2.
+                                            (BD4F)   LDA MTRON,X  ;Turn motor on.
+
+                                            * Establish z-page pointers to device characteristic
+                                            * table (DCT) and RWTS's I/O buffer (so can use z-page
+                                            * indirect addressing modes).
+                                            * IBDCTP ---> PTR2DCT (3C,3D)
+                                            * IBBUFP ---> PTR2BUF (3E,3F)
+                                            (BD52)   LDY #6       ;Get ptrs from RWTS's IOB
+                                            MOVPTRS  LDA (PTR2IOB),Y ;and put them in z-page.
+                                            (BD56)   STA: PTR2DCT-6,Y ;(Note:  ":" used to force
+                                                                  ;a 3-byte instruction.)
+                                            (BD59)   INY
+                                                     CPY #10      ;4 bytes to copy (6 to 9).
+                                            (BD5C)   BNE MOVPTRS
+
+                                            * Check drive status.
+                                            (BD5E)   LDY #3       ;Save hi byte of motor-on-time
+                                                     LDA (PTR2DCT),Y ;count in z-page.
+                                                     STA MTRTIME+1
+                                                     LDY #2       ;Get drive # wanted.
+                                                     LDA (PTR2IOB),Y
+                                                     LDY #16      ;Set (y) = index to last-used drive.
+                                                     CMP (PTR2IOB),Y ;Drv wanted vs drv last used.
+                                                     BEQ SAMEDRV
+                                            (BD6E)   STA (PTR2IOB),Y ;Designate drv wanted as old drv
+                                                                  ;for next time around.
+                                            (BD70)   PLP          ;Get status back off stk.
+                                            (BD71)   LDY #0       ;Reset status (z-flag off) to signal that
+                                                                  ;SPECIFIC DRIVE # we want in SPECIFIC SLOT
+                                                                  ;wanted was not originally spinning.
+                                            (BD73)   PHP          ;Push updated status back on stk.
+                                            SAMEDRV  ROR          ;Put low bit of drv wanted in carry.
+                                                     BCC USEDRV2  ;Branch if want drive 2.
+                                                     LDA SELDRV1,X ;Route power to select drive 1.
+                                                     BCS USEDRV1  ;ALWAYS.
+                                            USEDRV2  LDA SELDRV2,X ;Route power to select drive 2.
+                                            USEDRV1  ROR DRVZPG   ;Put sign bit for which drive
+                                            (BD7F)                ;using in z-page:  neg = drive1.
+                                                                  ;                  pos = drive2.
+
+                                            * Chk to see if a specific drive wanted in
+                                            * specific slot wanted was originally on or not.
+                                            (BD81)   PLP          ;Get previous test result.
+                                                     PHP          ;Put it back on stk for later use.
+                                            (BD83)   BNE WASON    ;Orig drv in orig slot was on.
+
+                                            * Specific drive wanted in specific slot
+                                            * wanted was ORIGINALLY OFF, so delay a
+                                            * bit to avoid positioning head during
+                                            * the period of heavy current flow that
+                                            * occurs when motor is turned on.  (That
+                                            * is, give line/capacitor time to 
+                                            * bleed down cause motor on/off switch
+                                            * requires more current than stepper motor.)
+                                            *
+                                            * (Amount of delay is not constant cause
+                                            * it depends on what is in accum & we don't
+                                            * know cause we were just accessing hardware.)
+                                            (BD85)   LDY #7
+                                            WAIT4MTR JSR DELAY    ;Stall.
+                                            (BD87)
+
+                                                                  * Main delay routine in DOS.
+                                                                  * (Amt of delay = 100 * (a) microsecs.)
+                                                                  (BA00)
+                                                                  DELAY    LDX #17
+                                                                  DLY1     DEX
+                                                                           BNE DLY1
+                                                                           INC MTRTIME
+                                                                           BNE DLY2
+                                                                           INC MTRTIME+1
+                                                                  DLY2     SEC
+                                                                           SBC #1
+                                                                           BNE DELAY
+                                                                  (BA10)   RTS
+
+                                            (BD8A)   DEY
+                                                     BNE WAIT4MTR ;Go stall some more.
+                                            (BD8D)   LDX SLOTPG5  ;Restore (x) = slot*16.
+                                            (BD90)
+                                            WASON    LDY #4       ;Get trk wanted.
+                                                     LDA (PTR2IOB),Y
+                                            (BD94)   JSR SEEKTRK  ;Go move arm to desired trk.
+
+                                                                  (BE5A)
+                                                                  SEEKTRK  PHA          ;Save # of trk wntd on stk.
+                                                                           LDY #1       ;Get drive type (1- or 2-phase)
+                                                                  (BE5D)   LDA (PTR2DCT),Y ;from DCT.  (P.S. the "II" in the
+                                                                                        ;"DISK II" logo stamped on Apple's
+                                                                                        ;disk drive denotes a two-phase
+                                                                                        ;stepper motor.)
+                                                                  (BE5F)   ROR          ;Put low byte of drive type in carry.
+                                                                           PLA          ;Get trk# wanted back in (a).
+                                                                  (BE61)   BCC SEEKIT   ;Not using standard DRIVEII, using a
+                                                                                        ;one-phase drive instead, ther4 skip
+                                                                                        ;doubling of trk # & use SEEKIT as part
+                                                                                        ;of routine instead of a subroutine.
+
+                                                                  * Using a two-phase drive.
+                                                                  (BE63)   ASL          ;Double trk # wanted to get
+                                                                                        ;number of 1/2 trk wanted.
+                                                                  (BE64)   JSR SEEKIT   ;Move disk arm to desired track.
+
+                                                                                        (BE6B)
+                                                                                        SEEKIT   .
+                                                                                                 .
+                                                                                                 .
+                                                     ---------------------------------------------
+                                                     l            * Routine/subroutine to move drive arm
+                                                     l            * to a specific trk position.
+                                                     l            * Used as a subroutine when using Apple's
+                                                     l            * disk drive II.  Note when SEEKIT is used as a
+                                                     l            * subroutine, DESTRK, PRESTRK, TRK4DRV1, TRK4DRV2,
+                                                     l            * STPSDONE and HOLDPRES are all expressed in half
+                                                     l            * tracks:
+                                                     l            * DESTRK = destination half-track position.
+                                                     l            * PRESTRK = present half-track position.
+                                                     l            * HOLDPRES = present half-track position.
+                                                     l            * TRK4DRV1 = base addr (when indexed by slot*16) pts
+                                                     l            *            at the addr that contains the last half-
+                                                     l            *            track that drive 1 was aligned on.
+                                                     l            * TRK4DRV2 = base addr (when indexed by slot*16) pts
+                                                     l            *            at the addr that contains the last half-
+                                                     l            *            track that drive 2 was aligned on.
+                                                     l            * STPSDONE = number of half tracks moved so far.
+                                                     l            * If not using a II-phase drive, change all
+                                                     l            * comments that read "half tracks" to read
+                                                     l            * "full tracks".
+                                                     l            (BE6B)
+                                                     l            SEEKIT   STA DESTRK   ;(a) = 2*trk # wanted.
+                                                     l                                  ;    = # of halftrk wanted.
+                                                     l            (BE6D)   JSR SLOTX2Y  ;Set (y) = slot.
+                                                     l
+                                                     l                                  * Convert slot*16 from
+                                                     l                                  * (x) to slot in (y).
+                                                     l                                  (BE8E)
+                                                     l                                  SLOTX2Y  TXA          ;Get slot*16 from (x).
+                                                     l                                           LSR          ;Divide it by 16.
+                                                     l                                           LSR
+                                                     l                                           LSR
+                                                     l                                           LSR
+                                                     l                                           TAY          ;Put slot # in (y).
+                                                     l                                  (BE94)   RTS
+                                                     l
+                                                     l            (BE70)   LDA TRK4DRV1,Y ;Pres halftrk# assoc with drv1.
+                                                     l            (BE73)   BIT DRVZPG   ;Contains:  neg = drive 1.
+                                                     l                                  ;           pos = drive 2.
+                                                     l            (BE75)   BMI SETPRSTK ;Branch if using drive 1.
+                                                     l                     LDA TRK4DRV2,Y ;Using drv 2 so get pres 1/2trk#
+                                                     l            SETPRSTK STA PRESTRK  ;Save present halftrk#.
+                                                     l            (BE7A)
+                                                     l
+                                                     l            * Designate halftrk we are about to seek
+                                                     l            * as present halftrk for next time around.
+                                                     l            * (Put halftrk info in slot dependent locations.)
+                                                     l            (BE7D)   LDA DESTRK
+                                                     l                     BIT DRVZPG   ;Chk to see which drive we are using.
+                                                     l                     BMI DRV1USG  ;Branch if using drive 1.
+                                                     l                     STA TRK4DRV2,Y ;Using drv2 -store halftrk 4 next time.
+                                                     l                     BPL DRV2USG  ;ALWAYS.
+                                                     l            DRV1USG  STA TRK4DRV1,Y ;Using drv1 -store halftrk 4 next time.
+                                                     l            DRV2USG  JMP SEEKABS
+                                                     l            (BE8B)   -----------
+                                                     l
+                                                     l            * Move disk arm to a given halftrk position.
+                                                     l            * On entry:  (x) = slot * 16.
+                                                     l            *            (a) = destination halftrack pos'n.
+                                                     l            *        PRESTRK = current halftrack pos'n.
+                                                     l
+                                                     l            (B9A0)
+                                                     l            SEEKABS  STX SLT16ZPG ;Save slot*16 in z-page.
+                                                     l                     STA DESTRK   ;Save destin halftrk #.
+                                                     l                     CMP PRESTRK  ;Dest halftrk = pres halftrk?
+                                                     l                     BEQ ARRIVED  ;Yes - we are already there, so exit.
+                                                     l                     LDA #0       ;Init counter 4 # of halftrks moved.
+                                                     l            (B9AB)   STA STPSDONE
+                                                     l
+                                                     l            * Save current halftrk pos'n & calc
+                                                     l            * number of halftrks need to move minus 1.
+                                                     l            (B9AD)
+                                                     l            SAVCURTK LDA PRESTRK  ;Save current halftrk pos'n.
+                                                     l                     STA HOLDPRES
+                                                     l                     SEC          ;Calc (PRESTRK - DESTRK).
+                                                     l                     SBC DESTRK
+                                                     l                     BEQ ATDESTN  ;At destin halftrk so go shutdown.
+                                                     l            (B9B7)   BCS MOVDWN   ;Pres halftrk > destin halftrk so
+                                                     l                                  ;want to move to lower trk.
+                                                     l
+                                                     l            * Want to move to a higher halftrk #
+                                                     l            * (PRESTRK - DESTRK = neg result).
+                                                     l
+                                                     l            (B9B9)   EOR #$FF     ;Convert neg to pos.
+                                                     l            (B9BB)   INC PRESTRK  ;Moving up, so inc current 1/2
+                                                     l                                  ;trk pos'n for next time around.
+                                                     l            (B9BE)   BCC CKDLYNDX ;ALWAYS.
+                                                     l                     ------------
+                                                     l
+                                                     l            * Want to move to lower halftrk #
+                                                     l            * (PRESTRK - DESTRK = pos result).
+                                                     l            (B9C0)
+                                                     l            MOVDOWN  ADC #$FE     ;Simulate a subtract of 1.  Actually
+                                                     l                                  ;adding minus 1 (#$FF) cause carry
+                                                     l                                  ;set.  Want (a) to equal 1 less than
+                                                     l                                  ;number of halftrks to move.
+                                                     l            (B9C2)   DEC PRESTRK  ;Moving down so reduce pres 1/2
+                                                     l                                  ;trk number for next time around.
+                                                     l
+                                                     l            * Check to see which index to use to
+                                                     l            * access the delay table.  IF WE ARE
+                                                     l            * WITHIN 12 STEPS of the destination
+                                                     l            * or start positions, then use closest
+                                                     l            * distance to start or end pos'n to
+                                                     l            * index delay tables.  Delay tables are
+                                                     l            * only 12 bytes long, so if more than 12
+                                                     l            * steps away from both start & destination,
+                                                     l            * then use last index (y=12) to access table.
+                                                     l
+                                                     l            * Check if closer to destination or start pos'n.
+                                                     l            (B9C5)
+                                                     l            CKDLYNDX CMP STPSDONE ;Compare # of halftrks moved
+                                                     l                                  ;to # of halftrks need to move.
+                                                     l            (B9C7)   BCC CLSR2ND  ;Branch if closer to destn than start posn.
+                                                     l
+                                                     l            * Closer to start.
+                                                     l            (B9C9)   LDA STPSDONE ;Set (a) = dist from start pos'n.
+                                                     l            CLSR2ND  CMP #12      ;Are we within 12 steps of start
+                                                     l                                  ;or destination pos'n?
+                                                     l            (B9CD)   BCS TURNON   ;We are at or beyond 12 steps from
+                                                     l                                  ;start or destn pos'n so use old
+                                                     l                                  ;index to access delay table.
+                                                     l            (B9CF)
+                                                     l            PRESNDX  TAY          ;Use present distance to index delay table.
+                                                     l            TURNON   SEC          ;Set carry so get odd index to base addr so
+                                                     l            (B9D0)                ;magnet will be turned ON.
+                                                     l            (B9D1)   JSR ONOROFF  ;Turn magnet ON to suck stepper motor
+                                                     l                                  ;to correct halftrack pos'n.
+                                                     l
+                                                     l                                  (B9EE)
+                                                     l                                  ONOROFF  LDA PRESTRK  ;Use lwr 2 bits of
+                                                     l                                  ENTRYOFF AND #%00000011 ;1/2 trk pos'n to
+                                                     l                                                        ;index magnet.
+                                                     l                                  (B9F3)   ROL          ;2*halftrack+(c).
+                                                     l                                                        ;If carry set,
+                                                     l                                                        ;result is odd &
+                                                     l                                                        ;magnet is energized.
+                                                     l                                  (B9F4)   ORA SLT16ZPG ;Merge index to magnet
+                                                     l                                                        ;with slot #.
+                                                     l                                  (B9F6)   TAX          ;Use (x) for indexing.
+                                                     l                                  (B9F7)   LDA MAG0FF,X ;Use magnet0 off as
+                                                     l                                                        ;base address.
+                                                     l                                  (B9FA)   LDX SLT16ZPG ;Restore (x)=slot*16.
+                                                     l                                  ARRIVED  RTS
+                                                     l                                  (B9FC)
+                                                     l
+                                                     l            (B9D4)   LDA ONTABLE,Y ;Get time 2 leave magnet on from tbl.
+                                                     l            (B9D7)   JSR DELAY    ;Delay to give drive time to act before
+                                                     l                                  ;magnet is turned off again cause computer
+                                                     l                                  ;too fast 4 peripheral & want smooth mov't.
+                                                     l
+                                                     l                                  * Main delay routine in DOS.
+                                                     l                                  * (Amt of delay = 100 * (a) microsecs.)
+                                                     l                                  (BA00)
+                                                     l                                  DELAY    LDY #17
+                                                     l                                  DLY1     DEX
+                                                     l                                           BNE DLY1
+                                                     l                                           INC MTRTIME
+                                                     l                                           BNE DLY2
+                                                     l                                           INC MTRTIME+1
+                                                     l                                  DLY2     SEC
+                                                     l                                           SBC #1
+                                                     l                                           BNE DELAY
+                                                     l                                  (BA10)   RTS
+                                                     l
+                                                     l            (B9DA)   LDA HOLDPRES ;Get last halftrk pos'n in (a).
+                                                     l            (B9DE)   CLC          ;Clr carry so index will come out even
+                                                     l                                  ;and there4 magnet will be turned OFF.
+                                                     l            (B9DD)   JSR ENTRYOFF ;Turn magnet assoc with prev pos'n off.
+                                                     l
+                                                     l                                  (B9F1)
+                                                     l                                  ENTRYOFF AND #%00000011 ;Halftrk pos'n to
+                                                     l                                                        ;index magnet.
+                                                     l                                  (B9F3)   ROL          ;2*halftrack+(c).
+                                                     l                                                        ;If carry set,
+                                                     l                                                        ;result is odd &
+                                                     l                                                        ;magnet is energized.
+                                                     l                                  (B9F4)   ORA SLT16ZPG ;Merge index to magnet
+                                                     l                                                        ;with slot #.
+                                                     l                                  (B9F6)   TAX          ;Use (x) for indexing.
+                                                     l                                  (B9F7)   LDA MAG0FF,X ;Use magnet0 off as
+                                                     l                                                        ;base address.
+                                                     l                                  (B9FA)   LDX SLT16ZPG ;Restore (x)=slot*16.
+                                                     l                                  ARRIVED  RTS
+                                                     l                                  (B9FC)
+                                                     l
+                                                     l            (B9E0)   LDA OFFTABLE,Y ;Get time 2 leave magnet off from table.
+                                                     l            (B9E3)   JSR DELAY    ;Leave magnet off for a while to give 
+                                                     l                                  ;arm time to be properly aligned.
+                                                     l                                  ;(Need time to suck it over & also to
+                                                     l                                  ;decrease bounce or over-shoot.)
+                                                     l
+                                                     l                                  * Main delay routine in DOS.
+                                                     l                                  * (Amt of delay = 100 * (a) microsecs.)
+                                                     l                                  (BA00)
+                                                     l                                  DELAY    LDY #17
+                                                     l                                  DLY1     DEX
+                                                     l                                           BNE DLY1
+                                                     l                                           INC MTRTIME
+                                                     l                                           BNE DLY2
+                                                     l                                           INC MTRTIME+1
+                                                     l                                  DLY2     SEC
+                                                     l                                           SBC #1
+                                                     l                                           BNE DELAY
+                                                     l                                  (BA10)   RTS
+                                                     l
+                                                     l            (B9E6)   INC STPSDONE
+                                                     l            (B9E8)   BNE SAVCURTK ;ALWAYS.
+                                                     l                     ------------
+                                                     l
+                                                     l            * Arrived at destination halftrack.
+                                                     l            (B9EA)
+                                                     l            ATDESTN  JSR DELAY    ;Wait for peripheral again.
+                                                     l
+                                                     l                                  * Main delay routine in DOS.
+                                                     l                                  * (Amt of delay = 100 * (a) microsecs.)
+                                                     l                                  (BA00)
+                                                     l                                  DELAY    LDY #17
+                                                     l                                  DLY1     DEX
+                                                     l                                           BNE DLY1
+                                                     l                                           INC MTRTIME
+                                                     l                                           BNE DLY2
+                                                     l                                           INC MTRTIME+1
+                                                     l                                  DLY2     SEC
+                                                     l                                           SBC #1
+                                                     l                                           BNE DELAY
+                                                     l                                  (BA10)   RTS
+                                                     l
+                                                     l            * Turn last-used magnet off so exit with all
+                                                     l            * phases (ie. magnets) off because MAG1ON is
+                                                     l            * wired into the write-protect switch.
+                                                     l            (B9ED)   CLC          ;Turn magnet OFF.
+                                                     l
+                                                     l            * Turn magnet on or off.
+                                                     l            (B9EE)
+                                                     l            ONOROFF  LDA PRESTRK  ;Use halftrk pos'n 2 index magnet.
+                                                     l            ENTRYOFF AND #%00000011 ;Only keep lwr 2 bits of halftrk#
+                                                     l            (B9F1)                ;cause only 4 magnets (0,1,2 & 3).
+                                                     l            (B9F3)   ROL          ;Multiply halftrk# * 2 and add (c)
+                                                     l                                  ;If (c)=1, result even, magnet off
+                                                     l                                  ;If (c)=0, result odd, magnet on
+                                                     l            (B9F4)   ORA SLT16ZPG ;Merge index to magnet with slot #
+                                                     l                     TAX          ;Use (x) for indexing.
+                                                     l                     LDA MAG0FF,X ;Use magnet-0-off as base addr.
+                                                     l                     LDX SLT16ZPG ;Restore slot*16 in (x).
+                                                     l            ARRIVED  RTS
+                                                     l            (B9FC)
+                                                     l--------------------------------------------
+                                                                                                 .
+                                                                                                 .
+                                                                                                 .
+                                                                           -----------------------
+                                                                           l
+                                                                           l
+                                                                  (BE67)   LSR PRESTRK  ;Calc present whole trk #
+                                                                                        ;(ie. pres halftrk# / 2).
+                                                                  (BE6A)   RTS
+
+                                            * Check to see if motor was originally on.
+                                            (BD97)   PLP          ;Get prev motor test result off stack.
+                                                     BNE BEGINCMD ;Branch if motor was originally on.
+                                            (BD9A)   LDY MTRTIME+1 ;Motor wasn't originally on.  However, we
+                                                                  ;have since turned it on.  Now check if it
+                                                                  ;has been on long enough.
+                                            (BD9C)   BPL BEGINCMD ;Yes - no need to wait any longer.
+         
+                                            * Although motor was turned on, it hasn't
+                                            * been on long enough to do accurate
+                                            * reading of bytes.  There4, delay until
+                                            * motor on time is 1 second (at which time
+                                            * MTRTIME count is zero).  (Part of time was
+                                            * taken up to seek track.)
+                                            (BD9E)
+                                            TIME1    LDY #18
+                                            TIME2    DEY
+                                                     BNE TIME2
+                                                     INC MTRTIME
+                                                     BNE TIME1
+                                                     INC MTRTIME+1
+                                            (BDA9)   BNE TIME1
+
+                                            * Motor is up to speed so now process command.
+                                            * (Seek=00, Read=01, Write=02, Format=04.)
+                                            * Counters:
+                                            * READCNTR = allow up to 48 times to find correct
+                                            *            addr prologue between re-seeking.
+                                            * RSEEKCNT = allow up to 4 re-seeks btwn recalibrations.
+                                            * RECLBCNT = allow up to 2 recalibrations.
+                                            * (There4, if necessary, allow up to 384
+                                            * attempts to find correct prologue addr.)
+
+                                            * Begin RWTS command processing.
+                                            (BDAB)
+                                            BEGINCMD LDY #12      ;Get cmd from IOB.
+                                                     LDA (PTR2IOB),Y
+                                                     BEQ WASEEK   ;Branch if cmd was "seek".
+                                                     CMP #4       ;Was cmd "format"?
+                                            (BDB3)   BEQ FORMDSK  ;Branch if command was "format".
+
+                                            * Command was READ or WRITE
+                                            * (ie. opcodes $01 or $02).
+                                            (BDB5)   ROR          ;SET carry if READ cmd (opcode $01).
+                                                                  ;CLR carry if WRITE cmd (opcode $02).
+                                            (BDB6)   PHP          ;Save carry denoting cmd on stack.
+                                            (BDB7)   BCS RESETCNT ;Branch if doing a read.
+                                                     ------------
+
+                                            * Common to READ or WRITE.
+                                            (BDBC)
+                                            RESETCNT LDY #48      ;Init counter for reading addr header.
+                                                     STY READCNTR
+                                            SETXSLT  LDX SLOT5PG  ;Set (x) = slot*16.
+                                            (BDC4)   JSR RDADDR   ;Go read addr header to find sector
+                                                                  ;that we want to read or write.
+
+                                                                  * Read the address header.
+                                                                  (B944)
+                                                                  RDADDR   LDY #$FC     ;Designate 772 chances (#$FCFC to #$10000) 
+                                                                                        ;to find the correct address prologue.
+                                                                  (B946)   STY PROSCRTH
+                                                                  KICKNTR  INY
+                                                                           BNE TRYD5
+                                                                           INC PROSCRTH
+                                                                  (B94D)   BEQ ERRTN    ;Error - can't find proglogue.
+
+                                                                  * Look for address prologue ("D5 AA 96").
+                                                                  (B94F)
+                                                                  TRYD5    LDA Q5L,X
+                                                                           BPL TRYD5    ;Wait for a full byte.
+                                                                  VERSUSD5 CMP #$D5     ;Was it a "D5"?
+                                                                           BNE KICKNTR  ;No - try again.
+                                                                           NOP          ;Wait 2 cycles.
+                                                                  TRYAA    LDA Q6L,X
+                                                                           BPL TRYAA    ;Wait for full byte.
+                                                                           CMP #$AA     ;Was it an "AA"?
+                                                                           BNE VERSUSD5 ;No - retry sequence.
+                                                                  (B962)   LDY #3       ;Set (y) for later reading of
+                                                                                        ;vol, trk, sec, checksum info
+                                                                                        ;from address field.
+                                                                  (B964)
+                                                                  TRY96    LDA Q6L,X
+                                                                           BPL TRY96    ;Wait for full byte.
+                                                                           CMP #$96     ;Was it a "96"?
+                                                                  (B96B)   BNE VERSUSD5 ;No - retry sequence.
+
+                                                                  * Read odd-even encoded volume, track,
+                                                                  * sector and checksum values from the
+                                                                  * address field.  (When reading,
+                                                                  * calculate a running checksum.)
+                                                                  * From: byte1:  1  b7  1 b5  1 b3  1 b1
+                                                                  *       byte2:  b6 1  b4 1  b2 1  b0 1
+                                                                  *       -------------------------------
+                                                                  * To:   byte:   b7 b6 b5 b4 b3 b2 b1 b0
+
+                                                                  (B96D)   LDA #0       ;Initialize running checksum val.
+                                                                  CALCK    STA CKSUMCAL
+                                                                  GETHDR   LDA Q6L,X    ;Get odd-encoded byte.
+                                                                           BPL GETHDR   ;Wait for a full byte.
+                                                                  (B976)   ROL          ;Shift bits & put set
+                                                                                        ;carry in bit0 pos'n.
+                                                                  (B977)   STA PROSCRTH ;Save shifted version.
+                                                                  RDHDR    LDA Q6L,X    ;Get even-encoded byte.
+                                                                           BPL RDHDR    ;Wait for full byte.
+                                                                           AND PROSCRTH ;Merge to form normal memory bytes.
+                                                                  (B980)   STA: CKSUMDSK,Y ;Store info read from addr
+                                                                                        ;field in zero page:
+                                                                                        ;$2F = vol found, $2E = trk found,
+                                                                                        ;$2D = sec found, $2C = checksum found.
+                                                                                        ;(Use ":" to force 3-byte instruction.)
+                                                                  (B983)   EOR CKSUMCAL ;Update running checksum.
+                                                                           DEY
+                                                                           BPL CALCK
+                                                                           TAY          ;Put checksum found in (y).
+                                                                  (B989)   BNE ERRTN    ;If checksum found < > 0, then error.
+                                                                                        ;Hackers often change these two bytes
+                                                                                        ;to "CLC" and "RTS" instructions in order
+                                                                                        ;to defeat the address checksum and ignore
+                                                                                        ;the address epilogue.
+
+                                                                  * Read first 2 bytes (only) of
+                                                                  * the address epilogue ("DE AA").
+                                                                  (B98B)
+                                                                  TRYEPIDE LDA Q6L,X    ;Get first byte.
+                                                                           BPL TRYEPIDE ;Wait for a full byte.
+                                                                           CMP #$DE     ;Was it a "DE"?
+                                                                           BNE ERRTN    ;No - try again.
+                                                                           NOP          ;Stall 2 cycles.
+                                                                  TRYEPIAA LDA Q6L,X    ;Get second byte.
+                                                                           BPL TRYEPIAA ;Wait for a full byte.
+                                                                           CMP #$AA     ;Was it an "AA"?
+                                                                           BNE ERRTN    ;No - retry sequence.
+                                                                  GOODRTN  CLC          ;Signal good read.
+                                                                  (B99F)   RTS
+                                                                           ============
+
+                                                                  (B942)
+                                                                  ERRTN    SEC          ;Signal bad read.
+                                                                  (B943)   RTS          ;Hackers often change the "SEC" to
+                                                                           ============ ;a "CLC" in order to defeat error
+                                                                                        ;checking.
+
+                                            (BDC7)   BCC RDRIGHT  ;Addr read was good.
+
+                                            * Bad address (or data) read.
+                                            (BDC9)
+                                            REDUCERD DEC READCNTR ;Reduce read counter.
+                                            (BDCC)   BPL SETXSLT  ;Try again.
+
+                                            * Do a recalibration cause exhausted
+                                            * all attempts to get a good read.
+                                            (BDCE)
+                                            DORECALB LDA PRESTRK  ;Save trk wanted on stack.
+                                                     PHA
+                                            (BDD2)   LDA #96      ;Pretend presently on trk 96
+                                                                  ;so force head against stop.
+                                            (BDD4)   JSR SETTRK   ;Go select drive & put trk wanted in
+                                                                  ;memory location specific to drive.
+
+                                                                  (BE95)
+                                                                  SETTRK   PHA          ;Save present trk on stack.
+                                                                           LDY #2       ;Get drive # wanted from IOB.
+                                                                           LDA (PTR2IOB),Y
+                                                                  (BE9A)   ROR          ;Condition carry:
+                                                                                        ;  clr=drv1, set = drv2.
+                                                                  (BE9B)   ROR DRVZPG   ;Condition zero-page loc:
+                                                                                        ;  neg=drv1, pos=drv2.
+                                                                  (BE9D)   JSR SLOTX2Y  ;Set (y) = slot.
+
+                                                                                        * Convert slot*16 from (x)
+                                                                                        * to slot in (y).
+                                                                                        (BE8E)
+                                                                                        SLOTX2Y  TXA          ;Get slot*16 from (x).
+                                                                                                 LSR          ;Divide it by 16.
+                                                                                                 LSR
+                                                                                                 LSR
+                                                                                                 LSR
+                                                                                                 TAY          ;(y) = slot.
+                                                                                        (BE94)   RTS
+
+                                                                  (BEA0)   PLA          ;Get trk wanted off stk.
+                                                                           ASL          ;Times 2 for half track.
+                                                                           BIT DRVZPG   ;Check which drive to use.
+                                                                           BMI STORDRV1 ;Branch if using drive 1.
+                                                                           STA TRK4DRV2,Y ;Save halftrack wanted for drv2.
+                                                                           BPL RTNSETRK ;ALWAYS.
+                                                                  STORDRV1 STA TRK4DRV1,Y ;Save halftrack wanted for drv1.
+                                                                  RTNSETRK RTS
+                                                                  (BEAE)
+
+                                            (BDD7)   DEC RECLBCNT ;Reduce recalibration counter.
+                                                     BEQ DRVERR   ;Error - exhausted recalib attempts.
+                                                     LDA #4       ;Indicate 4 chances to reseek track
+                                                     STA RSEEKCNT ;between recalibrations.
+                                                     LDA #0       ;Seek track 0.
+                                            (BDE3)   JSR SEEKTRK
+
+                                                                  (BE5A)
+                                                                  SEEKTRK  .
+                                                                           .
+                                                                  (See dis'mbly above.)
+                                                                           .
+                                                                           .
+                                                                           (RTS)
+
+                                            (BDE6)   PLA          ;Get trk wanted from stack.
+                                            RESEEK   JSR SEEKTRK  ;Seek trk wanted.
+
+                                                                  (BE5A)
+                                                                  SEEKTRK  .
+                                                                           .
+                                                                  (See dis'mbly above.)
+                                                                           .
+                                                                           .
+                                                                           (RTS)
+
+                                            (BDEA)   JMP RESETCNT ;Go back to try & read again.
+                                                     ------------
+
+                                            * Got a good read.
+                                            (BDED)
+                                            RDRIGHT  LDY TRKDSK   ;(y)=trk# found in header.
+                                                     CPY PRESTRK  ;Trk found = trk wanted?
+                                            (BDF2)   BEQ RTTRK    ;Yes - seeked to correct trk.
+
+                                            * Bad seek (or some kind of protection scheme)
+                                            * because track wanted < > track found.
+                                            (BDF4)   LDA PRESTRK  ;Save trk wanted on stack.
+                                                     PHA
+                                                     TYA          ;Set (a) = present trk = trk found.
+                                            (BDF9)   JSR SETTRK   ;Go select drive & put track wanted in
+                                                                  ;memory location specific to drive.
+
+                                                                  (BE95)
+                                                                  SETTRK   .
+                                                                           .
+                                                                  (See dis'mbly above.)
+                                                                           .
+                                                                           .
+                                                                           (RTS)
+
+                                            (BDFC)   PLA          ;Get trk wanted back off stack.
+                                            (BDFD)   DEC RSEEKCNT ;Allow 4 attempts between recalibrations
+                                                                  ;to find the correct trk.
+                                            (BE00)   BNE RESEEK   ;More attempts left to find track.
+                                            (BE02)   BEQ DORECALB ;ALWAYS - go do a recalibration.
+                                                     ------------
+
+                                            * Got a drive error.
+                                            (BE04)
+                                            DRVERR   PLA
+                                                     LDA #$40     ;Error code for bad drive.
+                                            TOERRWTS PLP
+                                            (BE08)   JMP RWTSERR
+                                                     -----------
+
+                                            * Command was seek (null).
+                                            (BE0B)
+                                            WASEEK   BEQ RWTSEXIT ;Not applicable when reading.
+                                                     -----------
+
+                                            * Command was format ($04).
+                                            (BE0D)
+                                            FORMDSK  JMP FORMAT   ;Not applicable when reading.
+                                                     ----------
+
+                                            * Found the correct track for
+                                            * the READ or WRITE opcodes.
+                                            (BE10)
+                                            RTTRK    LDY #3       ;Get vol wanted from IOB.
+                                                     LDA (PTR2IOB),Y
+                                                     PHA          ;Save it on the stack.
+                                                     LDA VOLDSK   ;Get volume found and
+                                                     LDY #14      ;save it on the IOB.
+                                                     STA (PTR2IOB),Y
+                                                     PLA          ;Retrieve vol wanted off stk.
+                                                     BEQ CRCTVOL  ;Volume 0 good for all.
+                                                     CMP VOLDSK   ;Vol wanted = vol found?
+                                            (BE20)   BEQ CRCTVOL  ;Yes - got correct vol #.
+
+                                            * Got a volume mismatch.
+                                            (BE22)   LDA #$20     ;Set code for vol mismatch.
+                                            (BE24)   BNE TOERRWTS ;ALWAYS.
+                                                     ------------
+
+                                            * Found correct volume, so now
+                                            * check if sector is also correct.
+                                            (BE26)
+                                            CRCTVOL  LDY #5       ;Get logical sector # wanted.
+                                                     LDA (PTR2IOB),Y
+                                                     TAY          ;Set (y) = logical sector # wanted.
+                                                     LDA PHYSECTR,Y ;Get # of physical sector wanted.
+                                                     CMP SECDSK   ;Phys sec wanted = phys sec found?
+                                                     BNE REDUCERD ;No - go try again.
+                                            (BE32)   PLP          ;PULL OPERATION FROM STACK.
+                                                                  ;Clr carry = write, set carry = read.
+                                            (BE33)   BCC WRITE    ;Branch if command was a write.
+
+                                            * Read data sector into RWTS's buffers.
+                                            (BE35)   JSR READATA  ;Go read a sector.
+
+                                                                  * Look for data prologue.
+                                                                  (B8DC)
+                                                                  READATA  LDY #32      ;Set (y) to designate 32
+                                                                  REDUCEY  DEY          ;attempts to find data prologue.
+                                                                           BEQ ERRTN    ;Error - couldn't find data prologue.
+                                                                  PRODATD5 LDA Q6L,X    ;Get byte from data prologue.
+                                                                           BPL PRODATD5 ;Wait for a full byte.
+                                                                  VERSD5   EOR #$D5     ;Check if byte was a "D5".
+                                                                           BNE REDUCEY  ;Wasn't a "D5, reduce counter.
+                                                                           NOP          ;Stall 2 cycles.
+                                                                  PRODATAA LDA Q6L,X    ;Read next data prologue byte.
+                                                                           BPL PRODATAA ;Wait for a full byte.
+                                                                           CMP #$AA     ;Was it an "AA"?
+                                                                           BNE VERSD5   ;No - restart sequence.
+                                                                  (B8F4)   LDY #86      ;Set (y) for later use
+                                                                                        ;in the read data routine.
+                                                                  (B8F6)
+                                                                  PRODATAD LDA Q6L,X    ;Read next byte in data prologue.
+                                                                           BPL PRODATAD ;Wait for a full byte.
+                                                                           CMP #$AD     ;Was it an "AD"?
+                                                                  (B8FD)   BNE VERSD5   ;No - restart search sequence.
+         
+                                                                  * Read first 86 bytes of data into
+                                                                  * RWTSBUF2 ($BC55 --> $BC00).
+                                                                  *
+                                                                  * Use disk byte as index to the
+                                                                  * NDX2NIBL table which contains
+                                                                  * offsets that we would be using
+                                                                  * if we were accessing a table
+                                                                  * of disk bytes when writing.
+                                                                  * (That is, we are just doing
+                                                                  * the opposite of writing.)
+                                                                  * EOR value from NDX2NIBL table
+                                                                  * with the previous EOR result.
+                                                                  * (On entry, use #$00 for previous
+                                                                  * EOR result.)
+         
+                                                                  (B8FF)   LDA #0       ;Initialize (a) for later EORing.
+                                                                  RDUCY    DEY          ;Reduce index to RWTSBUF2.
+                                                                           STY PROSCRTH ;Save index.
+                                                                  RDSKBYT  LDY Q6L,X    ;(y) = disk byte.
+                                                                           BPL RDSKBYT  ;Wait for a full byte.
+                                                                  (B909)   EOR NDX2NIBL-$96,Y ;Use (y) as index to tbl
+                                                                                        ;      of 2-encoded nibbles.
+                                                                  (B90C)   LDY PROSCRTH ;Store 2-encoded nibble in RWTSBUF2.
+                                                                           STA RWTSBUF2,Y
+                                                                  (B911)   BNE RDUCY    ;Conditioned from the "LDY PROSCRTH".
+
+                                                                  * Read rest of sector into RWTSBUF1
+                                                                  * ($BB00 --> $BBFF).
+                                                                  *
+                                                                  * Use disk byte as index to the
+                                                                  * NDX2NIBL table which contains
+                                                                  * offsets that we would be using
+                                                                  * if we were accessing a table
+                                                                  * of disk bytes when writing.
+                                                                  * (That is, we are just doing
+                                                                  * the opposite of writing.)
+                                                                  * EOR value from NDX2NIBL table
+                                                                  * with the previous EOR result.
+     
+                                                                  (B913)
+                                                                  SAVYNDX  STY PROSCRTH ;Save index to RWTSBUF1.
+                                                                  RDSKBYT2 LDY Q6L,X    ;(y) = disk byte.
+                                                                           BPL RDSKBYT2 ;Wait for a full byte.
+                                                                           EOR NDX2NIBL-$96,Y ;Get 6-encoded nibble from tbl.
+                                                                           LDY PROSCRTH ;Get index to RWTSBUF1.
+                                                                           STA RWTSBUF1,Y ;Store 6-encoded nibble in RWTSBUF1.
+                                                                           INY
+                                                                  (B923)   BNE SAVYNDX  ;More disk bytes to read.
+
+                                                                  * Read the data checksum.
+                                                                  (B925)
+                                                                  RDCHECK  LDY Q6L,X    ;Get data checksum.
+                                                                           BPL RDCHECK  ;Wait for full byte.
+                                                                  (B92A)   CMP NDX2NIBL-$96,Y ;Converted checksum = val in $BBFF?
+                                                                                        ;Remember:  Val in $#BBFF is result of
+                                                                                        ;previous cummulative EORing.  There4,
+                                                                                        ;this comparison with (a) detects any
+                                                                                        ;(non-cancelling) error(s) that may
+                                                                                        ;have occurred in the entire sector!!!
+                                                                  (B92D)   BNE ERRTN    ;No - got an error.
+                                                                                        ;Hackers often change these two bytes
+                                                                                        ;to "CLC" and "RTS" instructions in order
+                                                                                        ;to defeat the data checksum and ignore
+                                                                                        ;the data epilogue.
+
+                                                                  * Read the first two bytes (only)
+                                                                  * of the data epilogue ("DE AA").
+                                                                  (B92F)
+                                                                  EPIRDDE  LDA Q6L,X    ;Read first byte of data epilogue.
+                                                                           BPL EPIRDDE  ;Wait for a full byte.
+                                                                           CMP #$DE     ;Was it a "DE"?
+                                                                           BNE ERRTN    ;No - got an error.
+                                                                           NOP          ;Stall for 2 cycles.
+                                                                  EPIRDAA  LDA Q6L,X    ;Read 2nd data epilogue byte.
+                                                                           BPL EPIRDAA  ;Wait for a full byte.
+                                                                           CMP #$AA     ;Was it an "AA"?
+                                                                           BEQ GOODRTN  ;Yes - got a good read.
+                                                                  ERRTN    SEC          ;Signal bad read.
+                                                                  (B943)   RTS          ;Hackers often change the "SEC" to
+                                                                           ============ ;a "CLC" in order to defeat error
+                                                                                        ;checking.
+
+                                                                  (B99E)
+                                                                  GOODRTN  CLC          ;Signal good read.
+                                                                  (B99F)   RTS
+                                                                           =============
+
+                                            (BE38)   PHP          ;Save status of read on stack in case bad read.
+                                            (BE39)   BCS REDUCERD ;Bad read - go try again.
+                                                                  ;Leave set (c) on stack to denote reading.
+                                                                  ;We previously pulled the saved status
+                                                                  ;(denoting if reading or writing) off
+                                                                  ;the stack.  There4, we better put a set
+                                                                  ;(c) back on stack because we are reading
+                                                                  ;and are about to branch back to a routine
+                                                                  ;that expects the read (c=1) or write (c=0)
+                                                                  ;flag on the stack.
+                                            (BE3B)   PLP          ;Good read - not branching back, so no
+                                                                  ;need to preserve flag on stack.
+
+                                            * Postnibble data & shut down.
+                                            (BE3C)   LDX #0
+                                                     STX PROSCRTH
+                                            (BE40)   JSR POSTNB16
+
+                                                                  * Convert 6-&-2-encoded bytes in
+                                                                  * RWTS'S two buffers to normal
+                                                                  * memory bytes (usually placed in
+                                                                  * the DOS data sector buffer).
+                                                                  * (On entry:  (x) = slot * 16,
+                                                                  * PTR2BUF points to data buffer.)
+                                                                  (B8C2)
+                                                                  POSTNB16 LDY #0
+                                                                  POSTNIB1 LDX #$56     ;(decimal #86.)
+                                                                  POSTNIB2 DEX
+                                                                           BMI POSTNIB1
+                                                                           LDA RWTSBUF1,Y ;Set (a) = 6-encoded byte.
+                                                                           LSR RWTSBUF2,X ;Put lower 2 bits of 2-encoded
+                                                                           ROL          ;byte into original 6-encoded byte
+                                                                           LSR RWTSBUF2,X ;to get normal memory byte.
+                                                                           ROL
+                                                                           STA (PTR2BUF),Y ;Put normal memory byte in
+                                                                           INY          ;RWTS's buffer (normally DOS
+                                                                           CPY PROSCRTH ;data sector buffer).
+                                                                           BNE POSTNIB2
+                                                                  (B8D8)   RTS
+
+                                            (BE43)   LDX SLOT5PG  ;Set (x) = slot*16 from page 5.
+
+                                            * Signal success or failure & then shut down.
+                                            * Note:  Several references erroneously state that
+                                            * the return code is zero if no errors occurrred.
+                                            * However, a lone seek command always sets the return
+                                            * code to zero.  Even if a read or write operation
+                                            * is successful, the IOB return code will acquire a
+                                            * random value (as a result of accessing a hardware
+                                            * switch prior to entering this routine).
+     
+                                            (BE46)
+                                            RWTSEXIT CLC          ;Clr carry to signal successful operation.
+                                                     HEX 24       ;"BIT $38" to skip "SEC" instruc below.
+                                            RWTSERR  SEC          ;Set carry to signal unsuccessful operation.
+                                                     LDY #13      ;Store return code in IOB.
+                                                     STA (PTR2IOB),Y
+                                                     LDA MTROFF,X ;Turn motor off.
+                                            (BE50)   RTS
+
+                      (B7BA)   BCS ERRENTER ;Branch if operation unsuccessful.
+                               PLP          ;Throw status off stk.
+                               CLC          ;Signal successful.
+                      (B7BE)   RTS
+                               ============
+
+                      (B7BF)
+                      ERRENTER PLP          ;Throw status off stk.
+                               SEC          ;Signal UNsuccessful.
+                      (B7C1)   RTS
+                               ============
+
+(B093)   LDA IBSMOD   ;Get vol found from IOB
+         STA VOLFM    ;& put it in Fm parm list.
+         LDA #$FF     ;Designate vol wanted in
+(B09B)   STA IBVOL    ;IOB as 255 for next time.
+                      ;(Actually using 0 cause FF EOR FF = 0.)
+(B09E)   BCS ERRWTSDR ;Branch if UNsuccessful operation.
+(B0A0)   RTS
+         =============
+
+* Operation was NOT successful.
+(B0A1)
+ERRWTSDR LDA IBSTAT   ;Get RWTS'S error code.
+
+* Translate IOB error code in (a) to
+* FM error code in (y).  (DOS later employs
+* the FM error code in the routine used to
+* print the error message.)
+(B0A4)   LDY #7       ;Set (y) for FM error code.
+         CMP #$20     ;Vol mismatch?
+         BEQ SETFMERR ;Yes.
+         LDY #$04     ;No.
+         CMP #$10     ;Write protected?
+         BEQ SETFMERR ;Yes.
+         LDY #8       ;Must have been other, so
+SETFMERR TYA          ;designate as general I/O error.
+(B0B3)   JMP BADFMXIT ;Go handler error.
+         ------------
+
+(B37F)
+BADFMXIT SEC          ;(c) = 1 to signal UNsuccessful.
+FMEXIT   PHP          ;Preserve success of operation on stk.
+         STA RTNCODFM ;Put appropriate return code in FM parm list.
+         LDA #0       ;Avoid that infamous $48 bug.
+         STA STATUS
+(B38E)   JSR CPYFMWA
+
+                      (AE7E)
+                      CPYFMWA  JSR SELWKBUF
+
+                                            * Point the A4L/H pointer at the DOS work buffer (chain).
+                                            (AF08)
+                                            SELWKBUF LDX #0       ;Designate work area buffer.
+                                            (AF0A)   BEQ PT2FMBUF ;ALWAYS.
+
+                                            (AF12)
+                                            PT2FMBUF LDA WRKBUFFM,X ;Get addr of DOS's work buffer
+                                                     STA A4L      ;(chain) from FM parm list and put
+                                                     LDA WRKBUFFM+1,X ;it in the A4L/H pointer.
+                                                     STA A4L+1
+                                            (AF1C)   RTS
+
+                      * Copy work area buffer (non-chain)
+                      * to DOS work buffer (chain).
+                      (AE81)   LDY #0
+                      STORWRK  LDA FMWKAREA,Y
+                               STA (A4L),Y
+                               INY
+                               CPY #45
+                               BNE STORWRK
+                      (AE8D)   RTS
+
+(B391)   PLP          ;Exit with (c) conditioned accordingly.
+         LDX STKSAV   ;Reset the stack pointer so execution will
+         TXS          ;return to the caller of the function.
+(B396)   RTS          ;(Normally returns to AFTRFUNC ($A6AB)
+         ============ ;located in the FMDRIVER routine ($A6A8).)

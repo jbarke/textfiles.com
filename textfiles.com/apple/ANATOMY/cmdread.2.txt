@@ -1,0 +1,966 @@
+*:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=*
+* NOTE:  Normally, execution flows back into Applesoft.  When    *
+*        Applesoft picks up a subsequent INPUT or GET statement, *
+*        data is retrieved from the disk because the READ cmd    *
+*        was exited with OPUTCOND: $00 and CONDFLG: $01.  An     *
+*        example of program flow is shown below for an INPUT     *
+*        statement.  Our illustrative disassembly begins in      *
+*        Applesoft after it has recognized the INPUT tolen and   *
+*        jumped to the beginning of that routine.  Not that      *
+*        this disasseembly is over simplified and not complete.  *
+*        (For instance, it does not include multiple variable    *
+*        input.)  Furthermore, it is definitely NOT meant to     *
+*        describe the inner workings of Applesoft.  Instead the, *
+*        intent is merely to provide a specific example of how   *
+*        an INPUT statement becomes interconnected to, and is    *
+*        processed by, those nebulous DOS creatures called       *
+*        condition handlers.  Assembly language programmers who  *
+*        use GETLN ($FD6A) to retrieve data from the disk may be *
+*        particularly interested in the non-Applesoft portions   *
+*        of this disassembly.                                    *
+*:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=:=*
+
+
+(DBB2)
+INPUT    CMP #' '     ;Is there an optional input string?
+                      ;(Such as in: '100 INPUT "WHAT IS YOUR NAME";A$')
+(DBB4)   BNE NOPTNSTR ;Branch if no optional input string.
+         JSR STRTXT   ;Make text from the string.
+         LDA #';'     ;Make sure that there is a semicolon after
+         JSR SYNCHR   ;the optional string, else issue error message.
+(DBBE)   JSR STRPRT   ;Print the optional string prompt.
+                      ;Note:  Goes through DOS hooks via OPUTINCP and OPUTHNDL0.
+(DBC1)   JMP CKDIFRD  ;Bypass printing of the "?" prompt when
+         -----------  ;using optional string prompt instead.
+
+(DBC4)
+NOPTNSTR JSR OUTQUES
+
+                      * CONDITIONALLY PRINT THE INPUT "?" PROMPT.
+                      (DB5A)
+                      OUTQUES  LDA #'?'
+                      OUTDO    ORA #$80     ;Convert to neg ASCII.
+                               CMP #" "     ;Is it a ctrl char.
+                               BCC GODOPUT  ;Branch if ctrl char.
+                               ORA FLSHMSK  ;$40 for FLASH, $00 for INVERSE or NORMAL.
+                      GODOPUT  JSR COUT     ;Go to output handling routine.
+                      (DB64)
+
+                                            (FDED)
+                                            COUT     JMP (CSW)
+                                                     ---------
+
+                                            * DOS'S output intercept routine.
+                                            (9EBD)
+                                            OPUTINCP JSR PREP4DOS
+
+                                                                  * Prepare for processing by DOS.
+                                                                  (9ED1)
+                                                                  PREP4DOS STA ASAVED   ;Save (a), (y) & (x) registers.
+                                                                           STX XSAVED
+                                                                           STY YSAVED
+                                                                           TSX          ;Adjust stack pointer and save it so that
+                                                                           INX          ;when later restore it and hit an "RTS",
+                                                                           INX          ;we can return to the routine that
+                                                                  (9EDD)   STX STKSAVED ;called the routine that contained
+                                                                                        ;the "JSR PREP4DOS" instruction.
+                                                                                        ;(In this case, set to rtn to $DB67.)
+                                                                  (9EE0)
+                                                                  UNCONDOS LDX #3       ;Handy entry point frequently used by
+                                                                                        ;assembly language programmers to
+                                                                  (9EE2)                ;disconnect DOS completely.
+                                                                  SETRUHKS LDA CSWTRUE,X ;Restore the I/O hooks to point to the
+                                                                           STA CSW,X    ;true I/O handlers, ex:
+                                                                           DEX          ;   KSWTRUE: KEYIN --> KSW: KEYIN.
+                                                                           BPL SETRUHKS ;   CSWTRUE: COUT1 --> CSW: COUT1.
+                                                                  (9EEA)   RTS          ;4 bytes (0 to 3) to move.
+
+                                            * Use current OPUTCOND value to index table containing
+                                            * address of output condition handlers.  Do a "stack jump"
+                                            * to the appropriate condition handler entry point.
+                                            (9EC0)   LDA OPUTCOND
+                                                     ASL          ;Times 2 cause 2 bytes per address.
+                                                     TAX          ;Set (x) to index table of entry point addresses.
+                                                     LDA OUTHNDTB+1,X ;Put adr of output handler on stack
+                                                     PHA          ;(hi byte first) and then do a "stack jump"
+                                                     LDA OUTHNDTB,X ;to the appropriate entry point.
+                                                     PHA
+                                                     LDA ASAVED   ;Get char to be printed.
+                                            (9ED0)   RTS          ;Execute the "stack jump"
+
+                                                     .
+                                                     .
+                                            STACK JUMP TO OPUTHDL0
+                                                     .
+                                                     .
+                                            * Output handler 0.
+                                            * (Evaluate start of line.)
+                                            (9EEB)
+                                            OPUTHDL0 LDX RUNTRUPT ;Was a RUN interrupted?
+                                            (9EEE)   BEQ NONTRUPT ;Branch if not.
+ 
+                                            (9EF3)
+                                            NONTRUPT LDX CONDNFLG ;Are we doing a warmstart ($00), coldstart ($80),
+                                                                  ;using A(RAM) ($C0) or doing a READ ($01)?
+                                            (9EF6)   BEQ SETIGNOR ;Branch if warmstarting.
+
+                                            * Not doing a warmstart, so check (a) to see
+                                            * if using "?" associated with READing an
+                                            * INPUT statement.
+                                            (9EF8)   CMP #"?"
+                                            (9EFA)   BEQ OPUTHDL6 ;Branch if doing a READ.
+ 
+                                            * Output handler 6.
+                                            * (Skip the question mark prompt.)
+                                            (9F71)
+                                            OPUTHDL6 LDA #0       ;RESET TO CONDITION 0.
+                                                     STA OPUTCOND
+                                            (9F76)   BEQ DSPLYINP ;ALWAYS - go conditionally display input.
+
+                                            (9F9D)
+                                            DSPLYINP LDA #%00100000 ;Set bit pos'n 5 for test.
+                                            DSPLYCHR AND CIOCUMUL ;Check if "MON I" is in effect.
+                                            (9FA2)   BEQ DOSEXIT  ;Branch if display of input NOT required.
+
+                                            * Display the char.
+                                            (9FA4)
+                                            DSPLYALL JSR RESTOREG
+
+                                                                  * Restore (a), (y) & (x) registers.
+                                                                  (9FBA)
+                                                                  RESTOREG LDA ASAVED
+                                                                           LDY YSAVED
+                                                                           LDX XSAVED
+                                                                           SEC          ;Why???
+                                                                  (9FC4)   RTS
+
+                                            (9FA7)   JSR GODSPLY
+
+                                                                  (9FC5)
+                                                                  GODSPLY  JMP (CSW)
+                                                                           ---------
+
+                                                                  (FDF0)
+                                                                  COUT1    .
+                                                                           .
+                                                                  PRINT "?" CHAR THRU TRUE OUTPUT HANDLER.
+                                                                  (See dis'mbly in APPLE II REFERENCE MANUAL.)
+                                                                           .
+                                                                           .
+                                                                           (RTS)
+
+                                            (9FAA)   STA ASAVED   ;Save (a), (y) & (x) registers.
+                                                     STY YSAVED
+                                            (9FB0)   STX XSAVED
+
+                                            * Routine to exit DOS.
+                                            (9FB3)
+                                            DOSEXIT  JSR INITIOHK ;Reset DOS hooks.
+
+                                                                  * Initialize the I/O hooks so that DOS intercepts
+                                                                  * all input and output.   For instance, if a routine
+                                                                  * encounters a "COUT  JMP (CSW)", then execution will
+                                                                  * actually flow to DOS's output routine (OPUTINCP,
+                                                                  * $9EBD).  Similarly, any routine that refers to
+                                                                  * "RDKEY  JMP (KSW)" will actually jump to DOS's
+                                                                  * input routine (INPTINCP, $9E81).
+                                                                  *
+                                                                  * The true (ie. normal) hooks are saved, ex:
+                                                                  *   KSW: KEYIN --> KSWTRUE: KEYIN.
+                                                                  *   CSW: COUT1 --> CSWTRUE: COUT1.
+                                                                  * The intercepts are then set as follows:
+                                                                  *   ADINPTCP: INPTINCP --> KSW: INPTINCP.
+                                                                  *   ADOPUTCP: OPUTINCP --> CSW: OPUTINCP.
+
+                                                                  * Check if input hook needs to be reset.
+                                                                  (A851)
+                                                                  INITIOHK LDA KSW+1
+                                                                           CMP ADINPTCP+1
+                                                                  (A856)   BEQ CKOUTHK  ;Input hook already points to DOS'S
+                                                                                        ;input handler, so go check output hook.
+
+                                                                  * Reset the input hook to point to DOS.
+                                                                  (A858)   STA KSWTRUE+1 ;KSW: KEYIN --> KSWTRUE: KEYIN.
+                                                                           LDA KSW
+                                                                           STA KSWTRUE
+                                                                           LDA ADINPTCP ;ADINPTCP: INPTINCP --> KSW: INPTINCP.
+                                                                           STA KSW
+                                                                           LDA ADINPTCP+1
+                                                                  (A868)   STA KSW+1
+
+                                                                  * Check if output hook needs to be reset.
+                                                                  (A86A)
+                                                                  CKOUTHK  LDA CSW+1
+                                                                           CMP ADOPUTCP+1
+                                                                  (A86F)   BEQ SETHKRTN ;Output hook already points to DOS's
+                                                                                        ;output handler, so go exit.
+
+                                                                  * Reset the output hook to point to DOS.
+                                                                  (A871)   STA CSWTRUE+1 ;CSW: COUT1 --> CSWTRUE: COUT1.
+                                                                           LDA CSW
+                                                                           STA CSWTRUE
+                                                                           LDA ADOPUTCP ;ADOPUTCP: OPUTINCP --> CSW: OPUTINCP.
+                                                                           STA CSW
+                                                                           LDA ADOPUTCP+1
+                                                                           STA CSW+1
+                                                                  SETHKRTN RTS
+                                                                  (A883)
+
+                                            (9FB6)   LDX STKSAVED ;Retrieve the saved stack pointer value and
+                                                     TXS          ;reset the stack to return to caller.
+                                            RESTOREG LDA ASAVED   ;Restore (a), (y) & (x) registers.
+                                                     LDY YSAVED
+                                                     LDX XSAVED
+                                                     SEC          ;Return to the routine that called the routine
+                                            (9FC4)   RTS          ;that contined the "JSR PREP4DOS" instruction.
+
+                      (DB67)   AND #$7F     ;Convert char back to positive ASCII.
+                               PHA          ;Save it on the stack.
+                               LDA SPEEDFLG ;Delay in accordance with speed setting.
+                      (DB6C)   JSR WAIT
+
+                                            * Monitor ROM's main delay routine.
+                                            * Delay z number of cycles based on
+                                            * the formula:
+                                            * z = ((5 *a^2) + (27 * a) + 26) / 2
+                                            * where a = value in accumulator on entry.
+                                            (FCA8)
+                                            WAIT     SEC          ;Prepare for subtraction.
+                                            WAIT2    PHA          ;Save (a) on stack.
+                                            WAIT3    SBC #1       ;Keep on reducing (a) until it equals 0.
+                                                     BNE WAIT3
+                                                     PLA          ;Retrieve original (a) from stack.
+                                                     SBC #1       ;Reduce the original (a) down to 0 again.
+                                                     BNE WAIT2
+                                            (FCB3)   RTS
+
+                      (DB6F)   PLA          ;Get saved char back from stack.
+                      (DB70)   RTS
+
+(DBC7)
+CKDIFRD  JSR ERRDIR
+
+                      * Check if in deferred or immediate mode
+                      * (Remember, INPUT is only applicable to
+                      * deferred mode.)
+                      (E306)
+                      ERRDIR   LDX CURLIN+1 ;Contains #$FF if in immediate mode.
+                               INX          ;If $FF ==> $00 then immediate.
+                      (E309)   BNE WASDEF   ;Branch if deferred mode.
+                               ----------
+                               .
+                               .
+                               - Issue not-direct-command message.
+                               ============
+
+                      WASDEF   RTS
+                      (E2AC)   ============
+
+(DBCA)   LDA #$2C     ;Throw a $2C on the bottom of the stack
+         STA BUF200-1 ;for some unknown reason????
+(DBCF)   JSR INLIN
+
+                      * INPUT A LINE OF TEXT FROM THE CURRENT INPUT DEVICE.
+                      (D52C)
+                      INLIN    LDX #$80     ;Designate a NULL prompt.
+                      INLINPL2 STX PROMPT
+                      (D530)   JSR GETLN
+
+                                            * Get a line of input.
+                                            (FD6A)
+                                            GETLN    LDA PROMPT   ;PRINT NULL PROMPT.
+                                            (FD6C)   JSR COUT
+
+                                                                  * Go through the motions of printing,
+                                                                  * but don't actually print anything.
+                                                                  * (Using a NULL prompt.)
+                                                                  (FDED)
+                                                                  COUT     JMP (CSW)    ;Output hook pts to DOS's output handler.
+                                                                           ------------
+
+                                                                  * DOS's output intercept routine.
+                                                                  (9EBD)
+                                                                  OPUTINCP JSR PREP4DOS
+
+                                                                                        (9ED1)
+                                                                                        PREP4DOS STA ASAVED   ;Save (a), (y), & (x)
+                                                                                                 STX XSAVED   ;registers.
+                                                                                                 STY YSAVED
+                                                                                                 TSX          ;Adjust stk ptr and
+                                                                                                 INX          ;save it so that
+                                                                                                 INX          ;when we later
+                                                                                        (9EDD)   STX STKSAVED ;restore it and hit
+                                                                                                              ;an "RTS", we can
+                                                                                                              ;return to routine
+                                                                                                              ;that called the
+                                                                                                              ;routine that
+                                                                                                              ;contained the
+                                                                                                              ;"JSR PREP4DOS"
+                                                                                                              ;instruction.
+                                                                                                              ;(In this case,
+                                                                                                              ;set to return
+                                                                                                              ;to $FD6F.)
+
+                                                                                        * Restore the I/O hooks to point to the
+                                                                                        * true I/O handlers, ex:
+                                                                                        *    KSWTRUE: KEYIN --> KSW: KEYIN.
+                                                                                        *    CSWTRUE: COUT1 --> CSW: COUT1.
+                                                                                        (9EE0)
+                                                                                        UNCONDOS LDX #3
+                                                                                        SETRUHKS LDA CSWTRUE,X
+                                                                                                 STA CSW,X
+                                                                                                 DEX
+                                                                                                 BPL SETRUHKS ;4 bytes to move
+                                                                                        (9EEA)   RTS          ;(0 to 3).
+
+                                                                  * Use current OPUTCOND value to index table containing
+                                                                  * address of output condition handlers.  Do a "stack jump"
+                                                                  * to the appropriate condition handler entry point.
+                                                                  (9EC0)   LDA OPUTCOND
+                                                                           ASL          ;Times 2 cause 2 bytes per address.
+                                                                           TAX          ;Set (x) to index table of addresses.
+                                                                           LDA OUTHNDTB+1,X ;Put adr of output handler on stack
+                                                                           PHA          ;(hi byte first) and then do a "stack jump"
+                                                                           LDA OUTHNDTB,X ;to the appropriate entry point.
+                                                                           PHA
+                                                                           LDA ASAVED   ;Get char to be printed.
+                                                                  (9ED0)   RTS          ;Execute the "stack jump"
+
+                                                                           .
+                                                                           .
+                                                                  STACK JUMP TO OPUTHDL0
+                                                                           .
+                                                                           .
+                                                                  * Output handler 0.
+                                                                  * (Evaluate start of line.)
+                                                                  (9EEB)
+                                                                  OPUTHDL0 LDX RUNTRUPT ;Was a RUN interrupted?
+                                                                  (9EEE)   BEQ NONTRUPT ;Branch if not.
+ 
+                                                                  (9EF3)
+                                                                  NONTRUPT LDX CONDNFLG ;Are we doing a warmstart ($00),
+                                                                                        ;coldstart ($80), using A(RAM) ($C0)
+                                                                                        ;or doing a READ ($01)?
+                                                                  (9EF6)   BEQ SETIGNOR ;Branch if warmstarting.
+
+                                                                  * Not doing a warmstart, so check (a) to see
+                                                                  * if using "?" associated with READing an
+                                                                  * INPUT statement.
+                                                                  (9EF8)   CMP #"?"
+                                                                  (9EFA)   BEQ OPUTHDL6 ;Branch if getting ready
+                                                                                        ;to read a text file byte.
+                                                                  (9EFC)   CMP PROMPT   ;Are we printing a prompt?
+                                                                  (9EFE)   BEQ SET2EVAL ;Branch if about to print prompt.
+
+                                                                  (9F27)
+                                                                  SET2EVAL LDX #0       ;Set condition 0 - evaluate start of line.
+                                                                           STX OPUTCOND
+                                                                  (9F2C)   JMP DSPLYALL ;Go display char.
+                                                                           ------------
+
+                                                                  * Display the char.
+                                                                  (9FA4)
+                                                                  DSPLYALL JSR RESTOREG
+
+                                                                                        * Restore (a), (y) & (x) registers.
+                                                                                        (9FBA)
+                                                                                        RESTOREG LDA ASAVED
+                                                                                                 LDY YSAVED
+                                                                                                 LDX XSAVED
+                                                                                                 SEC          ;Why???
+                                                                                        (9FC4)   RTS
+
+                                                                  (9FA7)   JSR GODSPLY
+
+                                                                                        (9FC5)
+                                                                                        GODSPLY  JMP (CSW)    ;Pts to true hks.
+                                                                                                 ------------
+
+                                                                                        (FDF0)
+                                                                                        COUT1    .
+                                                                                                 .
+                                                                                        - print char thru true output handler.
+                                                                                        - ACTUALLY DOESN'T PRINT ANYTHING CAUSE
+                                                                                          CHAR IS A NULL CHARACTER ($80).
+                                                                                        (See dis'mbly in APPLE II REFERENCE MANUAL.)
+                                                                                                 .
+                                                                                                 .
+                                                                                                 (RTS)
+
+                                                                  (9FAA)   STA ASAVED   ;Save (a), (y) & (x) registers.
+                                                                           STY YSAVED
+                                                                  (9FB9)   STX XSAVED
+
+                                                                  * Routine to exit DOS.
+                                                                  (9FB3)
+                                                                  DOSEXIT  JSR INITIOHK ;Initialize the I/O hooks so that DOS
+                                                                                        ;intercepts all input & output.
+                                                                                        ;(See dis'mbly above.)
+                                                                  (9FB6)   LDX STKSAVED ;Retrieve the saved stack pointer val and
+                                                                           TXS          ;reset the stack to return to caller.
+                                                                  RESTOREG LDA ASAVED   ;Restore (a), (y) & (x) registers.
+                                                                           LDY YSAVED
+                                                                           LDX XSAVED
+                                                                           SEC          ;Return to the routine that called the
+                                                                  (9FC4)   RTS          ;routine that contained the "JSR PREP4DOS"
+                                                                                        ;instruction.
+
+                                            * Get a single byte of input.
+                                            (FD6F)   LDX #1
+                                            BCKSPC   TXA          ;Force fall thru to next instruction.
+                                                     BEQ GETLNZ
+                                                     DEX          ;Initialize (x) = 0 as index to input buf.
+                                            NXTCHAR  JSR RDCHAR
+                                            (FD75)
+
+                                                                  * Routine to read an input byte.
+                                                                  (FD35)
+                                                                  RDCHAR   JSR RDKEY
+
+                                                                                        (FDC0)
+                                                                                        RDKEY    LDY CH       ;Get horiz cursor
+                                                                                                              ;pos'n 4 nxt char.
+                                                                                        (FD0E)   LDA (BASL),Y ;Pick up char in next
+                                                                                        (FD10)   PHA          ;screen pos'n & save
+                                                                                                              ;it on the stack.
+                                                                                        (FD11)   AND #$3F     ;Convert char to
+                                                                                                 ORA #$40     ;flashing.
+                                                                                        (FD15)   STA (BASL),Y ;Put flashing char
+                                                                                                              ;on scrn to serve
+                                                                                                              ;as cursor.
+                                                                                        (FD17)   PLA          ;Get char back that
+                                                                                                              ;cursor is replacing.
+                                                                                                              ;(Need it in case do
+                                                                                                              ;bkspc or -> and
+                                                                                                              ;want to reinstate
+                                                                                                              ;orig char on scrn.)
+                                                                                        (FD18)   JMP (CSW)    ;Input hook still
+                                                                                                 -----------  ;pointing to DOS.
+
+                                                                                        (9E81)
+                                                                                        INPTINCP JSR PREP4DOS ;Save regs & stk ptr
+                                                                                                              ;(In this case, set
+                                                                                                              ;saved stk ptr to
+                                                                                                              ;return to $FD38.)
+                                                                                                              ;Pt hks at true
+                                                                                                              ;I/O handlers. (See
+                                                                                                              ;dis'mbly above.)
+                                                                                        (9E84)   LDA CONDNFLG ;Test if doing
+                                                                                        (9E87)   BEQ INPUTWRM ;warmstart.
+                                                                                                              ;Fall thru if
+                                                                                                              ;reading.
+                                                                                        (9E89)   PHA          ;Save condition flag.
+                                                                                                 LDA ASAVED   ;Put substitute
+                                                                                                 STA (BASL),Y ;cursor back on scrn.
+                                                                                                 PLA          ;Get condition val.
+                                                                                                 BMI INPUTCLD ;Branch 4 coldstart.
+                                                                                        (9E92)   JMP READTEXT ;Read file byte.
+                                                                                                 ------------
+
+                                                                                        * Routine to read a data byte.
+                                                                                        (A626)
+                                                                                        READTEXT JSR CKBSCRUN
+                                                                                                              .
+                                                                                                              .
+                                                                  .............................................
+                                                                  .        * Check if basic is running a program.
+                                                                  .        * Exit with (x) = 1 if in immediate mode.
+                                                                  .        (A65E)
+                                                                  .        CKBSCRUN PHA
+                                                                  .                 LDA ACTBSFLG ;Which basic is up?
+                                                                  .        (A662)   BEQ INTBASIC ;Branch if using Integer.
+                                                                  .
+                                                                  .        * Using Applesoft - now if line
+                                                                  .        * number > 65288 ($FF in hi byte),
+                                                                  .        * then using immediate mode.
+                                                                  .        (A664)   LDX CURLIN+1 ;Check hi byte of line #.
+                                                                  .        (A666)   INX          ;(If $FF --> $00, then
+                                                                  .                              ;number > 65288.)
+                                                                  .        (A667)   BEQ IMEDMODE ;Branch if using immed mode.
+                                                                  .
+                                                                  .        * FP appears to be running a prgm
+                                                                  .        * but maybe CURLIN+1 was zapped,
+                                                                  .        * so also check prompt.
+                                                                  .        (A669)   LDX PROMPT
+                                                                  .                 CPX #$DD     ;Using an Applesoft prompt?
+                                                                  .                 BEQ IMEDMODE ;Yes - must be in immed mode.
+                                                                  .        RUNNING  PLA          ;Get saved char back from stk.
+                                                                  .                 CLC          ;Signal program is running.
+                                                                  .        (A671)   RTS
+                                                                  .                 ============
+                                                                  .
+                                                                  .        (A672)
+                                                                  .        INTBASIC LDA RUNMODE  ;Check Integer's run mode flag.
+                                                                  .                 BMI RUNNING  ;If neg, Integer basic in deferred.
+                                                                  .        IMEDMODE PLA          ;Get saved (a) back from stack.
+                                                                  .                 SEC          ;Signal in immediate mode.
+                                                                  .        (A678)   RTS
+                                                                  .                 ============
+                                                                  .
+                                                                  .............................................
+                                                                                                              .
+                                                                                                              .
+                                                                                        (A629)   BCS CLOSZERO ;Basic not running,
+                                                                                                              ;so go close file.
+                                                                                                              ;Reset to condition
+                                                                                                              ;0 & do a warmstart.
+                                                                                                              ;(Remeber, READ cmd
+                                                                                                              ;is restricted to
+                                                                                                              ;deferred mode.)
+                                                                                                              ;See linear dis'mbly
+                                                                                        (A62B)   LDA #6       ;SET CONDITION 6 to
+                                                                                        (A62D                 ;ignore input prompt.
+                                                                                        SETCOND  STA OPUTCOND
+                                                                                        (A630)   JSR RDTXTBYT ;Go read text file
+                                                                                                              ;data byte.
+
+                                                                                                              * Set FM parm list
+                                                                                                              * to read 1 byte
+                                                                                                              * subfunction.
+                                                                                                              (A68C)
+                                                                                                              RDTXTBYT LDA #3
+                                                                                                                       STA OPCODEFM
+                                                                                                                       LDA #1
+                                                                                                              (A693)   STA SUBCODFM
+
+                                                                  
+                                                                                                              * Use FM driver to
+                                                                                                              * read a file byte.
+                                                                                                              (A696)   JSR FMDRIVER
+                                                                                                              - use read function
+                                                                                                                & read-one-byte
+                                                                                                                subfunction.
+                                                                                                              (A699)   LDA ONEIOBUF
+                                                                                                              - (a) = byte just
+                                                                                                                      read.
+                                                                                                              (A69C)   RTS
+
+                                                                                        (A633) BNE NOTEND     ;If byte read < > 0,
+                                                                                                              ;then haven't hit
+                                                                                                              ;end-of-file marker
+                                                                                                              ;yet.
+
+                                                                                        * Ran out of data.  Picked up a $00
+                                                                                        * byte either in partially full data
+                                                                                        * sector or else a zeroed-out T/S
+                                                                                        * link or zeroed-out data pair in
+                                                                                        * T/S list sector.
+                                                                                        (A636)   JSR CLOSEONE ;Go close file.
+                                                                                                              ;(See dis'mbly given
+                                                                                                              ;with close cmd.)
+                                                                                        (A638)   LDA #3       ;Using condition 3?
+                                                                                        (A63A)   CMP OPUTCOND ;Handling input
+                                                                                                              ;statement?
+                                                                                        (A63D)   BEQ DONEPOSN ;Yes - go to an "RTS"
+                                                                                                              ;(At this point in
+                                                                                        (A63F)                ;time, fall thru.)
+                                                                                        ENDATERR LDA #5       ;Out of data error.
+                                                                                        (A641)   JMP ERRHNDLR ;Go handle error.
+                                                                                                 ------------ ;(See dis'mbly
+                                                                                                              ;of errors.)
+
+                                                                                        (A644)
+                                                                                        NOTEND   CMP #$E0     ;Lowercase?
+                                                                                                 BCC SAVIT    ;Branch if uppercase.
+                                                                                        (A648)   AND #$7F     ;Convert lower to
+                                                                                                              ;upper in order to
+                                                                                                              ;fool the CAPTST
+                                                                                                              ;routine in
+                                                                                        (A64A)                ;monitor ROM.
+                                                                                        SAVIT    STA ASAVED   ;Save char read.
+                                                                                        (A64D)   LDX XSAVED   ;Get index to input
+                                                                                                              ;buffer.
+                                                                                        (A650)   BEQ TOEXIT   ;Branch if 1rst char.
+                                                                                        (A652)   DEX          ;Turn hi bit on in
+                                                                                                              ;previous char
+                                                                                        (A653)   LDA BUF200,X ;stored in BUF200
+                                                                                                 ORA #$80     ;to convert to
+                                                                                        (A658)   STA BUF200,X ;lowercase if
+                                                                                                              ;necessary.
+                                                                                        TOEXIT   JMP DOSEXIT  ;Go to DOS's
+                                                                                        (A65B)   ------------ ;exit routine.
+
+                                                                                        * Routine to exit DOS.
+                                                                                        (9FB3)
+                                                                                        DOSEXIT  JSR INITIOHK ;Initialize the I/O
+                                                                                                              ;hooks so that DOS
+                                                                                                              ;intercepts all input
+                                                                                                              ;& output.  (See
+                                                                                                              ;dis'mbly given
+                                                                                                              ;elsewhere in
+                                                                                                              ;this listing.)
+                                                                                        (9FB6)   LDX STKSAVED ;Reset stk pointer.
+                                                                                                 TXS
+                                                                                        RESTOREG LDA ASAVED   ;Restore regs.
+                                                                                                 LDY YSAVED
+                                                                                                 LDX XSAVED
+                                                                                                 SEC          ;Return to routine
+                                                                                        (9FC4)   RTS          ;that called the
+                                                                                                 ============ ;routine that
+                                                                                                              ;contained the
+                                                                                                              ;"JSR PREP4DOS"
+                                                                                                              ;instruction.
+
+                                                                  (FD38)   CMP #$9B     ;Escape key pressed?
+                                                                           BEQ ESC      ;Yes - go handle ESC.
+                                                                  (FD3C)   RTS
+
+                                            (FD78)   CMP #$95     ;Ctrl-U (ie. right arrow)?
+                                                     BNE CAPTST   ;No.
+                                            (FD7C)   LDA (BASL),Y ;Yes - take new char out & put char that
+                                                                  ;was in advanced pos'n back on screen
+                                            (FD7E)                ;because we just copied over it.
+                                            CAPTST   CMP #$E0     ;Lowercase?
+                                                     BCC ADDINP   ;No.
+                                                     AND #$DF     ;Yes - change it to a cap.
+                                            ADDINPT  STA UBF200,X ;***  PUT CHAR READ FROM FILE INTO INPUT BUFFER ***
+                                                     CMP #$8D     ;<rtn>?
+                                                     BNE NOTCR    ;No.
+                                            (FD8B)   JSR CLREOL   ;Was rtn, so clear to end of screen line.
+
+                                                                  * Clear to end of line by printing
+                                                                  * space chars (blanks) on screen.
+                                                                  (FC9C)
+                                                                  CLREOL   LDY CH       ;Hirizon scrn pos'n.
+                                                                  CLEOLZ   LDA #" "     ;Space.
+                                                                  CLEOL2   STA (BASL),Y
+                                                                           INY
+                                                                           CPY WNDWDTH  ;Done entire window width yet?
+                                                                           BCC CLEOL2   ;No.
+                                                                  (FCA7)   RTS
+
+                                            * GO PRINT A <CR> AT TERMINATION OF INPUT.
+                                            (FD8E)
+                                            CROUT    LDA #$8D     ;<cr>.
+                                            (FD90)   BNE COUT     ;ALWAYS.
+                                            ---------------------
+                                            ---------------------
+
+                                            (FD3D)
+                                            NOTCR    LDA INVFLG   ;Save current inverse flag on stack.
+                                                     PHA
+                                                     LDA #$FF     ;ALWAYS use normal inverse flag during input.
+                                                     STA INVFLG
+                                                     LDA INVFLG
+                                                     LDA BUF200,X ;Get char just put in input buffer back out
+                                            (FD47)   JSR COUT     ;and go print it as normal char.
+
+                                                                  * CONDITIONALLY INPUT CHAR JUST READ.
+                                                                  (FDED)
+                                                                  COUT     JMP (CSW)    ;Output hook points to DOS.
+                                                                           ------------
+
+                                                                  * DOS's output intercept routine.
+                                                                  (9EBD)
+                                                                  OPUTINCP JSR PREP4DOS
+
+                                                                                        * Prepare to let DOS take over.
+                                                                                        *
+                                                                                        * Save (a), (y) & (x) registers
+                                                                                        * and save the stack pointer.
+                                                                                        * (In this case, saved stk  pointer
+                                                                                        * is set to rtn to $FD4A.)
+                                                                                        (9ED1)
+                                                                                        PREP4DOS STA ASAVED
+                                                                                                 STX XSAVED
+                                                                                                 STY YSAVED
+                                                                                                 TSX          ;Adjust and save
+                                                                                                 INX          ;the stk pointer
+                                                                                                 INX          ;so that when we later
+                                                                                        (9EDD)   STX STKSAVED ;reinstate stk pointer
+                                                                                                              ;we can return to
+                                                                                                              ;the routine that
+                                                                                                              ;called the routine
+                                                                                                              ;that contained the
+                                                                                                              ;"JSR PREP$DOS"
+                                                                                                              ;instruction.
+
+                                                                                        * Restore the I/O hooks to point to
+                                                                                        * the true I/O handlers, ex:
+                                                                                        *    KSWTRUE: KEYIN --> KSW: KEYIN.
+                                                                                        *    CSWTRUE: COUT1 --> CSW: COUT1.
+                                                                                        (9EE0)
+                                                                                        UNCONDOS LDX #3
+                                                                                        SETRUHKS LDA CSWTRUE,X
+                                                                                                 STA CSW,X
+                                                                                                 DEX
+                                                                                                 BPL SETRUHKS ;4 bytes to move
+                                                                                        (9EEA)   RTS          ;(0 to 3).
+
+                                                                  * Use current OPUTCOND value to index table containing
+                                                                  * address of output condition handlers.  Do a "stack jump"
+                                                                  * to the appropriate condition handler entry point.
+                                                                  (9EC0)   LDA OPUTCOND
+                                                                           ASL          ;Times 2 cause 2 bytes per address.
+                                                                           TAX          ;(x) = index to tbl of entry pt adrs.
+                                                                           LDA OUTHNDTB+1,X ;Put adr of output handler on stack
+                                                                           PHA          ;(hi byte first) and then do a "stack jump"
+                                                                           LDA OUTHNDTB,X ;to the appropriate entry point.
+                                                                           PHA
+                                                                           LDA ASAVED   ;Get char to be printed.
+                                                                  (9ED0)   RTS          ;Execute the "stack jump"
+
+                                                                           .
+                                                                           .
+                                                                  STACK JUMP TO OPUTHDL6
+                                                                           .
+                                                                           .
+                                                                  * Output handler 6.
+                                                                  * (Skip the question mark prompt.)
+                                                                  (9F71)
+                                                                  OPUTHDL6 LDA #0       ;SET CONDITION 0.
+                                                                           STA OPUTCOND
+                                                                  (9F76)   BEQ DSPLYINP ;ALWAYS - go display input conditionally.
+
+                                                                  (9F9D)
+                                                                  DSPLYINP LDA #%00100000 ;Set bit 5 to see if using "MON I".
+                                                                  DSPLYCHR AND CIOCUMUL ;Test flag - see if should display.
+                                                                  (9FA2)   BEQ DOSEXIT  ;No display - specific bit was off,.
+                                                                                        ;MON/NOMON CLR/SET specific bit.
+
+                                                                  * Display the char on the screen.
+                                                                  (9FA4)
+                                                                  DSPLYALL JSR RESTOREG
+
+                                                                                        (9FBA)
+                                                                                        RESTOREG LDA ASAVED   ;Restore (a), (y) &
+                                                                                                 LDY YSAVED   ;(x) registers.
+                                                                                                 LDX XSAVED
+                                                                                                 SEC          ;Why???
+                                                                                        (9FC4)   RTS
+
+                                                                  (9FA7)   JSR GODSPLY  ;Output char via true output handler.
+
+                                                                                        (9FC5)
+                                                                                        GODSPLY  JMP (CSW)
+                                                                                                 ------------
+
+                                                                                        (FDF0)
+                                                                                        COUT1    .
+                                                                                                 .
+                                                                                        - PRINT CHAR THAT WAS JUST READ
+                                                                                          (IE., INPUT) FROM THE FILE.
+                                                                                        (See dis'mbly of monitor ROM in
+                                                                                        the APPLE II REFERENCE MANUAL.)
+                                                                                                 .
+                                                                                                 .
+                                                                                                 (RTS)
+
+                                                                  (9FAA)   STA ASAVED   ;Save (a), (y) and (x) registers.
+                                                                           STY YSAVED
+                                                                  (9FB0)   STX XSAVED
+
+                                                                  * Routine to exit DOS.
+                                                                  (9FB3)
+                                                                  DOSEXIT  JSR INITIOHK ;Reset I/O hooks to point to DOS.
+                                                                                        ;(See dis'mbly given below.)
+                                                                  (9FB6)   LDX STKSAVED ;Retrieve saved stack pointer.
+                                                                           TXS
+                                                                  RESTOREG LDA ASAVED   ;Restore (a), (y) & (x) registers.
+                                                                           LDY YSAVED
+                                                                           LDX XSAVED
+                                                                           SEC          ;Why???
+                                                                  (9FC4)   RTS
+
+                                            (FD4A)   PLA          ;Retrieve orig val & restore inverse flag.
+                                                     STA INVFLG
+                                                     LDA BUF200,X ;Retrieve char.
+                                                     CMP #$88     ;Was it a back space?
+                                                     BEQ BCKSPC   ;Yes - go to back-space handling routine.
+                                                     CMP #$9B     ;Was it a ctrl-X (used to cancel line)?
+                                                     BEQ CANCEL   ;Yes - go to cancel routine.
+                                                     CPX #$FB     ;Got 249 chars yet (ie. 0 to 248)?
+                                                     BCC NOTCR1   ;No.
+                                                     JSR BELL     ;Yes - ring warning bell.
+                                            NOTCR1   INX          ;Kick up buffer counter.
+                                            (FD60)   BNE NXTCHAR  ;GO BACK FOR MORE CHARS.
+                                                     .
+                                                     .
+                                                     ============
+
+                                            * PRINT A <CR> AT TERMINATION OF INPUT.
+                                            (FDED)
+                                            COUT     JMP (CSW)    ;Output hook points at DOS.
+                                                     ------------
+
+                                            (9EBD)
+                                            OPUTINCP JSR PREP4DOS
+
+                                                                  * Prepare to let DOS process info.
+                                                                  * Save (a), (y) & (x) registers
+                                                                  * and save the stack pointer.
+                                                                  (9ED1)
+                                                                  PREP4DOS STA ASAVED
+                                                                           STX XSAVED
+                                                                           STY YSAVED
+                                                                           TSX          ;Adjust and save stk pointer so will
+                                                                           INX          ;later rtn to $D533 when stk pointer
+                                                                           INX          ;is reinstated & we hit an "RTS".
+                                                                  (9EDD)   STX STKSAVED
+
+                                                                  * Restore the I/O hooks to point to
+                                                                  * the true I/O handlers, ex:
+                                                                  *    KSWTRUE: KEYIN --> KSW: KEYIN.
+                                                                  *    CSWTRUE: COUT1 --> CSW: COUT1.
+                                                                  (9EE0)
+                                                                  UNCONDOS LDX #3
+                                                                  SETRUHKS LDA CSWTRUE,X
+                                                                           STA CSW,X
+                                                                           DEX
+                                                                           BPL SETRUHKS ;4 bytes to move
+                                                                  (9EEA)   RTS          ;(0 to 3).
+
+                                            * Use current OPUTCOND value to index table containing
+                                            * address of output condition handlers.  Do a "stack jump"
+                                            * to the appropriate condition handler entry point.
+                                            (9EC0)   LDA OPUTCOND
+                                                     ASL          ;Times 2 cause 2 bytes per address.
+                                                     TAX          ;Set (x) to index tbl of entry point adrs.
+                                                     LDA OUTHNDTB+1,X ;Put adr of output handler on stack
+                                                     PHA          ;(hi byte first) and then do a "stack jump"
+                                                     LDA OUTHNDTB,X ;to the appropriate entry point.
+                                                     PHA
+                                                     LDA ASAVED   ;Get char to be printed.
+                                            (9ED0)   RTS          ;Execute the "stack jump"
+
+                                                     .
+                                                     .
+                                            STACK JUMP TO OPUTHDL6
+                                                     .
+                                                     .
+                                            * Output handler 6.
+                                            * (Skip the question mark prompt.)
+                                            (9F71)
+                                            OPUTHDL6 LDA #0       ;SET CONDITION 0.
+                                                     STA OPUTCOND
+                                            (9F76)   BEQ DSPLYINP ;ALWAYS - go display input conditionally.
+
+                                            (9F9D)
+                                            DSPLYINP LDA #%00100000 ;Set bit 5 to see if using "MON I".
+                                            DSPLYCHR AND CIOCUMUL ;Test flag - see if should display.
+                                            (9FA2)   BEQ DOSEXIT  ;No display - specific bit was off.
+                                                                  ;(MON/NOMON CLR/SET specific bit.)
+
+                                            * Display the char on the screen.
+                                            (9FA4)
+                                            DSPLYALL JSR RESTOREG
+
+                                                                  (9FBA)
+                                                                  RESTOREG LDA ASAVED   ;Restore (a), (y) &
+                                                                           LDY YSAVED   ;(x) registers.
+                                                                           LDX XSAVED
+                                                                           SEC          ;Why???
+                                                                  (9FC4)   RTS
+
+                                            (9FA7)   JSR GODSPLY  ;Output char viat ture output handler.
+
+                                                                  (9FC5)
+                                                                  GODSPLY  JMP (CSW)
+                                                                           ------------
+
+                                                                  (FDF0)
+                                                                  COUT1    .
+                                                                           .
+                                                                  - PRINT INPUT-TERMINATING <CR>.
+                                                                  (See dis'mbly of monitor ROM in
+                                                                  the APPLE II REFERENCE MANUAL.)
+                                                                           .
+                                                                           .
+                                                                           (RTS)
+
+                                            (9FAA)   STA ASAVED   ;Save (a), (y) and (x) registers.
+                                                     STY YSAVED
+                                            (9FB0)   STX XSAVED
+
+                                            * Routine to exit DOS.
+                                            (9FB3)
+                                            DOSEXIT  JSR INITIOHK ;Reset I/O hooks to point to DOS.
+
+                                                                  * Initialize the I/O hooks so that DOS intercepts
+                                                                  * all input and output.   For instance, if a routine
+                                                                  * encounters a "COUT  JMP (CSW)", then execution will
+                                                                  * actually flow to DOS's output routine (OPUTINCP,
+                                                                  * $9EBD).  Similarly, any routine that refers to
+                                                                  * "RDKEY  JMP (KSW)" will actually jump to DOS's
+                                                                  * input routine (INPTINCP, $9E81).
+                                                                  *
+                                                                  * The true (ie. normal) hooks are saved, ex:
+                                                                  *   KSW: KEYIN --> KSWTRUE: KEYIN.
+                                                                  *   CSW: COUT1 --> CSWTRUE: COUT1.
+                                                                  * The intercepts are then set as follows:
+                                                                  *   ADINPTCP: INPTINCP --> KSW: INPTINCP.
+                                                                  *   ADOPUTCP: OPUTINCP --> CSW: OPUTINCP.
+
+                                                                  * Check if input hook needs to be reset.
+                                                                  (A851)
+                                                                  INITIOHK LDA KSW+1
+                                                                           CMP ADINPTCP+1
+                                                                  (A856)   BEQ CKOUTHK  ;Input hook already points to DOS'S
+                                                                                        ;input handler, so go check output hook.
+
+                                                                  * Reset the input hook to point to DOS.
+                                                                  (A858)   STA KSWTRUE+1 ;KSW: KEYIN --> KSWTRUE: KEYIN.
+                                                                           LDA KSW
+                                                                           STA KSWTRUE
+                                                                           LDA ADINPTCP ;ADINPTCP: INPTINCP --> KSW: INPTINCP.
+                                                                           STA KSW
+                                                                           LDA ADINPTCP+1
+                                                                  (A868)   STA KSW+1
+
+                                                                  * Check if output hook needs to be reset.
+                                                                  (A86A)
+                                                                  CKOUTHK  LDA CSW+1
+                                                                           CMP ADOPUTCP+1
+                                                                  (A86F)   BEQ SETHKRTN ;Output hook already points to DOS's
+                                                                                        ;output handler, so go exit.
+
+                                                                  * Reset the output hook to point to DOS.
+                                                                  (A871)   STA CSWTRUE+1 ;CSW: COUT1 --> CSWTRUE: COUT1.
+                                                                           LDA CSW
+                                                                           STA CSWTRUE
+                                                                           LDA ADOPUTCP ;ADOPUTCP: OPUTINCP --> CSW: OPUTINCP.
+                                                                           STA CSW
+                                                                           LDA ADOPUTCP+1
+                                                                           STA CSW+1
+                                                                  SETHKRTN RTS
+                                                                  (A883)
+
+                                            (9FB6)   LDX STKSAVED ;Restore saved stack pointer.
+                                                     TXS
+                                            RESTOREG LDA ASAVED   ;Restore (a), (y) & (x) registers.
+                                                     LDY YSAVED
+                                                     LDX XSAVED
+                                                     SEC          ;Why???
+                                            (9FC4)   RTS          ;Return to the routine that called
+                                                                  ;the routine that contained the
+                                                                  ;"JSR PREP4DOS" instruction.
+
+                      (D533)   CPX #$EF     ;Got 239 chars yet?
+                               BCC TERMIN8  ;No.
+                               LDX #$EF     ;End line at 239 chars maximum.
+                      TERMIN8  LDA #0       ;Put in an eol marker.
+                               STA BUF200,X
+                               TXA
+                               BEQ NEG8NPUT
+                      CNVRTPOS LDA BUF200-1,X ;Convert to positive ASCII.
+                               AND #$7F
+                               STA BUF200-1,X
+                               DEX
+                               BNE CNVRTPOS
+                      NEG8NPUT LDA #0
+                               LDX #<BUF200-1
+                               LDY #>BUF200-1
+                      (D552)   RTS
+
+(DBD2)   .
+         .
+         .
+- build descriptor for variable
+  data read via INPUT statement.
+- store variable in memory.
+- pick up end-of-marker & exit to
+  Applesoft caller of the INPUT routine.
+         .
+         .
+         (RTS)
+

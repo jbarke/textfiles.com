@@ -1,0 +1,212 @@
+
+-------------------------------------------------
+Documentation for BLU - Binary II Library Utility
+Copyright (c) 1987 by Floyd Zink, Jr.
+All Rights Reserved.
+Updated - 10/09/87
+-------------------------------------------------
+
+REQUIRES EITHER AN ENHANCED //E, //C OR IIGS.
+
+About BLU
+---------
+
+This program is FREEWARE.  You can distribute BLU freely, just don't
+sell it.  I do ask that you make sure that this doc file is made
+available with the program.  You are under no obligation to pay
+anything for BLU.
+
+However, if you like this program and want to show your appreciation
+I do accept gratuities.  If you send me $10.00 I will send you the
+latest versions of both BLU and TEX - Text File Utility and
+any other FREEWARE programs I might write.  The $10.00 will also
+entitle you to 1 additional free update that will be AUTOMATICALLY
+mailed to you when I update the programs again.  This way I make
+a little money and you do not have to spend the money downloading
+the updates.  After the first mailing and the free update I will
+continue to mail out updates, but I will include a bill for $5.00
+to cover disk and shipping costs.  This way you will always have
+the most current versions.  I will do all mail outs before I upload
+them to any source.  You will find that in the long run this method
+will be cheaper for you than the connect charges would be for
+downloading this program.  My address is:
+
+                        Floyd Zink, Jr.
+                        P.O. Box 060069
+                        Palm Bay, FL  32906
+
+
+I repeat YOU ARE UNDER NO OBLIGATION TO PAY ANYTHING FOR BLU.
+                          ----------
+
+
+Features
+--------
+
+    1)  Catalogs disks
+
+    2)  Makes Binary II files
+
+    3)  Squeezes files
+
+    4)  Unsqueezes files
+
+    5)  Extracts individual files from a Binary II file
+
+    6)  Lists the contents of a Binary II file
+
+    7)  Deletes files
+
+
+The Menu
+--------
+
+You can select a menu item by either the first letter in the item or
+by using the arrow keys to move the inverse bar to your selection and
+then pressing return.  You will be returned to the menu after all
+processing is done.
+
+By pressing OA-? or OA-/ from the main menu one can view a help
+screen listing the commands.
+
+
+Selecting Files To Be Processed
+-------------------------------
+
+After making your menu selection you will be prompted for a source
+directory name and where necessary a destination pathname or target
+directory.  You can use the TAB key to skip to the next '/' in the
+pathname shown or OA-TAB to back up to the previous '/'.  The DELETE
+key will delete characters and the <-- --> keys will backspace and
+move the cursor forward.  When prompted for a destination pathname
+be sure and enter a pathname for a file not a directory.
+
+After the directory(s) are selected a catalog of the source directory
+will be displayed.  Using the up, down, left and right arrows will
+move the inverse bar accordingly.  Pressing the space bar will toggle
+a file for normal selection and will diplay a checkmark next to the
+name.  The 'S' key will toggle a file to be squeezed when added to the
+Binary II file and will display a '$' next to the name.  OA-space or
+control-a will toggle all the normal items and OA-S will toggle all
+the squeezed items.  Pressing return will start the processing using
+the selected filenames.
+
+Pressing OA-D when selecting the files will cause ALL the files and
+sub-dirs to be squeezed and all subsequent files and sub-dirs contained
+within them.  You could use this to sqz a WHOLE disk if you wanted.
+
+
+Using The Mouse
+---------------
+
+If you have a mouse BLU will find it and allow you to use it instead
+of using the arrow keys and you can use the mouse button to select
+files though you still have to press return to start the process after
+the files are selected.
+
+Holding down the OA (open apple) key when pressing the mouse button
+will toggle the file for squeezing.  Holding down the CA (closed apple,
+option on the gs) when pressing the mouse button will act just like
+pressing return does - it will start the processing.
+
+The sensitivity of the mouse is at location $204B when the program
+is in memory.  This is the $4B byte after the beginning of the program.
+It is currently set at $08.  This means the mouse must move 8 increments
+to move inverse bar.  If you want to change this use a block editor or
+from the basic prompt enter:
+
+CALL-151   ;enter monitor
+BLOAD BLU,TSYS,A$2000  ;load file
+204B:XX    ;XX being the new value. Higher value=lesser sensitivity.
+BSAVE BLU,TSYS,A$2000  ;save file
+^C         ;back to basic
+
+
+Making Binary II Files
+----------------------
+
+You can use the Destination pathname to pick which directory or disk
+the Binary II file is placed.
+
+BLU will display all the sub-directories that are selected and allow
+you to select files from them unless of course you use OA-D which
+will select them all automatically.
+
+
+Squeezing Files
+---------------
+
+BLU will NOT squeeze an existing Binary II file.  Squeezing an already
+formed Binary II file defeats the whole purpose behind using this
+format.  The correct method is to use BLU's ability to squeeze files
+WHILE making the Binary II file.
+
+BLU adds an extension of '.QQ' to the original filename to form the
+squeezed filename.
+
+All file types, except for DIRs, are able to be squeezed.
+
+BLU uses the Huffman algorithm to squeeze files.  It first encodes
+repeated characters by doing a byte for byte pass through the file
+except that DLE is encoded as DLE, zero and repeated byte values
+are encoded as value, DLE, count for counts that are greater or
+equal to 3.  On the second translation it developes a binary tree
+representing the decoding information for a variable length bit
+string code for each input byte.  Each string's length is in inverse
+proportion to its frequency of appearance in the incoming data stream.
+Decoding information is included in the squeezed file, so squeezing
+short files or files with uniformly distributed byte values will
+actually increase the size.
+
+Special thanks to Don Elton for the donation of his SQ/USQ source code
+to the Public Domain.  I adapted these routines to speed up the
+processing of squeezing and un-squeezing files and to fix a bug that
+sometimes caused large files to squeeze incorrectly.  There also had
+to be some changes to integrate the routines into BLU.  The core of the
+algorithms though are basically unchanged from Don's source.
+
+
+Un-squeezing Files
+------------------
+
+The squeezed file is un-squeezed to the original file's name.  If this
+name already exists then BLU overwrites it.
+
+
+Extracting from Binary II Files
+-------------------------------
+
+BLU will NOT overwrite any files, except the above.  If there is a
+duplicate file then BLU will add an extension of '.n' to the filename.
+You can then rename the file when you are done with BLU.
+
+BLU checks available disk space to make sure there is enough room for
+all the files.  If there is insufficient space then the program will
+issue an error message and exit back to the main menu.  It will not
+extract any files unless there is enough space.
+
+Squeezed files within the Binary II file will be AUTOMATICALLY
+unsqueezed when extracted.  You do NOT have to use the USQ function
+from the main menu to unsqueeze bny files.  If the files were
+squeezed separately first and then made into a Binary II file BLU will
+still unsqueeze them automatically as long as the files have a suffix
+of '.QQ'.
+
+Deleting Files
+--------------
+
+BLU will not delete locked files.
+
+
+Final Words
+-----------
+
+If you encounter any bugs or come up with a suggestion on improving the
+program please let me know.  
+
+
+-----------------------
+Floyd Zink, Jr. 
+Compuserve - 73147,2717
+Genie - F.ZINK
+-----------------------                             

@@ -1,0 +1,2165 @@
+  ZDDDDDDDDDDDDDDDDDD? IMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM; ZDDDDDDDDDDDDDDDDDD?
+  3   Founded By:    3 :  Network Information Access   : 3 Mother Earth BBS 3
+  3 Guardian Of Time 3D:            20JUN90            :D3  NUP:> DECnet    3
+  3   Judge Dredd    3 :       Guardian Of Time        : 3Text File Archives3
+  @DDDDDDDDBDDDDDDDDDY :            File 37            : @DDDDDDDDDBDDDDDDDDY
+           3           HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<           3
+           3           IMMMMMMMMMMMMMMMMMMMMMMMMMMMMM;             3
+           @DDDDDDDDDDD: VMS SYSTEM MANAGER'S MANUAL :DDDDDDDDDDDDDY
+                       :          CHAPTER 6          :
+                       HMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<
+
+SETTING UP A NETWORK
+
+As the manager of a VMS system,  you may want to connect your system to a
+network.  This chapter describes the following network topics:
+
+:  What a DECnet network is
+:  How a VMS system can be part of a DECnet network
+:  The responsibilities of the system manager in a network environment
+:  The procedures needed to bring up a VMS system as a node on an existing
+   network
+:  Techniques to keep the network running
+
+NOTE:  Refer to Chapter 7 if you intend to set up and manage a Local Area
+VAXcluster configuration.  That chapter outlines the tasks required to
+configure a Local Area VAXcluster and describes CLUSTER_CONFIG.COM, the
+command procedure that you use to perform these tasks.
+
+6.1 General Description of a DECnet NETWORK
+
+A DECnet network permits the linking of computers into flexible
+configurations to exchange information, share resources, and perform
+distributed processing.  A VMS operating system can participate in a DECnet
+network through its networking interface, DECnet-VAX.  As a part of a
+network, a VMS system can communicate with other VMS systems running on a full
+range of VAX processors, as well as with a wide range of non-VMS systems that
+use DECnet software.
+
+DECnet distributed processing capabilities allow information to be gathered
+from anywhere in the network.  VMS systems can be placed at locations where
+they are required while still having access to the facilities of other
+widely dispersed systems.  Access to the network is available wherever it is
+needed: executive offices, factory floors, laboratories, field locations.
+Information can be exchanged between all parts of an organization or
+institution in a stable, integrated networking environment.
+
+6.1.1  What is a DECnet Network?
+
+A DECnet network consists of two or more computer systems, called nodes,
+that are connected (for example, by means of cables, telephone lines,
+microwave or satellite links).  Adjacent nodes in a network are connected by
+lines over which circuits operate.  The line is the physical data path, and
+the circuit is the communications data path.  All input and output (I/O)
+between nodes takes place over circuits.  A node can be designed to have
+active circuits operating over a number of lines that connect that node to
+other nodes in the network.
+
+DECnet permits computer processes running on the same or different computers
+to communicate with each other over logical links.  A logical link connects
+two processes and carries a stream of two-way communications traffic between
+the processes over one or more circuits.  Many logical links can be
+supported concurrently over a single circuit established between two nodes.
+
+The process to which a logical link is connected is called an object.  Some
+objects are DECnet-VAX system programs (for exampl, the MAIL object); other
+subjects are user-written programs.  For two programs to communicate over
+the network, the program on the local node establishes a logical link with the
+object on the remote node.
+
+In a network of more than two nodes, the process of directing a data message
+from a source node to a destination node is called routing.  DECnet
+supports adaptive routing, which permits messages to be routed through the
+network over the most cost-effetive path; messages are rerouted
+automatically if a circuit becomes disabled or a lower-cost path becomes
+available.
+
+Nodes can be either routing nodes (called routers) or nonrouting nodes
+(known as end nodes).  Both routers and end nodes can send messages to and
+receive messages from other nodes in the network.  However, a router has the
+ability to forward or route messages from itself to another node.  A router
+can serve as an intermediate node on a path between two nodes exchanging
+messages, if the two nodes have no direct physical link to each other.  Any
+node that has two or more active circuits connecting it to the network must
+be a router.  An end node can only have one active circuit connecting it to
+the network.
+
+A DECnet network can vary in size from a small to a very large network.  A
+typical small network might consist of two to four nodes.  A maximum of 1023
+nodes is possible in an undivided network, but the optimum number is
+approximately 200 to 300 nodes, depending on the topology ( the way the
+nodes and lines are arranged in the network ).
+
+Very large DECnet networks can be divided into multiple areas:  Up to 63
+areas, each contaning a maximum of 1023 nodes.  In a multiple area network,
+the network manager groups nodes into separate areas, with each area
+functioning as a subnetwork.  Nodes in any area can communicate with nodes in
+other areas.  DECnet supports routing within each area and a second, higher
+level of routing that links the areas, resulting in less routing traffic
+throughout the network.  Nodes that perform routing within a single area are
+reffered to as level 1 routers; nodes that perform routing between areas as
+well as within their own area are called level 2 routers ( or area routers ).
+
+The DECnet architecture follows industry standards and is designed to permit
+easy expansion and incorporation of new developments in data communications.
+DECnet offers the option of communicating over different kinds of network
+connections, which are for the most part transparent to the general user of
+the network.
+
+6.1.2  How DECnet-VAX Serves As The VMS Interface To The Network
+
+DECnet is the collective name for the software and hardware products that
+are a means for various DIGITAL operating systems to participate in a
+network.  DECnet-VAX is the implementation of DECnet that allows a VMS
+operating system to function as a network node.  As the VMS network
+interface, DECnet-VAX supports both the protocols necessary for
+communicating over the network and the functions necessary for configuring,
+controlling, and monitoring the network.
+
+DECnet-VAX networking software can be configured on any VMS operating system
+running on any VAX processor.  in a DECnet network, a DECnet-VAX node can
+communicate with other DECnet-VAX nodes or with any other operating system that
+supports DECnet.  In addition, DECnet-VAX node can use a packet switching
+network to communicate with nodes on other networks and can use gateways and
+other special software and hardware products to communicate with foreign
+vendor systems.
+
+DECnet-VAX is tightly coupled to the VMS operating system.  It is completely
+integrated into the operating system and provides a natural extension of
+local I/O operations to remote systems.  VMS users can use the network
+almost transparently.
+
+Because DECnet-VAX is a part of the VMS operating system, you can use the
+DECnet-VAX interface as a standard part of a standalone operating system
+( for example, to prepare network application programs ).
+
+Before you can bring up your system as a node in a multinode environment,
+you must have a DECnet-VAX license and register a DECnet-VAX key on your
+system.
+
+6.1.3 What Does a DECnet Network Look Like?
+
+to be linked in flexible configurations.  The basic kinds of environments
+into which a DECnet network can be configured are the local rea network and
+the wide area network.  The local area network permits communication within a
+limited geographic area, while a wide area network permits long-distance
+communications.  Local area networks and wide area networks can be
+integrated into a single large network.
+
+A local area network provides a high-speed communications channel designed
+to connect information processing equipment in a specific geographic area,
+such as an office, a building, or a cluster of buildings (for example, a
+campus).  The DIGITAL local area network uses the Ethernet: a single shared
+network channel.  All nodes have equal access to the channel.  Because the
+Ethernet is a multi-access device, new nodes can be added without affecting
+existing nodes on the Ethernet.
+
+An Ethernet is a coaxial cable, to which each system or device is
+connected by a single line.  In an office or other area where personal
+computers and workstations are located, ThinWire Wthernet cabling is
+usually used.  The Ethernet supports a very high rate of data
+transmission (up to 10 million bits per second) in a limited area.
+
+DECnet-VAX also offers comprehensive wide-area network support and long-haul
+connectivity over point-to-point connections.  Point-to-point connections,
+which use the DIGITAL Data Communications Message Protocol (DDCMP), are
+synchronous or asynchronous.  Synchronous devices provide high-speed
+connections over dedicated lines or telephone lines ( using modems ).
+Asynchronous devices provide low-speed, low-cost connections over terminal
+lines that are switched on for network use either permanently ( a static
+connection ) or temporarily ( a dynamic connection ).  For example, a user
+on a MicroVAX can configure a dialup line to another comptuer as a dynamic
+asynchronous DECnet line for the duration of a telephone call.
+
+6.1.4  System And Network Manager REsponsiblities
+
+As system manager of a DECnet-VAX node, you are repsonsible for establishing
+your system as a node in the network, and controlling and monitoring your
+node.  To configure your system as a network node, you must supply
+information at the local node about network components, including the local
+node, remote nodes, circuits, lines, and objects.  This information
+constitutes what is called the configuration database for the local node.
+Each node in the network has such a database.  As manager of your system,
+you supply information about the configuration database using the Network
+Control Program (NCP) utility.
+
+If you are configuring a DECnet-VAX node for the first time or rebuilding
+the configuration database for your local node, you can use the interactive
+NETCONFIG.COM procedure to configure your node automatically.  Once you
+start up your DECnet-VAX node and verify its connection to the network, you
+can use the NCP utility to control and monitor local network operations, and
+test network software operation.
+
+Planning for configuration of your node in an existing network usually
+involves coordinating with the system managers of other nodes in the network
+or with the manager of the network (if a manager has been designated) to
+ensure uniform network parameter settings.
+
+To create a new network, the managers of individual systems should connect
+their systems by means of communications lines; the system managers should
+then configure their own systems as network nodes and start DECnet on their
+nodes.
+
+A system manager of a network may also be called upon to provide DECnet-VAX
+host services for other DECnet nodes.  Host services include loading system
+images and programs downline to unattended remote nodes, and receiving for
+interpretation upload dumps of system images from nodes that have crashed.
+For example, DECnet-VAX permits you to load an operating system image or a
+terminal server image downline to a target node.  Another DECnet-VAX host
+service involves connecting to an unattended remote node (for example, a
+diskless communications server) to act as its console.
+
+For a larger network, one person, who may be the manager of a network node,
+is usually designated as the manager of the network.  The network manager is
+responsible for planning, building and fine-tuning a whole network to run with
+maximum efficiency.  The network manager makes networkwide configuration
+decisions, such as the kinds of paths to be established, which nodes should
+be routers or end nodes, and whether the network should be divided into
+areas.  The network manager also sets values for network parameters that
+should be the same across the network.
+
+Managing a network usually involves regular monitoring to detect patterns of
+usuage and error conditions on the network, and performing remote
+configuration of the network to control traffic patterns and accommodate
+network growth.  System and network managers also perform maintenance
+procedures (to avoid serious problems from developing) and troubleshooting
+procedures (to resolve problems quickly).  Using network software, the
+manager can obtain statistics on network usuage and routing parameters.
+Network loggin files provide error statistics useful in diagnosing potential
+problems.  NCP commands display the status of nodes, lines and circuits in
+the network.
+
+6.2 Getting Started On The Network
+
+There are two ways to establish your VMS system as part of a DECnet-VAX
+network:
+
+: Bring up your VMS system as a network node:  If you are the manager of a
+  VMS system, you can physically connect your system to an existing DECnet
+  network by means of a communications line, and bring your system up as a
+  network node by performing the DECnet-VAX installation procedure.  The
+  DECnet-VAX installation procedure you perform on your system involves
+  registering the DECnet-VAX key using the VMS License Management Utility,
+  configuring your node as part of the network, starting the network, and
+  verifying that you are connected to the network.
+
+: Create a new network:  If there is no existing network to which you can
+  connect, you can cooperate with the managers of other systems to create a new
+  network.  A network is formed when two or more systems are connected by
+  communications lines and each system is brought up as a network node.  For
+  larger networks, the system manager of one node may also manage the network.
+
+6.2.1  Preparing To Bring Up Your System As A Node On An Existing Network
+
+If you are the system manager of a VMS system, you can install the
+DECnet-VAX license and configure your system as a node on an existing
+network.  You can be connected permanently to the network, in which case you
+will be able to communicate with any other node on the network.  You can also
+optionally choose to establish a temporary connection to another system over
+a telephone line.  This temporary DECnet connection between two systems may
+result in a network that exists only for the duration of the telephone call.
+
+Before you begin the procedure for starting DECnet-VAX on your system, you
+should check your hardware and connect any required communications lines.
+You should also prepare your VMS operating system for the network
+environment and decide how you want to configure your node.
+
+6.2.1.1 Connecting the Communications Hardware On Your System
+
+A network is a flexible configuration of computers and terminals
+interconnected by communicciations lines.  You should identify the equipment
+you need to connect your VAX computer to an existing network.  For each
+connection, this equipment normally includes:
+
+:  A communications controller device (line device) that contains one/more
+   interface points called ports.  (The line device is installed on your
+   processor.)
+
+:  A communications line to connect the port to the network.
+
+Consult your DIGITAL sales support representative if you are not familiar with
+the equipment that you require or if you need to install such equipment.
+Following the instructions in the hardware user manuals included with the
+equipment, you should be able to connect each network communications line to
+the appropriate port.
+
+A VAX computer on which a VMS operating system is running can be connected
+to the network by means of high-speed lines ( such as an Ethernet cable or a
+synchronous point-to-point line).  A VMS system can also be connected to a
+network by means of a low speed, low cost asynchronous line.  An
+asynchronous point-to-point connection can be established over any VMS
+terminal line between a VMS system and other system (which can be a non-VMS
+system) that supports the DECnet asynchronous DIGITAL Data Communications
+Message Protocol (DDCMP).  An asynchronous connection can optionally be made
+over a dialup line (for example, a telephone line) if a modem is used at
+each end of the connection.  A modem is a device that connects the terminal
+line to the telephone line.  MOdems may be purchased from DIGITAL, along with
+the appropriate installation documentation.
+
+A VAX processor can have a number of communications ports, depending on the
+model.  The possible connections are limited only by the number of devices
+that your processor can support, as specified in the DECnet-VAX Software
+Product Description load unit tables, and the devices that you can configure
+for your node.
+
+6.2.1.1 Connecting the Communications Hardware on Your System
+
+A network is a flexible configuration of computers and terminals
+interconnected by communications lines.  You should identify the equipment
+you need to connect your VAX computer to an existing network.  For each
+connection, this equipment normally includes
+
+:  A communications controller device(line device) that contains one or more
+   interface points called ports.  ( The line device is installed on your
+   processor.)
+
+: A communications line to connect the port to the network.
+
+Consult your DIGITAL sales support representative if you are not familiar with
+the equipment that you require, or if you need to install such equipment.
+Following the instructions in the hardware user manuals included with the
+equipment, you should be able to connect each network communications line to
+the appropriate port.
+
+A VAX computer on which a VMS operating system is running can be connected
+to the network by means of high speed lines ( such as an Ethernet cable or a
+synchronous point-to-point line). A VMS system can also be connected to a
+network by means of a low-speed, low-cost asynchronous line.  An
+asynchronous point-to-point connection can be established over any VMS
+terminal line between a VMS system and another system (which can be a
+non-VMS system) that supports the DECnet asynchronous DIGITAL Data
+Communications Message Protocol (DDCMP).  An asynchronous connection can
+optionally be made over a dialup line ( for example, a telephone line), if a
+modem is used at each end of the connection.  A modem is a device that
+connects the terminal line to the telephone line.  MOdems may be purchased
+separately from DIGITAL, along with the appropriate installation
+documentation.
+
+A VAX processor can have a number of communications ports, depending on the
+model.  The possible connections are limited only by the number of devices
+that your processor can support, as specified in the DECnet-VAX Software
+Product Description load unit tables, and the devices that your configure
+for your node.
+
+6.2.1.2 Preparing Your VMS System for the Network Environment
+
+Before you bring up DECnet-VAX on your system, you should take the following
+steps to prepare your system to function as part of the network:
+
+Check to see if you have the privileges you need to perform network
+operations.  The minimum privileges that a system manager normally requires
+to configure and control the network and run network programs are SYSPRV,
+OPER, TMPMBX, NETMBX, & BYPASS.  A list of privileges required for network
+operations appears in TABLE 6-1.
+
+Enter the DCL command SHOW PROCESS/PRIVILEGES to determine which of your
+authorized privileges are currently enabled, and use the SET
+PROCESS/PRIVLEGES command to enable any additional privileges you are
+authorized to have that are required for network operations.
+
+Decide whether you want to establish a default nonprivileged DECnet account
+and directory.  The nonprivileged account is a default DECnet account that
+is used in either of the following conditions:
+
+  When a user on a remote network node does not explicitly supply access
+  control information (the user name/password) when requesting a connection
+  to the local node, or
+
+  There is no proxy account to use on your system
+
+An account is required to use certain VMS utilities, such as MAIL or PHONE,
+over the network.  If you want the default account you can request that the
+DECnet-VAX configuration procedure, NETCONFIG.COME, establish a default
+nonprivileged account and directory for your node automatically.  As an
+alternative, you can establish a nonprivileged account and directory
+manually.
+
+Set up any proxy accounts that you want to establish for your node.  A proxy
+login account allows a user on a remote node on the network to access data
+by way of a local account on your system.  You should never grant proxy
+access to privileged accounts.
+
+If necessary, tune your VMS system to accommodate DECnet-VAX software.  The
+network manager who establishes network configuration guidelines should
+provide you with any required information if you need to update VMS system
+parameters and quotas.
+IMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM;
+:TABLE 6-1: VMS Privileges Required For DECnet-VAX Operations                :
+:DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD:
+:Privilege              Network Operations                                   :
+:ACNT                   Required to start the network; permits you to        :
+:                       suppress accounting messages                         :
+:BYPASS                 Permits you to view passwords in the DECnet-VAX      :
+:                       databases                                            :
+:CMKRNL                 Required to start the network; permits a process to  :
+:                       access the VMS kernel                                :
+:DETACH                 Required to start the network;allos you to create    :
+:                       detached processes                                   :
+:NETMBX                 Required for all network userrs; needed for any      :
+:                       network operation; needed to create a logical link   :
+:OPER                   Allows you to perform operator functions such as     :
+:                       modifying the DECnet-VAX volatile database           :
+:TMPMBX                 Required for all network users and default DECnet    :
+:                       accounts; needed to run NCP and to create a temporary:
+:                       mailbox                                              :
+:SYSNAM                 Permits you to declare a name or object number in a  :
+:                       user task                                            :
+:SYSPRV                 Required to access the DECnet-VAX permanent database :
+HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<
+
+6.2.1.3 Planning the Configuration of Your DECnet-VAX Node
+
+Before you specify how your node is to be configured as part of an existing
+network, you should make the following decisions:
+
+Select a unique node name and node address for your system.  If a network
+manager has been designated for your network, request a node name and
+address from the network manager.  If your node is a member of a VAXcluster,
+obtain your node name/address from the VAXcluster manager. ( The VAXcluster
+node name must be set in the VMS system parameter SCSNODE and the node
+address in SCSSYSTEMID ).
+
+Each node in the netowrk is identified by a specific name and a numeric
+address by which the node is known to other nodes in the network.  The node
+name can be no more than six alphanumeric characters ( including at least
+one alphabetic character ).  The node address consists of an area number (
+in the range from 1 to 63, w/ a default value of 1 ), and a node number ( in
+the range from 1 to 1023 ) separated by a period ( for example 2.2 ).
+
+If you node is a member of a VAXcluster that uses an alias node identifier (
+an alias name/address), you can obtainthe alias identifier from the
+VAXcluster manager.  An alias node identifier, common to some or all nodes
+in a cluster, permits remote nodes to treat the cluster as though it were a
+single node.  Individual nodes in a VAXcluster can optionally assume the
+alias, while retaining their individual node names.  You can use the alias
+adopted by the cluster, as well as your own node name, to communicate w/
+other nodes in the network.
+
+Determine the node names and addresses of all other nodes in  your netowrk
+to which you want to connect.  To obtain the correct node name/address of
+each node, you can contact the network manager or, if necessary, the
+individual system managers of the other nodes.  You must enter this remote
+node information in your network node database.
+
+Alternatively, you can determine whether the names/address of the nodes that
+you want to define are already defined in the network database of another
+node.  If you have the appropriate access, you can copy the node database
+information from a remote node into your node database.
+
+Decide whether your system is to be a router or an end node.  If you have a
+DECnet full function license and the accompanying DECnet-VAX key, you have
+the option of configuring your system as either a router or an end node.  If
+your DECnet license and key are for the end node capability, you can only
+configure your system as an end node.
+
+Determine the types of connections that will be made to the network:
+Ethernet, synchronous DDCMP, or asynchronous DDCMP connections.  You can use
+the network configuration procedure NETCONFIG.COM to configure all circuits
+and lines automatically except for asynchronous circuits and lines.
+
+6.2.2 Installing DECnet-VAX on Your System
+
+This section describes the procedure for installing DECnet-VAX on your VMS
+operating system.  Use this installation procedure to bring up your system
+as a node on an existing DECnet network.
+
+To perform the installation procedure, you should log in to the SYSTEM
+account on your node.  The DECnet-VAX installation procedure consists of the
+following steps:
+
+1.  Purchase the DECnet-VAX license and the DECnet-VAX key and register the
+    key on your system, using the VMS License Management Utility.
+
+2.  Configure your DECnet-VAX node and define the remote node names.  You
+    can configure your node and turn on the network at your node either
+    automatically or manually.
+
+3.  If you plan to use an asynchronous DECnet connection, perform any steps
+    needed to establish the connection.
+
+4.  Verify that your node is connected to the network.
+
+6.2.2.1 Getting a DECnet-VAX License and Key
+
+To permit your node to communicate w/ other nodes in the networ, you must
+have a DECnet-VAX license and register a DECnet-VAX key on your system using
+the VMS License Management Utility.  You can purchase either an end node or
+a full function license and the corresponding key.  The end node key permits
+you to configure your node only as an end node.  The full function key
+permits you to configure your node as either a routing node or an end node.
+You can also use the full function key to upgrade from end node to full
+function capability.
+
+6.2.2.2 Configuring Your DECnet-VAX Node
+
+You are now ready to configure your DECnet-VAX system.  You can configure
+the node automatically or manually.
+
+You can use the automatic configuration procedure when you first bring up
+the node or when you reconfigure it completely.
+
+You can use manual configuration techniques to bring up a new node,
+reconfigure a node, or modify an existing configuration.
+
+The system manager at each node in the network is responsible for the
+DECnet-VAX configuration database for the node.  The database includes the
+files that describe the local (executor) node and the other nodes in the
+network w/ which the local node can communicate, as well as the circuits and
+lines that connect the local node to the network.  The network database also
+includes information on the logging collection points ( such as the logging
+montiro ), to which network events are reported.  In addition, DECnet-VAX
+provides a default object database desribing objects ( such as MAIL ) known
+to the network.  Each node in the network has such a database.
+
+The configuration database comprises the volatile database ( the working
+copy of the database that reflects current netowrk conditions) and the
+permanent database ( which provides the initial values for the volatile
+database when you start the network ).  Modifications to the volatile
+database exist only while the network is running.  Changes made to the
+permanent database remain after the network is shut down, but do not affect
+the current system.
+
+As system manager, you provide network component information, from the point
+of view of the local node, int he configuration database at the local node.
+Use the Network Control Program ( NCP ) to supply this information in the
+form of parameter vaules, which determine how the various components of the
+network function together.  Use NCP DEFINE commands to establish the
+contents of the permanent database and SET commands to specify the contents
+of the volatile database.  Use PURGE commands to delete permament database
+entries and CLEAR commands to delete or reset volatile database entries.
+
+Configuring Your NOde Manually
+
+You can always configure your node manually; however, you have the option of
+doing it automatically ( as described in the next section ) if you are
+configuring a new node or compeletly reconfiguring a node.
+
+If you decide to configure your node manually, you must enter NCP commands
+to establish the permanent configuaration database and then turn on the
+network manually, causing the contents of the permnent database to be
+entered in the volatile database.  A brief explanatioon of how to use NCP to
+establish your configuration database manually appears later in this
+section.
+
+If you decide to configure your node manually, you can optionally create a
+default nonprivileged DECnet account and directory for your node manually.
+
+Configuring Your Node Automatically
+
+You can use the interactive command procedure NETCONFIG.COM to configure
+your system automatically.  NETCONFIG.COM configures all required permanent
+database entries except for remote nodes, asynchronous circuits, and lines.
+You can also use the command prcedure to set up the optional default
+nonpriviledged DECnet account on your system.
+
+Use NETCONFIG.COM only if you are bringing up your node for the first time,
+or want to reconfigure your node completely.  The procedure purges any
+existing permanent database entries on your system (except for remote node
+entires).  You must have the privilege SYSPRV to use NETCONFIG.COM to
+configure your node.
+
+If you decide to use the NETCONFIG.COM command procedure to configure your
+node automatically, perform the following steps.  Default values appear in
+brackets [] after certain questions in the interative dialog.  To accept a
+default, press RETURN.
+
+1.  Log in to the SYSTEM account on your node.
+
+2.  Invoke NETCONFIG.COM.  Enter the following command at the dollar sign
+    ($) prompt:
+
+    $ @SYS$MANAGER:NETCONFIG
+
+    The following message is displayed:
+
+    DECne-VAX network configuration procedure
+    This procedure will help you define the parameters needed to get
+    DECnet-VAX running on this machine.  You will be shown the changes
+    before they are executed, in case you want to perform them manually.
+
+3.  Provide the node name.  You will be promted as follows:
+
+    What do you want your DECnet node name to be?
+
+    Enter the node name you have selected ( or have been assigned by the
+    network manager ), your node name must be six alphanumeric characters or
+    less, and must be unique among all node names in the network
+
+    (If you are on a VAXcluster node, you must press RETURN to accept the
+    default node name that appears in brackets at the end of the prompt.  This
+    default node name is based on the SYSGEN parameter SCSNODE.  If no default
+    node name is displayed, exit the procedure and use SYSGEN to set up a value
+    for SCSNODE, then restart the procedure.  The DECnet node name of a
+    VAXcluster node must match the value of SCSNODE ).
+
+4.  Provide the node address.  You will be promted as follows:
+
+    What do you want your DECnet address to be?
+
+    Enter the node address you have selected/assigned.  The node address is
+    a numeric value of the following format?
+
+    area-number.node-number
+
+    Area-Number ( 1 to 63 ) designates the area in which the node is grouped
+    and node number ( 1 to 1023 ), designates the node's unique address w/in
+    the area.  If you do not specify an area number, the system will supply
+    a default area number ( the default value is 1 ).
+
+    (If you are on a VAXcluster node, you must press RETURN to accept the
+    default node address that appears in brackets at the end of the prompt.
+    This default node address is based on the SYSGEN parameter SCSSYSTEMID.  If
+    no default node address is displayed, exit the procedure and use SYSGEN to
+    set up a value for SCSSYSTEMID, then restart the procedure.  The DECnet node
+    address of a VAXcluster node must match the value of SCSSYTEMID.).
+
+5.  Specify router or nonrouter status.  You will be promted as follows:
+
+Do you want to operate as a rounter? [NO (nonrouting)]
+
+Press return to operate as a nonrouter ( that is, as an end node ).  Type
+YES and press RETURN if you want your ssytem to be a router and if you have
+registered the DECnet-VAX full function key or will register it before you
+start up the network.
+
+6.  Set up the nonprivileged DECnet account.  You will be promted as
+    follows:
+
+Do you want a default DECnet account? [YES]
+
+Press RETURN to set up the default nonprivileged DECnet account and
+directory.  Type NO and Press RETURN if you do not want to set up the
+account.
+
+7.  Apply the configuration.  The network configuration procedure displays
+the list of commands ncedssary to start up your network. ( An example
+showing the commands appears later in this section ).
+
+You will be promted as follows:
+
+Do you want these commands to be executed? [YES]
+
+Press return to configure the network; type NO and press RETURN to cancel
+the configuration operation.  If you choose to configure the network, the
+procedure displays a series of information messages and the following
+statement:
+
+The changes have been made.
+
+8.  Turn on the network.  You will then receive the following messages,
+ending in a prompt:
+
+If you have not already registered the DECnet-VAX key, then do so now.
+After the key has been registered, you should invoke the procedure
+SYS$MANAGER:STARTNET.COM to start up DECnet-VAX w/ these changes. ( if the
+key is already registered ) Do you want DECnet started? [YES]
+
+You can respond to this prompt in either of the following ways:
+
+Type No and press RETURN in response to the last prompt if you need to
+register the key on your system at this point.  Register the key using the
+VMS License Management Utility.  Once the DECnet-VAX key is registered, you
+can then start up DECnet-VAX manually w/ these configuration changes by
+entering the following command:
+
+$ @SYS$MANAGER:STARTNET
+
+(You can also type NO and press RETURN in response to the last prompt if the
+key is already registered but you do not want to start the network until a
+later time ).
+
+Press RETURN in response to the last prompt if you want to start the network
+at this time and the key is already registered.  The procedure turns on the
+network and displays the identification numbes of the created processes.
+When the dollar sign ($) prompt appears, you have successfully configured
+and turned on the DECnet-VAX network.
+
+If you want the network to be started automaticallly each time the VMS
+operating system is booked, enable the following command in the
+SYS$MANAGER:SYSTEARUP_V5.COM ccommand procedure ( by deleteing the
+exclamation point at the beginning of this command line in the command
+procedure):
+
+$ @SYS$MANAGER:STARTNET
+
+Note that you can optionally press RETURN to start the network w/out the key
+being registered, if you want to use DECnet-VAX only at your local node.
+The key IS required if you want to establish connections to other nodes in
+the network.
+
+Example 6-1 shows the interatctive dialog that is dsiplayed when you invokde
+NETCONFIG.COM to configure node PURPLE w/ address 2.3 ass an end node w/ a
+default DECnet account.  In this example, node PURPLE is connected to
+Ethernet Circuit UNA-0.
+ZDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDBDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD?
+3EXAMPLE 6-1: SAMPLING NETCONFIG.COM DIALOUGE3                               3
+CDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDADDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD4
+3DECnet-VAX network configuration procedure                                  3
+3This procedure will help you define the parameters needed to get DECnet     3
+3running on this machine.  You will be shown the changes before they are     3
+3actually executed, in case you want to perform them manually.               3
+3                                                                            3
+3What do you want your DECnet node name to be?        : PURPLE               3
+3What do you want your DECnet address to be?          : 2.3                  3
+3Do you want to operate as a router [NO(nonrouting)]  : RET                  3
+3Do you want a default DECnet Account?          [YES] : RET                  3
+3   Here are the commands necessary to set up your system.                   3
+3                                                                            3
+3---------------------------                                                 3
+3                                                                            3
+3 $ RUN SYS$SYSTEM:NCP                                                       3
+3   PURGE EXECUTOR ALL                                                       3
+3   PURGE KNOWN LINES ALL                                                    3
+3   PURGE KNOWN CIRCUITS ALL                                                 3
+3   PURGE KNOWN LOGGING ALL                                                  3
+3   PURGE KNOWN OBJECTS ALL                                                  3
+3   PURGE MODULE CONFIGURATOR KNOWN CIRCUITS ALL                             3
+3 $ DEFINE/USER SYS$OUTPUT NL:                                               3
+3 $ DEFINE/USER SYS$ERROR NL:                                                3
+3   PURGE NODE 2.3 ALL                                                       3
+3   PURGE NODE PURPLE ALL                                                    3
+3 $ RUN SYS$SYSTEM:NCP                                                       3
+3   DEFINE EXECUTOR ADDRESS 2.3 STATE ON                                     3
+3   DEFINE EXECUTOR MAXIMUM ADDRESS 1023                                     3
+3   DEFINE EXECUTOR ROUTING TYPE NONROUTING IV                               3
+3   DEFINE EXECUTOR NONPRIVILEGED USER DECNET                                3
+3 $ DEFINE/USER SYSUAF SYS$SYSTEM:SYSUAF.DAT                                 3
+3 $ RUN SYS$SYSTEM:AUTHORIZE                                                 3
+3   ADD DECNET /OWNER="DECNET DEFAULT" -                                     3
+3   /PASSWORD="" -                                                           3
+3   /UIC=[376,376] /ACCOUNT=DECNET -                                         3
+3   /DEVICE=SYS$SYSDEVICE: /DIRECTORY=[DECNET] -                             3
+3   /PRIVILEGE=(TMPMBX,NETMBX) -                                             3
+3   /FLAGS=(CAPTIVE) /LGICMD=NL: -                                           3
+3   /NOBATCH /NOINTERACTIVE                                                  3
+3 $ CREATE/DIRECTORY SYS$SYSDEVICE:[DECNET] /OWNER = [377,376]               3
+3 $ RUN SYS$SYSTEM:NCP                                                       3
+3   DEFINE LINE     UNA-0 STATE ON                                           3
+3   DEFINE CIRCUITE UNA-0 STATE ON COST 1                                    3
+3   DEFINE LOGGING MONITOR STATE ON                                          3
+3   DEFINE LOGGING MONTIOR EVENTS 0.0-9                                      3
+3   DEFINE LOGGING MONITOR EVENTS 2.0-1                                      3
+3   DEFINE LOGGING MONITOR EVENTS 4.2-13,15-16,18-19                         3
+3   DEFINE LOGGING MONITOR EVETNS 5.0-18                                     3
+3   DEFINE LOGGING MONITOR EVENTS 128.0-4                                    3
+3   Do you want these commands to be executed?        [YES]:RET              3
+3   The changes have been made.                                              3
+3   If you have not already registered the DECnet-VAX key, then do so now.   3
+3   After the key has been registered, you should invoke the procedure       3
+3   SYS$MANAGER:STARTNET.COM to start up DECnet-VAX w/ these changes.        3
+3   (if the key is already registered) Do you want DECnet Started [YES]: RET 3
+@DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDY
+
+
+9.  Define the other node names.  At the Dollar sign ($) prompt, invoke the
+Network Control Program (NCP) by entering the following command:
+
+$ RUN SYS$SYSTEM:NCP
+
+For each remote node in the network that you want to identify by node name,
+enter the following command to define the node address and name in your
+permanent node database:
+
+NCP>DEFINE NODE address NAME name
+
+Address is the existing node address in the form area-number.node-number,
+and name is the node name.  If you omit the area number from the node
+address, the area number of your local node is used.  The netowkr manager or
+the system manager of the remote node you want to define can provide you
+with the correct name and address.
+
+If a node that you can access on your network has a node database that
+contains all the node names and addresses you want to define and you have
+the appropriate privileges to access that database, you can enter the
+following command at the NCP prompt ( provided the network is turned on ):
+
+NCP>COPY KNOWN NODES FROM node-id TO PERMANENT
+
+In this command, node-id is the node name or address of the remote node from
+which you are copying the information.  If you specify the node name, that
+name must be in your volatile databse.  All the node names/addresses are
+copied to your permanent node database from the volatile node database of
+the remote node.
+
+If your node is a memeber of a VAXcluster that uses an alias node identifier
+( an alias node name/address ), your node can adopt the alias.  Specify the
+following commands to define the alias node address and name in the
+permanent node database, and associate the alias identifier with your node:
+
+NCP>DEFINE NODE address NAME name
+NCP>DEFINE EXECUTOR ALIAS NODE node-id
+
+for the node-id, you can specify either the alias node address or name that
+you have defined.  Your node can then be identified by the alias node
+name/address as well as by its unique node name/address when DECnet is
+running.
+
+Then enter the following commands to create the volatile node database for
+your node:
+
+NCP>SET KNOWN NODES ALL
+NCP>EXIT
+
+The other nodes on the network should define your node name/address in their
+node databases in order to be able to communicate with your node by node
+name.  If a network manager assigned the unique node name/address to your
+node, the manager can define your node name in an overall network node
+database.
+
+10.  Determine how to proceed.  You have completed the network startup
+procedure, if you plan to use asynchronous DECnet, continue to the next
+section, which describes how to establish asynchronous connections.
+
+6.2.2.3 Establishing Asynchronous DECnet Connections to Other Systems
+
+The automatic network configuration procedure described in the previous
+section does not configure asynchronous lines and circuits.  As a VMS system
+manager, you have the option of connecting your VMS system to another system
+by means of a low-cost, low-speed asynchronous DECnet line.  The two types
+of asynchronous DECnet connections you can establish are as follows:
+
+: A static asynchronous DECnet connection, which creates a permanent DECnet
+  link to a single remote node.
+
+: A dynamic asynchronous DECnet connection, which provides a temporary
+DECnet link.  You can establish dynamic connections to different remote
+nodes at different times.
+
+Note that non-VMS systems that support DECnet asynchronous DDCMP lines can
+make asynchronous DECnet connections to VMS systems.  The asynchronous
+connection can be between two routers, a router and an end node, or two end
+nodes.  If you are on an end node and want to make an asynchronous
+connections, it will be your only cennection to the network, because an end
+node can only have one circuit active at a time.
+
+Establishing a Static Asynchronous Connection
+
+A static asynchronous DECnet connection is a permanent connection between
+two nodes.  This type of connection can be made in one of two ways:
+
+:  The nodes can be connected by a physical line ( a null modem cable )
+   attached to a terminal port at each system.  No modems are required.  You
+   can communicate with the other system at any time.
+
+:  The connection can be made over a dialup line using modems at both ends
+   of the line.  For example, your VMS system can establish a static
+   asynchronous connection to a remote node over a telephone line.
+
+You can configure your static asynchronous line as soon as you have executed
+NETCONFIG.COM, and then turn on the network manually.  If you system is
+brought up as a routing node, you can establish a static asynchronous
+connection at any time, no matter how many network connections you already
+have.
+
+Follow the tsteps outlined in this section to establish a static
+asynchronous connection.  For the connection to be successful, the node with
+which you are creating a DECnet link must also establish an asynchronous
+DECnet connection with your node. ( note that the line speeds at each end of
+the connection must be the same ).
+
+1.  Log in to the SYSTEM account on your VMS node.
+
+2.  Load the asynchronous DDCMP driver, NODRIVER (NOA0).  Enter the commands
+shown below at your terminal ( or include them in the
+SYS$MANAGER:SYSTARTUP_V5.COM command procedure before you boot the system ).
+
+$ RUN SYSTEM:SYSGEN
+SYSGEN> CONNECT NOA0/NOADAPTER
+SYSGEN> EXIT
+
+The asynchronous driver must be loaded before any asynchronous connection
+can be made.
+
+3.  To set up the terminal line to become a static asynchronous DECnet line,
+enter the DCL command SET TERMINAL at your terminal.  If there is more than
+one terminal attached to your VMS system, you must specify a SET TERMINAL
+command for each terminal line that will be used for a static asynchronous
+DECnet connection.
+
+: Nondialup line: for a nondialup configuration, enter the following SET
+  TERMINAL command to convert a terminal line to a static asynchronous line:
+
+  $ SET TERMINAL/PERMANENT/PROTOCOL=DDCMP device-name:
+
+  In this command, device-name is the name of the terminal port that is
+  connected to the line that you want to make a static asynchronous DECnet
+  line( all references to a device in this section refer to the terminal
+  port ).
+
+: Dialup line: For a dialup configuration, enter the following SET TERMINAL
+  command to convert the terminal line to a static asynchronous DECnet line
+  with modem control.
+
+  $ SET TERMINAL/PERMANENT/MODEM/NOAUTOBAUD -
+  _$ /NOTYPE_AHEAD/PROTOCOL=DDCMP device-name:
+
+You can ensure that these SET TERMINAL commands will be executed
+automatically each time the network is started.  Modify your
+SYS$MANAGER:SYSTARTUP_V5.COM command procedure to include all required SET
+TERMINAL commands before the command @SYS$MANAGER:STARTNET.
+
+4. After configuring your node, configure the asynchronous lines and
+circuits in the network database.  Use NCP commands to define each
+asynchronous line and accompanying circuit as being inthe ON state ( The
+line and circuit are turned on when SYS$MANAGER:STARTNET.COM is executed.)
+Enter the following commands:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>DEFINE LINE dev-c-u STATE ON RECEIVE BUFFERS 4 -
+   _LINE SPEED BAUD-RATE
+NCP>DEFINE CIRCUIT dev-c-u STATE ON
+NCP>EXIT
+
+Baud-rate is the speed at which the line sends and receives data.  For an
+asynchronous line or circuit, dev-c-u is defined as follows:
+
+dev: the first two letters of the asynchronous device name ( passible
+     values are TT and TX).
+
+c  : A decimal number ( 0 or a integer ) designating a device's hardware
+     controller.  If the third letter on the device name is A, c egauls 0.  If
+     the third letter of the device name is B, c equals 1, and so on.
+
+u  :The unit number of the device name; u is always equal to 0 or a positive
+    integer.
+
+    (An example is the device identifier TT-0-0, which represents the
+    asynchronous device name TTA0. ).
+
+A minimum of four buffers should be allocated for data reception over the
+line.
+
+If the line speed at the other end of the connection is changed after the
+initial static asynchronous connection is made, you can use the DEFINE LINE
+command specified in step 4 to change the line speed for your end of the
+connection to match the line speed at the other end.  The line speed will be
+changed the next time the line is turned on.
+
+5.  For security over a dialup connection, you can run NCP and establish
+optional transmit and receive passwords for the local end of the static
+asynchronous dialup link.  The transmit password is the password sent to the
+other node during connection startup; the receive password is the password
+expected from the other node during connection startup.  You must also use
+NCP to specify that your asynchronous circuit is to verify the password
+supplied by the other node.  If the correct passwords are not supplied, the
+asynchronous connection cannot be made.
+
+Although transmit and receive passwords are not mandatory for static
+asynchronous dialups links, they add to their security of your DECnet
+connection.  Passwords can contain from one to eight alphanumeric characters
+and must be delimited with quotation marks if they contain spaces.  Specify
+the following commands:
+
+$ RUN SYS$SYSTEM:NCP
+NCP> DEFINE CIRCUIT dev-c-u VERIFICATION ENABLED
+NCP> DEFINE NODE node-id TRANSMIT PASSWORD transmit-password -
+     _RECEIVE PASSWORD receive-password
+NCP>EXIT
+
+Node-id is the name of the remote node to which your node will be connected.
+
+Note that if you have defined passwords for the local end of the link, you
+must notify the remote node system manager to establish transmit and receive
+passwords for the remote end of the static asynchronous DECnet dialup link.
+
+6. If the network is not already on, turn on the network at your node by
+   entering the following command:
+
+$ @SYS$MANAGER:STARTNET
+
+This command starts the network and causes the permanent database entries
+defined int he previous steps to be entered in the volatile database on the
+running network.
+
+If the network was already running before you began the static asynchronous
+connection procedure, enter the following commands to cause the permanent
+database entries to be entered in the volatile database.
+
+$ RUN SYS$SYSTEM:NCP
+NCP>SET LINE dev-c-u ALL
+NCP>SET CIRCUIT dev-c-u ALL
+NCP>SET NODE node-id ALL
+NCP>EXIT
+
+If the line and circuit could not be set on in the volatile database,
+causing DECnet to fail to gain control of the line, the following error
+message is displayed:
+
+% NCP-I-NMLRSP, LISTENER RESPONSE - Operation Failure
+
+If the static asynchronous connection cannot be made, refer to the section
+on asynchronous connection problems.
+
+7.  If you want to turn off the asyncrononous lines temporarily, run NCP and
+    enter the following:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>SET LINE dev-c-u STATE OFF
+NCP>SET CIRCUIT dev-c-u STATE OFF
+NCP>CLEAR LINE dev-c-u ALL
+NCP>CLEAR CIRCUIT dev-c-u ALL
+NCP>EXIT
+
+To turn the static asynchronous DECnet line back on, enter the following NCP
+commands:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>SET LINE dev-c-u ALL
+NCP>SET CIRCUIT dev-c-u ALL
+NCP>EXIT
+
+8.  If you want tos eitch an asyncrhonous DECnet line back to a terminal
+line with DECnet running, you must clear the line and circuit entries from
+the network volatile database.  To clear the entries, enter these commands:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>SET LINE DEV-C-U STATE OFF
+NCP>SET CIRCUIT DEV-C-U STATE OFF
+NCP>CLEAR LINE DEV-C-U ALL
+NCP>CLEAR CIRCUIT DEV-C-U ALL
+NCP>EXIT
+
+To switch the line for which modem control was not enabled back to a
+terminal line, enter the following command:
+
+$ SET TERMINAL/PERMANENT/PROTOCOL=NONE DEVICE-NAME:
+
+To switch the line for which modem control was enabled back to a terminal
+line, enter the following command:
+
+$ SET TERMINAL/PERMANENT/MODEM/AUTOBAUD -
+_$ /TYPE_AHEAD/PROTOCOL=NONE DEVICE-NAME:
+
+Establishing a Dynamic Asynchronous Connection
+
+A dynamic asynchronous DECnet connection is a temporary connection between
+two nodes, normally over a telephone line through the use of modems.  The
+line at each end of the connection can be switched from a terminal line to a
+dynamic asynchronous DECnet during establishment of a dynamic connection.  A
+dynamic asynchronous connection is normally maintained only for the duration
+of a telephone call.
+
+NOTE: A dynamic asynchronous connection to a VMS node can be initiated from
+any VMS or non-VMS node that supports the DECnet asynchronous DDCMP
+protocol.
+
+On a VMS node, you have the option of performing the initial steps of the
+dynamic asynchronous connection process ( steps 1/2 as follows ) before you
+turn on the network at your node ( step 3 ).  The later steps of the process
+( starting w/ step 4 ) must occur when the line is being switched to DECnet.
+
+Follow the steps listed in this section to establish a dynamic asynchronous
+DECnet connection.  This procedure assumes the local VMS node is originating
+the connection and switching on the terminal line for DECnet use.  The
+connection must be to a VMS node on which you have an account w/ NETMBX
+privilege.  The steps that the system manager at the remote VMS  node must
+perform in order for the dynamic asynchronous DECnet llink to be established
+successfully are also included in this section.
+
+1.  Log in to the SYSTEM account and enter the following commands
+interactively ( or include them in the SYS$MANAGER:SYSTARTUP_V5.COM command
+procedure before you boot the system ).  These commands load the
+asynchronous driver NODRIVER ( NOA0) and install DYNSWITCH software on your
+system.
+
+$ RUN SYS$SYSTEM:SYSGEN
+SYSGEN> CONNECT NOA0/NOADAPTER
+SYSGEN> EXIT
+$ INSTALL:=$SYS$SYSTEM:INSTALL
+$ INSTALL/COMMAND
+INSTALL> CREATE SYS$LIBRARY:DYNSWITCH/SHARE -
+_ /PROTECT/HEAER/OPEN
+INSTALL> EXIT
+
+The system manager of the remote VMS node must also enter these commands.
+
+Additionally, the system manager at the remote VMS node must enter the
+commands that follow.  These commands enable to use of virtual terminals for
+the terminal line that is to be switched, and set the DISCONNECT
+characteristic for the terminal line. ( The virtual terminal capability
+permits the process to continue running if the physical terminal you are
+using becomes disconnected. )
+
+$ RUN SYS$SYSTEM:SYSGEN
+SYSGEN> CONNECT VTAO/NOADAPTER/DRIVER=TTDRIVER
+SYSGEN> EXIT
+$ SET TERMINAL/EIGHT_BIT/PERMANENT/MODEM/DIALUP -
+_$ /DISCONNECT DEVICE-NAME:
+
+Device-name is the name of the terminal port to which the dynamic
+asynchronous connection is made.
+
+2.  You must establish the required transmit password at the originating end
+of the dynamic asynchronous dialup link.  The transmit password is the
+password sent to the remote node during connection startup.  Use NCP to
+enter a command to define the transmit password for the remote node.  The
+password can contain one to eight alphanumeric characters and should not
+contain any spaces.  Specify the following commands:
+
+$ RUN SYS$SYTEM:NCP
+NCP>DEFINE NODE node-id TRANMIT PASWORD pasword
+NCP>EXIT
+
+Node-id is the name of the remote node with which your node is forming a
+connection.
+
+For each remote node with which you will create a dynamic asynchronous
+DECnet dialup link, you must define a transmit password in a separate
+command.
+
+The system manager for the node at the other end of the connection must
+define that same password as a receive password for your node ( the password
+expected to be received from your node).  The remote system manager should
+also specify the parameter INBOUND ROUTER or INBOUND ENDNODE, to indicate
+the type of node ( router or end node ) that is expected to initiate the
+dynamic connection.  The remote manager should enter the following command:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>DEFINE NODE node-id RECEIVE PASWORD password INBOUND node-type
+NCP>EXIT
+
+3.  DECnet must be running on both nodes for the remaining steps.  If you
+havenot already done so, turn on the network by entering the following
+command ( and request that the remote system manager do so also):
+
+$ @SYS$MANAGER:STARTNET
+
+If the network was already running before you began the dynamic asynchronous
+connection procedure, enter these commands to cause the permanent database
+entry to be entered in the volatile database:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>SET NODE node-id ALL
+NCP>EXIT
+
+4.  The remaining steps can be performed by any VMS user with NETMBX
+privilege.  Log in to your local VMS system and enter the following DCL
+command on your terminal to cause your process to function as a terminal
+emulator ( which makes the remote terminal appear to be a local terminal
+connection ):
+
+$ SET HOST/DTE device-name:
+
+Device-name is the name of your local terminal port that is connected to he
+modem.  If both systems use modems with autodial capabilities ( for example,
+DF03, DF112 or DF224 modems that support an autodial protocol ), you can
+optionally include the /DIAL qualifier on the SET HOST/DTE command to cause
+automatic dialing of the modem on the remote node, as follows:
+
+$ SET HOST/DTE/DIAL=number device-name:
+
+5.  If you are not using automatic dialing, dial in to the remote node
+manually.
+
+6.  Once the dialup connection is made and you receive the remote VMS system
+welcome message, log in to your account on the remote node.
+
+7.  While logged in to your account on the remote node, enter the following
+command to cause the line to be switched to a DECnet line automatically:
+
+$ SET TERMINAL/PROTOCOL=DDCMP/SWITCH=DECNET
+
+The following message indicates that the DECnet link is being established:
+
+%REM-S-END - control returned to local-nodename::
+$
+
+To check whether the communications link has come up, specify the following
+command on the local system:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>SHOW KNOWN CIRCUITS
+NCP>EXIT
+
+The resulting display should list a circuit identified by the mnemonic TT or
+TX, depending on the asynchronous device installed on the line, and indicate
+that is is in the ON state.
+
+When the DCL prompt ($, by default) appears on your terminal screen, you can
+begin to communicate with the remote node over the asynchronous DECnet
+connection.
+
+If the dynamic connection is not made successfully, refer to the section on
+asynchronous connection problems.
+
+8.  As an alternative to switching the terminal line to a DECnet line
+automatically ( as described in the previous step ), you can switch the line
+manually.  If you originate a dynamic connection to a VMS node from anon_VMS
+system, manual switching is required; from a VMS system, it is optional.  If
+you are originating the connection from a non-VMS node, follow
+system-specific procedures to log in to the remote VMS node by means of
+terminal emulation.
+
+Once you are logged in to the remotenode, two steps are required to perform
+manual switching:
+
+Using your account on the remote VMS node, specify the SET TERMINAL command
+described in step 7, but add the /MANUAL qualifier:
+
+$ SET TERMINAL/PROTOCOL=DDCMP/SWITCH=DECNET/MANUAL
+
+You will receive the following message from the remote node indicating the
+remote system is siwtching its line to DECnet use:
+
+%SET-I-SWINPRG The line you are currently logged over is becoming a DECnet
+line
+
+You should exit from the terminal emulator and switch your line manually to
+a DECnet line.  The procedure depends on the specific operating system on
+which you are logged in.  The following example shows how a VMS user
+originating a dynamic connection would perform this procedure.
+
+: Exit the terminal emulator by pressing the backslash (Ø) key and the CTRL
+  key simultaneously on your VMS system.
+
+: Enter the following command to switch your tierminal line to a DECnet line
+  manually:
+
+$ SET TERMINAL/PROTOCOL=DDCMP TTA0:
+
+: Enter NCP commands to turn on the line and circuit connected to your
+terminal port TTAO manually, as in the following example:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>SET LINE TT-O-O RECEIVE BUFFERS 4 LINE SPEED 2400 STATE ON
+NCP>SET LINE TT-O-O RECEIVE BUFFERS 4 STATE ON
+NCP>EXIT
+
+Asynchronous DECnet is then started on the local VMS node.
+
+9.  You can terminate the dynamic asynchronous link in one of two ways:
+
+a:  Break the telephone connection.
+b:  Run NCP and turn off either the asynchronous line or circuit.  The two
+    commands you can use are as follows:
+
+    $ RUN SYS$SYSTEM:NCP
+    NCP>SET LINE dev-c-u STATE OFF
+    NCP>SET CIRCUIT dev-c-u STATE OFF
+    NCP>EXIT
+
+   If either of the above NCP commands is entered at the remote node, the
+   line returns to terminal mode immediately.  If the command is entered at
+   the local (originating) VMS node, the remote line and circuit remain on for
+   approximately four minutes and then the line returns to terminal mode.
+
+6.2.2.4 Shutting Down and Restarting The Network
+
+The network shuts down automatically as part of the normal VMS system
+shutdown procedure.  If your VMS system is running, you can shut down the
+network at your local node without destroying any active logical links by
+entering the following commands:
+
+$ RUN SYSTEM:NCP
+NCP>SET EXECUTOR STATE SHUT
+NCP>EXIT
+
+When this command sequence is issued, no new links are allowed; when all
+existing links are disconnected, the network is turned off.
+
+While your VMS system is running, you can stop the network at your node by
+entering the following commands:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>SET EXECUTOR STATE OFF
+NCP>EXIT
+
+All logical links are terminated immediately and the network is stopped.
+
+To turn the network on manually, specify the following:
+
+$ @SYS$MANAGER:STARTNET
+
+To start the network if it is not currently active, you must be logged in to
+the SYSTEM account or have the privileges listed at the beginning of the
+STARTNET.COM command procedure.
+
+To cause the network to be started each time the VMS operating system is
+booted, enable the following command in the SYS$MANAGER:SYSTARTUP_V5.COM
+command procedure:
+
+$ @SYS$MANAGER:STARTNET
+
+The command is supplied in the command procedure; to enable it, use a text
+editor to delete the exclamation point at the start of the command line.
+The network will be turned on automatically as part of the VMS system
+startup.  You will not have to turn on the network again unless you should
+explicitly shut down the network or remove the network startup invocation
+from the site-specific startup command procedure.
+
+6.2.2.5 Using NCP to Create and Tailor the Configuration Database
+
+The system manager is responsible for configuring the node for network
+operation by supplying information in the DECnet-VAX configuration database
+about the following network components:
+
+The local (executor) node
+Remote nodes with which the local node can communicate
+Local circuits
+Local lines
+Network objects
+network event logging
+
+The configuration database is actually two databases: a permanent database
+that establishes the deault parameter values for node startup, and a
+volatile database that contains the current parameter values in a
+functioning network.
+
+You can use the Network Control Program ( NCP ) Utility to build the network
+configuration database manually or to modify its contents.  If you are
+configuring the node for the first time, you can use the automatic
+configuration command procedure, NETCONFIG.COM, to establish parameters
+needed to get DECnet running.  The procedure for using NETCONFIG.COM is
+described in an earlier section.
+
+When you run NCP and enter a command, NCP will prompt you for selected
+parameters if you do not supply them.  NCP also provides a HELP facility
+with information about each command, which you can access as follows:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>HELP [topic...]
+
+Use NCP SET commands to establish the contents of the volatile database.
+Use NCP DEFINE commands to establish the conents of the permanent database.
+You must hav OPER privilege to change the volatile database and SYSPRV to
+change the permanent database.
+
+The permanent database information is supplied to the volatile database when
+the network is started ( that is, the STARTNET.COM commnd procedure is
+executed ).  You can also use the ALL parameter with the SET command to
+cause all permanent database entries for a network component to be loaded
+into the volatile database.
+
+The basic NCP commands requried to define the network components in the
+permanent configuration database are as follows:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>DEFINE EXECUTOR
+NCP>DEFINE NODE node-id
+NCP>DEFINE LINE line-id
+NCP>DEFINE CIRCUIT circuit-id
+NCP>DEFINE OBJECT object-name
+NCP>DEFINE LOGGING MONITOR STATE ON
+NCP>DEFINE LOGGING MONITOR EVENTS event-list
+NCP>EXIT
+
+NCP commands also recognize the plural forms of the network component names:
+KNOWN NODES, KNOWN CIRCUITS, KNOWN LINES, NKOWN OBJECTS.
+
+To modify the current configuration of your node, you can enter SET commands
+for any network component.  For example, to add circuit and line entries for
+the Ethernet UNA defice ( the DEUNA ), enter the following commands:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>SET LINE UNA-0 STATE ON
+NCP>SET CIRCUIT UNA-0 STATE ON
+NCP>EXIT
+
+To determine the contents of your network configuration database, use the
+NCP commands LIST and SHOW.  The LIST commands displays information in the
+permanent database; the SHOW command displays volatile database entries.  To
+delete entries from the configuratin database, use the PURGE and CLEAR
+commands.  The PURGE command deletes permanent database entries; the CLEAR
+command deletes or resets volatile database entries.
+
+For example, to list the permanent name/address of a node, enter the
+following commands:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>LIST NODE nod-id
+NCP>EXIT
+
+To delete a node form the permanent database, enter the following commands:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>PURGE NODE node-id ALL
+NCP>EXIT
+
+Node-id can be either the node name or the node address.  You can also
+delete an individual parameter for a node.
+
+Because the PURGE command does not affect the volatile ( memory-resident )
+copy of the DECnet database, you can access a node deleted with the PURGE
+command until DECnet is started again.  If you use the CLEAR command to
+delete a node entry, the node entry will reappear in the volatile database
+after DECnet is started again.
+
+6.2.2.6 Providing Security for Your DECnet-VAX Node
+
+Some of the security measures that you can use to protect your files and
+system in a network environment are summarized in this section.
+
+As manager of a VMS node, you can protect your system against unauthorized
+access by users on other nodes in the network by setting passwords for any
+accounts that you may create.  Otherwise, users on other nodes could gain
+full access to your system by using the SET HOST command to log in to one of
+the accounts on your node.
+
+Proteting Files and Using Proxy Accounts
+
+As a user on a VMS node, you can protect the files in your directory against
+access over the network.  To set limits on who can access the files in your
+account, specify the DCL command SET PROTECTION.  If your file is protected,
+a VMS user on a remote node who wants to access your file must be able to
+specify the user name and password of a local account that has the
+appropriate privileges to access the file.  A remote user to whom you have
+given this informatin must then include the authorization information in the
+form of an access control string, "username password", in the VMS file
+specification used to access your file:
+
+node"username password"::devicd:[directory]filename.type;version
+
+Establishing proxy accounts.  As system manager of your node, you can
+maintain the security of passwords by preventing their transmission over the
+network.  You can permit selected outside users to access particular
+non-privileged accounts on your node without having to send any explicit
+access control information over the network.  To do this, you must create a
+proxy account that allows a remote user to have access privileges on your
+node without having a private account on your node.  If the remote user is
+assigned a proxy accoount on your local node that maps into a local user
+account, the remote user assumes the same access privileges as the owner of
+the local account.
+
+the system manager controls the use of proxy accounts at the local node.
+Use the Authroize Utility to create and modify the permanent proxy database,
+NETPROXY.DAT, at your node.  Each NETPROXY.DAT entry can map a single remote
+user to multiple proxy acounts on the local node ( one default proxy account
+and up to 15 additional proxy accounts ).  The proxy database entry
+identifies the user by nodename::username or nodename::(group,member).
+
+When DECnet is started up, the information in NETPROXY.DAT is used to
+construct a volatile proxy database.  If changes are made to the permanent
+proxy database by means of the Authorize Utility, the volatile proxy
+database is updated automatically.
+
+Similarly, the system manager at a remote node can create and maintain a
+proxy database of network user having proxy access to specific accounts on
+that node.
+
+Controlling proxy login access.  For proxy login to be successful, one node
+must be able to initiate proxy login access and the other node must allow
+proxy login access.  To control proxy login for your local ( executor )
+node, use Netowrk Control Program commands to modify the proxy parameters in
+the executor and object databases.  The NCP parameters that specify whether
+a node can initiate proxy login are the outgoing proxy parameters; the
+parameters that specify whether a node allows proxy login access are the
+incoming proxy parameters.  By default, both the local node and the remote
+node can initiate proxy login and allow proxy access.
+
+Defaults for DIGITAL supplied objects are set in the object database.  For
+example the object MAIL has outgoing proxy access set by default. To specify
+or modify the proxy parameter for a network object, use the NCP command SET
+OBJECT.  Use this command to permit outgoing proxy access for a network
+object:
+
+$ RUN SYS$SYSTEM:NCP
+NPC>SET OBJECT object-name PROXY OUTGOING
+NCP>EXIT
+
+Controlling Access to Your Node
+
+In general, the system manager can control access to the local node at three
+levels:
+
+Circuit-level access control: for point-to-point connections, especially
+over dialup lines, you can use passwords to verify that the initiating node
+is authorized to form a connectin with your node.  Passwords ar usually
+optional for point-to-point connections but are required for dynamic
+asynchronous connections.
+
+Each end of a point-to-point circuit can establish a password to transmit to
+the oterh node, and specify a password expected from the other node.  Before
+the link is established, each node verifies that it received the expected
+password from the other node.
+
+Added security is provided for a dynamic asynchronous connection ( which is
+normally maintained only for the duration of a telephone call ): the node
+requesting the dynamic connection is required to supply a password, but the
+node receiving the login request is prevented from revealing a password to
+the requesting node.
+
+Node-Level access control:  To conttrol the establishment of logical links
+with remote nodes, you can specify in your network database access control
+parameters that indicate which of the following logical link connections are
+permitted:  INCOMING, OUTGOING, BOTH, or NONE.  Use the NCP commands to that
+follow to specify access parameters for a specific node, and the executor
+parameter DEFAULT ACCESS that applies to any node for which a specific
+access parameter is not specified:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>DEFINE NODE node-id ACCESS option
+NCP>DEFINE EXECUTOR DEFAULT ACCESS option
+NCP>EXIT
+
+System-level access control: When a remote user requests access to the
+system, the following means of authorizatin are checked:
+
+Is an explicit access control string available?
+
+Does the user have a proxy account on the local node?
+
+Is there a default nonprivileged DECnet account at the local node?
+
+If no explicit access control information or proxy account is available,
+DECnet-VAX will attempt to use a default nonprivileged DECnet account to
+access the system.  The default DECnet account allows users to perform
+certain network operations, such as the exchange of electronic mail between
+users on different nodes, without having to supply a name and password.  The
+default DECnet account is also used for file operations when an access
+control string is not supplied.  For example, it permits remote users to
+access local files on which the file protection has been set to allow WORLD
+ACCESS.  If you do not want remote users accessing your node, do notcreate a
+default DECnet account.
+
+you can request the DEcnet-VAX configuration command procedure,
+NETCONFIG.COM, to establish the default nonprivileged DECnet account and
+directory for you automatically or you can establish the account and
+directory manually, as follows:
+
+$ SET DEFAULT SYS$SYSTEM
+$ RUN AUTHORIZE
+UAF>ADD NETNONPRIV/PASSWORD=NONPRIV/DEVICE=device-name:-
+_/DIRECTORY=[NETUSER]/UIC=[200,200]/PRIVILEGE=(TMPMBX,NETMBX)-
+_/FLAGS=(CAPTIVE)/NOBATCH/NOINTERACTIVE/LGICMD=NL:
+UAF>EXIT
+$CREATE/DIRECTORY device-name:[NETUSER]/OWNER_UIC=[200,200]
+
+Device-name is the name of the device on which you have your directory.
+
+If a remote node requests access to an object on the local node but does not
+supply access control information, any access control information specified
+for the object in the local network database will be used.
+
+6.3  keeping the Network Running
+
+Once you have brought up your system as a network node, you can use a
+variety of software techniques to monitor and test the network.  You can
+also use troubleshooting techniques to resolve problems related to keeping
+the network running.  The tools you can use to monitor the network and the
+types of tests you can perform on the network are summarized in the
+following sections.  Common problems encountered during network operation
+are indicated, along with advice on troubleshooting.
+
+6.3.1  Monitoring the Network
+
+You can monitor network activity using software tools.  Analyzing the
+information you collect can help you to determine whether the network is
+running properly or whether any changes are required to resolve problems or
+improve performance.  Major network monitoring tools include the following:
+
+NCP display  commands you can use to determine the status and
+characteristics of components in the network.
+
+NCP counters you can read to obtain error and performance statistics on
+current network operations.
+
+Network events logged by DECnet that can be reported to you as they happen.
+
+Other software tools, such as the Ethernet configurator and the DECnet Test
+Sender/DECnet Test Receiver ( DTS/DTR ) Utility, that permit you to learn
+more about network operation.
+
+6.3.1.1 Using NCP to Display Information About network Components
+
+You can use the NCP commands SHOW and LIST to monitor network activity by
+displaying the following:
+
+Information about the current condigtion of network components ( using SHOW
+commands ) and the startup values assigned to the components ( using LIST
+commands ).
+
+Counter information about circuits, lines, remote nodes, and the local node
+( using SHOW COUNTER commands )
+
+Information about the range of network events being logged by the DECnet
+event logging facitlity ( using SHOW LOGGING commands )
+
+You do not need any privileges to issue SHOW commands, but you need the
+privilege SYSPRV to issue LIST commands.
+
+Use the SHOW command to monitor the operation of the running network.  You
+can display the characteristics and current status of network circuits,
+lines and nodes, including the local ( excutor ) node.  This information is
+useful in detecting any changes in the network configuratin or operation.
+For example, if a circuit failure causes some nodes to become unreachable,
+you can use SHOW commands to check the status of the circuit and the nodes.
+
+In general, the SHOW and LIST commands permit you to indicate what type of
+information you want NCP to display about the particular component you
+specify.  The display types include the following:
+
+
+CHARACTERISTICS: Static information that does not normally change during
+network operations ( for example, the identification of the local node and
+the circuits connected to the local node, and relevant routing parameters
+such as circuit cost ).
+
+STATUS: Dynamic information that usually indicates network operation for the
+running network ( for example, the operation state of the local node,
+circuits, lines and remote nodes ).
+
+SUMMARY: Only the most useful information from both static and dynamic
+sources; usually a condensed list of informatin provided for the
+CHARACTERISTICS and STATUS display types.  SUMMARY is the default if you do
+not specify a display type.
+
+COUNTERS:  Counter informatioon about circuits, lines, remote nodes, and the
+local node.
+
+EVENTS:  Information about which network events are currently being logged
+to which logging collection point.
+
+When you display information about network components, you can specify
+either the singular or plural form of the component in the NCP command.
+Plural forms of component names are KNOWN ( all components available to the
+local node ), ACTIVE ( all circuits, lines and logging not in the OFF
+state ), and ADJACENT ( all nodes directly connected to the local node ).
+
+typical examples of NCP display commands follow:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>SHOW EXECUTOR CHARACTERISTICS
+NCP>SHOW KNOWN LINES STATUS
+NCP>SHOW ACTIVE CIRCUITS
+NCP>SHOW ADJACENT NODES STATUS
+NCP>LIST KNOWN NODES
+NCP>EXIT
+
+All NCP display commands optionally allow you to direct the information
+displayed to an output file you specify.
+
+You can display information about network components on remote nodes using
+the TELL prefix in the NCP command.  The format of the command is TELL
+node-id SHOW component.  For example, to look at remote node counters, enter
+the following command sequence:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>TELL node-id SHOW EXECUTOR COUNTERS
+NCP>EXIT
+
+6.3.1.2 Using NCP counters
+
+You can use NCP commands to display error and performance statistics about
+network components at any time while the network is running.  DECnet
+software uses counters to collect statistics for the executor node, remote
+nodes, circuits and lines automatically.  To display the conents of
+counters, use NCP SHOW COUNTER commands, as in the following typical
+examples of the commands:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>SHOW EXECUTOR COUNTERS
+NCP>SHOW NODE node-id COUNTERS
+NCP>SHOW KNOWN CIRCUITS COUNTERS
+NCP>SHOW KNOWN LINES COUNTERS
+NCP>SHOW LINE line-id COUNTERS
+NCP>EXIT
+
+For the local node and remote nodes, counter statistics cover such subjext
+as connection requests, user data traffic, timouts, and errors.  Circuit
+counters cover such topics as the transmission of data packets over the
+circuit, timeouts, and errors.  Line counters cover such information as the
+transmission of bytes and data blocks over the line and relevant errors.
+
+Use NCP commands to control counter usage.  You may want to reset counters
+to zero if you are extablishing a controlled environment for test purposes.
+To reset counters to zero, use the NCP command ZERO COUNTERS ( the ZERO
+command requries the OPER privilege ).  You can zero counters for the
+executor node and individual nodes, circuits and lines, or all nodes,
+circuits and lines.  In the examples of typical commands that follow, not
+that the word COUNTERS is optional:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>ZERO EXECUTOR COUNTERS
+NCP>ZERO NODE node-id
+NCP>ZERO KNOWN CIRCUITS
+NCP>ZERO LINE line-id COUNTERS
+NCP>EXIT
+
+You can regulate the requency with which specific counters are logged by
+entering the following command sequence:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>SET component COUNTER TIMER nn
+NCP>EXIT
+
+The variable nn is in seconds.  Expiration of the counter timer causes the
+contents of the counter to be logged and the counter reset to zero.
+
+6.3.1.3 Using DECnet Event Logging
+
+Use the DECnet event logging facility to monitor significant network events,
+such as circuit failures or lost packets, on a continuous basis.  Whenever a
+network error or other meaningful event occurs, the DECnet event logger will
+log an event message to a terminal or file that you specify.  Examples of
+network events that are logged as they happen include the following:
+
+Changes in circuit and line states ( for example, a circuit failure )
+
+A node becoming reachable or unreachable
+
+Circuit and node counter values, logged before the counter is automatically
+reset to zero
+
+Errors in data transmission
+
+Use of invalid data link passwords
+
+Collection and analysis of network events can provide insight into why a
+particular error condition exists or why network performance may vary.
+
+As events are detected, the event logger sends them to a collection point
+for analysis.  Collection points are called logging sinkgs; they can be
+located on the local node or at a remote node.  Event data can go to one or
+more sinks.  Each of the following types of event sinks handles event data
+in a slightly different way:
+
+Logging monitor.  A program that receives and processes events.  Events sent
+to the logging monitor are displayed on the screen of any terminal declaring
+itself a "network operator" by means of the Operator Communication (OPCOM)
+facility.  Directing events to the OPCOM terminal is very useful for
+applications where the operator needs to know what is happening on the
+network as it happens.  For example, it may be useful to know that a circuit
+is going down as it happens.
+
+The automatic configuration command procedure enables the logging monitor.
+The OPCOM process is started when the command procedure
+SYS$MANAGER:STARTUP_V5.COM is executed.  You can enable a terminal as a
+network operator terminal by specifying the DCL command
+REPLY/ENABLE=NETWORK.  Usually the operator console ( OPA0 ) is one of the
+OPCOM terminals.
+
+Logging console.  A terminal or file that receives events in a readable
+format.  The default logging console is the operator console.
+
+Logging file.  A user-specified file that receives events in binary format,
+possibly for later analysis.
+
+In order for logging to occur at your node, logging must be enabled and the
+envents must be identified.  If you use the automatic configuration command
+procedure, NETCONFIG.COM, logging will be established automatically.
+Otherwise you can use the NCP command SET or DEFINE LOGGING to set the
+logging sink state to be ON.  To identify a remote location for a logging
+sink, specify the SINK node-id parameter in the command.  Use one or more
+commands to define the events to be logged.  For example, enter the following
+commands to cause all network events to be logged to OPCOM nd displayed at
+your network operator terminal:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>SET LOGGING MONITOR STATE ON
+NCP>SET LOGGING MONITOR KNOWN EVENTS
+NCP>EXIT
+
+Alternatively, for each event class, you can specify the specific events to
+be logged, as follows:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>SET KNOWN LOGGING EVENTS event-list
+NCP>EXIT
+
+Events in the event list are identified by class and type ( in the form
+class.type ).  An event class refers to the DECnet software functional layer
+in which the event occurred.  Event classes logged by DECnet include those
+listed in Table 6-2.  The event type is a decimal number representing a
+unique event within the class.  You can use the asterisk (*) wildcard
+character for event types, and you can specify a single event type or a
+range of types.
+
+ZDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD?
+3TABLE 6-2: DECnet Event Classes                  3
+CDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD4
+3Event Clas               DECnet Functional Layer 3
+3                                                 3
+30                        Network Management      3
+31                        Application             3
+32                        Session Control         3
+33                        End Communication       3
+34                        Routing                 3
+35                        Data Link               3
+36                        Phsyical Link           3
+37                        X.25 packet-level events3
+3128-159                  VMS system-specific     3
+@DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDY
+An example of the command to speify event types 5 through 7 in event class 4
+is as follows:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>DEFINE LOGGING MONITOR EVENTS 4.5-7
+NCP>EXIT
+
+The event message displayed by OPCOM is in the following form:
+
+EVENT TYPE class.typ, event-text
+>From node-address ( node name ) Occurred ( date/time )
+component type and identifier
+descriptive text
+
+You can use the SHOW LOGGING command to learn what logging is being
+performed.  For example, to display complete information on all logging
+being conducted at all nodes, use these commands:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>SHOW ACTIVE LOGGING KNOWN SINKS
+NCP>EXIT
+
+To stop monitory at the network operator terminal temporarily, enter the
+following commands:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>SET LOGGING MONITOR STATE OFF
+NCP>CLEAR LOGGING MONITOR ALL
+
+Then enter these commands to turn monitoring back on:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>SET LOGGING MONITOR STATE ON
+NCP.EXIT
+
+To disable logging at the network operator terminal permanently, enter the
+following commands:
+
+$ RUN SYS$SYSTEM:NCP
+NCP>PURGE LOGGING MONITOR ALL
+NCP>EXIT
+
+6.3.2 Common Problems Encountered on the Network
+
+Once you have brought up your system as a network node, you may receive
+messages related to netowrking errors.  Other problems that can occur at any
+time during network operation may not result in messages being displayed.
+This section explains the causes of error messages that may be displayed.
+
+6.3.2.1 Common Eorror Messages and Meanings
+
+When you are using DECnet-VAX, you may receive network-related messages
+indicating software or hardware problems, transient conditions, or errors in
+your input.  The following list displays some common netowrk-related
+messages, explains what condition may be causing each message, and suggests
+actions you can take.
+
+NCP-I-INVPVA, invalid parameter value
+
+This message is displayed if you specify a parameter value in an NCP command
+tht is not a valid value for the specified parameter.  The name of the
+parameter for which the value was invalid is displayed at the end of the
+error message.  Re-enter the command with the correct value for the
+parameter.
+
+SYSTEM-I-LINKEXIT, network partner exited
+
+This message is displayed if the process on the remote node exited before
+confirming the logical link to your node.  The remote process might have
+exited prematurely, a timeout may have occurred at the remote node, or there
+may be a problem in the log file on the remote node.  You could either retry
+the operation or try to read the NETSERVER.LOG file in the drectory of the
+account you are attempting to access at the remote node.  ( DECnet-VAX
+automatically creates a NETSERVER.LOG file and places it in the directory
+for the appropriate account when it receives a connect request. )
+
+SYSTEM-F-UNREACHABLE, remote node is not currently reachable
+
+This message is displayed when you attempt to connect to a node that is
+unreachable.  You can try to access the remote node again at a later time.
+
+The message is also displayed even if the remote node does not exist, as
+long as you have indicated a node address or a node name that you previously
+defined in your node data base.
+
+You also receive notice that the node is unreachable if the value of the
+executor parameter MAXIMUM ADDRESS in your network database is lower than
+the address of the remote node you are attempting to access.  Increase the
+value of the NCP executor parameter MAXIMUM ADDRESS in your database to be
+at least as high as the highest addrss of any node that you want to contact.
+
+SYSTEM-F-INVLOGIN, login information invalid at remote node
+
+This message is displayed if you attempt to access a remote node using an
+access control string that contains an invalid user name or password, or if
+you do not specify any access control information and no default DECnet
+account or proxy account is available at the remote node.  Retry the file
+operation with the correct login information.
+
+SYSTEM-F-NOSUCHNODE, remote node is unknown,
+
+This message is displayed if you attempt to enter a command to access a
+remote node and the remote node represented by node-id is not identified in
+the local volitile database.  Verify that the node identifier is correct,
+enter the node name in your node database, and retry the operation.
+
+SYSTEM-F-PATHLOST, path to network partner lost
+
+This message is displayed if you logged in to another node over the network
+( for example, using the DCL command SET HOST ) and the path to the remote
+node is lost.
+
+The path may be lost because of too much network activity or communications
+problems, or because DECnet was turned off at the remote node.  Wait, then
+check to see if the node is still reachable.  If so, try again to log in.
+
+SYSTEM-F-SHUT, remote node no longer accepting connects
+
+This message is displayed if you attempt to access the remote node using a
+DCL command ( such as the SET HOST command ) under either of these
+conditions:
+
+The executor parameter DEFAULT ACCESS on the remote node has been set to
+NONE.  The default access at theremote node must be set to permit incoming
+and outgoing access before you can connect to the node.
+
+SYSTEM-F-NOLINKS, maximum network logical links exceeded
+
+This message is displayed if the maximum number of links that the remote
+node allows has been exceeded.  Wait and try again later.
+
+SYSTEM-F-NOSUCHOBJ, network object unkown at remote node
+
+This message is displayed if you attempt to access a network object at a
+remote node and the object is not specified in the remote node database.
+For example, if you attempt to use the Phone Utility to reach a node that
+does not have an entry for the network object PHONE in its configuration
+database, you receive the above message.
+
+6.3.2.2 Problems Related to Network Operation
+
+Problems in maintaining the proper functioning of the running network can be
+difficult to resolve.  This section describes the technique for isolating a
+problem to a particular DECnet software functional layer or layers, and
+provides troubleshooting suggestions to determine the specific network
+problem.  As system manager of the local node, you may want to consult with
+the network manager ( if one is available for your network ) as necessary to
+resolve these problems.
+
+Troubleshooting Techniques Based on DNA layers
+
+Techniques for troubleshooting DECnet-VAX problems are based on the layered
+network design of DECnet-VAX as specified in the DIGITAL Network
+ARchitecture ( DNA ).  The DNA layers are illustrated in Figure 6-1.  Each
+layer performs particular services as part of the overall network capability
+provided at the node.
+
+During troubleshooting, it is useful to distinguish among the network layers
+in localizing the cause of a particular problem.  For example, some problems
+are characteristic of the Data Link layer, while others are related to the
+Routing layer or to the End Communicatins layer ( which provides logical
+link services ).
+
+         Figure 6-1: DECnet-VAX Software Design as Based on DNA Layers
+DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+                    ZDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD?
+                    3             USER LAYER              3
+                    CDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD4
+                    3         3 NETWORK APPLICATION LAYER 3
+                    3 NETWORK 3 SESSION CONTROL LAYER     3
+                    3 MANAGE- 3 END COMMUNICATIONS LAYER  3
+                    3 MENT    3 ROUTING LAYER             3
+                    3 LAYER   3 DATALINK LAYER            3
+                    CDDDDDDDDDADDDDDDDDDDDDDDDDDDDDDDDDDDD4
+                    3                PHSYICAL LINK LAYER  3
+                    @DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDY
+                                                ZK-6364-HC
+
+Network Problems and Suggested Actions
+
+The following discussion of network difficulties identifies typical problems
+originating at the various layers, and it describes actins you can take to
+locate the source of the problem.  The problems are grouped into those related
+data links, routing, and logical links.
+
+Data link problems.  Inability to reach and active node is a common problem
+on the network.  The problem could be either a data link problem or a
+routing problem.
+
+To determine whether the problem is a data link problem, examine both the
+remote node and the circuit.  The data link layer causes data to be moved
+over physical devices, so it affects only adjacent nodes ( an adjacent node
+is connected to the local node by a single physical line ).  You can learn
+whether the unreachable node is an adjacent node and whether the node is
+available by checking with the network manager or the system manager of the
+unreachable node.
+
+Also check the state of the circuits ( the data link protocol causes a
+circuit to be in the ON-SYNCHRONIZING state ).  The problem may be with the
+data link if the circuit does not start up correctly or is up but the
+adjacent node is not reachable.  ( Note that circuit startup may also be
+affected by incorrect setting of the transmit and receive passwords, as
+described in the following section on routing problems ).
+
+To locate a data link problem, examine the appropriate counters, line and
+circuit parameters, and network events.
+
+Use NCP SHOW commands to display the contents of the circuit and line
+counters to see if they are reporting errors.
+
+Use NCP SHOW commands to check the values of line and circuit parameters in
+the network configuration database.
+
+The look at the network events DECnet logged for event class 4 ( for the
+routing layer ) and event call 5 ( for the Data Link layer ) to determine
+whether any events affecting the data link have occurred.
+
+Routing problems.  Routing layer problems can involve nodes that are not
+reachable or circuits that are not stable.  The circuit may be up and the
+adjacent node may be reachable, but one or more intermediate nodes ( along
+the communications path ) that should be reachable are not.
+
+To isolate such Routing layer problems, examine the appropriate counters and
+passwords, and try to check the nodes along the routing path.
+
+Check the contents of the node and circuit counters at your node and, if
+possible, arrange for the node and circuit counters at the remote node to be
+examined.
+
+Examine network events logged for event class 4 ( for the Routing layer ).
+
+Check the setting sof the transmit and receive passwords for the local node
+and the adjacent node to see if they match ( these passwords affect circuit
+startup ).
+
+Finally, you can use NCP commands with the TELL prefix to try to trace the
+routing path from one node to another, to determine if an intermediate node
+is down and to examine the parameter values for all nodes on the
+communications path.
+
+If erratic routing behavior occurs ( for example, constant changes in the
+reachability of nodes, or connection to a node other than the one you expect
+to reach ), check whether two or more nodes with the same node address are
+connected to the network.  If routing seems to be functioning properly, you
+can look at executor parameters related to routing ( such as cost and
+hops ).
+
+Logical link problems.  The End Communications layer, which provides logical
+link servies, can also be the source of common problems.  Typical symptoms
+of logical link problems include
+
+Link timeout
+Network partner exited
+Invalid account
+Problems with performance and response time
+
+In general, for logical link problems, you can examinethe following:
+
+The default DECnet nonprivileged account and directory on the remote node,
+to determine if they have been created properly.
+
+Incoming and outgoing timers at both ends of the logical link, to ensure the
+links are not timing out prematurely because the timers are set too low.
+
+The accounting log ( using the VMS Accounting Utility), to determine whether
+the correct process was created or whether a correct process exited
+prematurely.
+
+The load on the local and remotenodes, to determine whether the load is
+preventing the link from being created.
+
+The path over the network to the remote node.  If the circuit is an Ethernet
+circuit, check the line buffer size parameter to ensure the proper setting.
+
+The Netserver timeouts, by getting somone to examine the NETSERVER.LOG file
+at the remote end.
+
+The proxy settings for your node and for the objects being accessed.  ( To
+determine the default proxy access setting for your executor node, specify
+the NCP command SHOW EXECUTOR CHARACTERISTICS.  To examine the proxy access
+setting for network objects, use the NCP command SHOW KNOWN OBJECTS
+CHARACTERISTCS ).
+
+The disk quota, to ensure it is sufficient to create the NETSERVER.LOG file.
+
+The SYS$LOGIN file, to determine whether the file protection is set to
+WORLD:READ.
+
+If a logical link connection is unsuccessful, the link may gave timed out
+for one of the following reasons:
+
+A heavily loaded node can cause creation of a logical link to take a long
+time.
+
+Incoming and outgoing timers may be set to low.
+
+A logical link problem may cause the message "network partner exited" to be
+displayed.  This message indicates that the remote node exited before the
+logical link was established.  Check the following:
+
+The networking load on the nodes at each end of the logical connection
+The accounting log on the remote end.
+Netserver timeouts on the remote node.
+
+If you receive a message indicating an invalid account, check that you have
+the proper authorization to make the logical link connection.  However, an
+invalid account condition may also be reported by the message "network
+partner exited."  Consequently you should try to have somone check the
+NETSERVER.LOG file on the remote node.
+
+If performance and resonse time over the logical link become degraded, the
+cause may be too much traffic on a path to the target node.  If you
+encounter this problem, consult with the network manager.
+
+Configuration problems.  The main reason for netowrk errors may be improper
+configuration of the system.  Check your DECnet-VAX configuration, and check
+the communciations calbes and connection.
+
+6.3.2.3 Asynchronous Connection Problems
+
+Attemps to establish asynchronous DECnet connections with other nodes can
+fail ofr a variety of reasons.  This section describes some reasons why you
+may fail to make a static or dynamic connection.
+
+A static asynchronous connection has failed if the static asynchronous
+DECnet line is started but remains in the ON-STARTING state.  To isolate the
+cause of the problem, check whether the following conditions exist.
+
+: Are the line speeds at both ends of the connection set to the same value?
+: If you are using a dialup line, is the modem characteristic set on the
+  terminal? ( This must be done before the line is set to asynchronous DDCMP
+  use.)
+: Are the two nodes being connected located in the same area in the network
+  (that is, do their node addresses have the same area number) or are both
+  nodes area routers?
+: Is the parity on the asynchronous DECnet line set to NONE? If your system
+  is not a VMS system, is the terminal line set to the correct parity?
+: Is the terminal line set up to use 8-bit characters?
+: If the node already has an active circuit, is the node a routing node?
+: If verification is enabled  for the circuit, do the passwords set at the
+  two nodes match?
+
+If you are unsuccessful in setting up your terminal line as a static
+asynchronous DDCMP line, check the following:
+
+: is the /NOTYPE_AHEAD qualifier specified for your terminal before you
+attempt to set up the static asynchronous line?  If a type-ahead buffer is
+associated with your terminal, you may not be able to bring up your terminal
+line as an asynchronous DECnet line until you terminate any process started
+at the remote node that may own your terminal line.
+
+If dynamic switching is being performed and the asynchronous DECnet
+connection is not made, first check the following:
+
+: Is DECnet started on both nodes?
+: Is the asynchronous DDCMP cla driver (NODRIVER) loaded by mean of
+  SY$YTEM:YGEN at each node?
+: Is the dynamic switch image (DYNSWITCH) installed by means of
+  SYS$SYSTEM:INSTALL at each node?
+: Are virtual terminals enabled on the remote node and, in particular, for
+  the terminal over which you are logged in to the remote node?
+
+If the dynamic asynchronous lines are started by are left in the
+"ON-STARTING" state, make the following checks:
+
+: Are the two nodes that are being connected located in the same area ( that
+  is, do their addresses have the same area number) or are they both area
+  routers?
+: Are the routing initialization passwords (transmit and receive passwords)
+  set appropriately at each node?
+: Is the INBOUND parameter for the initiating node set correctly in the node
+  database at thenode receiving the connection request?
+: Is the parity on the asynchronous DECnet line set to NONE?  If your system
+  is not a VMS system, is the terminal line set to the correct parity?
+: Is the terminal line at the remote node set up to use 8-bit characters?
+: If the node already has an active circuit, is the node fefined as a
+  routing node?
+
+$_END OF NIA037
+
+[OTHER WORLD BBS]
+
+
+

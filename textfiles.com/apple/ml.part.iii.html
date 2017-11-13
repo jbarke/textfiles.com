@@ -1,0 +1,197 @@
+***************************************
+*                                     *
+* PART VII - ASSEMBLERS               *
+*       WRITTEN BY DR. FIRMWARE       *
+*                                     *
+***************************************
+
+Assemblers are used for easily writing 
+up code from mnemonics to hex. To do   
+this by hand is tedious, to say the    
+least, and eventually one will make an 
+error here or there.
+
+Mnemonics are the codes that we have   
+been using, like 'LDA'. Since these do 
+not signify the addressing mode, there 
+is a set of symbols that are normally  
+used.
+
+To indicate immediate addressing mode, 
+we put a '#' in front of the arguement.
+To indicate absolute addressing mode,  
+we just put the address. To indicate   
+indexed absolute mode, we put the base 
+address followed by a comma and the    
+indexing register. Here is a short list
+of the conventions:
+
+LDA #$00           -IMMEDIATE
+LDA $0000          -ABSOLUTE
+LDA $0000,X        -ABSOLUTE IND. X
+LDA $0000,Y        -ABSOLUTE IND. Y
+LDA $00            -ZERO PAGE
+LDA $00,X          -ZERO PAGE,X
+LDA $00,Y          -ZERO PAGE,Y
+LDA ($00,X)        -INDIRECT,X
+LDA ($00),Y        -INDIRECT,Y
+JMP ($0000)        -INDIRECT
+INX                -IMPLIED
+ASL A              -ACCUMULATOR
+
+The modes will be fully explained      
+further down.
+
+Here'S a simple program in assembly    
+language:
+
+(1)        (2)     (3)       (4)
+          ORG     $300       Start at $300
+COUT      EQU     $FDED      COUT stands for $FDED
+          LDX     #$0C       Load X with length.
+LOOP      LDA     TEXT,X     Load A with a chr.
+          JSR     COUT       Gosub chr output at $FDED
+          DEX                Decrement X by 1.
+          CPX     #$00       Is it zero yet?
+          BNE     LOOP       If not goto to 'LOOP'
+          RTS                Else end.
+TEXT      ASC     'DR. FIRMWARE'
+                             - ASCII chrs for my name.
+
+The columns denoted by the numbers in  
+brackets are as follows: (1) label     
+field, (2) operator field, (3)         
+arguement field, and (4) comment field.
+
+
+Labels.
+
+Labels are used in assembly language to
+simplify things. The label 'PLOTIT'    
+means a lot more than $27A5. Note that 
+labels are all one word, no spaces.
+
+In this program, the label 'LOOP' is   
+used to denote a specific place in the 
+program. In the branch statement,      
+'LOOP' is refered to, and when the     
+program is assembled, the address in   
+memory where 'LOOP' will be is the     
+address the argument the statement will
+use.
+
+The operator field.
+
+This is where the mnemonics are. The   
+main part of the program is here.      
+However, you might have noticed the    
+'ORG' and the 'ASC'. These are 'psuedo-
+ops'. These pseudo-ops tell the        
+assembly program needed information    
+such as the address where the program  
+is supposed to run.
+
+There are many pseudo-ops, and since   
+each assembly program has thier own, it
+would be hard to cover all of them. So,
+refer to any manuels that you've copied
+with your software.
+
+Arguement field.
+
+This field is where the arguements for 
+the operators are, if there need to be 
+any given. The arguments need not to be
+hex numbers any more. One can use      
+labels for everything, if it pleases   
+you. But in general, since main point  
+of assembly programs is to let the     
+programmer program and not mess around 
+with (yucky) hex numbers, labels in    
+this field seem to be the way to go.
+
+Comment field.
+
+This field is to help narrate your     
+program, that is, to help someone who  
+is reading it (including yourself at   
+times, i'm sure). Of course one can put
+things like editorials or dirty msgs   
+here, but each to his own.
+
+In this column, i will be using a nice 
+mix of psuedo-ops and comments, so, if 
+this program doesn't work as typed, sue
+me.
+
+
+Ok, with that out of the way, here is  
+a description of the previously        
+mentioned addressing modes.
+
+Zero page.
+
+Zero page is somewhat special because  
+the MSB of all the bytes is $00. For   
+this mode, there is only one arguement 
+byte. This byte is the LSB of the      
+address and you will get addresses like
+$0045.
+
+When indexing zero page with either X  
+or Y, the resulting address is always  
+smaller than $100. For example,        
+LDA $45,X when X holds $FF will read   
+address $44 and put it in the          
+accumulator. The logic goes thus: $45+ 
+$FF= $144. Because the result is       
+greater than $100, the one at the front
+is dropped and all you have left is    
+$44.
+
+JMP.
+
+This is a goto-like command in m.l. and
+can be considered as such. The command 
+has 2 argument bytes and these         
+represent the address where program    
+execution will continue in the form    
+LSB MSB. Note the address to jump to is
+backwards just like the LDA command in 
+absolute mode.
+
+Indirect jump.
+
+The indirect jump is variation on the  
+JMP, such that the argument forms an   
+address from where the actual 'jump to'
+address is found. (Both in MSB LSB     
+form.)
+
+Suppose there was such an incident:
+
+300: JMP ($800)
+.
+.
+800: $00 $20
+
+($800 Contains $00 and $801 contains   
+$20)
+
+From $300, the argument gives $800. The
+program goes and gets $800 and $801 and
+re-arranges them to give $2000. Then   
+the program jumps to $2000 and         
+continues execution.
+
+A very useful command at times.
+
+Well, unfortunately the indirect       
+commands will have to wait 'til next   
+time.
+
+***************************************
+* DR. FIRMWARE CAN BE REACHED ON THESE*
+* BOARDS: 514-738-6576  TRANSFERS     *
+*         514-744-4108  APPLE ENCH.   *
+***************************************

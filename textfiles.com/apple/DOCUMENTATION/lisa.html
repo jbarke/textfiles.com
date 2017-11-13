@@ -1,0 +1,1167 @@
+______________________________________________________________________________
+
+
+             LISA816 v4.0g            SHAREWARE version
+
+                  by
+
+             Randall Hyde
+                  and
+           Brian Fitzgerald
+
+
+(c) 1980-1987 Randall Hyde and HAL LABS
+all rights reserved.
+
+Note: this shareware version of LISA may be freely distributed, provided that
+the following files are included:
+
+       LISA816              shareware assembler
+       ANIX.SYSTEM          ANIX system (LISA runs under the ANIX shell)
+       LISA.DOC             this document file
+       DISASM816.SRC        source to the disassembler
+       SIMPLECDA.SRC        source to the simple CDA
+
+After a two-week review period, you are required to either destroy any copies
+you have (should you decide NOT to purchase the assembler package) or send
+$50.00 (plus $5.00 shipping and handling) to
+
+       HAL Labs
+       18942 Dallas
+       Perris, CA 92370
+
+APDA should also be carrying LISA816 in the near future, along with the ANIX
+package (manual, extrinsic source and ANIX shell source).
+
+The disassembler provided in this package is also SHAREWARE; if you purchase
+LISA816, the disassembler is included.  If you wish to use the disassembler
+otherwise, send $15.00 to the above address (which entitles you to a disk, one
+update, and printed documentation).
+
+ANIX is freeware, but is (c) 1982-1987 Randall Hyde.
+DISASM816 is (c) 1987 HAL Labs
+
+______________________________________________________________________________
+
+
+What follows are some notes on using the LISA816 assembler.  Providing an
+assembler as share-ware is a large task- an assembler is usually not the
+intuitive kind of program that a word processor or terminal emulator is.  So,
+even though the accompanying document is 40K long (longer than the assembler!),
+everything is not covered.
+
+Of course not!  After all, we want you to buy the assembler.  However, we also
+want you to get a good feel for what LISA's like.  Therefore, there are several
+programs included in the package.  First, there's the source to a 65816
+disassembler.  Second, there's the source to a SIMPLE CDA.  Each file can be
+LOaded into the assembler, ASMbled (to a file on disk) and run.
+
+Any simple questions may be sent online to
+
+   GEnie:      HAL.LABS
+   DELPHI:     HALLABS
+   CompuServe: 72250,3226
+
+Until you buy the assembler, we won't answer more than a few simple questions,
+of course.  Registers users, of course, get better support.
+
+
+How to set up LISA816:
+
+LISA816 runs under the ANIX shell.  Therefore, you must have ANIX running
+before you can use LISA816.  Either
+
+  1) run ANIX.SYSTEM from basic  (ie "-ANIX.SYSTEM")
+  2) make a boot disk with PRODOS and ANIX.SYSTEM
+
+Then, after you have run ANIX, from the ANIX command line, type
+
+  LISA816
+
+(assuming that the LISA816 file is in the currently prefixed directory).
+ANIX is a command-line interface with many useful programmer extensions;
+that's why LISA816 uses it (ANIX was actually developed mainly so that
+there would be a decent environment to run LISA in).
+
+After that, you're up and running. We hope.
+
+Have fun!
+
+______________________________________________________________________________
+
+Source Editing Commands
+
+LISA has a few special characters of it's own, that only have meaning in
+the insert mode.  These special characters are used to enhance source-file
+editing.
+
+ <<return>> is used to exit insert mode.  This command, as do all the
+following commands, needs to be used as the first character of an insert
+line. 
+
+ <<control-A>> has the effect of moving the insertion point to before the line
+immediately preceding the current insertion point.  The previous line is
+displayed (for user convenience), and the new line number displayed for
+insertion.
+
+ <<control-B>> has the effect of moving the insertion point to after the line
+immediately following the current insertion point.  The next line is displayed
+(for user convenience), and the new line number displayed for insertion.  If
+the insertion point is line N, then line N+1 becomes line N, and the new
+insertion point is line N+1.
+
+ <<control-W>> has the effect of deleting the line previous to the insertion
+point, and then starting insertion at that point.  The deleted line is
+displayed (for user convenience), and the new line number displayed for
+insertion.  This is the most useful of the four special editing commands.
+Typically, a line will be entered, the user will press return, and then notice
+an error.  Using  <<control-W>> has the same effect as:
+
+  <<return>>
+ M nn
+ ...
+
+ <<control-C>> has the effect of deleting the next line in the source following
+the insertion point, and placing the insertion point following that line.
+The deleted line is displayed (for user convenience), and the new line number
+displayed for insertion.  If the insertion point is line N, then line N+1 is
+deleted, and the new insertion point is line N (because line N+1 was deleted).
+
+
+
+Importing and Exporting Text Files
+
+LISA source files are stored in a compressed, tokenized form.  This has
+several advantages:
+
+  * files are smaller
+  * assemblies are faster
+  * most errors are caught at edit time, not assembly time
+
+The disadvantage, of course, is that files are not stored in a pure text
+format.  It is, however, easy to import text from a text file, or to save a
+LISA file out as text, by using the READ and WRITE commands.  To import text,
+simply use a command of the form
+
+   READ nnn <textfile
+
+where nnn is the line to start insertion, and textfile is the name of the text
+file to read from.  LISA will convert each line from the text file into it's
+tokenized format.  If an error is detected in a line, LISA will stop
+momentarily and ask you to fix it - note that you can abort the read-in
+process (if, for example, you weren't reading a program text file) by pressing
+ <<return>> by itself to exit insert mode.
+
+Exporting to a text file is just as easy, using a command of the form
+
+   WRITE n1,n2 >textfile
+
+where n1..n2 is the range of lines to write to the text file named textfile.
+Normally, LISA writes text files with no space padding to line columns up.
+If you want the space padding, insert the TAB switch in the write command:
+
+   WRITE -t n1,n2 >textfile
+
+and spaces will be added to pad the columns out as they would be if a LIST
+command were issued.
+
+READ and WRITE can also be used to move portions of code from one LISA file
+to another.  If you have libraries that you raid routines from, or perhaps
+equate files that you only want certain lines from, you would use WRITE to
+extract the lines needed, and READ to insert them into the correct source file.
+
+
+LISA editor commands
+
+Note: each command may be abbreviated to the characters shown in upper case.
+Optional parameters are enclosed in braces, as {optionalparms}; required
+parameters are encased in double-brackets as, <<requiredparms>>.
+
+
+ <<ctrl-D>> (execute ANIX command)
+ 
+ Parameters: output file/device.
+ Usage:  <<ctrl-D>>  <<anix command>>
+ Executes the command following the  <<ctrl-D>> as an ANIX intrinsic command.
+ ANIX will report any errors that occur in the execution of the command.
+
+
+ <<ctrl-P>> (toggle printer on/off)
+ 
+ Parameters: none
+ Toggles the setting of the ANIX printer device; if printer was off, printer
+ is turned on, and vice versa.  This action is the same as in the ANIX shell.
+
+
+ - (list previous 20 lines)
+ 
+ Parameters: none.
+ Lists the 20 lines previous to the last line listed (by any list command).
+
+
+ , (list next 20 lines)
+ 
+ Parameters: none.
+ Lists the 20 lines after the last line listed (by any list command).
+
+
+ . (list 20 lines around current line)
+ 
+ Parameters: none.
+ Lists the 20 lines around to the last line listed (by any list command);
+ ie, from -10 to +9 around the current line.
+
+
+ ? (command help)
+ 
+ Parameters: output file/device.
+ Usage: ? {>outfile}
+ Prints a short summary of all the LISA commands available; if {>outfile}
+ is present, output is redirected to the selected file or device.
+
+
+ Assemble (assemble source)
+ 
+ Parameters: output file/device.
+ Usage: Assemble {>outfile}
+ Assemble the source file in memory; if the optional parameter {>outfile} is
+ present, output is directed to the selected file or device. If the source
+ file in memory ends with a CHN " <<file>>" and not an END, the file in memory
+ is saved out to disk as "T.." and then assembly continues with  <<file>>.  
+
+
+ BReak (break to monitor)
+ 
+ Parameters: none.
+ Exits from LISA into the LISA monitor.  To return to LISA, use  <<control-C>>
+ for a LISA warmstart (leaves file intact) or  <<control-B>> for a LISA
+ coldstart (does a NEW on re-entry to LISA).
+
+
+ COpy (copy source lines)
+ 
+ Parameters: start line, end line, dest line.
+ Usage: COpy  <<startline>>, <<endline>>, <<destline>>
+ Copies source lines in the range  <<startline>>.. <<endline>> to a position
+ in the file starting at  <<startline>>.  Note that  <<endline>> must not be
+ less than  <<startline>> and  <<destline>> cannot lie within the selected
+ range  <<startline>>.. <<endline>>. 
+
+
+ CPu (set CPU type)
+ 
+ Parameters: CPU type
+ Usage:  CPu  <<cputype>>
+ Set CPU type to be of type  <<cputype>>.  CPU Type must be one of the three:
+    6502  65C02  65816
+ If  <<cputype>> is omitted, the current CPU type is displayed.
+
+
+ Delete (delete source lines)
+ 
+ Parameters: delete line 1, delete line 2.
+ Usage:  Delete  <<delline1>>, {delline2}
+ Deletes source lines in the range  <<delline1>>.. <<delline2>>.  If
+ <<delline2>> is not specified, only line  <<delline1>> is deleted.  The
+ range must be legal -  <<delline2>> must not be less than  <<delline1>>.
+
+
+ DS (dump symbol table)
+ 
+ Parameters: optional file/device.
+ Usage:  DS {>outfile}
+ Will print the symbol table from the last assembly to the standard output
+ device.  As usual, output may be directed to any ANIX device (>.P for printer,
+ >filename for file, etc).
+
+
+ Find (find search string)
+ 
+ Parameters: search string.
+ Usage:  Find {searchstring}
+ Looks for {searchstring} in the file and displays all lines it is contained
+ in.  FIND may be aborted by pressing  <<control-C>>.  If no search string is
+ specified, FIND will do nothing.
+
+
+ FReplace (find and replace)
+ 
+ Parameters: search string, replacement string.
+ Usage:  FR {searchstring} ^ {replacestring}
+ Looks for {searchstring} in the file and replaces it with {replacestring}
+ where-ever found.  FR will prompt for replacement at each occurence of
+ {searchstring}.  FR may be aborted by pressing  <<control-C>>.  If no search
+ string is specified, FR will do nothing.  If no replacement string is
+ specified, FR will delete the search string if allowed.
+
+
+ Insert (insert source lines)
+ 
+ Parameters: insert line.
+ Usage:  Insert {insline}
+ Starts insertion of source code lines at  <<insline>>.  If  <<insline>>
+ is not specified, insertion starts at the end of the file.  Insert mode
+ is exited by entering  <<return>> on a blank line.
+
+
+ LEngth (source file stats)
+ 
+ Parameters: optional file/device.
+ Usage:  LEngth {>outfile}
+ Will print the statistics for the current source file in memory- length,
+ number of symbols.
+
+
+ List (List source lines)
+ 
+ Parameters: list line 1, list line two, output file/device.
+ Usage:  List {line1},{line2},{>outfile}
+ Lists source lines in the range  <<line1>>.. <<line2>>.  If no lines are
+ specified, then the entire source file is listed, starting at line 1.  If
+ only the first line is specified, then only that line is listed.  If one
+ line number is given, followed by a comma, then 20 lines are listed starting
+ at that line.  If one line number is given, followed by two commas, then the
+ entire source file is listed, starting at that number.  If both numbers are
+ given, then the source lines in that range are listed.  If the optional
+ parameter {>outfile} is used, output is re-directed to the selected file
+ or device.
+
+
+ LOad (load source file)
+ 
+ Parameters: ProDOS pathname.
+ Usage:  LOad  <<pathname>>
+ Used to load a LISA source file from disk.  Errors- applicable ProDOS errors,
+ memory full, not LISA vx.x file.
+
+
+ Modify (modify source lines)
+ 
+ Parameters: modify line 1, modify line 2.
+ Usage:  Modify  <<modline1>>, {modline2}
+ Deletes source lines in the range  <<delline1>>.. <<delline2>>, and then
+ starts insertion at  <<delline1>>.  Note that  MODIFY is equivalent to
+ DELETE followed by INSERT at the first line  <<modline1>>.  MODIFY follows
+ the same syntactic rules as DELETE.
+
+
+ New (clear LISA workspace)
+ 
+ Parameters: none
+ clears the LISA workspace area in preparation for new source file creation.
+
+
+ Read (read text file source)
+ 
+ Parameters: insert line, read source.
+ Usage:  Read {linenum},{<file}
+ Inserts lines from the specified text file starting at line linenum; if
+ linenum is not specified, then insertion starts at the end of the source
+ file.  Insertion ends when end-of-file is reached.
+
+
+ SAve (save source file)
+ 
+ Parameters: ProDOS pathname.
+ Usage:  SAve  <<pathname>>
+ Used to load a LISA source file from disk.  Errors- applicable ProDOS errors.
+
+
+ SYstem (system call)
+ 
+ Parameters: none.
+ Returns control to ANIX shell.  To return to LISA, type RUN 303 from ANIX.
+
+
+ TAbs (set tab stops)
+ 
+ Parameters: opcode tab, address tab, comment tab.
+ Usage:  TAbs { <<optab>>, { <<adtab>>,  <<comtab>>} }
+ If no tab stops are specified, then the default tab stops of 10,19,40 are
+ used.  If TA 0 is used, the current tab stops are displayed.  If three
+ tab stops are specified - TA x,y,z - then the opcode field tab is set to x,
+ the address field tab is set to y, and the comment field tab is set to z.
+ These tab stops settings are saved with the file.  Note that LISA tab stops
+ are implicit, and used for output formatting - the TAB key is not used on
+ input.
+
+
+ TRansfer (move source lines) 
+ 
+ Parameters: start line, end line, dest line
+ Usage:  TRansfer  <<startline>>, <<endline>>, <<destline>>
+ Moves source lines in the range  <<startline>>.. <<endline>> to a position
+ in the file starting at  <<startline>>. TRANSFER is subject to the same
+ restrictions as COPY; it is the same as COPY, except that it deletes the
+ original lines from the file. 
+
+
+ Write (write source lines)
+ 
+ Parameters: write line 1, write line two, output file/device.
+ Usage:  Write {line1},{line2},{>outfile}
+ Write out source lines in the range  <<line1>>.. <<line2>>.  No line numbers
+ are printed for the listed source lines (as opposed to LIST, which numbers
+ each line).  If no lines are specified, then the entire source file is
+ listed, starting at line 1.  If only the first line is specified, then only
+ that line is listed.  If one line number is given, followed by a comma,
+ then 20 lines are listed starting at that line.  If one line number is given,
+ followed by two commas, then the entire source file is listed, starting at
+ that number.  If both numbers are given, then the source lines in that range
+ are listed.  If the optional parameter {>outfile} is used, output is
+ re-directed to the selected file or device.  Note that this is the typical
+ use of write.
+
+
+
+______________________________________________________________________________
+
+LISA expression syntax
+
+
+13.1  Definitions.
+
+A token is the smallest meaningful unit of text in a LISA source line.  The
+tokens of LISA are classified into special-symbols, identifiers, numbers,
+character-strings, and comments.
+
+A LISA source line is composed of tokens, separated by blanks (a blank is
+defined as the ASCII space character).  The tokens are classified by type
+according to the field they are in- label field, opcode field, operand field,
+and comment field.  Two adjacent tokens must be separated by one or more
+separators if each token is an identifier, number, or opcode.  Only 1 token
+may be in the label, opcode, and comment fields apiece- the operand field can
+(and often does) contain multiple tokens.
+
+13.1.1 Character Set and Special Symbols.
+
+The letters are the English characters A through Z, and a through z.
+The decimal digits are the numerals 0 through 9.
+The hex digits are the numerals 0 through 9, letters A through Z, and a
+through z.
+The binary digits are the numerals 0 and 1.
+
+The special-symbols are tokens having one or more fixed meanings.  The
+following single characters are special-symbols:
+
+ + - * / = < > @ # $ % ^ & | \ ( ) [ ] , ' " ~ :
+
+The following character-pairs are special-symbols:
+
+        <=  >=  <>  :A  :L
+
+13.1.2 Labels.
+
+A label is an identifier appearing in the label field or the operand field
+(regular and numeric), or in the opcode field (macros only).  A label serves
+to denote a constant, variable, program address, data address, or macro call.
+Identifiers can be any length up to 63 characters, all of which are
+significant.  Case is not important in identifiers.  Labels can have the
+same spelling as an opcode, because type is determined by context.  A label
+must begin with either a letter (regular labels), the special character {^}
+(numeric local labels), or the special character {_} (macro call).  Regular
+labels can contain letters, numbers, and the special characters {.} and {_}.
+A regular label in the operand field can be followed by the type-coercion
+tokens {:A} or {:L}.
+
+Numeric local labels are {^} followed by 1 numeric digit, and are referred to
+as {^0}..{^9} in the label field, or {<0}..{<9} and {>0}..{>9} in the operand
+field.  Regular labels must be unique (within their scope); numeric local
+labels do not have to be.
+
+13.1.3 Opcodes.
+
+An opcode is an indentifier appearing in the opcode field.  An opcode may be
+classified into one of three groups- instruction, pseudo-op, or a macro.  The
+following opcodes are the legal instructions and psuedo-ops for the assembler:
+
+ =   .DA .DB .EL .FI .GO .IF .LA .LX .MD .ME .SA .SX .TF .WE ADC ADD ADR AND
+ ANX ASL BBY BCC BCS BEQ BFL BIT BGE BLT BMI BNE BPL BRA BRK BRL BTR BVC BVS
+ BYT CHN CLC CLD CLI CLV CMP CND CON COP CPU CPX CPY CSP DBY DCI DEC DEX DEY
+ DFS DPH END EOR EPZ EQL EQU EXP FZR GEN HBY HEX ICL IF1 IF2 INC INP INX INY
+ JML JMP JSL JSR LCL LDA LDX LDY LIB LNK LSR LST MSG MVN MVP NLC NLS NOG NOP
+ NOX OBJ ORA ORG PAG PAU PEA PEI PER PHA PHB PHD PHK PHP PHS PHX PHY PLA PLB
+ PLD PLP PLX PLY PSM REP RLB RLS ROL ROR RTI RTL RTS RVS SAV SBC SBT SEC SED
+ SEG SEI SEP SET STP STR STX STY STZ SUB SWA TAD TAS TAX TAY TCD TCS TDA TDC
+ TRB TSA TSB TSC TSX TTL TXA TXS TXY TYA TYX USR WAI WHL XBA XCE XOR ZRO
+
+Any other identifier appearing in the opcode field is assumed to be a macro-
+all macros must begin with the macro lead-in character {_}.  Any token
+appearing in the opcode field that does not parse to an instruction,
+pseudo-op, or macro is declared illegal by the editor.
+
+13.1.4 Operands.
+
+The operand field contains one or more expressions; each expression is
+separated by the special symbol {,}.  An expression consists of a term, which
+is an label, number, character-string, or special operand, followed optionally
+by operator-term pairs.  An operator is a special-symbol.  The whole
+expression may be prefixed by one or more prefix operators {@}, {~} and {-}.
+Byte selector operators {#} (low byte), {/} (middle byte), and {^} (high byte)
+may also prefix the whole expression (before the normal prefix operators).
+Word selector operators {|}-low word and {\}-high word may also prefix the
+expression.  Type-coercion suffixes {:A} and {:L} must follow the label they
+apply to, not the expression as a whole.
+
+13.1.4.1 Expression modifiers.
+
+Expression modifiers are used to modify an entire expression, and are always
+the first prefix to an expression.  There are five expression modifiers:
+
+     #   select low byte (LISA mode) or low word (APW mode 16-bit)
+     /   select middle byte
+     ^   select high byte (LISA mode) or high word (APW mode 16-bit)
+     |   select low word (LISA mode)
+     \   select high word (LISA mode)
+
+When used with a 65816 instruction, all the expression prefixes indicate
+immediate addressing mode.  When used with LISA pseudo-ops, the expression
+prefixes select various parts of a 24-bit value for code generation.
+
+13.1.4.2 Operators.
+
+Operators are either monadic (operator preceding expression) or dyadic
+(operator infix between two terms.
+
+A monadic operator is one of the following special-symbols.
+
+ -    @    ~
+
+A dyadic operator is one of the following special-symbols.
+
+ + - * / < > = <= >= <> & | ^ %
+
+13.1.4.3 Labels.
+
+An label appearing in the operand field has the same format as one appearing
+in the label field, except for the special case of numeric local labels.
+A numeric local label reference in the operand field has the form {<0} to
+{<9} and {>0} to {>9}, where {<} and {>} indicate the direction relative to
+the expression of the particular local label.
+
+A label in the operand field may have a type-coercion suffix that is used to
+force address mode type regardless of the declared type of the label- {:A}
+is used to force the absolute attribute for a label, and {:L} is used to
+force the long attribute for a label.
+
+13.1.4.4 Numbers.
+
+A number can be either decimal, hexadecimal, or binary.  Decimal numbers use
+no prefix.  Hexadecimal numbers use the {$} character as a prefix.  Binary
+numbers use the {%} character as a prefix.
+
+13.1.4.5 Character Strings.
+
+A character-string is a sequence of characters delimited by the special
+string delimiter characters {'} or {"}.  If {'} are used, the high-order
+bit of each byte is set to 0; if {"} are used, the high-order bit of each
+byte is set to 1.  Inside the delimiters, a doubled occurrence of the
+delimiter inserts one char of that delimiter in the string without terminating
+the character string.
+
+13.1.4.5 Special Operand.
+
+A special-operand is a sequence of one or more characters representing a
+certain value.  There are several special operand types.  The current
+program-counter value (of the assembler) can be referenced by {*}.
+Macro parameters can be referenced (inside a macro) by {?0}..{?9}.  Parameters
+to a macro are numbered by occurrence; parameters, where required, may not be
+omitted.
+
+13.1.5 Comments.
+
+A comment begins with the {;} character, and optionally (first column only)
+with the {*} character.  The comment field is the last field in the source
+line, and is terminated by a  <<return>> character.
+
+13.2  Source Line Formats.
+
+Each source line is separated into 4 fields: label, opcode, operand, and
+comment.  All four fields do not have to be present on a line, but there are
+some restrictions to field appearance.  The general case of a LISA source line
+is-
+
+line # label   opcode     operand                 comment
+   11  PROGRAM  lda     SEQUENCE:L + R.OFFST   ;get record byte from sequence
+
+The assembler supplies all line numbers.  PROGRAM is in the label field
+(the first field), so it is parsed as a label.  LDA is in the opcode field
+(the second field), so it is parsed as an opcode, and recognized as a 65816
+mnemonic.  SEQUENCE:L+R.OFFST is in the operand field (the third field),
+so it is parsed as an operand, in this case as an address expression.  The
+remainder of the line starts with the character {;}, so it is parsed as a
+comment.
+
+If a colon {:} follows the token in the label field, then the line is assumed
+to have only the label field in it.
+
+   29  STUB:
+
+If the first character of the line is a comment char {;} or optionally {*},
+the line is assumed to have only the comment field in it.
+
+  241 ; The next routine is responsible for gathering characters one at
+
+If the first character of the line is a blank (space character), then the
+label field is assumed to be null, not specified.
+
+  122        mvp   L.BANK,R.BANK       ;move var set
+
+If the line ends after the opcode field, or a comment character is found
+following the opcode field, then the operand field is assumed to be null,
+not specifed.
+
+   45       asl                       ;shift twice for x4 indexing
+   46       asl
+
+Note that in each of the above cases, the lines were listed as LISA would
+list them, not as they might be entered.  LISA tokenizes and formats all
+source lines according to it's model, checking syntax at line entry time.
+A line entered in as:
+
+ 122 draw lda #myset ;get set number for DRAW
+
+would be parsed and listed as
+
+ 122 draw   lda   #MYSET           ;get set number for DRAW
+
+and
+
+ 123  jsr newplot ;call version 2 plot routine
+
+(with a leading space) would be parsed and listed as
+
+ 123        jsr   newplot         ;call version 2 plot routine
+
+
+
+13.3  Syntax checking.
+
+Each line is checked for syntax errors on entry.  The line is broken up into
+tokens, and each token analyzed according to it's field position.
+
+13.3.1 Label field.
+
+There are two types of labels.  Alpha labels must start with an alphabetic
+character, (upper/lower case), and contain only {A}..{Z}, {a}..{z}, {0}..{9},
+{.} and {_}.  Labels have a maximum length of 63 characters.  Alphabetic case
+is maintained as entered, but has no significance on assembly ("Label" is the
+same as "LABEL").  Labels start in the first column of a source line.  Errors
+generated by a bad label include:
+
+   Bad character in symbol
+   Illegal label
+   Label required here
+
+Numeric local labels start with a caret {^} and are followed by a numeric
+digit {0}..{9}.  Only 1 digit is permitted after the {^} symbol.
+
+A space { } or a colon {:} must terminate entries in the label field.
+
+13.3.2 Opcode field.
+
+There are two types of mnemonics that are legal in the opcode field.  The
+first type are the 65816 opcode mnemonics and LISA pseudo-ops.  The second
+type are macro invocations.  All legal 65816 opcodes and LISA pseudo-ops are
+listed in section 13.1.3.  Macros are identified by a special lead-in
+character, currently defined as {_}.  Examples:
+
+   23        jsr      PRINT
+   24        byt      "Enter file name",0
+   25       _GETNAME
+
+where line 23 contains a 65816 mnemonic {jsr}, line 24 contains a LISA
+pseudo-op {byt}, and line 25 contains a macro call {_GETNAME}.
+Errors pertaining to the opcode field include:
+
+     Illegal mnemonic
+     Illegal label
+
+13.3.3 Operand field.
+
+The operand field contains 1 or more expressions; the expression type depends
+on the mnemonic in the opcode field.  Expressions can be:
+
+ address expressions
+ string expressions
+
+If the mnemonic is a 65816 opcode, the expression is embedded in address type
+selectors, to indicate addressing modes.  Legal 65816 address expressions are:
+
+   1      iny                ;implied
+   2      asl                ;implied (accumulator)
+   3      ldx #dexpr         ;immediate (8 bit)
+   4      ldy |aexpr         ;immediate (16 bit)
+   5      asl dexpr          ;direct page
+   6      inc aexpr          ;absolute
+   7      and lexpr          ;absolute long
+   8      ldy dexpr,X        ;direct page indexed,X
+   9      dec aexpr,X        ;absolute indexed,X
+  10      ora lexpr,X        ;absolute long indexed,X
+  11      ldx dexpr,Y        ;direct page indexed,Y
+  12      ora aexpr,Y        ;absolute indexed,Y
+  13      sbc (dexpr)        ;direct page indirect
+  14      jmp (aexpr)        ;absolute indirect
+  15      adc (dexpr,X)      ;direct page indexed indirect
+  16      jsr (aexpr,X)      ;absolute indexed indirect
+  17      cmp (dexpr),Y      ;direct page indirect indexed
+  18      eor [dexpr]        ;direct page indirect long
+  19      jsl [aexpr]        ;absolute indirect long
+  20      sbc [dexpr],Y      ;DP indirect long indexed
+  21      and dexpr,S        ;stack relative
+  22      sta (dexpr,S),Y    ;stack relative indirect index
+  23      mvn bexpr,bexpr    ;block move
+  24      bcs rexpr          ;program counter relative
+  25      brl rlexpr         ;program counter relative long
+
+where epxr can be any legal expression that evaluates to an address. Dexpr
+must evaluate to a 8-bit (direct page) address.  Aexpr must evaluate to a
+16-bit (absolute) address.  Lexpr must evaluate to a 24-bit long address.
+Bexpr evaluates to a 8-bit bank number.  In each case, unique special-symbols
+provide address type information; the individual addressing types cause unique
+opcodes for each instruction to be assembled.
+
+If the mnemonic is a LISA pseudo-op, various combinations of address and/or
+string expressions are permitted.  Each expression is separated by a {,}
+delimiter.
+
+  26      adr aexpr,aexpr,aexpr              ;16-bit addresses
+  27      byt "string",expr,'string'         ;byte data declaration.
+  28      .da aexpr,#aexpr,/aexp,\aexpr      ;address and byte data
+
+Address expressions consist of identifiers and constants combined with
+operators.  An expression is of the form
+
+ {modifier} {prefix} term {operator-term} {operator-term} . . .
+
+There are 5 expression modifiers:
+
+     #    use low byte (LISA mode) or low byte/word (APW mode) of expression
+     /    use mid byte (LISA mode) of expression
+     ^    use high byte (LISA mode) or high byte/word (APW mode) of expression
+     |    use low word of expression
+     \    use high word of expression
+
+There are 3 prefix operators.
+
+  @expr   at-operator.      evaluates to {PC-expr}, where PC is the value of
+                            the assembler program counter at the start of the
+                            instruction line
+ -expr    negate-operator.  evaluates to {0-expr}
+ ~expr    not-operator.     evaluates to {$FFFFFF EOR expr}.
+
+There are 10 types of terms.
+
+identifier       statement label or equate label (from EPZ, EQU, EQL etc).
+                 The value of the label is used.
+  354            decimal number (no prefix character).
+  $3B            hexadecimal number.
+  %10011         binary number.
+  *              value of PC counter (of assembler)
+  ?0..?9         macro parameter value (only inside macro).  select one of
+                 the 10 possible macro parameters passed to macro invocation.
+  ?#             number of macro parameters passed.
+  ?:expr         evaluate expr; result must be 0..9 and is used to select
+                 one of the 10 possible macro parameters.
+  >0..>9         local label reference in forward direction.  >0 refers
+                 to next ^0 local label in forward direction, etc.  The
+                 value of the local label is used.
+  <0..<9         local label reference in backward direction.  <0 refers
+                 to next ^0 local label in backward direction, etc.  The
+                 value of the local label is used.
+
+There are 14 infix operators
+
+     +           addition
+     -           subtraction
+     *           multiplication
+     /           division
+     %           modulo
+     &           bitwise AND
+     |           bitwise OR
+     ^           bitwise EOR
+     =           logical EQUALS
+     <           logical LESS THAN
+     >           logical GREATER THAN
+     <=          logical LESS THAN OR EQUAL
+     >=          logical GREATER THAN OR EQUAL
+     <>          logical NOT EQUAL
+
+String expressions consist of a string delimiter {'} or {"}, followed by some
+ASCII characters, and ending with the same string delimiter {'} or {"}.  The
+{'} string delimiter sets bit 7 (the MSB)  of each byte to 0; the {"} string
+delimiter sets bit 7 of each byte to 1.  To imbed the delimiter char inside
+a string, double it.
+
+  'A string with bit 7 clear'
+  "another with bit 7 set"
+  'one with ''an apostrophe'' inside it'
+  "a last ""quote"" to remember"
+
+
+______________________________________________________________________________
+
+Using the LISA calculator
+
+
+Built in to the LISA assembler is a programmer's calculator that will do
+decimal and hexadecimal math to 224-1 (3 hexadecimal bytes, the range of
+addresses in the 65816); basic 4-functions (+ - * /), boolean operations
+(AND OR NOT), negation, left and right shifts, hex to decimal and vice versa.
+It also has help screens for ASCII characters, ProDOS 8/ProDOS 16 equates,
+and ANIX and CHARIO equates (for programmers writing programs to run under
+the ANIX shell.
+
+To access the calculator, press  <<esc>>  <<esc>> at any place where LISA is
+waiting for a line of input (even in the middle of entering a line of text).
+That is,  press the ESC key, and then press it again.  NOTE:  there is a
+reason why you must push ESC twice to get into the calculator.  Pressing
+ESC in ANIX tells it to return the next keypress unchanged; this is the only
+way to return all control characters (except RETURN and CTRL-@), since the
+normal response to some control characters is as screen editing functions.
+So, pressing ESC twice has the effect of returning one ESC char (which is
+ASCII $1B or $9B) to the LISA input routine.  Once in the calculator, the
+line editing characters are not needed, so only one ESC is necessary until
+you return to LISA.
+
+The calculator screen should pop up, overlaid on your screen.  Don't worry;
+since it's a pop-up window,  it will restore the screen when you exit.
+The calculator looks like this:
+
+
+ _____________                       !
+|  _________  |  ESC: quit           !
+| |         | |    T: ASCII codes    !
+| |       0 | |    Q: ANIX equates   !
+| |_________| |    P: PRODOS equates !
+|             |    O: CHARIO opcodes !
+| < >   H M S |                      !
+| & | ^ ~     |  H: HEX mode         !
+|           + |  M: DECIMAL mode     !
+| C D E F   - |  L: clear calculator !
+| 8 9 A B   * |  S: change sign      !
+| 4 5 6 7   / |  &: AND  ^: EOR      !
+| 0 1 2 3   % |  |: OR   ~: NOT      !
+|           = |  <: left shift       !
+|_____________|  >: right shift      !
+--------------------------------------
+
+
+Pressing ESC when the calculator is showing will return you back to what you
+were doing before you entered the calculator.  So,  you could be in the middle
+of entering a source line and want to calculate a constant before entry.
+Pressing ESC twice gets you into the calculator, you do the calculation,
+note the result, press ESC again to return to line entry, and enter in the
+calculated constant.
+
+The calculator is fairly self-explanatory.  It is a regular infix calculator
+(TI style rather than HP style); so you enter number then operator then
+number, etc.  The RETURN key doubles as the "=" key, for ease of use (most
+people are well accustomed to hitting RETURN after data entry, much more
+so than "=").  Also, once you've hit return, all is not lost.  You can keep
+on with operator and number pairs after that.
+
+The calculator will also retain the value in the display between calls to it.
+However, if you do an assembly, the accumulator number will be lost.  HEX,
+DECIMAL, SIGN, and NOT operations are instantaneous; they affect the
+accumulator value only, and do not upset pending calculations.
+
+In the upper right-hand corner of the calculator are some prompts for some
+important help screens.  First of all is the ubiquitous ASCII chart.  This
+comes in handy every once in a while (although LISA does handle character
+constants well, it helps to know what the actual values are if you're doing
+anything the slightest bit tricky or innovative).  Just hit a "T", and the
+ASCII chart pops up.  Press ESC to return back to the main calculator display.
+
+Second, there is a help screen for ANIX equates.  Pressing "Q" will bring up
+the ANIX equates screen.  This comes in handy when you are writing programs
+that will execute under the ANIX shell (new extrinsics, little utilities,
+etc), and don't want to include the master file of ANIX equates in your small
+program.  For ANIX v2.1 running LISA816 v4.0, this will be a list of absolute
+equates (since this presumes you are running a //e, or IIGS in emulation
+mode) for JSR calls; for ANIX v3.0 running LISA816 v5.0, this will be a list
+of COP parameter values, since ANIX v3.0 calls are made via the COP
+instruction.  Once again, pressing ESC will return you to the main calculator
+screen.
+
+Third, there is a help screen for ProDOS equates.  Pressing "P" will bring
+up the ProDOS equates screen.  This reference will not only show the ProDOS
+call numbers, but also the parameter list structures for each call.  Once
+again, if you are running ANIX v2.1, this will show ProDOS 8 (which also is
+applicable to ProDOS 1.1.1) calls, and their parameter lists; if you are
+running ANIX v3.0, this wil show ProDOS 16 calls.  The ProDOS equates screen
+will show the calls by name; pressing the letter next to the name will bring
+up a further screen showing the parameter list required for that call.  Press
+ESC to exit from an individual parameter list, and ESC from the ProDOS equates
+screen to return back to the calculator.
+
+Finally, there is a help screen for the CHARIO calls.  Pressing "O" will
+bring up the CHARIO equates screen.  This will show you the call numbers
+for each CHARIO function; the call number is the parameter to CHARIO needed
+to invoke that function for the installed console driver.  Pressing ESC will
+return you to the main calculator screen.
+
+______________________________________________________________________________
+
+LISA pseudo-ops
+
+  Note: not all of these pseudo-ops are implemented in the share-ware version
+        of LISA816 (LISA v4.0g).  Specifically:
+            HEX  .DB   .LA   .LX   .SA   .SX
+            LIB   PSM   LNK  RLB   ICL
+
+
+Assembly listing control:
+
+      LST              turns assembly listing on.
+      NLS              turns assembly listing off.
+      GEN              prints all object bytes for each source line.
+      NOG              prints at most 4 object bytes per source line.
+      EXP              turns assembly listing of macro expansion on.
+      NOX              turns assembly listing of macro expansion off.
+      CND              turns assembly listing of conditionals on.
+      NLC              turns assembly listing of conditionals off.
+      PAG              start new page in assembly listing.
+      TTL "title"      set new title at top of each assembly listing page,
+                       and start new page.
+      SBT "sub"        start new subtitle at top of each assembly listing page
+                       (but does not start new page).
+
+
+Conditional assembly control:
+
+      .IF {expr}       assembles code to next .EL or .FI if {expr} evaluates
+                       to TRUE.
+      IF1              assembles code to next .EL or .FI during pass 1 only.
+      IF2              assembles code to next .EL or .FI during pass 2 only.
+      .EL              assembles code to next .FI if previous .IF evaluated
+                       to FALSE.
+      .FI              endif clause for the .IF / .EL / .FI construct.
+      WHL {expr}       repeat assembly of code to .WE while {expr} evaluates
+                       to TRUE.
+      .WE              endwhile clause for the WHL / .WE construct.
+
+Macro assembly:
+
+      .MD macro        starts a macro definition with name macro.
+      .ME              ends macro definition.
+
+Program origin control:
+
+      SEG {expr}       start new SEGMENT with attributes "expr".
+      ORG expr         defines origin for program code following the ORG.
+      OBJ expr         specifies where the object code is stored in memory.
+      PHS expr         starts in-line assembly of code with new ORG address.
+      DPH              ends in-line assembly and restores to old ORG address.
+
+Labels and equates:
+
+label EPZ expr         define "label" as ZERO PAGE label with value "expr".
+label EPD expr         define label as DIRECT PAGE label (identical to EPZ)
+label EQU expr         define label as ABSOLUTE label with value "expr".
+label EQL expr         define label as LONG label with value "expr".
+label = expr           define label as ABSOLUTE label with value "expr"
+                       (the "=" label is re-definable)
+label CON expr         define label as CONSTANT label with value "expr".
+label SET expr         define label as SET label with value "expr".
+
+      FZR label        define label as ZERO PAGE (needed if label used before
+                       it is defined).
+      FDR label        define label as DIRECT PAGE (identical to EPZ).
+      FAR label        define label as LONG (needed if label used before
+                       definition).
+      INP label        prompt for assembly-time definition of label.
+      LCL label        define label as local to specified section (scope
+                       ends with RLS).
+      RLS label        marks end of local label scope defined with LCL.
+
+Constants and storage:
+
+      BYT expr, ..     define byte constants of low-order 8 bits of each expr.
+      HBY expr, ..     define byte constants of mid-order 8 bits of each expr.
+      BBY expr, ..     define byte constants of high-order 8 bits of each expr.
+      .DA expr, ..     define byte, word, string constants.
+      ADR expr, ..     define word constants (usually addresses)
+                       low byte, then high byte.
+      DBY expr, ..     define word constants (usually addresses)
+                       high byte, then low byte.
+      CSP expr, ..     is JSR followed by byte, word, strings (same syntax
+                       as .DA)
+      DFS expr,{e}     define space of expr bytes, optionally initialized to e.
+      HEX hexdigits    define hex string of bytes.
+      LONG expr,..      define long (and byte and word) constants
+
+
+String declaration:
+
+      BYT "string"     define string- {'} creates with bit 7=0, {"} creates
+                       with bit 7=1
+      DCI "string"     define string as in BYT; bit 7 of last char is inverted
+                       from normal.
+      RVS "string"     define string as in BYT, but with chars generated in
+                       reverse order.
+      STR "string"     define string as in BYT, with length byte preceding
+                       string (PASCAL)
+      ZRO "string"     define string as in BYT, with $00 terminating string
+                       (C-string)
+
+Control operations:
+
+      CPU type         set CPU to assemble for.  type = {6502, 65C02, 65816}
+
+      .DB              declare what bank the DBR (data bank register) is
+                       pointing to.
+
+      .LA              declare 16-bit ACCUMULATOR mode.
+      .SA              declare 8-bit ACCUMULATOR mode.
+      .LX              declare 16-bit INDEX mode.
+      .SX              declare 8-bit INDEX mode.
+
+      END              end of source.
+
+      .TF "file",type  declare file to which generated code is saved to,
+                       and type (type is defined in HEX).
+      SAV "file"       saves memory as binary file.
+      ANX "cmd"        send cmd to ANIX shell to be executed as an ANIX
+                       intrinsic.
+
+      CHN "file"       chain to next file to be assembled.
+      ICL "file"       include source file in assembly.
+      PSM "file"       include packed-sym file in assembly.
+
+      LNK "objfile"    include object code in link.
+      LIB "library"    extract needed object code from library in assembly.
+      RLB "objlib"     include information from Run-Time-Library in linkage.
+
+      .GO expr         jumps to address expr to execute a machine language
+                       routine.
+      USR expr         parses expr, and jumps to user command.
+
+      MSG "string"     print message to stdout during assembly
+      PAU              force assembly error ("PAU encountered")
+
+______________________________________________________________________________
+
+
+ANIX Commands
+
+The format for these commands is given in parenthesis.  Unless otherwise
+stated, these commands are to be followed by a carriage return.
+
+INTRINSIC COMMANDS
+
+*                   (Asterisk)        if an asterisk appears in the first
+                    column, that is, the first space, in a line processed by
+                    ANIX, then the rest of the line will be ignored.  The use
+                    of this instruction may not be obvious; it is used to
+                    insert comments within an EXEC file.
+
+Brk                 (BRK)           Transfers control to the Apple monitor at
+                    location $FF/FF65.  To return to ANIX, type A000G from the
+                    monitor to do an ANIX warmstart.
+
+Catalog             (CATALOG {pathname}  <<return>>)   Displays the listing of
+                    a directory file.  Abbreviation: "CAT". The pathname
+                    is optional; if it is present, ANIX will give the specified
+                    directory, and if it is absent,  then ANIX will look for
+                    the default directory.  The pathname must be of a DIR
+                    (subdirectory) type file, or a disk (a disk is indicated
+                    with ".Dn", where "n" represents a number between 1 and 8).
+
+Close               (CLOSE  <<return>>)   Will close any and all open ProDOS
+                    files. This command may be useful after a program
+                    bombs, in order to make sure all the programs opened by the
+                    program are closed properly, and their buffers are freed by
+                    ProDOS.
+
+Date                (DATE  <<return>>)  This prints the date, in the format
+                      "mm/dd/yy"; it will, that is, if you have a ProDOS
+                    compatible clock installed. (always the case on a IIgs).
+                    Otherwise, this command will print the last date specified
+                    with the SETDATE command; and if the SETDATE command has
+                    not been used, then "-NO DATE" will be printed.
+
+Delete              (DELETE  <<pathname>> <<return>>)   This will erase a file
+                    from a disk; the pathname is not optional for this command.  It
+                    will not erase a file if its "D" attribute flag is turned
+                    off (if you don't know what an attribute flag is,  wait for
+                    the latter part of this section), so it will have to be
+                    unlocked before it may be deleted.
+
+                    NOTE: When deleting a subdirectory,  it must be empty
+                    before the DELETE command will work on it.
+
+Exec                (EXEC <<pathname>> <<return>>)  The EXEC command is used to
+                    redirect input from a textfile rather than a keyboard; the
+                    pathname is not optional, and must be the name of a TXT
+                    type file, a sequential text file.  When the EXEC command
+                    is executed, ANIX then begins looking for ANIX commands
+                    from the named textfile rather than the keyboard.
+
+Load                (LOAD <<pathname>> {hex address} <<return>>)  Loads a BIN
+                    or SYS file from disk into memory; a pathname is required,
+                    but the hex address is optional.  If the optional hex
+                    address is not present, then the file is loaded at the
+                    location from which it was saved.  Example:
+                         LOAD SHORT.PROGRAM
+
+Lock                (LOCK {-N -R -W -D} <<pathname>> <<return>>)  This command
+                    and the Unlock command are closely associated, and they
+                    share the same syntax.  The Lock command will set any or
+                    all of four attribute flags: the N (rename) flag, the R
+                    (read) flag, the W (write) flag, and the D (Delete) flag.
+                    The N (rename) flag, upon being set, will thereafter
+                    prevent the given file from being renamed, until the N
+                    flag for the file is Unlocked.  The R (read) flag will
+                    stop anyone from reading a file which isn't meant to be
+                    touched.  The W (write) flag will prevent someone actually
+                    saving a new version of a program with the same name of a
+                    version you wish to preserve.  Finally, the D (delete)
+                    flag will stop the deletion of a file.
+
+                    Any of these flags, once locked, may be reset, using the
+                    Unlock command.
+
+
+Online              (ONLINE <<return>>) Lists all the volumes currently on-line
+                    The result will be a line for each volume of this form:
+
+                            s/d volume-name
+
+                    In these lines, "s" is the slot number, "d" is the drive
+                    number, and volume-name is the name of the volume in the
+                    specified slot and drive.
+
+Prefix              (PREFIX {pathname} <<return>>)  The pathname is optional.
+                    See the discussion of pathnames and prefixes following
+                    this listing for an explanation of this command.
+
+Rename              (RENAME  <<pathname>>, <<pathname>> <<return>>)  Changes
+                    the name of a file in a directory.  The pathnames are
+                    not optional, and they must be the same, except for the
+                    ending filenames. Examples:
+                   
+                       Rename /directoryname1/subdirectoryname2/thisprogram,
+                         /directoryname1/subdirectoryname2/thatprogram.
+
+                       Rename Yourfile,Myfile
+
+Run                 (RUN <<hex address>> {parms} <<return>>)  Runs (calls) the
+                    assembly language program at the hex address named; the hex
+                    address is required.  The optional parameters are for the
+                    use of the assembly language program. 
+
+Save                (SAVE <<pathname>> <<start addr>> <<length>> <<return>>)
+                    This is for saving out an object file.  The hex address and
+                    length must be included.
+
+Syssave             (SYSSAVE <<pathname>> <<start addr>> <<length>> <<return>>)
+                    This is the same as the Save command above, except that it
+                    saves a SYS type file rather than a BIN type file.
+
+Time                (TIME   <<return>>)  Prints the time, assuming there is a
+                    ProDOS compatible clock present.  If there is no clock,
+                    then this command prints the last time set by the extrinsic
+                    SETTIME command, or 00:00 if SETTIME has never been used.
+
+Unlock              See LOCK.

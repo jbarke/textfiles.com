@@ -1,0 +1,689 @@
+
+ MAC can replace the labels with line numbers for use with Atari BASIC.
+ 
+ If code exceeds 250 or so bytes, many assemblers produce compound files
+ which cannot be used in a string.  An easy way around this is to
+ assemble to RAM (somewhere around $6000) and use BSAVE.  This has the
+ added advantage of allowing you to work on the file with a monitor.
+ Check the last few lines of both examples.  The percent sign in the
+ BSAVE line is used to indicate a line delete character [ESC] [SHIFT]
+ [DELETE].  This causes the line to appear on screen as a command after
+ assembly so all you have to do is overtype -LAST- with the address which
+ appears above it.
+ 
+ TWO EXAMPLES
+ 
+ The best way to demonstrate technique is with short programs that serve
+ real and useful functions.  The first sample listing obtains a key press
+ from a list of allowable keyboard codes.  To avoid a series of IF-THEN
+ statements or conversions, the routine returns the position in the list
+ of the key pressed.  This means a calling program can use ON-GOTO(SUB)
+ or variable line numbers; for example:
+ 
+ ON USR(ADR(K$),k1,k2,k3) GOTO 100,200,300 or
+ GOTO 100*USR(ADR(K$),k1,k2,k3)
+ 
+ The second routine is a flexible and powerful disk access tool.  It can
+ form the basis for any number of programs since it includes some
+ functions normally found in DOS.  The program I wrote it for, uses it to
+ (among other things) read SpartaDOS directories from BASIC while working
+ under any FMS.  This routine is an example of what I call -one bit
+ programming-.  This means making use of individual bits, several flags,
+ and every possible known condition to save bytes.  FR0 is used to find
+ the routine's address, loops are started so as to leave an index
+ register set for subsequent operations, etc.  BIT is used for the trick
+ mentionned above as well as for its true purpose and, in conjunction
+ with that, both the N and V flags are used.
+ 
+ THE FAT LADY SINGS
+ 
+ The sample routines are complex but worth working through.  You'll
+ discover numerous byte saving tricks, especially in the second.  Of
+ course you don't start by writing anything so difficult.  Consider, for
+ example, a routine to set your system defaults.  For screen color and
+ keyboard defaults, all you need to use are load and store instructions
+ though this is an excellent spot for loop(s).  Setting things up this
+ way is considerably faster (and more satisfying) than using SETCOLOR and
+ POKE and, if you skip the PLA, the same code can be used as a SpartaDOS
+ COM.
+ 
+ Like any other language, you learn assembler by doing; and the best way
+ to start doing is with short USR routines.  BASIC programmers who don't
+ want to -do- assembler can still use the two example routines; I've
+ included both in the form of LISTed BASIC lines in the file USRTUTOR.ARC
+ for your intrepid editor to stick on a BBS.  (You'll still have to look
+ at the source code for the -DOC's-.)  Up here, in The Great White North,
+ the file is on The Pothole BBS at 604-642-6795.
+ 
+ EXAMPLE 1
+ 
+          .TITLE -Get Key-
+ ;  Programmed by John Picken
+ ;   last revision: 20 Sep 89
+ ;            Syntax
+ ;K=USR(ADR(KEY$)[,k1,k2,...,kn])
+ ; k1,.., etc. are Keyboard codes
+ ;
+ ; Gets a key press and compares
+ ; its keyboard code with a list
+ ; of target codes. When matched,
+ ; the key's position in the list
+ ; is returned. Maximum allowable
+ ; keys is 26 in Atari Basic, 27
+ ; with Turbo. Keys are checked
+ ; in the order passed so, if a
+ ; code is passed twice, the 1st
+ ; match is reported.
+ ;
+ ; If called with no parameters,
+ ; the routine supplies defaults
+ ; as if called for RETURN only.
+ ; ESC always exits and returns 0
+ ; BREAK is disabled until the
+ ; routine exits to Basic.
+ ;
+ ;    Equates and macros
+ CH       =   $02FC   Last key pressed
+ POKMSK   =   $10
+ IRQEN    =   $D20E 
+ MASK     =   $3F
+ ; Mask values for use with AND
+ ;  $3F = All converted to
+ ;        upper case
+ ;  $7F = Ctrl and Shft Ctrl
+ ;        converted to Shft
+ ;  $BF = Shft Ctrl
+ ;        converted to Ctrl
+ ;  $FF = No conversion
+ ;
+          .MACRO SKIPW
+          .BYTE $2C
+          .ENDM
+ ;
+          *=  $CB
+ POKSAV   *=  *+1
+ COUNT    *=  *+1
+ UNUSED   *=  *+7
+ FR0      *=  *+2     ;  D4
+ TABLE
+ ;
+          *=  $6000   Relocatable
+ ENTRY    LDA POKMSK  Save <Break>
+          STA POKSAV  key status.
+          AND #$7F    Kill <Break>
+          STA IRQEN
+          STA POKMSK
+          LDX #0      x for later but
+          STX FR0+1   clear msb now.
+ ;
+          PLA         Get parameter
+          TAY         count and branch
+          BNE BUILD   if any. Else set
+ ;
+          INY         up a default of
+          LDA #12     one key <Return>
+          SKIPW      and skip 2 PLA's
+ ;
+ BUILD    PLA         msb   Key codes
+          PLA         lsb  from Basic
+ ;
+          STA TABLE,X Build key table
+          INX         using x as index
+          DEY         and y as param
+          BNE BUILD   count.
+ ;
+          STX COUNT   x=table length.
+          DEY         Keep $FF in y to
+ ;
+ CLEAR    STY CH      clear key press.
+ ;
+ KEY?     LDA CH      Loop til some
+          CMP #$FF    key pressed.
+          BEQ KEY?
+ ;
+          AND #MASK   Upper case only.
+          LDX #0      Table index.
+          CMP #28     ESC pressed?
+          BEQ REPORT  If so, exit.
+ ;
+ MATCH?   INX         Next entry.
+          CMP TABLE-1,X Match found?
+          BEQ REPORT  If so, exit.
+ ;
+          CPX COUNT   At table end?
+          BNE MATCH?  No, try next.
+ ;
+          BEQ CLEAR   Yes, refuse key.
+ ;
+ REPORT   STX FR0     Report match.
+          STY CH      Leave CH clear
+          LDA POKSAV  and restore
+          STA POKMSK  original status
+          STA IRQEN   of <Break>.
+ ;
+          RTS         That's it
+ ;
+         .OPT LIST
+ CODELEN  =   *-ENTRY
+ LAST     =   *-1
+ ;%BSAVE #D1:GETKEY.OBJ <6000,LAST
+ ;
+          .OPT NO LIST
+          .END 
+ 
+ EXAMPLE 2
+ 
+         .TITLE -SIO Utility-
+ ;  Programmed by John Picken
+ ;   last revision: 05 Oct 89
+ ;
+ ; A USR routine to access SIO.
+ ;           Syntax
+ ;Status only
+ ;  S=USR(rtn)
+ ;
+ ;Status or Format
+ ;  S=USR(rtn,cmd)
+ ;
+ ;Read or Put/Write ops
+ ; single sector
+ ;  S=USR(rtn,cmd,sec,buf)
+ ; consecutive sectors
+ ;  S=USR(rtn,cmd,sec,buf,lim)
+ ; trace file links
+ ;  S=USR(rtn,cmd+$80,sec,buf,lim)
+ ; follow list of sectors
+ ;  S=USR(rtn,cmd,adr,buf)
+ ; follow offset list of sectors
+ ;  S=USR(rtn,cmd,adr,buf,off)
+ ; _____________________________
+ ; 1st param is command: !-PRSW
+ ;
+ ; No other parameter is needed
+ ; or accepted for Format. Since
+ ; the routine checks status when
+ ; called, the Status command is
+ ; not needed but will execute
+ ; correctly if used.
+ ;
+ ; If cmd is passed with the high
+ ; bit set (inverse P, R, or W),
+ ; the routine reads or writes
+ ; sectors by tracing Dos 2 type
+ ; file links until a forward
+ ; pointer less than 3 is found
+ ; or until the limit in param 4.
+ ; The trace assumes bits 2-7 of
+ ; the forward pointer msb are a
+ ; file number and ignores them
+ ; (MyDos/TopDos style). This
+ ; limits it to sectors 4-1023.
+ ;
+ ; The high bit of cmd is simply
+ ; ignored on format or status.
+ ; _____________________________
+ ; 2nd param is sector number of
+ ; the starting (or only) sector.
+ ;            or
+ ; If greater than 1279 (msb 5+),
+ ; this param is taken to be the
+ ; address of a string of sector
+ ; numbers in 6502 order. This
+ ; string must end with two zero
+ ; bytes. This is the format used
+ ; by SpartaDos in map sectors
+ ; from byte 4 on (bytes 0-3 are
+ ; previous & next map pointers).
+ ; _____________________________
+ ; 3rd param is buffer address.
+ ; _____________________________
+ ; The msb of the 4th param is
+ ; always ignored.
+ ;
+ ; This param is total number of
+ ; consecutive sectors or maximum
+ ; traced sectors to do. Since
+ ; the longest possible buffer
+ ; string is 32767, the routine
+ ; will not allow more than 127
+ ; double density sectors.
+ ;            or
+ ; If operating on listed sectors
+ ; this is the offset in sectors
+ ; counting from 1. eg. to start
+ ; with the ninth sector in the
+ ; list, this param would be 9.
+ ; The routine uses 2*(offset-1)
+ ; for indexing so it is limited
+ ; to 128 sectors. For greater
+ ; offsets, adjust the string
+ ; address in param 2.
+ ; _____________________________
+ ;    Default parameters
+ ; Drive and timeout may be
+ ; altered by string assignment:
+ ;   Sio$(8,8)=CHR$(DUnit)
+ ;   Sio$(13,13)=CHR$(DTimlo)
+ ;
+ ; The routine sets DBytlo/hi
+ ; based on the status call but
+ ; always uses single density
+ ; with boot sectors.
+ ; _____________________________
+ ;           Returns
+ ; The routine reports SIO status
+ ; via FR0. Error 168 is used for
+ ; a parameter error. Error 255
+ ; indicates an attempt to access
+ ; more than 127 DD sectors.
+ ; 
+ ; Following sector operations,
+ ; the number of successful ops
+ ; is PEEK(208) and the final, or
+ ; abort, sector number is left
+ ; in Daux1/2 (778-779)
+ ;
+ ; The status frame is left in
+ ; Dvstat (746-749).
+ ;
+         .MACRO SKIPW
+         .BYTE $2C
+         .ENDM
+ ;
+ ; System equates
+ DVSTAT   =   $02EA
+ DDEVIC   =   $0300
+ DUNIT    =   $0301
+ DBYTLO   =   $0308
+ DBYTHI   =   $0309
+ SIOV     =   $E459
+ ;
+ ; Program variables.
+          *=  $CB
+ LIMIT    *=  *+1     Not
+ OFFSET   *=  *+1     cleared
+ STRPTR   *=  *+2     on
+          *=  *+1     entry
+ ;
+ COUNT    *=  *+1     Bytes
+ TYPFLG   *=  *+1     cleared
+          *=  *+1     on
+          *=  *+1     entry
+ FR0      *=  *+2     ;  D4
+ ; 
+          *=  $E0
+ ZDEVIC   *=  *+1     Shadow DCB cuts
+ ZUNIT    *=  *+1     3-byte ops to 8
+ ZCOMND   *=  *+1     total. Aside
+ ZSTATS   *=  *+1     from speed and
+ ZBUFLO   *=  *+1     length benefits,
+ ZBUFHI   *=  *+1     this simplifies
+ ZTIMLO   *=  *+2     setting defaults
+ ZBYTLO   *=  *+1     and lessens the
+ ZBYTHI   *=  *+1     chance of a 155
+ ZAUX1    *=  *+1     or 34 character
+ ZAUX2    *=  *+1     in a string.
+ ; 
+          *=  $6000
+ START    LDX #INIT-DATA ;    x=count
+          LDY #INIT-1-START ; y=index
+          BNE INIT    Go always
+ ;
+ DATA     .BYTE '1    Dcb defaults
+          .BYTE 1     DUnit
+          .BYTE 'S    DComnd
+          .BYTE $40   DStats
+          .WORD DVSTAT DBuflo/hi
+          .WORD 3     DTimlo/hi
+          .WORD 4     DBytlo/hi
+ ;
+ INIT     LDA (FR0),Y
+          STA DDEVIC-1,X Set up DCB
+          STA ZDEVIC-1,X and shadow
+          DEY
+          DEX
+          BNE INIT    On exit x=0 y=5
+ ;
+ ZLOOP    STX COUNT,Y Clear FR0
+          DEY         down to COUNT
+          BPL ZLOOP   inclusive
+ ;
+          JSR SIOV    Execute and
+          STY FR0     save status
+ ;
+          PLA         Done if no
+          BEQ EXIT    parameters
+ ;
+          TAX         Else keep count
+ ;
+          PLA         Msb Command
+          PLA         Lsb    -
+          DEX         Stack count
+ ;
+          ASL A       Bit 7 to carry.
+          ROR TYPFLG  To bit 7 of flag
+          LSR A       Restore Cmd with
+          STA ZCOMND  bit 7 stripped
+ ; 
+          CPX #1      Params left?
+          BEQ CLRSTK  Error if only 1
+          BCS SETZST  Branch if more
+ ;
+          CMP #'S     Status already
+          BEQ EXIT    done
+ ; 
+          CMP #'!     BCC/BCS avoids
+          BCC ERR168  quote in string
+ ;
+          CMP #'#     when checking
+          BCS ERR168  for format cmd
+ ;
+          STX ZSTATS  Use 0 for format
+          STA ZTIMLO  Allow 33- or 34-
+          BCC GOTALL  Go always
+ ;
+ CLRSTK   PLA         Error handler
+          PLA         to clear stack
+          DEX
+          BNE CLRSTK
+ ;
+ ERR168   LDY #168    Syntax error
+ ;
+ YEXIT    STY FR0     Final report
+ EXIT     RTS         to Basic
+ ;
+ SETZST   CMP #'R
+          BEQ GETSEC  If not read
+ ;
+          ASL ZSTATS  make Zstats=$80
+          CMP #'P
+          BEQ GETSEC
+ ;
+          CMP #'W     If not Write, an
+          BNE CLRSTK  invalid command
+ ;
+ GETSEC   PLA         Msb of start
+          TAY         sector number
+          PLA         Lsb
+          DEX         Stack count
+ ;
+          CPY #5      For carry only
+          ROR TYPFLG  B7=Str B6=Trc
+ ;
+          STA STRPTR  Strptr ignored
+          STY STRPTR+1 by consec/trc.
+          STA ZAUX1   If string, zaux
+          STY ZAUX2   is re-set later
+ ;
+          PLA         Msb
+          STA ZBUFHI  Buffer address
+          PLA         Lsb
+          STA ZBUFLO
+          DEX         Stack count
+          BEQ GOTALL  Go if got last
+ ;
+          PLA         Limit: keep lsb
+          PLA         only (max DIM)
+          DEX         Last param?
+          BNE CLRSTK  If not, too many
+ ;
+          TAX         Error if Limit=0
+          BEQ ERR168  Else, DEX now to
+ ;                    offset default;
+          DEX         or, if a string,
+ ;                    to index from 0.
+ GOTALL   LDY FR0     Check status
+ JMIYEX   BMI YEXIT   Abort if bad
+ ;
+          DEY         Else
+          STY ZBYTLO  clear ZBytlo
+          SEC
+          LDA #$20    Check DD bit in
+          AND DVSTAT  drive status
+          BEQ SINGLE
+ ;
+          ROL ZBYTHI  Carry to bit 0
+           SKIPW
+ ;
+ SINGLE   ROR ZBYTLO  Carry to bit 7
+ ;
+          BIT TYPFLG  Doing string?
+          BMI STRING
+ ;
+          INX         Else add default
+          STX LIMIT   Any limit less
+          BPL EXEC    than $80 is OK
+ ;
+          TAX         If no DD bit
+          BEQ EXEC    max limit OK
+ ;
+          DEY         Else error #255
+          BMI YEXIT   Go always
+ JVS168
+ STRING   BVS ERR168  No trace if str.
+ ;
+          STX OFFSET  Two bytes per
+          ASL OFFSET  sector number
+ ;
+ NEXT     LDY OFFSET  Get next sector 
+          LDA (STRPTR),Y ; number lsb
+          STA ZAUX1   from string
+          INY
+          LDA (STRPTR),Y ; and msb
+          INY         Adjust offset
+          STY OFFSET  for next pass
+ ;
+ DOAUX2   STA ZAUX2
+          ORA ZAUX1   Next sector=0?
+ JEQEXI   BEQ EXIT
+ ;
+ EXEC     LDX #11
+ EXLOOP   LDA ZUNIT-1,X Copy shadow
+          STA DUNIT-1,X to real DCB
+          DEX
+          BNE EXLOOP
+ ;
+          LDA ZAUX2   Boot sector?
+          BNE GOSIO   No, got an msb
+ ;
+          LDY #3      Check lsb. Leave
+          CPY ZAUX1   set carry for
+          BCC GOSIO   Force SD below
+ ;
+          BIT TYPFLG  Can't trace
+          BVS JVS168  without links
+ ;
+          STA DBYTHI  Force SD for one
+          ROR A       sector but don't
+          STA DBYTLO  alter shadow DCB
+ ;
+ GOSIO    JSR SIOV    Execute
+          BMI JMIYEX  Oops
+ ;
+          INC COUNT   Good one!
+          BIT TYPFLG  If trace, get FP
+          BVC BUFADJ  before Bufadj
+ ;
+          LDY ZBYTLO  Set Y to index
+          DEY         forward pointer
+          DEY         lsb in last sec
+          LDA (ZBUFLO),Y Get lsb of
+          STA ZAUX1   next sector
+          DEY
+          LDA (ZBUFLO),Y Filenum+msb
+          AND #$07    Ignore filenum
+          TAX         Save msb
+ ;
+ BUFADJ   LDA DBYTLO  Add real sector
+          BEQ DOBUFH  length to bufptr
+ ;
+          CLC
+          ADC ZBUFLO
+          STA ZBUFLO
+          BCC BFDONE
+ ;
+ DOBUFH   INC ZBUFHI
+ ;
+ BFDONE   BIT TYPFLG  If string go
+          BMI NEXT    get next secnum
+ ;
+          DEC LIMIT   Else count
+          BEQ JEQEXI  down to 0
+ ;
+          TXA         Recover fwd ptr
+          BVS DOAUX2  Go if tracing
+ ;
+          INC ZAUX1   Else point to
+          BNE EXEC    next sector
+ ;
+          INC ZAUX2   Bump high byte
+          BNE EXEC    Go always
+ ;
+          .OPT LIST
+ CODELEN  =   *-START
+ LAST     =   *-1
+ ;%BSAVE #D1:SIOUSR.OBJ<6000,LAST
+          .OPT NO LIST
+          .END 
+ 
+ 
+ 
+ 
+ FILENAME EXTENSIONS
+ ===================
+ 
+ .1ST       Text file, read this first
+ 
+ .ACT       Action file
+ .ACC       ST accessory
+ .AMS       Advanced Music System file
+ .AMP       Antic Music Processor
+ .ARC       ARC compressed file
+ .ASC       Ascii text file
+ 
+ .BAK       Back-up data file
+ .BAS       Saved BASIC file
+ .BAT       Batch file
+ .BIN       Binary file
+ .BXL       BASIC XL program
+ .BXE       BASIC XE program
+ 
+ .C         C language data file
+ .COM       SpartaDos Command file
+ .COM       Compiled Object code file
+ .CZ        Casio MIDI data file
+ 
+ .DAT       Data file
+ .DCM       Diskcomm compressed file
+ .DIS       Diskcomm compressed file
+ .DOC       Wordprocessor, text file
+ 
+ .EXE       Executable file
+ 
+ .FNT       Font
+ 
+ .GIF       Graphics Interchangeable Format picture
+ .GRx       Graphic screen mode x
+ 
+ .H         ST resource data file
+ .HAM       Amiga picture format
+ 
+ .IFF       Amiga picture format
+ .INF       Information  file
+ 
+ .KOA       Koala format picture
+ 
+ .LGO       Logo data file
+ .LST       Listed BASIC
+ .LZH       LHarc compressed file
+ 
+ .M         ST Michtron BBS data file
+ .ME        Read me extention, text file
+ .M65       MAC-65 source code
+ .MAC       MacIntosh picture file
+ .MPT       Micropainter picture file
+ 
+ .OBJ       Object file
+ 
+ .PAS       Pascal data file
+ .PC1       ST Degas Low resolution picture (compressed)
+ .PC2       ST Degas Med resolution picture (compressed)
+ .PC3       ST Degas Hi resolution picture (compressed)
+ .PCX       IBM picture format
+ .PI1       ST Degas Low resolution picture (uncompressed)
+ .PI2       ST Degas Med resolution picture (umcompressed)
+ .PI3       ST Degas Hi resolution picture (umcompressed)
+ .PIC       Koala, Micropainter picture file
+ .PIT       MacIntosh Pit compressed file
+ .PRG       ST executable file
+ 
+ .RSC       ST resource file
+ 
+ .SCR       Scrunch compressed file
+ .SHR       Shrink compressed file
+ .SPB       Superboot compressed file
+ .SPC       ST Spectrum compressed picture
+ .SPU       ST Spectrum uncompressed picture
+ .SRC       Source code
+ .SUP       SuperArc compressed file
+ .SYN       Synassembler source code
+ .SYS       System file
+ 
+ .TOS       Executable ST program
+ .TTP       ST application program
+ .TXT       Text file
+ 
+ .V         Pokey player music file
+ 
+ .WP        ST WordPerfect data file
+ 
+ .ZIP       Zip compressed file
+ 
+ 
+ =======================================================================
+ Z*MAGAZINE Atari 8-Bit Online Magazine is a bi-weekly magazine covering
+ the Atari and related computer community.   Material  contained in this
+ edition may be reprinted without permission,  except where otherwise
+ noted,  unedited,  with  the  issue number, name and author included at
+ the  top  of each reprinted article.  Commentary and opinions presented
+ are those of the individual author and  does  not  necessarily  reflect
+ the opinions of Z*MAGAZINE or the staff.  Z*Magazine Atari 8-Bit Online
+ Magazine, Z*Net Atari Online Magazine, Z*Net  are  copyright (c)1990 by
+ Rovac Industries  Inc, a registered corporation.  Post  Office  Box 59,
+ Middlesex, New Jersey 08846.  (908) 968-2024.  Z*Net  Online  BBS  24
+ Hours, 1200/2400 Baud, (908) 968-8148.  We can be reached on CompuServe
+ at 71777,2140 and on GEnie at Z-NET.
+ =======================================================================
+                  Z*Magazine Atari 8-Bit Online Magazine
+                Copyright (c)1990, Rovac Industries, Inc..
+ =======================================================================
+</pre>
+<p><!-- body="end" -->
+<hr noshade>
+<ul>
+<!-- next="start" -->
+<li><strong>Next message by date:</strong> <a href="0187.php">Atari SIG: "Z*Magazine: 18-Dec-90 #188"</a>
+<li><strong>Previous message by date:</strong> <a href="0185.php">Atari SIG: "Z*Magazine: 29-Oct-90 #186"</a>
+<!-- nextthread="start" -->
+<!-- reply="end" -->
+</ul>
+<!-- trailer="footer" -->
+</pre>
+<pre>-----------------------------------------
+<a href="./index.php">Return to message index</a></pre>      </td>
+		<td height=277></td>
+	</tr>
+	<tr valign=top>
+		<td width=112 colspan=2></td>
+	</tr>
+	<tr>
+		<td width=84><img src="http://www.atariarchives.org/images/_clear.gif" border=0 width=84 height=1 alt=""></td>
+		<td width=28><img src="http://www.atariarchives.org/images/_clear.gif" border=0 width=28 height=1 alt=""></td>
+		<td width=1421><img src="http://www.atariarchives.org/images/_clear.gif" border=0 width=397 height=1 alt=""></td>
+		<td width=3 height=1><img src="http://www.atariarchives.org/images/_clear.gif" border=0 width=3 height=1 alt=""></td>
+	</tr>
+</table>
+  <p>&nbsp; </p>
+</body>
+</html>
+

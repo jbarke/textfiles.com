@@ -1,0 +1,450 @@
+
+America Online
+APPLE II DEVELOPMENT FORUM CONFERENCE LOG
+Tuesday, October 30, 1990  10:00 p.m. Eastern Time
+Topic:  Open Topic
+Forum Leader:  Gary Jacobson (AFA Gary J)
+
+AFA Gary J Ok.  Let me start this conference officially....
+AFA Gary J Good evening, and welcome to the Apple II Development Forum. 
+           Tonight is
+AFA Gary J an open topic, so feel free to bring up any development related
+           question you'd
+AFA Gary J like.  Let's don't use protocol just yet, unless things get out
+           of hand.
+ShanoJ     Dave, I think I found a bug in NiftyList. :(
+Dave Lyons :(  What?
+ShanoJ     Not a big one, though. :) If you type something like ?~s, it'll
+           give you the
+ShanoJ     description of the '~' commands, and then execute an 's' command,
+           rather than
+ShanoJ     give the description of the ~s command, which I would have
+           expected...
+Dave Lyons Well...it's a feature.
+Dave Lyons Yeah, the Help ("?" or "=") only eats one character, except for
+           the "\" command.  The
+Dave Lyons parsing for stuff like "~" and ";" and "_" and ">" is inside the
+           command itself.  I suppose I
+Dave Lyons should mention that in the docs, though.  (Stuff like
+           "?_NewHandle..." should be really
+Dave Lyons insteresting... :) )
+AFA Gary J :)
+ShanoJ     Oh, okay, that's kinda what I thought. :)
+ShanoJ     BTW Dave, thanks again for the suggestion of saving the value of
+           $E0C000 and 
+ShanoJ     seeing if ANY of it changes. I stuck that into Twilight and it
+           works REALLY
+ShanoJ     well! :)
+Dave Lyons (good!)
+Dave Lyons BTW, I've got a minimally-working version of "Nifty List NDA"
+           (needs some more tweaking before
+Dave Lyons it's presentable, but the concept definitely works).
+ShanoJ     Hey, that's pretty awesome! I think I'll probably stick to the
+           CDA, though...
+ShanoJ     I find for development stuff I prefer having the separation
+           between the 
+ShanoJ     application and the debugging utils. Can't wait to see it,
+           though!!
+Dave Lyons Yeah, I'll keep using the CDA most of the time too, but when you
+           want to play with the toolbox and
+Dave Lyons see the results on the screen, an NDA version is cool.  Also, you
+           get cut/copy/paste editing in
+Dave Lyons the NDA, so you can scroll around and even have little scripts you
+           load off disk or whatever (it
+Dave Lyons executes as commands whatever text you select before pressing
+           Enter, just like MPW).
+ShanoJ     Ya, that sounds really awesome! I wish I had the skill to do
+           parsing like you
+ShanoJ     do in NL. Stuff like that is still beyond me. :(
+Dave Lyons Which part of the parsing is hard?  Doing "expressions" is a
+           little fun, but mostly it
+Dave Lyons goes left-to-right and calls a command subroutine for each
+           different letter.  It's built on top of
+Dave Lyons two routines:  get-the-next-character and get-the-same-character,
+           with the convention that
+Dave Lyons when you get called you're already "at" the first un-parsed
+           character (this is just how Applesoft
+Dave Lyons works, only it's getting "tokens" which can be characters or whole
+           reserved words).
+ShanoJ     Ya, mentally I can comprehend what you're doing, but how to
+           actually CODE
+ShanoJ     something like that... Especially expressions like:
+ShanoJ     _Call1(_Subcall1(_SubCall1a), _Subcall2(_Subcall2a(_Subcall2b)))
+WinkieJim  Looks simple to me :)
+Dave Lyons It's not as bad as it seems--you're really just parsing
+           _call1(blah1,blah2), so you parse
+Dave Lyons "_call1" and look for a "(".  Then you call the *same* routine
+           you're already in to parse the
+Dave Lyons first sub-expression; then you check whether you're at a "," or a
+           ")" (otherwise it's an error).  If
+Dave Lyons you're at a ")" you're done, and if you're at a "," you munch it
+           and parse another sub-expression, and
+Dave Lyons that's about it.
+Dave Lyons The trick is to save the right stuff on the stack (or something
+           equivalent) when you call yourself
+Dave Lyons recursively).
+Dave Lyons (The other trick is to invent good data structures--then you
+           "just" have to
+Dave Lyons write the code that uses them.)
+ShanoJ     Ya, I had to write a recursive quicksort in assembly the other
+           day, and it was
+ShanoJ     NOT fun.... :(
+Dave Lyons Not even after it worked? :)
+ShanoJ     What makes you think it worked?! :) Actually, it does blow the
+           pants off of
+ShanoJ     my old bubble sort routine (right, Scott?! :), so I guess it was
+           worth it. 
+ShanoJ     Biggest problem was that if and only if the array was already
+           sorted it would 
+ShanoJ     overflow the stack. Took mbout two days to figure that out... :(
+Dave Lyons Is that a stable sort?  (That is, do "tied" items stay in their
+           original order?)
+ShanoJ     You mean if there's three 3's in a row will they still be in the
+           same relative
+ShanoJ     positions after it's done sorting?
+Dave Lyons (Jonah, yes--that's what I meant by a stable sort.)
+ShanoJ     (Hmm, tell you the ruth I don't know. I wouldn't think so,
+           though.... How do
+ShanoJ     you test something like that? Uh, probably I could figure it out
+           if I thought
+ShanoJ     about it... :)
+Dave Lyons (Yeah, you'd generally want to prove it rather than test it--just
+           wondering.)
+Surak TFF  Question: I am trying to play a sound from inside a CDEV. I have
+           the Snd Tools
+Surak TFF  started up, (after checking to see if they were ALREADY started of
+           course), and
+Surak TFF  I go to make my _FFStartSound call, when, right after the
+           _FFStartSound call,
+Surak TFF  I get an error $0012.... I can't find this error listed in any
+           book, anywhere.
+Surak TFF  And I am using the same procedure for playing a sound which worked
+           perfectly
+Surak TFF  in another part of the same program...
+Dave Lyons Surak, sounds very strange.  $0012 doesn't mean anything to me
+           offhand.  Are you setting the
+Dave Lyons Bank register in your CDev?  Are you sure you're allocating
+           direct-page space properly and
+Dave Lyons successfully starting up the Sound Tools?
+Surak TFF  Yes, there was no error on _SoundStartUp, and as far as DP space,
+           the rest of
+Surak TFF  the CDev seems to work right :)    A strange thing is, if I take
+           out the error
+Surak TFF  check after the _FFStartSound call, the sound doesn't play, but
+           the machine
+Surak TFF  doesn't hang or crash either - it just doesn't do anything with
+           the sound at
+Surak TFF  all.
+Surak TFF  (So it's probably not that invalid data is in the parameter block,
+           as far as
+Surak TFF  I can figure)...
+Dave Lyons Ah--does your "error check" consist of calling SysFailMgr with the
+           returned error code?
+Surak TFF  Well, basically...
+Surak TFF  (that will, of course, be changed when the program is finished
+           :)
+Dave Lyons I've got a feeling the $0012 you got was supposed to be a $0812 (I
+           remember at least one Sound
+Dave Lyons Tools bug like that, where it was failing to stick on the tool
+           number).  I belive $0812 means you
+Dave Lyons haven't started up the Sound Tools (even if SoundStartUp didn't
+           return an error, something
+Dave Lyons could have gone wrong--like maybe you somehow passed zero for the
+           direct-page address).
+Surak TFF  $0812 is Sound Tools Not Started. But how can I start them up, if
+           SoundStartUp
+Surak TFF  doesn't do it?
+Dave Lyons Check the values that are really getting passed--have it display
+           the direct-page value
+Dave Lyons and see if it's valid!  Maybe your NewHandle failed, or maybe
+           you're not dereferencing the
+Dave Lyons handle properly.
+Surak TFF  Well, I used the Memory Manager to get a $100 byte page-aligned
+           locked block in
+Surak TFF  bank 0, dereferenced the handle, and then passed the low word of
+           the pointer I
+Surak TFF  got to the tools....
+Dave Lyons Sounds right, but one of those steps isn't happening right.
+ShanoJ     Dan, why not pop into NiftyList after you THINK you've started the
+           sound tools
+ShanoJ     and see if they're actually started?
+Surak TFF  THe problem with that, Jonah, is that it happens so fast I have no
+           way of tell-
+Surak TFF  ing when they are started before the system "fails" :(
+Surak TFF  (I could put in a BRK or something)...
+ShanoJ     Why not put a brk 00 into the code and THEN pop into NL! :)
+WinkieJim  <---lives on BRKs :)
+ShanoJ     BRK's rule, especially with GSBug INIT installed!! :)
+WinkieJim  <---has a basket full of BRKs next to my desk :)
+Nuzz       I BRK for animals
+ShanoJ     Really Mike? I only BRK for bugs.... :)
+Nuzz       But my bugs are REAL animals to find
+WinkieJim  I see a bumper sticker taking form here...:) 
+WinkieJim  I BRK for bugs!
+ShanoJ     Do you think anyone would understand a bumper sticker like that?!
+           LOL :)
+AFA Gary J (Winkie:  You'd sure find out who knows anything about 6502's
+           with a bumper
+AFA Gary J sticker like that :)
+ShanoJ     Dave, are there any plans to create new official scrap types? I
+           would think a
+ShanoJ     sound scrap would be particularly suited to the GS...
+Dave Lyons Jonah, a Sound scrap sounds cool to me...we should pound out an
+           exact spec.
+Surak TFF  (A sound scrap is a good idea.... It'd be quite useful)
+Surak TFF  Well, the routine I used in the same program to get DP for
+           Standard File was
+Surak TFF  copied EXACTLY (cut and paste) for this, and it works for SF....
+           Very strange..
+Dave Lyons Obviously something is different in the environment--cut and paste
+           doesn't guarantee it's
+Dave Lyons going to work in a different program.  Do you have the B and D
+           registers set up when you use this
+Dave Lyons re-used code?
+WinkieJim  Are you checking for an error from the NewHandle call?
+Surak TFF  Well, it is in the SAME program.... :)    And the B/D registers
+           are set up
+Surak TFF  by the CDEV before the CDEV jumps to the various routines it
+           has...
+Surak TFF  (and yes, I am checking for a NewHandle error :)
+WinkieJim  Does your CDev set it's own Direct Page?
+Surak TFF  Yes, it does, Jim...
+Surak TFF  It is probably just a simple mistake I made somewhere (it happens
+           often enough,
+Surak TFF  anyway), it was just the $0012 error that threw me...
+WinkieJim  Hmmm, I've a NDA that I've worked on and I found that if I set the
+           direct
+WinkieJim  page that some tools calls behaved wierdly unless I restore the
+           direct page
+WinkieJim  that was active when I got control ...
+WinkieJim  might want to to try restoring the original DP before calling
+           tools...
+Surak TFF  Well, I haven't had any problems with the direct page before.... I
+           could check
+Surak TFF  that out, but first I could see if the sound tools are actually
+           getting 
+Surak TFF  started....
+Surak TFF  (though I won't really know what to do if they're not :(  )
+Surak TFF  (except check for typos ;)
+Dave Lyons Nah, no tools require a special D value when you call them--and
+           they don't change it on you
+Dave Lyons either.  But you do need to put B and D back before you return
+           control to the system from your CDev.
+Surak TFF  Oh, yes, the CDev does do that...
+Dave Lyons Surak, are you using $C015 for the attributes of your direct-page
+           handle?
+ShanoJ     Can you open a window from a CDEV with a NewWindow2 call? Probably
+           not because
+ShanoJ     it's an NDA, right?
+Surak TFF  Yes, $C015 attributes.....
+Dave Lyons You can, but it has to stay modal--there's currently no way for an
+           NDA to have more than
+Dave Lyons one modeless window.
+ShanoJ     Hmm.... That has some interesting possibilities... :) 
+AFA Parik  would fakemodaldialog work?
+Dave Lyons Yes, you should be able to use fakeModalDialog fine, as long as
+           you *don't* let it update
+Dave Lyons background windows or open NDAs from within the modal window.
+Dave Lyons (The restriction on updating is because it would call Application
+           content-draw routines without
+Dave Lyons setting the ResourceApp correctly.)
+ShanoJ     Okay, color me stupid but what's fakeModalDialog?
+Surak TFF  Good question, Jonah... Sounds familiar but I can't place it...
+           :)
+Dave Lyons Do you want that, Matt?
+Matt DTS   FakeModalDialog is a tool provided in the latest round of Sample
+           Code from DTS.
+Matt DTS   It allows you to implement modal dialog boxes without using the
+           Dialog Manager.  This means you
+Matt DTS   can use all the facilities of System 5.0, including extended
+           controls and windows.
+ShanoJ     Ah, I KNEW I'd seen it somewhere! Thanks for coloring me stupid,
+           Matt! :)
+Matt DTS   You create the window, tell FMD to treat it as a Modal Dialog and
+           it does the rest.
+Matt DTS   (It can also deal with "movable modal dialogs", a new interface
+           component.)
+Matt DTS   Partners, Associates and KFest attendees got a manual on the
+           tools; it's not otherwise available at
+Matt DTS   this point.  If you REALLY DESPERATELY need it, send me some US
+           Mail with your address and appropriate
+Matt DTS   groveling, and I'll forward it to the Take Pity committee.
+Matt DTS   (GA)
+WinkieJim  BRIBE?
+WinkieJim  :)
+ShanoJ     Okay, thanks Matt!!
+
+ShanoJ     How does Glen Bredon do those's Text/SHR 'screens' for ProSEL?
+AFA Parik  overscan
+ShanoJ     No, I mean how does he shadow the text screen to the SHR screen?
+           Guess he
+ShanoJ     'just' loads the characters from the text screen and draws them
+           back to the SHR
+ShanoJ     screen? Sure s QUICK.
+AFA Parik  or his COUT prints to both shr & text if shr active (otherwise
+           only text)
+AFA Gary J Probably that, Parik.
+A2GS       Personally, I think he uses the heimlich menuevar.
+AFA Parik  anyone know what "My Word" is?  Heard its a word-processor by (!)
+           gary little
+Matt DTS   It's a WP based on TextEdit that reads "Teach", AppleWorks WP and
+           text files.  It's included on the
+Matt DTS   latest Developer CD ("Night of the Living Disc") so we could ship
+           some online docs for things like
+Matt DTS   Universal Access with styles in them.
+AFA Parik  is it on the Prodos partition?
+Matt DTS   Yes, it's in the "Utilites" folder if I recall.
+Matt DTS   (the icon points to it so you can use DIcEd to find out from the
+           ICONS folder)
+ShanoJ     (Where'd the name "Teach" come from?)
+ShanoJ     Any word on the release of 5.0.3? Is that why Platinum Paint is no
+           longer being
+ShanoJ     distributed?
+Matt DTS   5.0.3 is Golden Master and is available to Partners and Associates
+           on AppleLink right now.
+Matt DTS   It will get to the general public in a few weeks, after developers
+           have a chance to make sure it works
+Matt DTS   with their software before they get flooded with phone calls.
+AFA Parik  is the CD-version golden-master?  (hi joey)
+A2GS       Correct me if I'm wrong...was Hypercard GS released on the Dev.
+           CD?
+AFA JoeyS  (woo)
+ShanoJ     "Golden Master"?
+WinkieJim  Shano, Golden Master is one step before the public gets it.
+Matt DTS   No, the CD version is *NOT* Golden Master.  For your usage
+           purposes, the only thing that changed is
+Matt DTS   the LaserWriter driver.  However, as always, you may not ship
+           anything other than what Software
+Matt DTS   Licensing sends you.
+ShanoJ     (Thanks, Jim)
+WinkieJim  (Unless it goes backwards :) :)
+AFA Parik  ok.  great!  no lw here :)
+Nuzz       I licensed 5.0.2, does that mean that I can ship 5.0.3 or do I
+           need another one
+Nuzz       for that
+Matt DTS   Your license covers 5.0.x, Mike, but you have to wait for the
+           disks from Licensing.
+Matt DTS   Further information is on AppleLink in the AIIDTS folder, along
+           with the 5.0.3 package itself.
+Matt DTS   (further licensing information)
+
+A2GS       BTW...I'm not sure if this falls within Non-Dis., but Matt, have
+           you started
+A2GS       work on 6.0?
+Matt DTS   We haven't announced any 6.0 project, A2.
+A2GS       ok, thanx
+AFA JoeyS  So what's after 5.0.3, then??  :)
+AFA JoeyS  (preparing to dodge pies)
+WinkieJim  5.0.4
+WinkieJim  :)
+AFA Parik  a big vacation I imagine
+AFA JoeyS  Oh, thank you... :-)
+Nuzz       Why did I expect that answer :)
+AFA Gary J :)
+AFA JoeyS  <tiddy-boom>
+WinkieJim  or m aybe 5.0.3.1
+
+AFL Scott  I got a question... why are control def procs so fast!  I've got
+           beta testers
+AFL Scott  complaining of scrollbar ping pong!:) 
+AFL Scott  I had to put a delay in just to slow it down...:)
+Dave Lyons Is your delay based on the tick count, Scott?
+AFL Scott  Yessir!:)  
+Dave Lyons Good!  Yeah, Mac people had the same problem.  Scroll bars that
+           worked just great on a Mac Plus
+Dave Lyons sometimes went a little too fast on a IIfx. :)  Tognazini claims
+           in an Apple Direct article that
+Dave Lyons Inside Mac told folks from the beginning to max their scrolling
+           speed by the tick count, but nobody
+Dave Lyons I know has found evidence of this.... :)
+AFL Scott  LOL!:)  That's a good one!:)  Seriously, though....
+AFL Scott  Hey, BTW, the access to control actions procedures is really clean
+           using Windows instead of Dialogs..
+AFL Scott  It was a problem that I never in my life anticipated.  People on
+           unaccelerated GS'
+AFL Scott  were complaining... I knew I did it right then.  I truly love the
+           new way to do it.  It's nicer
+AFL Scott  to operate using part codes instead of messages. 
+
+A2GS       How does one remove a device (ex. 5.25 drive) from the active
+           device list, I
+A2GS       would assume it involves deavtivating the appropriate DIB,
+           right?
+AFA JoeyS  Under P8 or GS/OS, A2GS?
+Dave Lyons Nope, you can never remove a device from the device list.
+Dave Lyons (Except by rebooting, of course.)
+Matt DTS   You can add new ones, but you can't remove ones that are there
+           without rebooting the system.
+Dave Lyons (These answers are for GS/OS, by the way.)
+A2GS       under GS/OS...
+A2GS       You can add a DIB, but not remove it?
+Matt DTS   Yes.
+Dave Lyons A2GS, Yes.  It makes sense, too--what if a program got the device
+           number from somewhere and
+Dave Lyons decided to do some operations with it later--it wouldn't be good
+           if some other device was
+Dave Lyons there then.
+A2GS       What about making a Driver Shutdown call?
+Matt DTS   1)  You can't make a driver shutdown call.
+Matt DTS   2)  That still doesn't stop the problem of other people trying to
+           use the device.
+
+AFL Scott  I have another question... What is the apple preferred way to
+           handle a preference selection...
+AFL Scott  Currently, I'm just opening up a "Modal" window and getting the
+           selections, then writing them to disk.
+AFL Scott  Creation is another story.  If no file is found, I ask the user if
+           creation is desired, if not, I just
+AFL Scott  use defaults and don't tell them... is that ok?
+Matt DTS   That's fine, but some preferences are best represented by
+           "checked' menu items.
+Matt DTS   As for creation, you don't have to ask permission to create a
+           preferences file.  Just don't complain
+Matt DTS   if there's an error.  (And be sure to get an auxtype from DTS
+           before shipping.)
+AFA Gary J :)
+AFL Scott  OK, Matt, will do!  Where is the _proper_ place to put a
+           preference file?  In the system folder as on
+AFL Scott  Macs?
+Dave Lyons (BTW, I think you *should* warn the user if you're unable to save
+           their non-default preferences.)
+Dave Lyons 9/blahblah.config is the best place.  There's
+Dave Lyons even a technote that says so.
+Matt DTS   No, "@:blahblah" is the best place if you're an application. 
+           (Shame, shame, Dave.  You even wrote
+Matt DTS   that note.)(
+AFL Scott  Ok... Thanks!:)  
+AFA Gary J Which note is that?
+AFA Gary J (Do you know off hand?)
+Matt DTS   (GS/OS #11, "Using the @ prefix."  I think.)
+AFA Gary J (Ah, ok.  looking)
+Dave Lyons (That's what I meant.  Sorry, I hurt my elbow.)
+AFA JoeyS  :)
+
+AFL Scott  Nice article on printer drivers, Matt!:)
+Matt DTS   Thank you.  It was written on no sleep, but they wouldn't let me
+           print that.
+Matt DTS   (I love being a martyr.)
+AFA Gary J :)
+Dave Lyons Matt, aren't Martyrs supposed to die?
+
+Paladin13  I got a question
+Paladin13  if you use a loop with Gettick as a time delay will that work with
+           accelerator
+Paladin13  boards too
+Dave Lyons Yes.  There are always 60 ticks per second, no matter what
+           accelerators are around.
+Matt DTS   Only if you base your loop on the tick count. :)
+Dave Lyons (Or maybe it's 50 in Europe, but it still doesn't depend on the
+           system speed.)
+Paladin13  Great thats how I wrote all my delay stuff
+A2GS       try basing your ticks on Scan Line interrupts  :)
+Paladin13  I was hoping the accelerators wouldn't throw it off :)
+AFA Gary J Find someone with a Transwarp to beta test for you.
+Paladin13  Why A2GS?
+A2GS       Should speed things up immensly  :)
+Paladin13  Actually I was thinking of purchasing it I know someone who is
+           dumping his for
+Paladin13  $200
+A2GS       only kidding...stick with what works...60 ticks per sec.
+

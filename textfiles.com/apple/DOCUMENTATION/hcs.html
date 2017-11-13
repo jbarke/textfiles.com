@@ -1,0 +1,253 @@
+                     ________________________________
+                    |                                |
+                    |     Hacking Construction Set   |
+                    |                                |
+                    |          Documentation         |
+                    |________________________________|
+
+                        Program and Docs by Cyborg
+
+=============================================================================
+
+ Hacking Construction Set's features:
+
+1.  Totally user-definable, including the service format.
+2.  Multi-port and multi-carrier hacking.
+3.  Auto-verification of codes.
+4.  Random dialup delay.
+5.  Codes can progress forward or backwards randomly or stepping in any step up to 99999, or completely randomly.
+6.  Up to nine service configurations on one parm file.
+7.  Codes are dated to show age.
+8.  Codes are 95% reliable.
+9.  Easy to use; entirely menu-driven.
+10. Cover Word Processor screen on demand.
+
+HCS is to the //c what Megaphreak is to the AppleCat!
+
+HCS can only be used on a //c until I make a //e version.
+
+=============================================================================
+
+
+Starting out
+------------
+
+HCS will appear on the screen, and set up the modem. You will be prompted to set the date in MM/DD/YY format; set the date correctly.
+
+The Screen
+----------
+
+At the top middle of the screen you should see a block containing
+
+                          Main  04/14/86
+
+The "Main" is the current module you are on, and the numbers are the current date.
+
+On the bottom row of the screen you should see a line containing
+
+  CARRIER  CODE  WAIT 00  DISK  HUNGUP
+
+These are the status registers. They are currently inversed (black on white), but if any of them become 'activated' they will be shown as normal (white on black).
+
+Register.....Purpose
+
+CARRIER      to show if a carrier is detected
+CODE         to show if a code has been found
+WAIT 00      to show a delay of 00 seconds
+DISK         to show any disk access
+HUNGUP       to show that the modem is hung up
+
+NOTE: The WAIT register alone means awaiting carrier or service hangup.
+
+On the screen now you will see 9 names that have been loaded from a disk based parameter index. Each is a seperate configuration. You will see:
+
+  EMPTY    D:0   F:0   00.0%
+    !        !     !     !
+  name   dialed  found  ratio 
+         \-------total-------/
+
+Name  : Name of parameter
+Dialed: Total number of tries since created.
+Found : Total number of codes found since created.
+Ratio : Ratio of total found over total dialed, percent found in total tries.
+
+
+MAIN MODULE    To manage parameter files.
+-----------
+
+Use: [ARROWS] to MOVE the highlight
+     [RETURN] to SELECT the highlighted service parameter file.
+              if an EMPTY file is selected, jump to CONFIG MODULE.
+              if a non-EMPTY file is selected, jump to HACKER MODULE.
+      [SPACE] to EDIT the highlighted file.
+          [D] to DELETE the highlighted file forever.
+        [ESC] to RETURN to MAIN MENU
+
+
+CONFIG MODULE   To configure an empty parameter file
+-------------
+
+After selecting an empty parm file
+
+Use: [ARROWS] to MOVE the pointer
+     [SPACE]  to EDIT value
+     [RETURN] to save and exit
+     [ESC]    to exit
+
+Use arrows to advance off the page onto next page.
+
+Page One of configure:
+
+Name: Input the name of the service here.
+Service Number: Input the access number for the service here.
+Carrier Number: Input a number which will give a carrier CONSTANTLY
+                when dialed up, and will NEVER be BUSY!
+
+Format: define the way in which you wish the digits to be dialed
+        using [S]ervice Number: Dial Service Number.
+              [C]arrier Number: Dial Carrier Number.
+              [N]umber        : Enter N followed by a numeric digit you wish
+                                to be dialed. EX: N0 dials 0.
+              [T]ry code      : Enter T followed by a numeric digit that
+                                specifies the number of digits in the CODE.
+                                EX: T6 try a 6 digit code
+              [D]elay         : Enter D followed by a numeric digit which
+                                specifies the number of seconds you wish
+                                the delay to be. EX: D4 wait 4 seconds.
+
+Combine the five to make a dialing FORMAT that will work for your SERVICE.
+The most common example is:
+
+FORMAT: SD4T6C
+        dial service, wait 4 seconds, try 6 digit code, dial carrier number.
+
+if you make a mistake, use the [DELETE] key to erase the last step you did.
+When you are satisfied with the format, hit [RETURN] to continue.
+
+You will then be prompted for the Number of seconds to wait for a carrier. This is how long you want the modem to await a CARRIER after finishing the dialing FORMAT.
+
+Page Two of the configure contains (If [ON] these will..):
+
+
+Auto-Verify: Check any code TWICE, to insure accuracy.
+RND delay  : Wait a RANDOM number of seconds before dialing the next code.
+
+Multi-Ports  : Use up to 6 extra ports in dialing, picked randomly. If you
+               select this option, then input the next 6 ports as you would
+               the Service Number. They MUST all use THE SAME EXACT FORMAT.
+Multi-Carrier: Use up to 6 extra Carrier Numbers in dialing. They MUST all
+               give a CARRIER and NEVER A BUSY! If this is selected, input
+               the next 6 Carrier Numbers.
+
+Note: The multi- options are determined randomly in dialing; if there are X ports and X carriers (including Service + Carrier) the port and carrier used
+for any given dial will be determined by a INT(RND(1)*X)+1 statement.
+
+
+EDIT MODULE    To change a parameter file.
+-----------
+
+Simply go through as you would the CONFIG MODULE, except the options have
+been already specified; change them if you wish. Use the same keys as CONFIG
+MODULE. NOTE: there are no defaults! You must trace over a number for it to
+remain the same, not hit return.
+
+
+HACKER MODULE  Hacking a service thru parameter file.
+-------------
+
+You will be prompted for a STARTING and ENDING CODE to hack at. Input these
+at the appropriate space. You will be prompted for an increment. An increment is the way the program gets from the STARTING CODE to the ENDING CODE. It adds (or subtracts, if it's negative) the increment to the STARTING CODE, to get to the ENDING code.
+
+ STARTING CODE options:                             Format  Example
+1. Accept default of last code dialed on file       #####    10000
+2. Enter new starting code                          #####    20000
+ 
+NOTE: If you use completely random hacking the  starting code is irrelevant, but it must be inputted.
+
+ ENDING CODE options:               Format    Example 
+1. Simply a code to end at          #####      50000   end at 50000.
+2. A number of codes to find        C###       C5      find 5 codes and end.
+3. A number of tries                T###       T100    dial 100 times and end.
+
+INCREMENT options:
+
+Use any digit, positive or negative, for that increment.
+
+Increment=1   1,2,3,4,5....
+Increment=50  50,100,150...       NOTE: if a negative increment is used, the
+Increment=-5  20,15,10,5...       END code MUST be larger than the START .
+
+Use two digits seperated with a period with an asterisk in front for a random increment range within those digits.
+
+ Increment=*1.10  1,3,5,15... Random number 1-10  added.
+ Increment=*5.30  2,8,12,22.. Random number 10-30 added.
+ Increment=*-5.-9 20,15,12... Random number -5 to -9 subtracted. (NOTE^^).
+
+Use two asterisks for completely random incrementing.
+
+Increment=** CODES=11233,22923,99740...  NOTE: If a random increment is used,
+                                         HCS will not STOP until [ESC] used.
+
+Datafile name: input the name you wish the codes found for the service to be put in.
+
+Now if you're satified, press [RETURN] to start hacking, [R] to redo options if you aren't, or [ESC] to abort.
+
+
+HACKING RUNTIME:
+----------------
+
+After pressing return, HCS will open the datafile IF it's a new datafile, or if it's an old one, simply APPEND the date of hacking on the end.
+
+HCS will highlight in inverse the numbers it is dialing AS it dials them. It'll also use the status registers (Remember those?) to show what the modem is doing.
+
+You will see:
+
+|000000|
+|100000|  D:0  F:0  00.0%
+|100005|
+
+The line of numbers is the |last code dialed|
+                           |  current code  |
+                           | code coming up |
+
+
+NOTE: If you use a random increment, then HCS can't tell what the next code willbe, therefore the "code coming up" will be blank.
+
+D=Number of codes dialed
+F=Number of codes found
+00.0%=Ratio of codes found over codes dialed. 
+
+
+When the "WAIT" register is on, you can use these commands:
+
+[SPACE] to go to the next code.
+    [S] to toggle the modem speaker.   NOTE: the speaker isn't cut on/off
+    [G] to toggle fake screen                until HCS goes to the next
+        (when mommie walks in)               code. IE: use [S],[SPACE].
+  [ESC] to save progress and go to MAIN.
+
+HCS will give you a "CHARGE" tune when it gets a good code (hahha..) . If it is done with the hacking routine, it will play another tune.
+
+Notes
+-----
+
+You can view the text file created during hacking, or any other text file using the main menu "VIEW TEXT" feature.
+
+The input date routine is easy to modify so it uses your clock, as long as you know a little BASIC. Just go to the subroutine that reads the clock (it's labelled..) and read your clock. Set K$="MM/DD/YY" and use a RETURN to return the date.
+
+The file where all the parameters are stored is named "HCS.INDEX". HCS will look for the file on the current drive, and if not found, will create an empty file.
+
+HCS can function without the fake word processor screen "FAKEWP" if necessary. 
+
+
+The End. Wake Up.
+-------
+
+You can reach me on The Dungeon......... 714-877-3044
+                    Rock&Roll Harbour... 305-557-8778
+                    Kleptic Palace...... 314-527-5551
+
+For comments, additions, complaints, modifications or conversation...
+
+Credit goes to: The Oracle, The Bucketeer, Rick Rocker, and Disk Phantom.
+

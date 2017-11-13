@@ -1,0 +1,432 @@
+
+	"C" LANGUAGE EMULATION OF AN AUTOMAG PAINTBALL GUN
+				version 1.0
+
+1 Introduction
+
+  This program calculates the behavior of an automag paintball gun using
+a simple model of the gun. Please see the automag manual for an
+explanation of the terminology. If the program is run as is, it will
+emulate a 0.2 second wait while the gun charges up to about 450 psi, then
+the trigger is pulled and a ball is ejected at about 290 fps. In order to
+set up other scenarios, the timing loop in main() and the trigger
+subroutine UpDate_t() must be modified by the user. 
+
+2 Explanation of the Program
+
+  At any point in time, the gun is considered to be completely described
+by specifying a set of pressures, volumes, surface areas, positions and
+velocities of certain key elements of the gun. In the computer program,
+the subroutine tstep() takes the set of variables describing the state of
+the gun, along with the time (t) and a time step (dt), and calculates the
+new values for these variables at time t+dt. This "marching algorithm" is
+accurate as long as the time step dt is small enough but if dt is too
+small, it can take a long time for the program to calculate out to a
+reasonable amount of time. A good value for dt seems to be about 1
+millisecond. A check on whether a small enough time step is being used
+is to cut the time step by a factor of 3 and see if the results are the
+same. If the time step is increased by a factor of 3 and the results
+are about the same, a larger time step can be used.
+
+  There are two types of subroutines used by tstep(); flow rate
+subroutines starting with "Q" and moving part update subroutines starting
+with "U". 
+
+2.1 Flow rate subroutines
+
+  There are 4 volumes or chambers in the gun: "s" signifies the source
+(e.g. a CO2 bottle), "r" is the regulator chamber, "a" is the air
+chamber, and "b" is the barrel. Thus, for example, PV.Pr is the regulator
+chamber pressure and PV.Vr is the regulator chamber volume, and Qra() is
+the subroutine that calculates the rate of flow from the regulator
+chamber to the air chamber. The regulator valve connects the source and
+the regulator chamber, the on-off valve connects the regulator chamber
+and air chamber and the bolt-to-power tube o-ring is the "valve" that
+connects the air chamber to the barrel. The flow rate subroutines
+calculate the rate of flow of gas from one chamber to the other according
+the the crude equation:
+
+	Q12 = d(P2*V2)/dt = -d(P1*V1)/dt = (Cl + Z*x)*(P1-P2)	      (1)
+
+where P1 and V1 are the pressure and volume of the upstream chamber, P2
+and V2 are the pressure and volume of the downstream chamber, Cl is a
+leakage flow rate (in order that bad o-rings may be modelled), Z*x is the
+normal flow rate where x is a measure of how open the valve is and Z is a
+proportionality constant. (If x becomes negative it is assumed the flow
+is stopped). Any pressure at time t+dt is calculated (assuming constant
+volume V) by:
+
+		P(t+dt) = P(t) + (Qin-Qout)*dt/V		      (2)
+
+where Qin is the rate into the chamber and Qout is the rate out of the
+chamber.
+
+2.2 Moving Part Update Subroutines
+
+  The moving parts of the gun are moved by pressure differentials applied
+to various surfaces, by springs, by friction, or by a finger moving the
+trigger. Generally, the force (F) on a surface of area S due to a
+pressure difference is given by:
+
+		F = S*(P1-P2)					      (3)
+
+where P1 and P2 are the pressures on either side of the surface. The
+force on an element due to a spring is;
+
+		F = K*(x-x0)					      (4)
+
+where x is the length of the spring, x0 is its relaxed length, and K is
+the spring constant. The force due to friction is taken to be:
+
+		F = -R*V					      (4.5)
+		
+where V is the velocity of the part and R is a proportionality constant.
+
+  If a massive part is being moved, the position (x) and velocity (v) of
+the part must be known in order to predict its motion. The acceleration
+of the part is A=F/M where F is the force on the part and M is the mass
+of the part. The position and velocity of the part at time t+dt is
+calculated as:
+
+        x(t+dt) = x(t) + (v(t) + 0.5*A*dt)*dt			      (5a)
+        v(t+dt) = v(t) + A*dt					      (5b)
+
+2.25 The Source Pressure
+
+  The pressure of the source (PV.Ps) is assumed to derive from the
+equilibrium vapor pressure over liquid carbon dioxide at temperature PV.T. 
+The vapor pressure data was found in the CRC Handbook of Chemistry and
+Physics, 74th edition, copyright 1993. The data is given between
+temperatures of 140 and 300 degrees kelvin. The logarithm of the pressure
+as a function of temperature was fitted with a third order polynomial and
+the source pressure is calculated using the four co-efficients of this
+polynomial.
+
+2.3 The Regulator
+
+It is assumed that a gas source at pressure PV.Ps is applied to
+the input. The regulator is diagrammed schematically below:
+
+
+                                |----------------
+                                |                ->  to on-off valve
+                                |   |-|         
+                ---------------|-   |D|----------
+                |   |  E  |   |     |-|        |
+                | A |88888| B |---------|C|    |
+                |   |     |   |     |-|        |
+                ---------------|-   |D|        |
+                                |---|-|--|   |-|
+                                         |   |
+                                           |
+                                           v
+                                        to source
+
+
+   A Regulator nut
+   B Regulator piston
+   C Regulator valve
+   D Regulator seal
+   E Regulator spring pack ("888" represents the spring)
+
+  It is assumed that the left end of the regulator valve is always in
+contact with the regulator piston. (actually the regulator valve spring
+contacts the right end of the regulator valve and keeps it pushed against
+the regulator piston) As gas enters from the source, it flows past the
+regulator valve into the part of the regulator chamber holding the
+regulator piston. The pressure forces the piston to the left, and the
+regulator valve moves with it. This process continues until the regulator
+valve head comes in contact with the regulator seal and stops the flow.
+Equation (1) is used to calculate the rate of flow of gas past the
+regulator valve, with:
+
+        Qsr = (Zr.Cl + Zr.Z*Zr.x)*(PV.Ps-PV.Pr)			      (6)
+
+        Zr.x    distance from the bottom of the regulator valve
+                    head to the top of the regulator seal.
+        PV.Ps   source pressure
+        PV.Pr   regulator chamber pressure
+        Zr.Z    flow rate/length for the regulator valve
+        Zr.Cl   leakage rate for the regulator valve
+
+  The position of the regulator valve is determined by the position of
+the regulator piston. The regulator piston is pushed to the left by the
+regulator spring and pushed to the right by the higher pressure in the
+regulator chamber. The regulator piston can only move so far to the right
+before it runs into a stop. The force of the regulator spring can be
+increased by moving the regulator nut to the right, compressing the
+spring. Lets say Zr.x0 is the value of Zr.x when the regulator piston is
+against the stop and Zr.T/Zr.H is the distance the regulator nut
+compresses the spring beyond its relaxed length when the regulator piston
+is against the stop. Zr.T is the number of turns of the regulator nut
+(clockwise) and Zr.H is the number of turns per inch of the regulator
+nut. The position of the regulator piston is found by assuming that the
+spring force  and the pressure force are always equal:
+
+	Zr.K*(L0 - L) = Zr.S*(PV.Pr-PV.Px)   			      (7)
+
+where L0 is the relaxed length of the regulator spring and L is its
+compressed length. When the spring is compressed, it is compressed from
+the left Zr.T/Zr.H inches by the regulator nut and Zr.x0-Zr.x by the
+pressure force. That means
+
+        L0 = L + Zr.T/Zr.H + Zr.x0 - Zr.x			      (8)
+
+The above two equations can be solved for Zr.x
+
+	Zr.x = Zr.x0 + Zr.T/Zr.H - (PV.Pr-PV.Px)*Zr.S/Zr.K;	      (8.5)
+
+which is the equation used inUpDate_r();
+
+2.4 The On-Off valve
+ 
+ A schematic diagram of the on-off valve is given below:
+ 
+ 			------------|
+    to regulator   <-		    |
+ 			|----o o----|
+ 			|     |        -> to air chamber
+			|-----|------
+			      |
+			      A--------B----------
+ 				      Sear
+ 								      
+Equation (1) is used to calculate the flow through the on-off valve with:
+
+        Qra = (Zo.Cl + Zo.Z*Zo.x)*(PV.Pr-PV.Pa)
+
+	Zo.x    distance that the top of the regulator pin is below
+			the on-off o-ring
+	PV.Pr   regulator pressure
+	PV.Pa   air chamber pressure
+	Zr.Z    flow rate/length for the on-off valve
+	Zr.Cl   leakage rate for the on-off valve
+
+The position of the on-off pin is controlled by the sear which is in turn 
+controlled by the trigger. It is assumed that the bottom of the on-off
+pin is connected to the sear but actually the regulator pressure pushes
+it against the sear. If the trigger is released, the sear is tilted at
+zero degrees. As the trigger is pulled, The on-off valve position (Zo.x)
+decreases according to:
+	
+		Zo.x = -Zt.xs*sin(Zo.B-Zo.Bo)
+
+where Zt.xs is the length of the sear arm connecting its pivot point
+("B" in the diagram) to the point of contact with the on-off pin ("A"
+in the diagram). Zo.Bo is the angle at which the on-off pin contacts
+the teflon on-off o-ring. This equation is implemented in UpDate_o()
+except it is assumed that the angle Zo.B-Zo.Bo is small enough so that
+sin(Zo.B-Zo.Bo) can be replaced with Zo.B-Zo.Bo itself.
+ 
+2.5 The Power Tube
+ 
+ A schematic diagram of the power tube is given below:
+ 
+ 	
+ 	                ----------|-----------|--------------
+ 	                          O |888888888|
+ 	                        |---|-----------|
+ 	     Air Chamber        |    bolt       |	Barrel
+ 	                        |-------|-------|
+ 	                          O     |
+ 	                ----------|-----|---------------------
+ 	                                |
+ 	                                | |
+ 	                                  |
+		      ---------o----------|
+ 						 Sear
+ 								              
+ Equation (1) is used to calculate the flow through the power tube valve:
+ 
+ 	Qab = (Zp.Cl + Zp.Z*Zp.x)*(PV.Pa-PV.Pb)			      (9)
+ 
+	Zp.x    distance that the bolt is to the right of the power tube
+        		o-ring ("O" on the diagram)
+	PV.Pa   air chamber pressure
+	PV.Pb   barrel pressure
+	Zr.Z    flow rate/length past the power tube o-ring
+	Zr.Cl   leakage rate past the power tube o-ring
+
+The position of the bolt is controlled by the pressure difference between
+the air chamber and the barrel, the power tube spring ("888" in the
+diagram), and the sear. If the bolt moves Zp.xc inches to the left of the
+power tube o-ring, it is latched by the sear, as long as the sear is at
+an angle of Zt.Bl or greater. If the bolt at the latch point, it is
+stopped from moving left. If the bolt moves to the right by Zp.xm inches,
+it strikes a stop in the main body and is stopped from moving right.
+anywhere between these two points, equations (3) and (4) give
+the force on the bolt except that if the bolt is in contact with the
+power tube o-ring, it is assumed that there is an additional frictional
+force on the bold according to equation (4.5)  and equations 5a and 5b
+then determine the motion. This is implemented in subroutine UpDate_p().
+
+2.6 The Ball and Barrel
+ 
+The ball is pushed down the barrel by the difference in pressure between
+the barrel and the atmosphere. A complication here is that the barrel
+volume (the volume of the barrel between the bolt and the ball) is
+changing as the ball moves down the barrel. The barrel volume (Vb) is
+given by:
+
+	Vb = 0.25*pi*Zb.D*Zb.D*(Zb.x+0.1)			     (10)
+
+where Vb(t) is calculated before Zb.x is updated and Vb(t+dt) is
+calculated after Zb.x is updated. The rate equation is then:
+	
+	P(t+dt)Vb(t+dt) = PV.Pb*Vb(t) + (Qab-Qbx)*dt		     (11)
+  
+which can be solved for PV.Pb(t+dt). Equations 3, 5a, and 5b are then
+used to update the position of the ball. If the ball moves beyond the end
+of the barrel, the barrel pressure is atmospheric.
+
+  I tried worrying about whether the ball was in contact with the foamie
+and being pushed by the bolt or whether it was being pushed by barrel
+pressure, but it seemed like it was always being pushed by barrel
+pressure, so I didn't bother with including this in the model, even
+though it needs to be included. Also, it shouldn't be too hard to model
+a vented barrel to determine how much more gas efficient an undrilled
+barrel is.
+
+2.7 Estimation of Constants
+ 
+ Most of the geometric values were obtained by direct measurement of the
+gun itself, or were obtained from the automag manual.
+
+2.7.1 The Power tube spring constant
+
+  The spring constant of the power tube spring was estimated by placing
+a 5-pound weight on the spring and noting the deflection.
+ 
+2.7.2  The Regulator Spring Pack Spring Constant
+
+  The manual says that the gun is nominally charged to 450 psi. Not
+knowing how much the regulator nut compresses the spring pack under
+these conditions, I assumed it didn't compress it at all. That means the
+spring constant for the spring pack is found by solving equation (8.5)
+with Zr.x = 0 and Zr.T=0:
+
+		Zr.K = Zr.S*(450-PV.x)/Zr.x0 = 1367.5		     (12)
+
+This value for Zr.K can probably be improved if I can find out how much
+the regulator spring pack is compressed when the gun is charged to 450
+psi.
+
+2.7.3	Air chamber volume
+
+The manual says that a 7 oz tank of CO2 will provide 400 good shots for
+the gun. There are probably about 6 usable ounces in the tank so that
+70 shots per ounce of CO2 is a reasonable estimate of gas consumption
+per shot. Assuming that the air chamber fill pressure is is 450 psi, and
+the temperature is 70 degrees F, we can solve the ideal gas equation for
+PV.Va:
+
+		PV.Pa*PV.Va = n*R*PV.T
+		
+where n = 1/70 oz = 9.2904e-2 mole and R=8.314 J/mole/deg K. This gives
+an air chamber volume of 0.463 in^3
+
+2.7.4 The Valve Flow Rates/Length
+
+  The manual says the gun charges up to 450 psi in about a third of a
+second. The flow rate constant Zr.Z was found by hit-or-miss until the
+air chamber filled up to 95 percent of its steady state value (i.e. 430
+psi) in about 0.33 seconds. The same value of flow rate/length was used
+for both the regulator valve and the on-off valve.
+
+2.7.5 Power Tube Flow Rates/Length
+
+  When the air chamber is filled up to 450 psi, it is assumed that the
+ball will be ejected from an 11 inch barrel at 300 fps. The Power Tube
+Flow Rate/Length was adjusted until this was the case.
+
+2.7.6 Power Tube Friction Coefficient
+
+If the friction coefficient is set to zero, in the "lawn sprinkler"
+scenario the bolt motion is dominated by the resonant frequency of
+the bolt and its spring. If the coefficient is much greater than 3.0
+all evidence of this natural frequency is lost. I chose a value of
+1.0 only because its interesting. The bolt motion has about equal
+components of 5 and 10 cycles per second. Some thinking has to be
+done to get the value of this constant correct.
+
+3. Scenarios
+
+A print statement is in the main() program which outputs a number of
+variables. A few different scenarios are given by the following
+modifications to the program along with a description of the expected
+printed output
+
+3.1 Simple Shot - run program as is. The regulator chamber should
+charge to 449.54 psi and the air chamber should charge to 449.02 psi at
+0.005 seconds, then the trigger should go on and a ball should be ejected
+at 296.69 fps.
+
+3.2 fast stroke: The regulator and air chambers are pre-charged to
+about 450 psi and the trigger subroutine turns the trigger on to
+begin with. The first ball comes out at 296.67 fps. The trigger
+subroutine waits until the air chamber is emptied, then turns the trigger
+off (0.0176 sec). 0.2 seconds later at 0.2176 sec, the second ball comes
+out at 263.92 fps, becuase the air chamber could not fully charge in
+0.2 seconds.
+
+     Zt.B = Zt.Bb;      /* Trigger pulled               */
+     PV.Pr = 449.;      /* regulator chamber charged    */
+     PV.Pa = 449.;      /* regulator chamber charged    */
+     dt    = .0002;
+     n     = 1150;
+
+----- Insert into UpDate_t() -----
+
+  static double delt;
+  double cycle;
+  
+  cycle = 0.2;		/* time trigger is off	(sec)	*/
+
+  if(Zt.B >= Zt.Bb)
+  {
+    if((Zb.x >= Zb.L) && (PV.Pa <= 1.005*PV.Px))
+    {
+      Zt.B  = 0.0;	/* trigger off				*/
+      Zp.x  = -0.1;	/* bolt latched				*/
+      Zp.v  = 0.0;
+      Zb.x  = 0.0;	/* ball loaded				*/
+      Zb.v  = 0.0;	/* ball motionless			*/
+      delt = t;		/* reset timer				*/
+    }
+  }
+  else
+  {
+    if(t-delt >= cycle)Zt.B = Zt.Bb;	/* Trigger on	*/
+  }
+  
+ret:  return(0);
+
+----------------------------------
+
+3.3 Lawn sprinkler. A leakage in the on-off valve is put in, and no
+   ball is loaded (This is done by putting the position of the ball
+   Zb.x outside the barrel, i.e. Zb.x >= Zb.L) The trigger is always
+   on, and the regulator and air chamber pressures are set roughly
+   to a steady state value. (They needn't be).
+
+    Zb.x  = Zb.L;	/* no ball	*/
+    Zt.B  = Zt.Bb;	/* trigger down	*/
+    Zp.X  = 0;		/* bolt at zero	*/
+    Zo.C  = 0.01	/* on-off leak	*/
+    PV.Pr = 450;	/* steady state	*/
+    PV.Pa = 34.7;	/* steady state	*/
+    n  = 3000;
+    dt = .0002;
+    
+----- Insert into UpDate_t() -----
+    {
+      Zt.B=Zt.Bb
+      return(0);
+    }
+----------------------------------
+
+3.4 Cold Gun - Low temperatures lower the vapor pressure of the CO2 which
+results in slow charging of the gun and possibly incomplete charging.
+Set the temperature PV.T to 30 degrees F. and run the short stroke 
+scenario. The second ball will come out at 239.00 fps, which is even less
+than before, this being due to the lower source gas pressure.

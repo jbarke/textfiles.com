@@ -1,0 +1,97 @@
+Following is a transcription of the magnetic data encoding standards as used
+on ATM cards, credit cards and other Magnetic strip cards.
+
+Track:          Density:        bits/char:              total chars on track:
+-----------------------------------------------------------------------------
+Track 1         210 bpi         7 bits/char             79 alphanum. chars
+Track 2         75 bpi          5 bits/char             40 numeric chars
+Track 3         210 bpi         5 bits/char             107 numeric chars
+
+7 bit/char characters consist of a parity bit, followed by 6 data bits
+5 bit/char characters consist of a parity bit, followed by 4 data bits
+
+******************************************************************************
+Track 1 as defined by the IATA: 
+______________________________________________________________________________
+| SS | FC |    PAN   | FS |    NAME      | FS |    Additional data  | ES |LRC|
+------------------------------------------------------------------------------
+          | Primary  |    | Name.        |__  |*Expir. date        4|
+          | Account  |    | 26 alphanumeric|  |*Restriction/type   3|
+          | Number   |___ | characters max |  |*Offset or PVN      5|
+          | 19 dig. max | ------------------  | Discretionary data  |
+          ---------------                     -----------------------
+                                                                   ^
+
+line 44
+
+
+^SS = Start Sentinel (= "%")                                        |
+FS = Field Separator (= "{")                                 no. of chars
+ES = End Sentinel (= "?")
+FC = Format Code
+LRC= Longitudinal Redundancy Check
+
+* = Required by Visa and Mastercard.
+
+Note: Mastercard PAN is variable upto 16 digits length, VISA 13 or 16 
+digits, including mod 10 check digit.
+******************************************************************************
+Track 2 as defined by the ABA: 
+______________________________________________________________________________
+| SS |         PAN              | FS |         Additional data      | ES |LRC|
+------------------------------------------------------------------------------
+     |      Primary             |    |*Expiration date      4       |
+     |      Account             |    |*Restriction or type  3       |
+     |      Number              |    |*Offset or PVN        5       |
+     |      19 dig. max         |    | Discretionary data           |
+     ----------------------------    --------------------------------
+                                                            ^
+SS = Start Sentinel (= 0xb)                                 |
+FS = Field Separator (= 0xd)                            no. of chars.
+
+line 67
+
+
+^ES = End Sentinel (= 0xf)
+LRC= Longitudinal Redundancy Check
+
+* = Required by Visa and Mastercard.
+
+Note: Mastercard PAN is variable upto 16 digits length, VISA 13 or 16 
+digits, including mod 10 check digit.
+******************************************************************************
+Track 3 as defined by the TTS:  (ISO 4909)
+______________________________________________________________________________
+| SS | FC |    PAN   | FS |USE AND SECURITY DATA |   Additional data  |ES|LRC|
+------------------------------------------------------------------------------
+          | Primary  |    |*country code  3 or FS|*First Subsidiary   |___
+          | Account  |    | currency code 3      | account number (SAN-1)|
+          | Number   |___ | currency exponent 1  |___                    |___
+          | 19 dig. max | | Amount auth. per cycle 4|_____*Second subsidiary|
+          --------------- | amount remaining this cycle 4| account number   |
+                          | Cycle begin(validity date   4| (SAN-2)          |
+                          | Cycle length                2|                  |
+                          | Reentry count               1| Relay Marker  1  |
+                          |*PIN control param.  6 or FS  |                  |
+                          | Interchange control         1|*Cryptogr. check  |
+                          | PAN service restriction     2| Digits  6 or FS  |
+                          | SAN-1 service restriction   2|                  |
+                          | SAN-2 service restriction   2| Discretionary    |
+                          |*Expiration date     4 or FS  | Data.            |
+                          | Card sequence number        1|-------------------
+                          |*Card security number 9 or FS |
+                          --------------------------------
+                                                        ^
+                                                        |_no. of chars.
+
+* This field is optional. If an optional field is not used, a field separator
+  must be encoded.
+
+SS = Start Sentinel (= 0xb)
+FS = Field Separator (= 0xd)
+ES = End Sentinel (= 0xf)
+FC = Format Code  (2 digits)
+LRC= Longitudinal Redundancy Check
+
+******************************************************************************
+

@@ -1,0 +1,131 @@
+MiniSport Laptop Hacker - Vol 13, 29 Apr 1993
+Copyright(C) 1993 by Brian Mork.
+
+>>> ADMIN
+No, I'm not superstitious, but the number of this MLH edition did pass my
+mind.  The last two weeks, my ZL-2 has been out of commission.  Almost si-
+multaneously, I received a letter from n7ftm (Bill) that his is having the
+same trouble.  I've spent the last few nights tearing mine apart.  Bad for
+me; good for you!  I've got more specs on how the power supply works in
+the next edition of MLH.
+
+In addition, I've been digesting volumes of documentation on Internet and
+Waffle, a BBS program meant to host users and process Internet E-mail and
+Usenet topical forums.  I now have a node running on my own computer.  See
+the new (and let's hope stable) address below.
+
+Two people have sent me messages via USMail because something about the
+packet link wasn't getting messages through.  Each edition, I try to con-
+firm in the ADMIN section who all I've heard from.  If I don't mention
+your callsign here, I didn't get your message.  This round I've heard from
+N9ADS, N9LNQ, WA8WZX, W4NTG, W5SYT, N7FTM, KA9CAP.
+
+>>> COM I/O ARCHITECTURE
+Continuing from Volumes 7,8, and 10, there are only three more registers
+to cover.
+
+Line Control Register (LCR) at address (BASE+3)
+-----------------------------------------------
+This register allows you to configure the format of the serial data leav-
+ing the UART and (simultaneously) the format expected by the UART.  All
+bits of this register are read/write.
+
+Bit 0&1: These two bits select how many data bits are transferred in each
+       asynchronous character.  5,6,7, or 8 bits are selected with values
+       of 00,01,10, or 11 respectively.  For example, if you desire 7 data
+       bits, set Bit0 to 0 and Bit1 to 1.
+
+Bit 2: Set to 0 if you want one stop bit generated on outbound data and
+       checked on inbound data.  Setting to 1 chooses 1-1/2 stop bits with
+       5-bit data and two stop bits with 6,7, or 8-bit data.
+
+Bit 3: Set to 1 to generate a parity bit.  Set to 0 if you want no parity
+       bit at all.  If this is set to 0, the next bit has no effect.
+
+Bit 4: Even Parity Select.  When Bit3 is 1 and Bit4 is 0, an odd number of
+       1's is transmitted or checked in the data bits and parity bit.
+       When Bit3 is a 1 and Bit4 is a 1, an even number of bits is trans-
+       mitted or checked.
+
+Bit 5: When set to 1, the function of Bit4 is reversed.
+
+Bit 6: Set Break.  When this bit is set to 1, the serial output is forced
+       to the spacing state (same as data=0) and remains until changing
+       this bit to a 0.
+
+Bit 7: This is the Baud-Rate Divisor Latch Access Bit.  This bit is set to
+       0 for normal operation allowing access of the transmitter and re-
+       ceiver buffers at BASE+0, and the Interrupt Enable Register at
+       BASE+1.  When set to 1, these same addresses access the Baud Rate
+       Divisor.
+
+Line Status Register (LSR) at address (BASE+5)
+----------------------------------------------
+This register provides information about recent data transfer.  All bits
+are not read/write.
+
+Bit 0: Data Ready. The UART sets this bit to 1 whenever a complete incom-
+       ing character is available in the receiver buffer.  It is reset to
+       0 by writing a zero or by reading the receiver buffer.  Bit1
+       through Bit4  are "errors" that produce a RLS interrupt (see IER
+       and IIR descriptions).
+
+Bit 1: Overrun. This bit is set to 1 whenever the receiver buffer was not
+       read by the CPU before the next character was transferred into the
+       receiver buffer (overwriting the lost character).  This bit is re-
+       set to 0 whenever the CPU reads the LSR.
+
+Bit 2: Parity Error. If this bit is 1, the received character did not have
+       the correct even or odd parity as selected by the bits in the LCR.
+       It resets to 0 whenever the CPU reads the LSR.
+
+Bit 3: Framing Error. This bit is set to 1 whenever the stop bit following
+       the last data bit (or parity, if selected) is detected in the spac-
+       ing level.  (A stop bit is suppose to be mark status.)
+
+Bit 4: Break Received.  This is set to 1 whenever the received data input
+       is held in spacing status longer than a full word's time: the total
+       of start bit, data bits, parity, and stop bits.
+
+Bit 5: Transmitter register empty.  This bit is 1 when the UART is ready
+       to accept a new character for transmission.  It actually switches
+       to 1 when the previous character is moved from the transmitter
+       holding register to the transmit shift register.  It becomes 0 con-
+       currently with the loading of the holding register by the CPU.
+
+Bit 6: Transmitter shift register empty.  This bit is 1 whenever the shift
+       register is idle (nothing being transmitted).  It becomes 0 when
+       the shift register gets a character from the transmitter holding
+       register.
+
+Bit 7: Permanently 0
+
+Baud Rate Divisor Latch at addresses (BASE, BASE+1)
+---------------------------------------------------
+These two registers set the bits per second rate transmitted by the UART.
+This is a 16-bit divisor for the clock fed into pin 16 of the 8250 UART,
+giving a frequency *sixteen* times the desired baud rate.  Pin 16 is usu-
+ally fed with a frequency of 1.8432 MHz.
+
+The LSB (least significant byte) is written to (or read from) address
+BASE, and the MSB (most significant byte) is written/read from address
+BASE+1.  This is true only when the Divisor Access Bit in the LCR is set
+to 1.
+
+The following table can be used if a 1.8432 Mhz clock is used (table
+values are decimal):
+
+     300       1200      2400      4800      9600      19200
+MSB    1         0         0         0         0         0
+LSB  128        96        48        24        12         6
+
+
+Lastly, a request:  Please look in any data book you have and try to iden-
+tify the following three chips.  Two of each are surface mounted on the
+bottom side of the ZL power supply switching regulator board.  I need to
+find out how they're suppose to work to know if mine are working!  A pin-
+out and short description would be GREATLY appreciated!
+
+73, Brian Mork (Opus-OVH)          KA9SNF@wb7nnf.#spokn.wa.usa
+                                   Internet ka9snf@opus-ovh.spk.wa.us
+                                   6006-B Eaker, Fairchild, WA 99011

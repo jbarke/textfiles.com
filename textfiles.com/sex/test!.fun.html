@@ -1,0 +1,111 @@
+				 PURITY TEST
+
+  Score by adding "no" answers.  "MOS" means member of the opposite sex.
+  1 point for each no answer out of 100 possible.
+
+	HAVE YOU EVER:
+
+    1.	had a date?
+    2.	been out on a date past 4 am?
+    3.	had a blind date?
+    4.	kissed a MOS?
+    5.	been french kissed
+    6.	kissed a MOS in the horizontal position?
+    7.	french kissed three or more MOS's in 24 hours?
+    8.	kissed a MOS in the last three months?
+    9.	necked for more than 2 hours consecutively?
+   10.	slow danced cheek-to-cheek?
+   11.	had an alcoholic drink?
+   12.	been drunk?
+   13.	driven while under the influence of alcohol or drugs?
+   14.	had a lapse of memory due to drinking or drugs?
+   15.	used alcohol or drugs to lower a MOS's resistance?
+   16.	smoked tobacco?
+   17.	smoked pot or hashish?
+   18.	used a stronger drug?
+   19.	taken 4 or more "recreational" drugs within 24 hours?
+   20.	read a pornographic book or magazine?
+   21.	seen a pornographic movie?
+   22.	seen a stripper?
+   23.	been arrested?
+   24.	been convicted of a crime?
+   25.	had an erection/clitoral erection?
+   26.	had an orgasm?
+   27.	had an orgasm in a dream?
+   28.	fondled a MOS's ass?
+   29.	caressed a MOS's thigh?
+   30.	fondled a breast or had your breast fondled?
+   31.	wrestled with a MOS?
+   32.	showered, bathed, jacuzzied, or saunaed with a MOS?
+   33.	gone coed skinny-dipping?
+   34.	gone through the motions of intercourse while fully clothed?
+   35.	spent the night in a MOS's room?
+   36.	slept in the same bed with a MOS?
+   37.	seen a naked post-pubescent MOS?
+   38.	been seen naked by a MOS after puberty?
+   39.	undressed or been undressed by a MOS?
+   40.	kissed a MOS on the breast or been kissed on the breast?
+   41.	fondled a MOS's genitals or had your genitals fondled by a MOS?
+   42.	had an orgasm due to manipulation by a MOS?
+   43.	kissed a MOS on the thigh?
+   44.	engaged in cunnilingus?
+   45.	engaged in fellatio?
+   46.	had sexual intercourse at a parents house while they were home?
+   47.	engaged in definitely sexual activity on the first date?
+   48.	masturbated?
+   49.	masturbated to a picture?
+   50.	masturbated with another person in the room?
+   51.	watched another person masturbate?
+   52.	been caught masturbating?
+   53.	simulated intercourse with an inanimate object?
+   54.	committed an act of voyeurism?
+   55.	committed an act of exhibitionism?
+   56.	massaged or been massaged by a MOS?
+   57.	unintentionally interrupted a couple in a significant state of undress?
+   58.	participated in a tickle orgy, gross out, truth or dare, etc.?
+   59.	experimented sexually before puberty?
+   60.	purchased contraceptives in a drug store?
+   61.	had sexual intercourse?
+   62.	had sexual intercourse more than 10 times?
+   63.	had sexual intercourse continuously for 1/2 hour?
+   64.	had sexual intercourse within the last 3 months?
+   65.	had sexual intercourse 3 or more times in 1 night?
+   66.	had sexual intercourse in 3 or more positions?
+   67.	had sexual intercourse in a car?
+   68.	had sexual intercourse using a condom?
+   69.	?
+   70.	had sexual intercourse outdoors?
+   71.	had sexual intercourse with 3 different people?
+   72.	had sexual intercourse with a virgin?
+   73.	had sexual intercourse during menstruation?
+   74.	had sexual intercourse without using birth control?
+   75.	had sexual intercourse with 2 MOSs in 24 hours?
+   76.	had sexual intercourse in a public place?
+   77.	described a sexual experience to a separate party?
+   78.	committed statutory rape?
+   79.	been the object of travel or traveled 100 miles or more for sexual
+	activity?
+   80.	impregnated a woman or been pregnant?
+   81.	arranged or had an abortion?
+   82.	displaced a roommate by staying with a MOS for 1 or more nights?
+   83.	shacked up with a MOS for a month or more?
+   84.	tasted semen?
+   85.	been propositioned by a prostitute or pimp?
+   86.	accepted?
+   87.	had anal intercourse?
+   88.	been tested for V.D. due to reasonable suspicion?
+   89.	had V.D.?
+   90.	picked up a strange MOS for sexual purposes?
+   91.	engaged in group sex?
+   92.	engaged in sadism or masochism for sexual enjoyment?
+   93.	been propositioned by a member of the same sex?
+   94.	accepted?
+   95.	been masturbated by a member of the same sex?
+   96.	been orally stimulated by a member of the same sex?
+   97.	committed incest?
+   98.	fondled a pre-pubescent MOS?
+   99.	engaged in transvestitism for sexual enjoyment?
+  100. committed bestiality?
+
+hoo-boy!
+

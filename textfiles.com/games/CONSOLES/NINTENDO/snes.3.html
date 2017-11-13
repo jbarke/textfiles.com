@@ -1,0 +1,348 @@
+ ----------------------------------------------------------------------------
+| For those of you who don't know how the SNES does do it's graphics, it     |
+| uses tiles (surprise surprise!).                                           |
+|                                                                            |
+| There are different MODEs on the SNES; the most famous being MODE 7.       |
+| Most people think that $2106 (Screen Pixelation: Look in SNES.1 for an ex- |
+| planation on this register) is MODE 7. *** THIS IS NOT MODE 7!!! ***.      |
+| So, the next time the pixels get really "big" (almost making them          |
+| look like IBM-clone 320x200x256 MODE 13h graphics), and your friend says   |
+| "WOW! MODE 7 is really awesome," punch him/her in the nose for me. Just    |
+| joking. :-)                                                                |
+|                                                                            |
+| Also, another thing I should mention: Bitplanes are not equal the planes,  |
+| atleast in my document. Planes are like overlayed-screens; you can scroll  |
+| a plane, but not a bitplane. Bitplanes are put ONTO a plane...             |
+|                                                                            |
+| I'll be explaining MODE 1. MODE 7 I don't know, and I don't plan on learn- |
+| ing about it anytime in the near future. Sorry to those who wanted MODE 7  |
+| documentation! :-( Look elsewhere.                                         |
+|                                                                            |
+|MODE   #/Playfields   MaxColour/Tile  Palettes      Colours                 |
+|----------------------------------------------------------------------------|
+|0      4              4               8             32                      |
+|1      3              16/16/4 (HUH?)  8             128                     |
+|                                                                            |
+| MODE 0 is good for geometric shapes (if you were going to rotate a wire-   |
+| frame cube, or something like that), basic star scrolls, or a very 'bland' |
+| text scroller... it's pretty cool and doesn't take up much space. :-)      |
+|                                                                            |
+| I'm going to explain MODE 1, since MODE 0 is the same thing but with less  |
+| bitplanes. :-)                                                             |
+|                                                                            |
+| MODE 1 is really best for things; detailed star scrolls, text scrollers,   |
+| geometric shapes, and filled objects. It's the most common used MODE in    |
+| the professional SNES programming world.                                   |
+|                                                                            |
+| What you need is 4 bitplanes of data; You don't HAVE to use all 4 bit-     |
+| planes; you can use 1 bitplane if you want, but you only get 16 colours.   |
+|                                                                            |
+| You also need a plane map: You can't just have the predefined graphics,    |
+| and that's it: You need to "setup the plane" to tell it what tile goes     |
+| where. For demonstration purposes, i'll use code to explain it...          |
+|----------------------------------------------------------------------------|
+| The "lda #$0000   tcd" transfers the DP location pointer to where the      |
+| so-called 'scratchpad RAM' is. This makes things go much faster, because   |
+| DP is always faster than normal RAM (yay for DP!)                          |
+| The other part defines the location of the data for where the binary or    |
+| image data is into two DP locations: font and font2.                       |
+|----------------------------------------------------------------------------|
+| font  equ $00                    ; Direct page equates.                    |
+| font2 equ font+1                                                           |
+|                                                                            |
+|       sei                                                                  |
+|       phk                                                                  |
+|       plb                                                                  |
+|       xce                                                                  |
+|       rep #$30                                                             |
+|       lda #$0000                                                           |
+|       tcd                                                                  |
+|       lda #charset                                                         |
+|       sta font                                                             |
+|       lda #charset2                                                        |
+|       sta font2                                                            |
+|----------------------------------------------------------------------------|
+| The following code tells the SNES where the actual data is in VRAM memory. |
+|----------------------------------------------------------------------------|
+|       lda #$10                   ; Plane 0 text @VRAM location $1000.      |
+|       sta $2107                                                            |
+|       lda #$02                   ; Tiles for Plane 0 @VRAM $2000.          |
+|       sta $210b                                                            |
+|----------------------------------------------------------------------------|
+| The following code actually MOVES the data in the binary/image into the    |
+| SNESs' VRAM.                                                               |
+|----------------------------------------------------------------------------|
+|       sep #$20                                                             |
+|       ldx #$2000                 ; This puts the data sent thru $2118 and  |
+|       stx $2116                  ; $2119 into VRAM location $2000.         |
+|                                                                            |
+|       ldy #$0000                                                           |
+|-      lda (font),y               ; ...Get bitplane 0 data (font)...        |
+|       sta $2118                  ; ...and store it in bitplane 0...        |
+|       lda (font2),y              ; ...Get bitplane 1 data (font2)...       |
+|       sta $2119                  ; ...and story it in bitplane 1...        |
+|       stz $2118                  ; I don't use bitplane 2 and 3, so I put  |
+|       stz $2119                  ; zeros for their data. You could put     |
+|       iny                        ; more font data here if you wanted.      |
+|       cpy #$0200                                                           |
+|       bne -                                                                |
+|                                                                            |
+|       ldx #$1000                 ; Put the data sent thru $2118 and $2119  |
+|       stx $2116                  ; into VRAM location $1000.               |
+|                                                                            |
+|       ldx #$0000                                                           |
+|-      lda Text,x                 ; Get the character from Text... Then AND |
+|       and #$3f                   ; #$3f it 'cuz I only define the first 8  |
+|       sta $2118                  ; bits for a character: I don't care for  |
+|       stz $2119                  ; the rest... Check near the end of this  |
+|       inx                        ; file for an explanation on why I just   |
+|       cpx #$0400                 ; clear them.                             |
+|       bne -                                                                |
+|----------------------------------------------------------------------------|
+| Here's the actual data names (charset, charset2, and Text). My new source  |
+| has them in dcb % statements to make the font more readable; the first     |
+| time I did this, I had to convert the binary stuff I wrote on paper into   |
+| hex, then put them into decent hex statements in an orderly fashion! :-(   |
+|----------------------------------------------------------------------------|
+|charset                                                                     |
+|       dcb     $00,$00,$00,$00,$00,$00,$00,$00 ;'@'                         |
+|       dcb     $00,$3c,$66,$7e,$66,$66,$66,$00 ;'A'                         |
+|       dcb     $00,$7c,$66,$7c,$66,$66,$7c,$00 ;'B'                         |
+|       dcb     $00,$3c,$66,$60,$60,$66,$3c,$00 ;'C'                         |
+|       dcb     $00,$78,$6c,$66,$66,$6c,$78,$00 ;'D'                         |
+|       dcb     $00,$7e,$60,$78,$60,$60,$7e,$00 ;'E'                         |
+|       dcb     $00,$7e,$60,$78,$60,$60,$60,$00 ;'F'                         |
+|       dcb     $00,$3c,$66,$60,$6e,$66,$3c,$00 ;'G'                         |
+|       dcb     $00,$66,$66,$7e,$66,$66,$66,$00 ;'H'                         |
+|       dcb     $00,$3c,$18,$18,$18,$18,$3c,$00 ;'I'                         |
+|       dcb     $00,$1e,$0c,$0c,$0c,$6c,$38,$00 ;'J'                         |
+|       dcb     $00,$6c,$78,$70,$78,$6c,$66,$00 ;'K'                         |
+|       dcb     $00,$60,$60,$60,$60,$60,$7e,$00 ;'L'                         |
+|       dcb     $00,$63,$77,$7f,$6b,$63,$63,$00 ;'M'                         |
+|       dcb     $00,$66,$76,$7e,$7e,$6e,$66,$00 ;'N'                         |
+|       dcb     $00,$3c,$66,$66,$66,$66,$3c,$00 ;'O'                         |
+|       dcb     $00,$7c,$66,$66,$7c,$60,$60,$00 ;'P'                         |
+|       dcb     $00,$3c,$66,$66,$66,$3c,$0e,$00 ;'Q'                         |
+|       dcb     $00,$7c,$66,$66,$7c,$6c,$66,$00 ;'R'                         |
+|       dcb     $00,$3e,$60,$3c,$06,$66,$3c,$00 ;'S'                         |
+|       dcb     $00,$7e,$18,$18,$18,$18,$18,$00 ;'T'                         |
+|       dcb     $00,$66,$66,$66,$66,$66,$3c,$00 ;'U'                         |
+|       dcb     $00,$66,$66,$66,$66,$3c,$18,$00 ;'V'                         |
+|       dcb     $00,$63,$63,$6b,$7f,$77,$63,$00 ;'W'                         |
+|       dcb     $00,$66,$3c,$18,$3c,$66,$66,$00 ;'X'                         |
+|       dcb     $00,$66,$66,$3c,$18,$18,$18,$00 ;'Y'                         |
+|       dcb     $00,$7e,$0c,$18,$30,$60,$7e,$00 ;'Z'                         |
+|       dcb     $08,$00,$00,$00,$00,$00,$00,$00 ;'['                         |
+|       dcb     $00,$00,$00,$00,$00,$00,$00,$00 ;'\'                         |
+|       dcb     $00,$00,$00,$00,$00,$00,$00,$00 ;']'                         |
+|       dcb     $00,$00,$00,$00,$00,$00,$00,$00 ;'^'                         |
+|       dcb     $00,$08,$00,$00,$00,$00,$00,$00 ;'_'                         |
+|       dcb     $00,$00,$00,$00,$00,$00,$00,$00 ;' '                         |
+|       dcb     $00,$7E,$7E,$3C,$18,$00,$18,$00 ;'!'                         |
+|       dcb     $00,$00,$00,$00,$00,$00,$00,$00 ;'"'                         |
+|       dcb     $80,$80,$80,$80,$80,$80,$80,$80 ;'#'                         |
+|       dcb     $FC,$FE,$FF,$F7,$F7,$FF,$FE,$FC ;'$'                         |
+|       dcb     $3E,$42,$4E,$5C,$5C,$4E,$42,$3E ;'%'                         |
+|       dcb     $00,$00,$00,$00,$00,$00,$00,$01 ;'&'                         |
+|       dcb     $00,$00,$00,$07,$00,$00,$00,$00 ;'''                         |
+|       dcb     $00,$04,$08,$08,$08,$08,$04,$00 ;'('                         |
+|       dcb     $00,$20,$10,$10,$10,$10,$20,$00 ;')'                         |
+|       dcb     $08,$08,$08,$F8,$08,$08,$08,$08 ;'*'                         |
+|       dcb     $10,$10,$10,$1F,$10,$10,$10,$10 ;'+'                         |
+|       dcb     $10,$10,$20,$C0,$00,$00,$00,$00 ;','                         |
+|       dcb     $00,$00,$00,$FF,$00,$00,$00,$00 ;'-'                         |
+|       dcb     $00,$00,$00,$00,$00,$18,$18,$00 ;'.'                         |
+|       dcb     $00,$00,$00,$FF,$80,$80,$80,$80 ;'/'                         |
+|       dcb     $00,$3c,$66,$6e,$76,$66,$3c,$00 ;'0'                         |
+|       dcb     $00,$18,$38,$18,$18,$18,$7e,$00 ;'1'                         |
+|       dcb     $00,$7c,$06,$0c,$30,$60,$7e,$00 ;'2'                         |
+|       dcb     $00,$7e,$06,$1c,$06,$66,$3c,$00 ;'3'                         |
+|       dcb     $00,$0e,$1e,$36,$7f,$06,$06,$00 ;'4'                         |
+|       dcb     $00,$7e,$60,$7c,$06,$66,$3c,$00 ;'5'                         |
+|       dcb     $00,$3e,$60,$7c,$66,$66,$3c,$00 ;'6'                         |
+|       dcb     $00,$7e,$06,$0c,$0c,$0c,$0c,$00 ;'7'                         |
+|       dcb     $00,$3c,$66,$3c,$66,$66,$3c,$00 ;'8'                         |
+|       dcb     $00,$3c,$66,$3e,$06,$66,$3c,$00 ;'9'                         |
+|       dcb     $00,$00,$00,$03,$04,$08,$08,$08 ;':'                         |
+|       dcb     $00,$80,$80,$F0,$80,$80,$00,$00 ;';'                         |
+|       dcb     $80,$80,$80,$FF,$00,$00,$00,$00 ;'<'                         |
+|       dcb     $00,$00,$00,$C0,$20,$10,$10,$10 ;'='                         |
+|       dcb     $08,$08,$04,$03,$00,$00,$00,$00 ;'>'                         |
+|       dcb     $00,$00,$00,$00,$00,$00,$00,$00 ;'?'                         |
+|                                                                            |
+|charset2                                                                    |
+|       dcb     $00,$3C,$4E,$5E,$5E,$40,$3C,$00 ;'@'                         |
+|       dcb     $00,$3c,$66,$7e,$66,$66,$66,$00 ;'A'                         |
+|       dcb     $00,$7c,$66,$7c,$66,$66,$7c,$00 ;'B'                         |
+|       dcb     $00,$3c,$66,$60,$60,$66,$3c,$00 ;'C'                         |
+|       dcb     $00,$78,$6c,$66,$66,$6c,$78,$00 ;'D'                         |
+|       dcb     $00,$7e,$60,$78,$60,$60,$7e,$00 ;'E'                         |
+|       dcb     $00,$7e,$60,$78,$60,$60,$60,$00 ;'F'                         |
+|       dcb     $00,$3c,$66,$60,$6e,$66,$3c,$00 ;'G'                         |
+|       dcb     $00,$66,$66,$7e,$66,$66,$66,$00 ;'H'                         |
+|       dcb     $00,$3c,$18,$18,$18,$18,$3c,$00 ;'I'                         |
+|       dcb     $00,$1e,$0c,$0c,$0c,$6c,$38,$00 ;'J'                         |
+|       dcb     $00,$6c,$78,$70,$78,$6c,$66,$00 ;'K'                         |
+|       dcb     $00,$60,$60,$60,$60,$60,$7e,$00 ;'L'                         |
+|       dcb     $00,$63,$77,$7f,$6b,$63,$63,$00 ;'M'                         |
+|       dcb     $00,$66,$76,$7e,$7e,$6e,$66,$00 ;'N'                         |
+|       dcb     $00,$3c,$66,$66,$66,$66,$3c,$00 ;'O'                         |
+|       dcb     $00,$7c,$66,$66,$7c,$60,$60,$00 ;'P'                         |
+|       dcb     $00,$3c,$66,$66,$66,$3c,$0e,$00 ;'Q'                         |
+|       dcb     $00,$7c,$66,$66,$7c,$6c,$66,$00 ;'R'                         |
+|       dcb     $00,$3e,$60,$3c,$06,$66,$3c,$00 ;'S'                         |
+|       dcb     $00,$7e,$18,$18,$18,$18,$18,$00 ;'T'                         |
+|       dcb     $00,$66,$66,$66,$66,$66,$3c,$00 ;'U'                         |
+|       dcb     $00,$66,$66,$66,$66,$3c,$18,$00 ;'V'                         |
+|       dcb     $00,$63,$63,$6b,$7f,$77,$63,$00 ;'W'                         |
+|       dcb     $00,$66,$3c,$18,$3c,$66,$66,$00 ;'X'                         |
+|       dcb     $00,$66,$66,$3c,$18,$18,$18,$00 ;'Y'                         |
+|       dcb     $00,$7e,$0c,$18,$30,$60,$7e,$00 ;'Z'                         |
+|       dcb     $00,$00,$00,$00,$00,$00,$00,$00 ;'['                         |
+|       dcb     $09,$09,$00,$00,$00,$00,$00,$00 ;'\'                         |
+|       dcb     $00,$00,$00,$00,$00,$00,$00,$00 ;']'                         |
+|       dcb     $00,$00,$00,$00,$00,$00,$00,$00 ;'^'                         |
+|       dcb     $00,$08,$00,$00,$00,$00,$00,$00 ;'_'                         |
+|       dcb     $00,$00,$00,$00,$00,$00,$00,$00 ;' '                         |
+|       dcb     $00,$7E,$7E,$3C,$18,$00,$18,$00 ;'!'                         |
+|       dcb     $00,$00,$00,$00,$00,$00,$00,$00 ;'"'                         |
+|       dcb     $80,$80,$80,$80,$80,$80,$80,$80 ;'#'                         |
+|       dcb     $FC,$FE,$FF,$F7,$F7,$FF,$FE,$FC ;'$'                         |
+|       dcb     $3E,$42,$4E,$5C,$5C,$4E,$42,$3E ;'%'                         |
+|       dcb     $00,$00,$00,$00,$00,$00,$00,$01 ;'&'                         |
+|       dcb     $00,$00,$00,$07,$00,$00,$00,$00 ;'''                         |
+|       dcb     $00,$04,$08,$08,$08,$08,$04,$00 ;'('                         |
+|       dcb     $00,$20,$10,$10,$10,$10,$20,$00 ;')'                         |
+|       dcb     $08,$08,$08,$F8,$08,$08,$08,$08 ;'*'                         |
+|       dcb     $10,$10,$10,$1F,$10,$10,$10,$10 ;'+'                         |
+|       dcb     $10,$10,$20,$C0,$00,$00,$00,$00 ;','                         |
+|       dcb     $00,$00,$00,$FF,$00,$00,$00,$00 ;'-'                         |
+|       dcb     $00,$00,$00,$00,$00,$18,$18,$00 ;'.'                         |
+|       dcb     $00,$00,$00,$FF,$80,$80,$80,$80 ;'/'                         |
+|       dcb     $00,$3c,$66,$6e,$76,$66,$3c,$00 ;'0'                         |
+|       dcb     $00,$18,$38,$18,$18,$18,$7e,$00 ;'1'                         |
+|       dcb     $00,$7c,$06,$0c,$30,$60,$7e,$00 ;'2'                         |
+|       dcb     $00,$7e,$06,$1c,$06,$66,$3c,$00 ;'3'                         |
+|       dcb     $00,$0e,$1e,$36,$7f,$06,$06,$00 ;'4'                         |
+|       dcb     $00,$7e,$60,$7c,$06,$66,$3c,$00 ;'5'                         |
+|       dcb     $00,$3e,$60,$7c,$66,$66,$3c,$00 ;'6'                         |
+|       dcb     $00,$7e,$06,$0c,$0c,$0c,$0c,$00 ;'7'                         |
+|       dcb     $00,$3c,$66,$3c,$66,$66,$3c,$00 ;'8'                         |
+|       dcb     $00,$3c,$66,$3e,$06,$66,$3c,$00 ;'9'                         |
+|       dcb     $00,$00,$00,$03,$04,$08,$08,$08 ;':'                         |
+|       dcb     $00,$80,$80,$F0,$80,$80,$00,$00 ;';'                         |
+|       dcb     $80,$80,$80,$FF,$00,$00,$00,$00 ;'<'                         |
+|       dcb     $00,$00,$00,$C0,$20,$10,$10,$10 ;'='                         |
+|       dcb     $08,$08,$04,$03,$00,$00,$00,$00 ;'>'                         |
+|       dcb     $00,$00,$00,$00,$00,$00,$00,$00 ;'?'                         |
+|                                                                            |
+|TEXT   dcb     " THIS IS YOUR ENTIRE SCREEN     "                           |
+|       dcb     " HERE... IF YOU REMOVE ONE OF   "                           |
+|       dcb     " THE LINES WHICH IS BLANK, THE  "                           |
+|       dcb     " SCREEN ENDS UP BEING FUNKY     "                           |
+|       dcb     " DOWN AT THE BOTTOM OF THE      "                           |
+|       dcb     " SCREEN.                        "                           |
+|       dcb     "                                "                           |
+|       dcb     " SO MAKE SURE YOU ALWAYS LEAVE  "                           |
+|       dcb     " ALL OF THIS TEXT THINGS IN!    "                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|       dcb     "         YOSHI THE DINO         "                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|       dcb     "********************************"                           |
+|       dcb     "                                "                           |
+|       dcb     "                                "                           |
+|                                                                            |
+|----------------------------------------------------------------------------|
+| Well there's some code for those whom want to rip it :-). I hope I haven't |
+| confused you yet: If I have, go back and re-read the code. I've been work- |
+| ing with the 65c816 based CPU for awhile, so I understand a little more    |
+| than a newbie. :-)                                                         |
+| You're probably wondering how the heck the following line ends up being an |
+| "@" on your TV or monitor:                                                 |
+| charset                                                                    |
+|       dcb     $00,$00,$00,$00,$00,$00,$00,$00 ;'@'                         |
+|charset2                                                                    |
+|       dcb     $00,$3C,$4E,$5E,$5E,$40,$3C,$00 ;'@'                         |
+|                                                                            |
+| Convert the above hex-values into binary. Consider each byte (each new $xx |
+| statement) a new pixel line. Tile size in thie case is 8x8.                |
+|      %00000000          = $00                                              |
+|      %00000000          = $00    This is charset                           |
+|      %00000000          = $00                                              |
+|      %00000000          = $00                                              |
+|      %00000000          = $00                                              |
+|      %00000000          = $00                                              |
+|      %00000000          = $00                                              |
+|      %00000000          = $00                                              |
+|                                                                            |
+|      %00000000          = $00                                              |
+|      %00111100          = $3C    This is charset2                          |
+|      %01001110          = $4E                                              |
+|      %01011110          = $5E                                              |
+|      %01011110          = $5E                                              |
+|      %01000000          = $40                                              |
+|      %00111100          = $3C                                              |
+|      %00000000          = $00                                              |
+|                                                                            |
+| See the AT symbol in charset2? This font took me hours by hand, drawing it |
+| in binary-statements, so...                                                |
+| You're probably now asking: "Well, that tells me how to define where a     |
+| pixel IS, but how do I define it's colour?"                                |
+|                                                                            |
+| If you have a 0 for bitplane 0, a 0 for bitplane 1, a 0 for bitplane 2,    |
+| and a 0 for bitplane 3, you get color #0; eg.:                             |
+|                       0000 = Color #0                                      |
+|                       ||||___________Bitplane 0                            |
+|                       |||__________Bitplane 1                              |
+|                       ||_________Bitplane 2                                |
+|                       |________Bitplane 3                                  |
+|                                                                            |
+| So, now, think about a 0 for bitplane 0, a 1 for bitplane 1 and 2, and a 0 |
+| for bitplane 3:                                                            |
+|                       0110 = Color #6                                      |
+|                       ||||___________Bitplane 0                            |
+|                       |||__________Bitplane 1                              |
+|                       |_________Bitplane 2                                 |
+|                       |________Bitplane 3                                  |
+|                                                                            |
+| Keep in mind, this is the best explanation i've ever seen done about SNES  |
+| pixel color definition. Until I see better, I'd have to say this is the    |
+| best it's gonna get.                                                       |
+| The result above gives you the color # per pixel; it's interesting. It's   |
+| an "overlay" method, so-to-speak.                                          |
+|                                                                      	     |
+| I mentioned in the source listed above that you should check near the end  |
+| of this file for information on why I "stz $2119".                         |
+| Well, here's why:                                                          |
+| The bits in the tile-data are fairly "silly," atleast to me. The bits for  |
+| the actual character take up the first 10 bits; the other 6 are for 'fun'. |
+|   y: Flip the tile vertically.     yxPcccNN | NNNNNNNN                     |
+|   x: Flip the tile horizontally.                                           |
+|   P: Priority bit (if it's set to 1, tile shows thru from plane 1 to 0).   |
+|   c: Pallete # (0-7).                                                      |
+|   N: Character-bits themselves.                                            |
+|                                                                            |
+| So, I STZ there: Yes, I leave the top bits "unset", which means you COULD  |
+| get messed up data; but as far as I have checked, the SNES has zeros in    |
+| memory when you power it: So, the bits I don't zero out should be zero     |
+| anyways! If you want to set them, feel free to do so... The resutls of     |
+| flipping Y and X are sortof fun to play with. "To read this scroller, you  |
+| must stand on your head."                                                  |
+ ----------------------------------------------------------------------------

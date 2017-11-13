@@ -1,0 +1,944 @@
+
+-----------------------------------------------------------------
+|    SWITCHABLE CONVERSION BETWEEN GRAVITAR AND BLACK WIDOW     |
+-----------------------------------------------------------------
+
+COPYRIGHT 1993
+
+REVISION NUMBER: 1.1 (first public release)
+  REVISION DATE: 17 March 1994
+     CREATED BY: Doug Jefferys
+
+
+STANDARD DISCLAIMER:
+--------------------
+
+The author hereby grants permission to reproduce and distribute this
+document for personal use, subject to the condition that the document
+(along with any copyright and disclaimer notices) is not modified in
+any way.  The opinions expressed within this document are those of the
+author only and not necessarily those of the author's employer.  This
+document is provided for informational purposes only.  Although the
+author has made every effort to provide accurate information, he cannot
+guarantee the accuracy or usefulness of any of the information contained
+herein due to the complexity of the issues involved.  The author takes
+no responsibility for anything arising as a result of anyone using the
+information provided in this document, and the reader hereby absolves
+the author of any and all liability arising from any activities
+resulting from the use of any information contained herein.
+
+
+GENERAL OVERVIEW:
+-----------------
+
+Once upon a time there was a game called Gravitar.  Best described
+as "Lunar Lander with guns", it was a good game, and lots of fun.
+
+Once upon a time there was also a game called Black Widow.  Best
+described as "a cross between Robotron:2084 and Centipede, but played
+on a vector monitor", it was also good, and lots of fun.
+
+Black Widow boards have a cute little sticker on 'em.  If you own
+such a board, and you peel back this sticker, you'll be greeted with
+a neat surprise:  they're actually Gravitar boards in disguise.
+
+Okay, so the control panels are a little different -- you might
+want to add two four-directional joysticks to your Gravitar panel,
+or you might want to add five buttons to your Black Widow panel,
+but considering that you can save yourself the trouble of buying
+a whole new cabinet, it's a small price to pay.
+
+Now that you've gotten the control panels out of the way, there
+still remains the subject of the boards.  A simple ROM swap will
+do the trick, but won't help you much if you want to switch back
+and forth on a regular basis.  You're looking at either a lot of
+ROM swapping, or finding a new board to plug in.  One method is
+time-consuming and potentially damaging to the components, and
+the other requires a considerable hardware investment.
+
+Wouldn't it be nice if it were just a matter of flicking a switch
+and swapping control panels?  Why bother swapping an army of ROMs
+when both games can be held on a single chip?  People have designed
+multi-carts for home video game systems before, so why can't the
+same idea be applied here?
+
+Unlike home games, most arcade games from the early '80s ran on
+proprietary hardware architectures which were unique from game to
+game.  It turns out, however, that the multi-cart technology *can*
+be applied in some rare instances.  This is one of them.
+
+At the end of this project, you'll have two small daughterboards and
+a few small connectors.  Plugging the daughterboards into sockets on
+the main board and soldering the wires from the connectors onto some
+test points (also on the main board) will give you the ability to
+convert back and forth between the two games at the flick of a switch.
+
+Sections labeled "Tech Note" are primarily for people who want to
+know *WHY* the hack works, and how it was designed.  If you're only
+interested in building the unit, you can skim over these sections.
+
+
+INGREDIENTS:
+------------
+1 - Working Gravitar/Black Widow machine (kinda helps :-)
+1 - Set of controls for whichever game you don't currently own
+1 - 27512 EPROM at 450ns or faster
+1 - 27256 EPROM at 450ns or faster
+3 - 7408 quad AND chips
+2 - chunks of blank breadboard, .100" spacing, about 2.5 inches square
+2 - 12-pin female .100" MTA connectors
+2 - 12-pin male .100" strip headers
+1 - 4-pin female .100" MTA connector
+1 - 4-pin male .100" strip header
+2 - 28-pin chip sockets
+2 - 24-pin chip sockets
+3 - 14-pin chip sockets
+4 - 14-pin male .100" strip headers
+
+You will also need an EPROM programmer (or a friend who has one),
+binary dumps of the original Gravitar and Black Widow ROMs, a wire-
+wrapping tool and a soldering iron.
+
+
+DETAILED INSTRUCTIONS:
+----------------------
+
+0) Read all of these instructions before you begin.
+
+   Steps 1 and 2 can be done at your desk in about half an hour.
+
+   Step 3 is just background information, but you should probably
+   understand the material as the hack won't make much sense without
+   some background information.
+
+   Step 4 should take about half an hour.
+
+   If you get tired, *STOP* and take a break.  Half an hour spent
+   lounging around the house and finishing off last night's pizza
+   will make you feel better and will save you at least two hours
+   of debugging time later :-)
+
+
+1) Create the ROM data files:
+
+
+1.1) Read the Gravitar and Black Widow ROMs (All 2532s except for
+     the one 2716) and store the data on disk.  We will assume, in
+     this example, that you name the data files after the chips'
+     part numbers.
+
+
+1.2) Create a dummy file of $FFs, 2048 bytes long.
+     Call this file "blank.fff"
+
+
+1.3) Create the program ROM, a 27512.  The contents of the Gravitar
+     and Black Widow program ROMs will be mapped onto the following
+     addresses relative to the 64K of memory available on the chip:
+
+     $0000-$0FFF = BLANK
+     $1000-$6FFF = GR 201..206
+     $6FFF-$7FFF = GR 206 (may only need to copy $6FFA..$6FFF)
+     $8000-$8FFF = BLANK
+     $9000-$EFFF = BW 101..106
+     $F000-$FFFF = BW 106 (may only need to copy $EFFA..$EFFF)
+
+     Executing the following script will create the required file:
+
+     cat blank.fff  >  27512.dat
+     cat blank.fff  >> 27512.dat
+     cat 136010.201 >> 27512.dat
+     cat 136010.202 >> 27512.dat
+     cat 136010.203 >> 27512.dat
+     cat 136010.204 >> 27512.dat
+     cat 136010.205 >> 27512.dat
+     cat 136010.206 >> 27512.dat
+     cat 136010.206 >> 27512.dat
+     cat blank.fff  >> 27512.dat
+     cat blank.fff  >> 27512.dat
+     cat 136017.101 >> 27512.dat
+     cat 136017.102 >> 27512.dat
+     cat 136017.103 >> 27512.dat
+     cat 136017.104 >> 27512.dat
+     cat 136017.105 >> 27512.dat
+     cat 136017.106 >> 27512.dat
+     cat 136017.106 >> 27512.dat
+
+     Tech Note:  No, you can't use $0000-$0FFF for storing your
+                 own hacks unless you want to modify the address
+                 decoding considerably.  This hack is designed to
+                 use the game's on-board address decoding to do
+                 most of the work, and the low $1000 bytes of the
+                 27512 ($8000..$8FFF in Gravitar's memory map)
+                 don't map onto any existing ROM space.
+
+     Tech Note:  You probably *CAN* use $7000-$7FF9 (and $E000..$EFF9)
+                 as blank space for your own hacks.  I suspect that
+                 only the last six bytes of this memory are required
+                 to hold the 6502's reset vectors.  No guarantees,
+                 as I haven't had time to test this theory, but it's
+                 a good guess.
+
+
+1.4) Create the vector ROM, a 27256:
+
+     $0000-$07FF = BLANK
+     $0800-$0FFF = GR 210
+     $1000-$3FFF = GR 207..209
+     $4000-$47FF = BLANK
+     $4800-$4FFF = BW 107
+     $5000-$7FFF = BW 108..110
+
+     Tech Note:  Again, since we're using the on-board address
+                 decoding and chip selection signals, you can't
+                 use the low $0800 bytes for storing your own hacks.
+
+     Executing the following script will create the required file:
+
+     cat blank.fff  >  27256.dat
+     cat 136010.210 >> 27256.dat
+     cat 136010.207 >> 27256.dat
+     cat 136010.208 >> 27256.dat
+     cat 136010.209 >> 27256.dat
+     cat blank.fff  >> 27256.dat
+     cat 136017.107 >> 27256.dat
+     cat 136017.108 >> 27256.dat
+     cat 136017.109 >> 27256.dat
+     cat 136017.110 >> 27256.dat
+
+
+2) Fry up the ROMs:
+
+
+2.1) Burn a 27512 with the contents of "27512.dat", and burn a 27256
+     with the contents of "27256.dat".
+
+     Tech Note:  In case you're wondering why we didn't put the vector
+                 ROMs and program ROMs onto the same chip, there's a
+                 catch in the game's architecture:  the machine has
+                 separate address and data buses for program and vector
+                 RAM and ROM.  We are therefore forced to have two sets
+                 of address and data lines, and consequently, two chips.
+
+     Tech Note:  When we're done everything, flicking a switch will
+                 pull the A15 line of the 27512 high or low, resulting
+                 in data being read from the top or bottom (Gravitar
+                 or Black Widow) halves of the chip.  The same idea
+                 will be applied to the 27256 and A14.  It's now just
+                 a matter of figuring out when to enable/disable the
+                 chips' outputs -- address decoding.
+
+
+3) Okay, you've got your chips.  Now we have to figure out when to
+   read data from the chips, and from what addresses we should do
+   the reading.
+
+   [Editor's Note:  This whole section is basically an extended tech
+                    note, but it's probably worth reading, just to
+                    get a feel for what we're trying to accomplish
+                    with all of this...]
+
+   Figuring out *when* to read data is fairly simple.  The game PCB
+   has test points on all chip selection lines, marked !ROM[0..5] and
+   !VROM[0..3].  Figuring out *where* to read from is a bit more fun;
+   we will use the chip-selection signals to *deduce* the addresses
+   from which we're going to read our data.
+
+   The cute part of this technique is that we only have to deduce
+   a few address lines, as A0..A11 and D0..D8 are all supplied to
+   us from the existing chip sockets.  This greatly reduces the
+   amount of wiring involved and, as an added bonus, allows us to
+   plug the "final product" into any socket we feel like.
+
+   So, our inputs are the !ROMx and !VROMx chip selection lines,
+   and our outputs are going to be a set of address lines above
+   A11, and one chip selection signal to enable/disable the main
+   chip.  A little muddling with the schematics and game memory
+   map produces the following logic functions:
+
+   PGM: A12 = !ROM1 && !ROM3
+        A13 = !ROM0 && !ROM3 && !ROM4
+        A14 = !ROM0 && !ROM1 && !ROM2
+        !CS = !ROM0 && !ROM1 && !ROM2 && !ROM3 && !ROM4 && !ROM5
+            = A13 && A14 && !ROM5
+
+   VEC: A12 = !VROM0 && !VROM2
+        A13 = !VROM0 && !VROM1
+        !CS = !VROM0 && !VROM1 && !VROM2 && !VROM3
+            = A12 && A13 && !VROM3
+
+   What we will eventually want to do is hook up a bunch of 7408
+   quad-AND chips to evaluate these functions and pass their results
+   on to the ROMs.
+
+   There's one other catch.  We're using 28-pin 27xx-series EPROMs,
+   and the board is set for 24-pin 25xx-series EPROMs.  We have to
+   integrate an adaptor into the circuit in order to allow us to use
+   the address and data lines as they come from the socket without
+   doing extra wiring.
+
+
+4) Here's where the fun begins.  Build the adaptor to allow you to
+   plug the big EPROMs into the 2532 sockets on the two pieces of
+   daughterboard.
+
+   Tech Note:  Here are the pinouts for a 2532, a 27256, and a 27512.
+               We want to build something that will let us plug the
+               27xxx-series chips into the game's existing 2532
+               sockets.
+                                  __ __           __ __
+                              +5V|  U  |+5V   A15|  U  |+5V
+                   __ __      A12|     |A14   A12|     |A14
+                A7|  U  |+5V   A7|     |A13    A7|     |A13
+                A6|     |A8    A6|     |A8     A6|     |A8
+                A5|     |A9    A5|     |A9     A5|     |A9
+                A4|     |+5V   A4|  2  |A11    A4|  2  |A11
+                A3|  2  |!CS   A3|  7  |!CS    A3|  7  |!CS
+                A2|  5  |A10   A2|  2  |A10    A2|  5  |A10
+                A1|  3  |A11   A1|  5  |!CE    A1|  1  |!CE
+                A0|  2  |D7    A0|  6  |D7     A0|  2  |D7
+                D0|     |D6    D0|     |D6     D0|     |D6
+                D1|     |D5    D1|     |D5     D1|     |D5
+                D2|     |D4    D2|     |D4     D2|     |D4
+               GND|_____|D3   GND|_____|D3    GND|_____|D3
+
+               Note the similarities between these pinouts.  We can
+               ignore the !CS signal on the 2532, as it no longer
+               has any relevance to us, and we'll also have to move
+               the +5V and A11 lines.  The rest of the pins can go
+               straight through to the chip; no wiring required.
+
+               We'll use strip headers for those "straight through"
+               connections, cutting off any lines we don't need, and
+               bending any lines we'd like to reroute away from the
+               chip, again simplifying the wiring job ahead.
+
+
+4.1) Start by putting the 14-pin strip headers into both boards,
+     as shown below.  Note that you want the longer pins of the
+     strip header to stick out of the top side of the boards, and
+     the shorter pins to be on the bottom.
+
+     Viewed from the top, the boards should look like this:
+
+     LEGEND:
+     -------
+     . = empty hole on breadboard
+     * = a pin from a 14-pin male strip header
+
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . * * * * * * * * * * * * * * . . . .
+     . . . . . . . . . . . . . . . . .         .
+     . . . . . . . . . . . . . . . . . PIN 15  .
+     . . . . . . . . . . . . . . . . .         .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . * * * * * * * * * * * * * * . . . .
+     .         . . . . . . . . . . . . . . . . .
+     .  PIN 1  . . . . . . . . . . . . . . . . .
+     .         . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+
+
+     The view from the side should look like this:
+
+             | | | | | | | | | | | | | |         < pin
+             | | | | | | | | | | | | | |         < pin
+             | | | | | | | | | | | | | |         < pin
+             | | | | | | | | | | | | | |         < pin
+             | | | | | | | | | | | | | |         < pin
+             | | | | | | | | | | | | | |         < pin
+     =========================================== < breadboard
+             * * * * * * * * * * * * * *         < plastic surrounding pins
+             | | | | | | | | | | | | | |         < pin
+             | | | | | | | | | | | | | |         < pin
+
+
+4.2) Cut off pin 22 (!CS) of the strip header; it won't be used
+     by anything in the circuit.
+
+
+4.3) Bend pins 23 and 26 at right angles.  These will eventually
+     supply the circuit with its +5V power.
+
+
+4.4) Also bend down pin 20.  This pin will supply the chip with
+     the A11 signal from the 2532 socket.
+
+     When you have completed the preceding three steps, both boards
+     should look something like this when viewed from the top...
+
+     LEGEND:
+     -------
+     . = empty hole on breadboard
+     * = a pin from a 14-pin male strip header
+     x = a *cut* pin from the strip header
+     | = a *bent* pin from the strip header
+
+     . . . . . . | . . | . . | . . . . . . . . .
+     . . . . * * | * * | x * | * * * * * . . . .
+     . . . . . . . . . . . . . . . . .         .
+     . . . . . . . . . . . . . . . . . PIN 15  .
+     . . . . . . . . . . . . . . . . .         .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . * * * * * * * * * * * * * * . . . .
+     .         . . . . . . . . . . . . . . . . .
+     .  PIN 1  . . . . . . . . . . . . . . . . .
+     .         . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+
+
+     ...and something like this when viewed from the side.
+
+     LEGEND:
+     -------
+     = = breadboard material
+     * = the plastic that surrounds the row of pins in the strip header
+     | = uncut pins
+     x = the stub of the cut pin
+     . = the end of a bent pin, pointing towards the viewer.
+
+             | | | | |   |     | |   | |
+             | | | | |   |     | |   | |
+             | | | | |   |     | |   | |
+             | | | | |   |     | |   | |
+             | | | | |   |     | |   | |
+      PIN 15 | | | | | . | x . | | . | | PIN 28  < pin (also bent/cut pins)
+     ===========================================
+             * * * * * * * * * * * * * *
+             | | | | | | | | | | | | | |
+             | | | | | | | | | | | | | |
+
+
+4.5) Using a soldering iron, tin the leads of the tops of the strip
+     header pins and the pins of a 28-pin socket.  This will make
+     the next step infinitely easier to perform, and make the final
+     product considerably more reliable.
+
+
+4.6) Place the 28-pin socket on *top* of the strip header pins and
+     solder all connecting pins in place.  Probably the best way
+     to start is to solder the four pins on the corners of the chip
+     first. This will hold things in place solidly enough to do the
+     rest of the soldering job.  When you're done, finish up by
+     reflowing the solder on the four corner pins you started with.
+
+     When you are done, you should have something that looks like this:
+
+     LEGEND:
+     -------
+     # = body of 28-pin socket
+     ! = pins from 28-pin socket
+     = = breadboard material
+     * = the plastic that surrounds the row of pins in the strip header
+     | = uncut pins from the strip header
+     x = the stub of the cut pin
+     . = the end of a bent pin, pointing towards the viewer.
+
+             ###########################         < 28-pin socket body
+             ###########################         < 28-pin socket body
+             ! ! ! ! ! ! ! ! ! ! ! ! ! !         < pins from 28-pin socket
+             | | | | |   |     | |   | |
+             | | | | |   |     | |   | |
+             | | | | |   |     | |   | |
+             | | | | |   |     | |   | |
+             | | | | |   |     | |   | |
+      PIN 15 | | | | | . | x . | | . | | PIN 28
+     ===========================================
+             * * * * * * * * * * * * * *
+             | | | | | | | | | | | | | |
+             | | | | | | | | | | | | | |
+
+
+4.7) You're almost done.  Now you want to wire up the last few pins to
+     complete the adaptors, specifically the A11 line and the +5V lines.
+
+     Going back to our side view, we've labeled the appropriate pins
+     with "A" and "B".  Connect the two "A" pins to connect A11, and
+     connect the three pins marked "B" to supply +5V to the chip.
+
+             ###########################
+             ###########################
+             ! ! ! ! ! ! ! ! ! ! ! ! ! !
+             | | | | |   |   A | |   | |         < A = A11 to the 27xxx
+             | | | | |   |     | |   | |
+             | | | | |   |     | |   | |
+             | | | | |   |     | |   | |
+             | | | | | A |   B | | B | |         < A = A11 from the 2532
+      PIN 15 | | | | | . | x . | | . | | PIN 28  < B = +5V from the 2532
+     ===========================================
+             * * * * * * * * * * * * * *
+             | | | | | | | | | | | | | |B        < B = +5V to the 27xxx
+             | | | | | | | | | | | | | |
+
+
+4.8) Complete the adaptors by plugging them into the two 24-pin sockets
+     you obtained earlier, as shown in the diagram below.  (Due to the
+     limitations of ASCII drawings, we have not shown the wiring you
+     performed during the previous step)
+
+     LEGEND:
+     -------
+     # = body of 28- or 24-pin socket
+     ! = pins from 28- or 24-pin socket
+     = = breadboard material
+     * = the plastic that surrounds the row of pins in the strip header
+     | = uncut pins from the strip header
+     x = the stub of the cut pin
+     . = the end of a bent pin, pointing towards the viewer.
+
+             ###########################
+             ###########################
+             ! ! ! ! ! ! ! ! ! ! ! ! ! !
+             | | | | |   |   A | |   | |
+             | | | | |   |     | |   | |
+             | | | | |   |     | |   | |
+             | | | | |   |     | |   | |
+             | | | | | A |   B | | B | |
+      PIN 15 | | | | | . | x . | | . | | PIN 28
+     ===========================================
+             * * * * * * * * * * * * * *
+             | | | | | | | | | | | | | |B
+             ####################### | |         < 24-pin socket body
+             #######################             < 24-pin socket body
+             ! ! ! ! ! ! ! ! ! ! ! !             < pins from 24-pin socket
+
+     Test-fit the completed adaptors by plugging them into the 24-pin
+     sockets on the main board.  You will probably have to bend the
+     test points down to give yourself enough clearance.  Just be
+     gentle when bending the test points out of the way and be sure
+     not to bend them down so far that they short out the traces
+     on the main board.  When you are done, the test points should
+     probably be at about a 30-degree angle relative to the board.
+
+
+5) Lay out the rest of parts as shown in the diagrams below.
+
+   The EPROM sockets will already be present from the adaptor work
+   you performed in step 4) above.  You still have to add the 14-pin
+   sockets for the 7408 quad-AND chips and the 12- and 4-pin connectors
+   which will be used to connect the hack to the main board.
+
+   Now it's time to start wrapping!
+
+   The wrap lists will be in the form "Xn - Ym", where "X" and "Y"
+   denote components as depicted in steps 5.1) and 5.2) below, and
+   "n" and "m" denote pin numbers.  Explanatory notes and/or signal
+   names are shown off to the right of the list.
+
+   For example:
+
+     E28 - X14  |  +5V
+
+   means to connect pin 28 of the EPROM to pin 14 of the first 7408,
+   and that the connection carries +5VDC.
+
+   Remember that the wrap lists are from the point of view of the
+   pin numbers on the ICs -- i.e. that the diagrams shown above
+   depict the boards as shown from the *PARTS* side, not the *WIRING*
+   side.  You will have to mentally flip things around if you want to
+   use the diagrams to do the wrapping.
+
+   This bears repeating, especially for inexperienced wire-wrappers.
+   Make absolutely sure that if you're connecting something to "the
+   second pin from the leftmost" on some chip on the diagrams above,
+   that you actually connect it to the second pin from the RIGHT on
+   the chip when you're looking at it from below.  It's an easy
+   mistake to make, and it can be very frustrating.
+
+   If you've got small labels to stick on the bottom of your board
+   to prevent this kind of mistake, by all means use 'em.
+
+   Okay, you're ready to wrap.  Grab your tools and wire, get comfy,
+   and go to work!
+
+
+5.1) Program (27512) board:
+
+     LEGEND:
+     -------
+     . = empty hole on breadboard
+     P = 27512 EPROM
+     X = 7408 quad-AND chip
+     Y = 7408 quad-AND chip
+     C = 12-pin connector
+
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . P P P P P P P P P P P P P P . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+             . . . . . . . . . . . . . . . . . .
+      PIN 1  P P P P P P P P P P P P P P . . . .
+             . . . . . . . . . . . .         . .
+     . . . . . . . . . . . . . . . . C PIN 1 . .
+     . . . . X X X X X X X . . . . . C       . .
+     . . . . . . . . . . . . . . . . C . . . . .
+             . . . . . . . . . . . . C . . . . .
+      PIN 1  X X X X X X X . . . . . C . . . . .
+             . . . . . . . . . . . . C . . . . .
+     . . . . . . . . . . . . . . . . C . . . . .
+     . . . . Y Y Y Y Y Y Y . . . . . C . . . . .
+     . . . . . . . . . . . . . . . . C . . . . .
+             . . . . . . . . . . . . C . . . . .
+      PIN 1  Y Y Y Y Y Y Y . . . . . C . . . . .
+             . . . . . . . . . . . . C . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+
+     .---------------------.
+     | POWER / MISCELLANY: |
+     |-------------------------------------------------------------------.
+     | P28 - X14  |  +5V                                                 |
+     | X14 - Y14  |  +5V                                                 |
+     | P14 - X7   |  GND                                                 |
+     | X7  - Y7   |  GND                                                 |
+     | P14 - P20  |  !CE should be low; the chip should always be active |
+     | C2  - P1   |  GAME_SELECT connects to A15 on the 27512            |
+     `-------------------------------------------------------------------'
+
+     .---------------------.
+     | CHIP SELECT INPUTS: |
+     |-------------------------------------------------------------------.
+     | C5  - X2   |  !ROM0                                               |
+     | C5  - X9   |  !ROM0                                               |
+     | C6  - X10  |  !ROM1                                               |
+     | C6  - X12  |  !ROM1                                               |
+     | C7  - X4   |  !ROM2                                               |
+     | C8  - X1   |  !ROM3                                               |
+     | C8  - X13  |  !ROM3                                               |
+     | C9  - Y12  |  !ROM4                                               |
+     | C10 - Y5   |  !ROM5                                               |
+     `-------------------------------------------------------------------'
+
+     .--------------------------.
+     | INTERMEDIATE PROCESSING: |
+     |-------------------------------------------------------------------.
+     | X8  - X5   |  !ROM0 && !ROM1                                      |
+     | X6  - Y2   |  A14 == (!ROM0 && !ROM1) && !ROM2                    |
+     | X3  - Y13  |  !ROM0 && !ROM3                                      |
+     | Y11 - Y1   |  A13 == (!ROM0 && !ROM3) && !ROM4                    |
+     | Y3  - Y4   |  A13 && A14                                          |
+     `-------------------------------------------------------------------'
+
+     .------------------.
+     | ADDRESS OUTPUTS: |
+     |-------------------------------------------------------------------.
+     | X6  - P27  |  A14                                                 |
+     | X11 - P2   |  A12                                                 |
+     | Y11 - P26  |  A13                                                 |
+     | Y6  - P22  |  !CS == (A13 && A14) && !ROM5                        |
+     `-------------------------------------------------------------------'
+
+
+5.2) Vector (27256) board:
+
+     LEGEND:
+     -------
+     . = empty hole on breadboard
+     V = 27256 EPROM
+     Z = 7408 quad-AND chip
+     C = 12-pin connector
+     D = 4-pin connector
+
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . V V V V V V V V V V V V V V . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+             . . . . . . . . . . . . . . . . . .
+      PIN 1  V V V V V V V V V V V V V V . . . .
+             . . . . . . . . . . . . .       . .
+     . . . . . . . . . . . . . . . . C PIN 1 . .
+     . . . . Z Z Z Z Z Z Z . . . . . C       . .
+     . . . . . . . . . . . . . . . . C . . . . .
+             . . . . . . . . . . . . C . . . . .
+      PIN 1  Z Z Z Z Z Z Z . . . . . C . . . . .
+             . . . . . . . . . . . . C . . . . .
+     . . . . . . . . . . . . . . . . C . . . . .
+     . . .         . . . . . . . . . C . . . . .
+     . . .  PIN 1  D D D D . . . . . C . . . . .
+     . . .         . . . . . . . . . C . . . . .
+     . . . . . . . . . . . . . . . . C . . . . .
+     . . . . . . . . . . . . . . . . C . . . . .
+     . . . . . . . . . . . . . . . . . . . . . .
+
+     .---------------------.
+     | POWER / MISCELLANY: |
+     |-------------------------------------------------------------------.
+     | V28 - V1   |  +5V                                                 |
+     | V1  - Z14  |  +5V                                                 |
+     | Z14 - D3   |  +5V                                                 |
+     | V14 - Z7   |  GND                                                 |
+     | Z7  - D1   |  GND                                                 |
+     | V14 - V20  |  !CE should be low; the chip should always be active |
+     | C2  - V27  |  GAME_SELECT connects to A14 on the 27256            |
+     | D2  - C2   |  GAME_SELECT originates at the 4-pin connector       |
+     `-------------------------------------------------------------------'
+
+     .---------------------.
+     | CHIP SELECT INPUTS: |
+     |-------------------------------------------------------------------.
+     | C5  - Z1   |  !VROM0                                              |
+     | C5  - Z5   |  !VROM0                                              |
+     | C6  - Z4   |  !VROM1                                              |
+     | C7  - Z2   |  !VROM2                                              |
+     | C8  - Z9   |  !VROM3                                              |
+     `-------------------------------------------------------------------'
+
+     .--------------------------.
+     | INTERMEDIATE PROCESSING: |
+     |-------------------------------------------------------------------.
+     | Z3  - Z13  |  A12 == (!VROM0 && !VROM2)                           |
+     | Z6  - Z12  |  A13 == (!VROM0 && !VROM1)                           |
+     | Z11 - Z10  |  A12 && A13                                          |
+     `-------------------------------------------------------------------'
+
+     .------------------.
+     | ADDRESS OUTPUTS: |
+     |-------------------------------------------------------------------.
+     | Z3  - V2   |  A12                                                 |
+     | Z6  - V26  |  A13                                                 |
+     | Z8  - V22  |  !CS == (A12 && A13) && !VROM3                       |
+     `-------------------------------------------------------------------'
+
+
+6) Wire the connectors:
+
+   Congratulations!  You are now the proud owner of two cute little
+   daughterboards with cute little connectors on 'em.  Maybe now would
+   be a good time to turn them into something useful, eh?
+
+   For the easiest "fit" in terms of wiring, the vector daughterboard
+   should be plugged into location M7, and the program daughterboard
+   should go into E/F1.
+
+   Plunk your daughterboards into the suggested locations, and imagine
+   a single wire connecting the daughterboards to each other, and lots
+   of wires connecting the daughterboards to the nearby !ROMx and !VROMx
+   test points on the game PCB.  Finally, imagine some wires going from
+   the vector daughterboard to a switch, either in your cabinet, or on
+   the control panel, which will be used to switch between the two games.
+   This gives you a rough idea of what the final setup will look like.
+
+
+6.1) Program (27512) board:
+
+     One of your .100" female MTA 12-pin connectors should be labeled
+     as follows:
+
+      1 - GND
+      2 - GAME_SELECT
+      3 - +5V
+      4 - N/C (key)
+      5 - !ROM0
+      6 - !ROM1
+      7 - !ROM2
+      8 - !ROM3
+      9 - !ROM4
+     10 - !ROM5
+     11 - N/C
+     12 - N/C
+
+     GND and +5V are actually redundant -- they are artifacts of a
+     previous design, and can be included for completeness, or can
+     be omitted.
+
+     !ROM0 through !ROM5 should be filled with medium-length wires.
+     Insert one end of the wire into the connector, and make sure
+     you have enough length to connect to the appropriate !ROMx test
+     point on the game PCB.
+
+     GAME_SELECT should hold a long wire; long enough to connect it
+     to the other daughterboard in the vector ROM area of the main
+     board.
+
+
+6.2) Vector (27256) board:
+
+     The other .100" female MTA 12-pin connectors should be labeled
+     as follows:
+
+      1 - GND
+      2 - GAME_SELECT
+      3 - +5V
+      4 - N/C (key)
+      5 - !VROM0
+      6 - !VROM1
+      7 - !VROM2
+      8 - !VROM3
+      9 - N/C
+     10 - N/C
+     11 - N/C
+     12 - N/C
+
+     GND and +5V are actually redundant -- they are artifacts of a
+     previous design, and can be included for completeness, or can
+     be omitted.
+
+     !VROM0 through !VROM5 should be filled with medium-length wires.
+     Insert one end of the wire into the connector, and make sure
+     you have enough length to connect to the appropriate !VROMx
+     test point on the game PCB.
+
+     GAME_SELECT should hold a long wire; long enough to connect it
+     to the other daughterboard in the program ROM area of the main
+     board.
+
+
+6.3) 4-pin connector:
+
+     The final .100" female MTA 4-pin connector should be labeled
+     as follows:
+
+      1 - GND
+      2 - GAME_SELECT
+      3 - +5V
+      4 - N/C (key)
+
+     If you're using an external switch, GND and +5V *NOT* redundant
+     here; you'll need a way of turning GAME_SELECT high or low at
+     the flick of a switch.
+
+     If you're mounting the GAME_SELECT switch on the control panel,
+     however, you only need to wire up GAME_SELECT, as GND and +5V
+     are already present on the control panel.  
+     
+     See section 8) below for more details; you should decide which
+     choice you will take before completing this step, as the choice
+     affects the amount and style of wiring you'll have to do.
+
+
+7) Wire up the test points:
+
+
+7.1) Plug the 12-pin and 4-pin connectors into the daughterboards.
+
+
+7.2) Tin the leads of the !ROMx and !VROMx wires coming from the
+     connectors.  Also, tin the "leads" created by the !ROMx and
+     !VROMx test points on the main PCB.
+
+
+7.3) Solder the !ROMx wires onto the !ROMx test points, and the
+     !VROMx wires to the !VROMx test points.
+
+     Check everything twice, and wiggle the soldered wires to make
+     sure your joints are solid.  A broken solder joint here can 
+     send a loose wire shorting across dozens of nearby PCB traces,
+     with potentially catastrophic results.  If you've tinned your
+     leads properly and done a good job of soldering, you'll never
+     have to worry about it.
+
+
+8) Connect the game selection switch:
+
+   First, decide what kind of a switch you want to use.  You can either
+   mount a switch externally, connecting it to the game PCB through the
+   4-pin connector, or you can mount it on the control panel for a more
+   finished appearance.
+
+
+8.1) External switch:
+   
+     The 4-pin female connector in section 6.3) should have three 
+     wires coming out of it; GND, +5V, and GAME_SELECT.  Connect 
+     these to a toggle switch such that one switch position forces 
+     GAME_SELECT to +5V, and the opposite position forces GAME_SELECT
+     to GND.  You're done!
+
+
+8.2) Control-panel-mounted switch:
+
+     For maximum ease of use, and a lot less strain on the connectors
+     to boot, you don't have to hook your switch directly to the 4-pin
+     connector.  Instead, hook things up directly to the game's wiring
+     harness and mount the switch on the control panel.
+     
+     This is especially useful if you've added joysticks (or buttons, 
+     depending on what you started with) to your existing control panel
+     to avoid the need for panel-swapping.  If you're going to modify 
+     your control panel, why not go all the way?  A toggle switch mounted
+     directly below the P1 and P2 start buttons is easy to access and 
+     gives your cabinet a finished, professional appearance.
+
+     If you decide to go this route, you only need the GAME_SELECT pin
+     on the 4-pin connector from section 6.3).  Connect the wire coming
+     from the 4-pin connector to one of the unused pins on the PCB.  
+     Then, add a pin to the main wiring harness to carry the GAME_SELECT
+     signal to the main control panel, the utility panel, or any other 
+     area of your cabinet.  If you use the control panel, for instance,
+     you only have one wire to worry about, as you can use the +5V (LED 
+     driver) and GND lines already present on the panel connector to
+     hook up your switch.
+
+     Connect GND, +5V, and GAME_SELECT to your toggle switch such that
+     one switch position forces GAME_SELECT to +5V, and the opposite
+     position forces GAME_SELECT to GND.  You're done!
+
+
+TROUBLESHOOTING:
+----------------
+
+- When working directly the main PCB (wiring up the !ROM and !VROM 
+  test points), be careful about static.  If you've got an ESD-safe
+  workstation, use it.  The probability of damaging your board while
+  soldering is low, but there's no point in taking unnecessary chances.
+
+- Check *EVERYTHING* for shorts, etc... before powering up your
+  converted board.  Go over it and look for little bits of solder
+  that went to the wrong place, strands of wire, *anything* that 
+  could cause trouble.  If you've got a multimeter with a continuity
+  checker, use it.  The fifteen minutes you spend now may save your
+  boards later.
+
+- The test points on the PCB are fairly tall.  Once you've plugged 
+  the hack into your board, you may notice that the test points come 
+  into contact with the bottom of the daughterboards, either shorting 
+  out pins, or pushing the daughterboards out of their sockets.  As
+  you can probably guess, both of these possibilities are Bad Things.
+
+  If it happens on your hack, bend the test points down to about 
+  a 45-degree angle.  This will solve the problem.  Just use gentle 
+  pressure, and be careful not to bend the test points down all the
+  way, or you'll run the risk of shorting out the traces on the PCB,
+  which is an Even Worse Thing!
+
+- Solder is brittle and can crack easily.  If you've bent the test
+  points as described above, you might want to reflow the solder 
+  joints connecting the wire to the test point, and the test point 
+  to the PCB.  You should also pay close attention to the quality 
+  of the solder joints that form the connection between the various 
+  layers of your adaptors, and be gentle when plugging in or removing 
+  the daughterboards.
+
+- When switching between games, power things off and wait for a few
+  seconds before flicking the switch.  Switching "on the fly" will
+  confuse the hell out of the machine.  In most cases, the program 
+  will crash, leading to an immediate reset, but it's conceivable 
+  that there are portions of code during which a switch could lead
+  to sufficient confusion to cause hardware damage.  Why take the
+  chance?
+
+Good luck building this gadget, and happy hacking!
+

@@ -1,0 +1,160 @@
+_______________________________________________________________________________
+
+                             BlackSpring GS v4.0
+
+                by: Ronand E. Mercer (aka. The Dungeon Master)
+
+                Copyright 1988/1989 Ronald E. & Robin R. Mercer
+_______________________________________________________________________________
+
+                   [ A Full-Featured  ACOS Word Processor ]
+
+ This program utilizes the ProTERM Special terminal emulation for its effects
+
+------------------------------------------------------------------------------
+
+CHECKLIST
+
+Here is a list of items that have been included in this package:
+
+BLACKSPRING     : the actual program
+BLACKSPRING.DOX : documentation on the program (what you're reading now)
+UPDATES         : file which describes updates to the program
+
+NUVISION.GS     : NuVision GS Video Driver.
+NUVISION.PATCH  : Installation program.
+NUVISION.DOCS   : Documentation for NuVison GS.
+
+------------------------------------------------------------------------------
+
+INSTALLATION
+
+To install BlackSpring into your system, you must first install NuVision GS.
+By installing this patch you will be able to see ALL of the ProTERM Special
+effects locally, thus taking alot of burden off of the editor.
+
+Consult the NuVision GS Documentation file for installation procedures.
+
+Now you will need to copy the USE file into your system.  Simply copy the
+BLACKSPRING file to whichever drivespec you please.
+
+And finally, you will need to modify your segments so that BlackSpring will be
+incorporated into your system.  To do this, please refer to the next section.
+
+------------------------------------------------------------------------------
+
+BLACKSPRING OPERATION NOTES
+
+BlackSpring has a buffer size of 96,854 bytes.  However, the buffer size isn't
+really measured in bytes, it's measured by lines (a line is equivalent to 79
+bytes).  So really, the buffer size is 1226 lines.
+
+The use format is as follows:
+
+ use "x:blackspring",[username],[filename],[optional]
+
+[username] = a3$                This is the variable containing the name of
+                                the person who's using the editor.
+
+[filename] = "x:filename"       This is the filename of the file that will be
+                                written when the save option is issued.
+
+[optional] = 0 or 1             This is only used when editing text files.  If
+                                you wish to edit a text file this must be set
+                                to 1.  Please refer to the next section.
+
+When you return from BlackSpring, memory location 10 will contain one of three
+values which will give you some miscellaneous information:
+
+ peek(10) value 0 = No errors occurred and message was saved.
+                1 = Message was aborted and not saved.
+                2 = The file that was loaded was too large [buffer overflow].
+
+BlackSpring creates a text file which corresponds to the SPEC/NAME defined in
+the USE string.  You should copy this file into your MSG file and then delete
+it.
+
+Please refer to the program example at the end of this documentation file.
+
+------------------------------------------------------------------------------
+
+EDITING TEXT FILES WITH EDITOR
+
+A unique feature of BlackSpring is that it allows you to edit text files
+on-line.  These text files can only be 1226 lines long, and no longer.
+
+The process is very simple.  Simply place a one in the [optional] extension
+and the file will be loaded instead of created.
+
+If the text file that you are loading is longer than 1226 lines, memory
+location 10 will contain a 2 and BlackSpring will not allow you to edit it.
+
+When the Save/Write command is issued the old text file will be written over
+with the newly edited one.  If no text file existed, it will be created.
+
+BlackSpring will allow you to use control characters in the text files.
+Control characters will appear in inverse during editing.
+
+If a line in a text file is longer than 79 characters, it will be split into
+two different lines.  It is not recommended that you use BlackSpring to edit
+segments, since most segments have lines that are longer than 79 characters.
+
+Example Program:
+
+ input @2 \"Filename to edit: " i$:if i$="" return
+ use "g:blackspring",a3$,i$,1:if peek(10)=2 print \"File too long...":return
+ if peek(10) \\"[ Aborted ]"
+ return
+
+-------------------------------------------------------------------------------
+
+GETTING HELP FROM THE EDITOR
+
+If you, or one of your users, is in need of a command list, then he/she only
+has to press Control-A (user) or Open-Apple A (sysop) to get a Help Window.
+
+The Help Window will appear on the screen.  You simply press RETURN when you
+are done using the Help Window and the screen will be refreshed and you can
+continue to write your file.
+
+------------------------------------------------------------------------------
+
+COMMANDS
+
+Control-A      Display Help Window
+Control-B      Jump to Line 1 of the editor
+Control-C      Center the current line of text
+Control-D      Delete current line; pull text up
+Control-E      Toggle Insert/Replace Mode
+Control-N      Jump to Last Line of the file which you're editing
+Control-P      Toggle Insert Control Characters ON/OFF
+Control-W      Write: Save Message
+Control-T      Toggle tab stop
+Control-X      Clear the contents of the current line
+Control-Y      Delete the word under the cursor
+Control-Z      Insert Line; push text down
+      DEL      Delete character to the left of cursor
+      TAB      Jump to next tab stop
+      ESC      Abort: Abort Message
+
+Arrow Keys     The arrow keys allow for FULL SCROLLING CAPABILITIES
+
+If the SysOp wishes to use BlackSpring, then he/she can only enact the above
+commands by means of the Open-Apple key (instead of the Control key).  This
+alleviates the compatability problem with the ACOS control-character commands.
+
+______________________________________________________________________________
+
+PROGRAM EXAMPLE
+
+;BlackSpring v4.0  - Full featured ACOS word-processor
+
+;variables used:
+;a3$=full name of user that is on-line
+; f$=filename of the text file you're writing/editing
+
+editor
+ use "x:blackspring",a3$,f$:return
+______________________________________________________________________________
+
+         (this documentation file was written using BlackSpring v4.0)

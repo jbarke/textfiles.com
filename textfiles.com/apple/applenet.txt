@@ -1,0 +1,172 @@
+#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#
+%                                                                           %
+#                  Getting AE/CATFUR to work with Apple-Net                 #
+%                  ------- --------- -- ---- ---- ---------                 %
+#                                                                           #
+%    Written by: The 0mega & Lord Vision w\help from Rock 'n Roll Doctor    %
+#                                                                           #
+%                    Infinity's Edge -:- 805/683-2725 10 megz 300/1200      %
+#                    The Cartel      -:- 206/825-6236                       #
+%                                                                           %
+#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#%#
+
+July 9, 1986:
+
+     Ok, now, if you're like most of the Sysops out there running an
+Apple-Net, you've probably wanted to run AE/CATFUR with your system,
+but just couldn't figure out how to do it.  There are some Sysops out
+there who know how to do it, but there was no general file available to
+help, or to answer some questions (at least, we've never found one).
+Here's where I hope this file will fill that void; be sure and read it
+all the way through before you mod your BBS.  Also, I am going to make
+an assumption that you know how to program and didn't just get
+Apple-Net last week.  *NOTE*: The method I outline below MAY WORK WITH
+OTHER SYSTEMS BESIDES APPLE-NET, but I have not tried it elsewhere; If
+you're at a loss, you might want to give it a try.  Also *NOTE*: I am
+assuming in this article you are using a Hard Drive. The Method I will
+describe could be used for floppies, with a little work; I'll describe
+that later in this file.
+
+     Now, there are several problems you have to circumvent.  The first
+one is maintaining carrier when transferring between Apple-Net and
+AE/CATFUR.  First, let's get AE out of the way.  These pokes should
+solve that:
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+For Ascii Express:
+
+     Put this line in the main portion of your BBS.  I will assume you
+will have the BBS jump to this line when the command for Drop-into-AE
+is selected (Like: IF X1$="Y" THEN 38000):
+
+     38000 A1=300+900*(PEEK(49)=24)+2100*(PEEK(49)=26)
+     38005 POKE 1146,39: POKE 1274,99: POKE 1402,139:
+           POKE 1530,5: POKE 1658,(4*(A1=300)+5*(A1=1200)):
+           POKE 1786,0: POKE 1914,1: POKE 2842,1:
+           POKE 768,2: POKE 248,16: POKE 255,16
+     38007 PRINT CHR$(4);"BRUN AE,S7,V2"
+
+     Line 38000 determines what baud-rate the caller is at now, so that
+in line 38005 it can determine what baud-rate to set AE for: POKE
+1658,4 for 300 baud, or POKE 1658,5 for 1200 baud.  By the way, those
+pokes in line 38005 come out of the AE Manual and say they're for a
+MicroModem or some other generic modem.  Well, apparently they work for
+any other modems, too, because they work for our 212 Apple-Cat.
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+For CAT-FUR:
+
+
+     Put this line also in your main BBS.  Again, I assume you do the
+jump to this routine yourself (Like: IF X1$="X" THEN 38010):
+
+     38010 POKE 254,32: POKE 2047,187: POKE 2046,1
+     38020 PRINT CHR$(4);"BRUN CAT-FUR,S7,V2"
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+     You'll also need these pokes (from Apple-Net) to restore the
+volume default in DOS, so that you can change volumes from AE or
+CATFUR, so add these pokes in lines 38006 and lines 38015:
+
+     380XX POKE -24359,141: POKE -24358,102: POKE -24357,170
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+     That was simple.  However, the Apple-Net Modem Driver still causes
+a big problem.  It uses some zero page locations, and without getting
+into all the reasons, quite simply it does not get along with AE or
+CATFUR.  If you BRUN AE after doing those pokes, everything may seem
+all right, but you'll probably encounter the same problem we did:  On
+Carrier Loss, AEX is not EXEC'd, and the system freezes.
+
+     The solution?  Booting your Hard Drive with, say, PR#7 (If it's in
+slot 7, of course) will clear out zero page and reset things nicely for
+AE or CATFUR. [Thanks, Rock 'n Roll Doctor, for suggesting that, and
+for your help.] The problem is, does it lose carrier?  No.  It
+shouldn't.  (At least on the SIDER, it does not.  I am reasonably sure
+you should not lose carrier if you are using any other Hard Drive,
+etc.)  There, the Hard Drive can load up the HELLO program, and decide
+if you're cold booting and want to go run the BBS, or if you want AE or
+CATFUR, or whatever (I'll explain how shortly).  Then, a BRUN is all
+you need; simple as all that.
+
+     Now, we need to set a flag that will not be wiped out that can
+signal what is wanted.  I use POKE 895,x.  For AE, I use POKE 895,4 for
+300 baud AE; POKE 895,5 for 1200 baud AE; POKE 895,6 for CAT-FUR; and
+PEEK(895) is anything else if the Hard Drive is just cold booting.
+First, you will have to re-do 38000- in the Main BBS:
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+Patches for Main BBS for AE and CATFUR and H.D. boot:
+
+     38000 A1=300+900*(PEEK(49)=24)+2100*(PEEK(49)=26)
+     38005 POKE 895,(4*(A1=300)+5*(A1=1200)): PRINT D$;"PR#7"
+
+     38010 POKE 895,6: PRINT D$;"PR#7"
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+     Now, in the HELLO program (the first file your HD boots up), all
+the necessary POKES can be done before AE/CATFUR is BRUN'd:
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+HELLO Program for Hard Drive:
+
+
+     5     CALL 1002: IF PEEK(895)=4 OR PEEK(895)=5 THEN 30032
+     7     IF PEEK(895)=6 THEN POKE 895,0: GOTO 30035
+     10    PRINT CHR$(4);"RUN AN.BBS,S7,V3"
+     20    END
+     30032 POKE 1146,39: POKE 1274,99: POKE 1402,139: POKE 1530,5:
+           POKE 1658,PEEK(895): POKE 1786,0: POKE 1914,1: POKE 2842,1:
+           POKE 768,2: POKE 248,16: POKE 255,16: CLEAR
+     30033 POKE 895,0: CALL 54915: PRINT "TRANSPORTING TO AE...":
+           PRINT: PRINT CHR$(4);"BRUN AE,V2"
+     30035 POKE 254,32: POKE 2047,187: POKE 2046,1:
+           PRINT "TRANSPORTING TO CAT-FUR...":
+           PRINT CHR$(4);"BRUN CAT-FUR,V2": END
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+     Since you just re-booted, you do not need to restore the Volume
+Defaults that Apple-Net had set up before in lines 38006 and 38015.
+
+     Everything should be set.  In the case of AE, you still have to
+configure it correctly using INSTALL:
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+INSTALL Configuration for Ascii Express:
+
+     Now, go to the INSTALL program from AE, and choose the
+UNATTENDED/REMOTE PARAMTERS change option.  Under that, choose 'O' for
+"ON-LINE RUN".  Also turn on the "EXEC AEX ON CARRIER LOSS?" option.
+The other options are, of course, up to you, like setting up
+AE-NOACCESS on certain volumes, your volume configuration, and system
+set up.
+
+:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+     Ok, now, if you're running off floppies (you better have more than
+2), the same mod could be used, but it would be damn tight and probably
+a waste of time.  What you'd have to do is put AE/CATFUR on drive 1,
+then do a PR#6 from the BBS, there, the HELLO program would take over.
+And, in the HELLO program, if PEEK(895)=0, then go run AN.BBS on drive
+2 or whatever.  You'd have to have AEX run the BBS on that drive, too.
+If you're gonna try this, I wish you luck! You'll be tight for space.
+
+     If you have any questions on Apple-Net, just leave me a note on
+Infinity's Edge (805/683-2725).  I've been working with it for about 2
+years, and probably have the most modded, diverse Apple-Net around.  I
+know quite alot about the program and the Modem Driver.  Just leave
+[F]eedback to: The 0mega.  The BBS is also a hybrid with Proving
+Grounds, which means we have the best of Apple-Net and Proving
+Grounds...A heavily modded Apple-Net & on-line adventure, user battles,
+gambling casino, bazaar, jousting, and much more.
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Feel free to distribute this file, so long as you leave the credits.
+
+                             The Krackartists
+

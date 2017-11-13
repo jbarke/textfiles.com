@@ -1,0 +1,1074 @@
+*================================================================*
+*                                                                *
+*                     Read Function handler                      *
+*                                                                *
+*================================================================*
+*                                                                *
+*      Use subfunction code as an index into the read sub-       *
+* function entry point table.  Do a "stack jump" to execute the  *
+* desired READ subfunction.  (Note:  The read-position sub-      *
+* functions are never called by normal DOS commands.  However,   *
+* they are available to assembly language programmers.)          *
+*                                                                *
+*----------------------------------------------------------------*
+
+
+(AC58)                                                                 * Table of file manager READ subfunction
+FNREAD   LDA SUBCODFM ;Check if subcode is legal.                      * entry points.  (P.S.  Subfunctions with
+         CMP #5       ;(Must be < = 5.)                                * the position attribute are available to
+         BCS TOERRSUB ;Error - illegal subcode.                        * the user, but never called by DOS.)
+         ASL          ;Subcode * 2, cause 2 bytes/address.             (AAE5)                 ;Index to subfunction.
+         TAX          ;Index table of subfunction addresses.           RDSUBTBL DA GOODFMXT-1 ;(0), Exit.
+         LDA RDSUBTBL+1,X ;Get address (minus 1) of subfunction                 DA READONE-1  ;(1), Read one byte.
+         PHA          ;entry point and stick it on the stack                    DA READRNG-1  ;(2), Read a range of bytes.
+         LDA RDSUBTBL+1,X ;(hi byte first).  Then do a "stack jump"             DA PSNRDONE-1 ;(3), Position & read one byte.
+         PHA          ;to execute the given READ subfunction.                   DA PSNRDRNG-1 ;(4), Pos'n & read range of bytes.
+(AC69)   RTS                                                            (AAEF)  DA GOODFMXT-1 ;(5), Exit.
+
+
+
+(AC6A)   ------------
+TOERRSUB JMP RNGERRSB ;Go handle range error.
+         ------------ ;(See dis'mbly of errors.)
+
+
+*----------------------------------------------------------------*
+*                                                                *
+*                   Position and read-one-byte                   *
+*                      subfunction handler                       *
+*                                                                *
+*----------------------------------------------------------------*
+*                                                                *
+*      Adjust file pointer and then read a single byte.          *
+* (NOTE:  This subfunction is never accessed by normal DOS cmds  *
+* but it is available to assembly language programmers.)         *
+*                                                                *
+*----------------------------------------------------------------*
+
+
+(AC87)
+PSNRDONE JSR CALCFPTR ;Using R-, L-, & B-parameters, calculate
+                      ;the position of the file pointer.
+
+                      * Calculate the exact position of the three-byte file pointer:
+                      *        FILPTSEC = sector offset (low/hi format) into entire file (2 bytes).
+                      *        FILPTBYT = byte offset into current sector (1 byte).
+                      * All three bytes define the exact position of the file pointer
+                      * via the following formula:
+                      *        (record number * record length) + byte offset into record
+                      *        where:  RECNMBFM = record number from R-parameter (set
+                      *                           by user when using random access files
+                      *                           or simply incremented when using other
+                      *                           file types).
+                      *                RECLENWA = record length parsed from L-parameter
+                      *                           and assigned with open command (else
+                      *                           defaulted to a size of 1).
+                      *                BYTOFFFM = offset into the current record (set by
+                      *                           user when using open command or
+                      *                           occassionally used with sequential files
+                      *                           as a B-parameter).
+                      * Note that you can actually directly access any byte in any
+                      * file by bypassing the command interpreter and setting the
+                      * L-, B- & R-parameters however you want.
+
+                      (B300)
+                      CALCFPTR LDA RECNMBFM ;Put record # in multiplier and
+                               STA FILPTBYT ;also save it in the work area.
+                               STA RECNMBWA
+                               LDA RECNMBFM+1
+                               STA FILPTSEC
+                               STA RECNMBWA+1
+                               LDA #0       ;Zero out the hi order byte of the sector
+                      (B314)   STA FILPTSEC+1 ;offset into the file.
+
+                      * Calculate: Record number *  record length.
+                      * This routine simply multilplies two 16-bit
+                      * numbers together.  It may at first seem
+                      * a bit confusing because FILPTSEC & FILPTBYT
+                      * are used both for holding the multiplier
+                      * (record #) and part of the product result.
+                      * However, the bits of the product don't get mixed
+                      * up with the bits of the multiplier because rolling
+                      * in a product bit also rolls out the last-used
+                      * multiplier bit (ie., there is no bit overlap).
+                      (B317)   LDY #16      ;16 bits / one 2-byte number.
+                      NMBXLEN  TAX          ;Save part of running product.
+                                            ;(On first entry, set (x) = 0).
+                               LDA FILPTBYT ;Set (a) = multiplier.
+                               LSR          ;Put multiplier bit in carry.
+                               BCS NMBXLEN1 ;If (c)=1, go add multiplicand to running product.
+                               TXA          ;(a) = part of running product.
+                               BCC NMBXLEN2 ;Always branch.  No use adding multiplicand cause
+                                            ;bit in multiplier is a 0.  Therefore, just go shift
+                                            ;running product.
+                      NMBXLEN1 CLC          ;Add multiplicand to running version of shifted product.
+                               LDA FILPTSEC+1
+                               ADC RECLENWA
+                               STA FILPTSEC+1
+                               TXA          ;Set (a) = low byte of running product.
+                               ADC RECLENWA+1
+                      NMBXLEN2 ROR          ;Shift the running product (as a unit) 1 bit
+                               ROR FILPTSEC+1 ;right for next time around.
+                               ROR FILPTSEC ;Shift lower 2 bytes of running product and
+                               ROR FILPTBYT ;at the same time throw out the last-used
+                                            ;multiplier bit.
+                               DEY          ;Reduce bit counter.
+                      (B33C)   BNE NMBXLEN  ;Branch if haven't done all 16 bits yet.
+
+                      * Copy byte offset into record from
+                      * the FM parameter list to the work area.
+                      (B33E)   CLC
+                               LDA BYTOFFFM
+                      (B342)   STA BYTOFFWA
+
+                      * Calculate lowest order byte of file pointer
+                      * BYTOFFWA =  offset into current record.
+                      *          = byte offset into record
+                      *            + (record length *  record  number).
+                      (B345)   ADC FILPTBYT
+                               STA FILPTBYT
+                               LDA BYTOFFFM+1
+                               STA BYTPFFWA+1
+                               ADC FILPTSEC
+                               STA FILPTSEC
+                               BCC CALCRTS
+                               INC FILPTSEC+1
+                      CALCRTS  RTS
+                      (B35C)
+
+
+*----------------------------------------------------------------*
+*                                                                *
+*                         Read-one-byte                          *
+*                      subfunction handler                       *
+*                                                                *
+*----------------------------------------------------------------*
+*                                                                *
+*      The read-one-byte subfunction handler ($AC8A) is called   *
+* by most DOS commands that write data to the disk.  Almost all  *
+* of the subroutines that are employed  by READONE ($AC8A) are   *
+* also used during the writing process.  Because these sub-      *
+* routines must be versatile enough to support an array of entry *
+* conditions, it can be difficult to trace different execution   *
+* patterns of program execution.  In order to make this task     *
+* easier, the structure of a T/S list and the major flags used   *
+* to govern execution are described below:                       *
+*                                                                *
+* Structure of a T/S list                                        *
+* Byte offset                 Function of bytes                  *
+* $00           Unused                                           *
+* $01, $02      Link to next T/S list.  (If no more T/S lists    *
+*               are present, the link bytes are zeroed out.)     *
+* $03, $04      Unused                                           *
+* $05, $06      Relative sector number (with respect to the      *
+*               entire file) of the first data sector pair       *
+*               that can be described in the present T/S list.   *
+*               Possible values are:  $0000, $007A, 2*$007A,     *
+*               3*$007A, $4*007A.  The image of these bytes are  *
+*               stored in the work area at RELFIRST ($B5DC,      *
+*               $B5DD).                                          *
+* $07 - $0B     Unused.                                          *
+* $0C, $0D      First data pair.  (Track and sector values of    *
+*               the first data sector.)                          *
+* $0E, $0F      Second data pair.                                *
+* $10, $11      Third data pair.                                 *
+*     .                .                                         *
+*     .                .                                         *
+*     .                .                                         *
+* $FE, $FF      One hundred and twenty-second data pair.         *
+*               If there are less than 122 data sectors in the   *
+*               file, the unused data-pair bytes are zeroed out. *
+*                                                                *
+* Major decisions and flags used:                                *
+* Use current data sector?                                       *
+*      - yes  = FILPTSEC/+1 = RELPREV/+1                         *
+*      - no   = FILPTSEC/+1 < > RELPREV/+1                       *
+*               - when a file is first opened, the open function *
+*                 (FNOPEN, $AB22) sets FILPTSEC: $0000 and       *
+*                 RELPREV: $007A.  This forces the computer to   *
+*                 try to use the file's first data sector.       *
+*               - when a data sector is filled by successively   *
+*                 adding data bytes, FILPTSEC/+1 > RELPREV/+1.   *
+*               - if the position function was used to adjust    *
+*                 the filpointer out of the range of RELPREV,    *
+*                 FILPTSEC/+1 < > RELPREV/+1.                    *
+* Use current T/S list?                                          *
+*      - yes    = FILPTSEC/+1 > = RELFIRST/+1                    *
+*                 and FILPTSEC/+1 < RELASTP1/+1.                 *
+*      - no     = FILPTSEC/+1 < RELFIRST/+1                      *
+*                 or FILPTSEC/+1 >= RELASTP1/+1.                 *
+* Update current data or T/S list sectors?                       *
+*      - yes    = bit 6 (data) or bit 7 (T/S list) of UPDATFLG   *
+*                 ($B5D5) are set.                               *
+*      - no     = bits 6 and 7 of UPDATFLG are clear.            *
+* Read first T/S list?                                           *
+*      - yes    = (c) = 0 - carry cleared if file was just       *
+*                           opened.  File pointer was previously *
+*                           backed up by CALCFPTR ($B300).       *
+*      - no     = (c) = 1 - file is long enough that another T/S *
+*                           list must be used.                   *
+* Writing data?                                                  *
+*      - yes = OPCODEFM ($B105) = 4.                             *
+*      - no  = OPCODEFM < > 4.                                   *
+* Any more data pairs listed in current T/S list?                *
+*      - no  = trk byte portion of data pair = $00.              *
+*      - yes = trk byte portion of data pair < > $00.            *
+* Any more T/S lists in file?                                    *
+*      - yes = trk byte portion of link < > $00.                 *
+*      - no  = trk byte portion of link = $00.                   *
+*      (Link to first T/S list is contained in the first two     *
+*      bytes of the file description entry in the directory sec. *
+*      Link to subsequent T/S lists are contained in 2nd and 3rd *
+*      bytes (offsets $01 and $02) of previous T/S lists.)       *
+*                                                                *
+* Note:  RELPREV ($B5E0, $B5E1)                                  *
+*                = the relative sector number (in relation to    *
+*                  the entire file) of the last data sector that *
+*                  was read or written.  (Values can range from  *
+*                  $0000, $007A, 2*$007A, 3*$007A, 4*$007A.)     *
+*       RELFIRST ($B5DC, $B5DD)                                  *
+*                = the relative sector number (in relation to    *
+*                  the entire file) of the first data sector     *
+*                  that is (or can be) listed in the current     *
+*                  T/S list.  (Values can range from $0000,      *
+*                  $007A, 2*$007A, 3*$007A, 4*$007A.)            *
+*      RELASTPL1 ($B5DE, $B5DF)                                  *
+*                = one greater than the maximum relative sector  *
+*                  number (in relation to the entire file) of    *
+*                  the last data sector that can possibly be     *
+*                  listed in the current T/S list.  (Values can  *
+*                  vary from $007A, 2*$007A, 3*$007A, 4*$007A,   *
+*                  to 5*$007A.)                                  *
+*                                                                *
+* Execution pattern:                                             *
+*      READONE ($AC8A) calls RDDATA ($ACA8) to read in the       *
+* appropriate T/S list and data sectors if necessary and then    *
+* retrieve a single input byte from the data sector buffer.      *
+* RDDATA in turn calls NXTDATRD ($B0B6) to do most of the dirty  *
+* work.  As shown below, NXTDATRD and its associated subroutines *
+* can use several different execution patterns when called by a  *
+* read subfunction:                                              *
+*                                                                *
+* Pattern 1:  = FILPTSEC/+1 =  RELPREV/+1                        *
+*             - select the current data sector.                  *
+*             - exit the NXTDATRD routine via XITNXDAT.          *
+* Pattern 2:  = FILPTSEC/+1 < > RELPREV/+1                       *
+*             = FILPTSEC/+1 > = NDXFIRST/+1                      *
+*               and FILPTSEC/+1 < RELASTP1/+1                    *
+*             = trk portion of data pr < > 0                     *
+*             - update the current data sector if necessary.     *
+*         2a: - get valid link byte to the next data sector from *
+*               the current T/S list.                            *
+*             - read in the next data sector.                    *
+*             - update RELPREV.                                  *
+*             - exit the NXTDATRD routine via XITNXDAT.          *
+* Pattern 3:  = FILPTSEC/+1 < > RELPREV/+1                       *
+*             = FILPTSEC/+1 > = RELFIRST/+1                      *
+*               and FILPTSEC/+1 < RELASTP1/+1                    *
+*             = trk portion of data pr = 0                       *
+*             = OPCODEFM < > 4                                   *
+*             - update the current data sector if necessary.     *
+*        3a:  - detect zeroed out data pair in the current T/S   *
+*               list.                                            *
+*             - test OPCODEFM to determine that we are not       *
+*               writing and set the carry flag to signal an out- *
+*               of-data error has occurred.                      *
+*             - abort the read subfunction via NDATERR.          *
+* Pattern 4:  = FILPTSEC/+1 < > RELPREV/+1                       *
+*             = FILPTSEC/+1 < = RELFIRST/+1                      *
+*             = carry clear at $AF69                             *
+*             = trk portion of link byte to next T/S list < > 0  *
+*             - update current data and/or T/S list secs if      *
+*               necessary.                                       *
+*             - get link to file's first T/S list from the file  *
+*               description entry in the current directory sec.  *
+*             - read in the first T/S list.                      *
+*             - loop back to do 2a, 3a or 5.                     *
+* Pattern 5:  = FILPTSEC/+1 < > RELPREV/+1                       *
+*             = FILPTSEC/+1 > = RELASTP1/+1                      *
+*             = carry set at $AF69                               *
+*             = trk portion of link to next T/S list < > 0       *
+*             - update current data and/or current T/S list      *
+*               sectors if necessary.                            *
+*             - get valid link bytes to the next T/S list from   *
+*               the current T/S list.                            *
+*             - read in the next T/S list.                       *
+*             - loop back to do 2a, 3a or repeat 5.              *
+* Pattern 6:  = FILPTSEC/+1 < > RELPREV/+1                       *
+*             = FILPTSEC/+1 > = RELASTP1/+1                      *
+*             = carry set at $AF69                               *
+*             = trk portion of link to next T/S list < > 0       *
+*             = OPCODEFM < > 4                                   *
+*             - update current data and/or current T/S list      *
+*               sectors if necessary.                            *
+*             - get zeroed out link bytes to next T/S list from  *
+*               the current T/S list.                            *
+*             - test OPCODEFM to determine that we are not       *
+*               writing and set the carry flag to signal an out- *
+*               of-data error has occurred.                      *
+*             - abort the read subfunction via NDATERR.          *
+*                                                                *
+*      If no errors are encountered, the NXTDATRD routine        *
+* ($B0B6) is exited via XITNXDAT ($B12C).  XITNXDAT points the   *
+* A4L pointer ($42, $43) at the DOS data sector buffer and sets  *
+* (y) to index that buffer.  When an "RTS" is encountered,       *
+* execution returns to the RDDATA routine at $ACAB.              *
+*        The input byte is retrieved from the data sector buffer *
+* and saved on the stack.  Next, INCREC ($B15B) is called to     *
+* increment the byte offset into the record.  If the resulting   *
+* offset corresponds to the record length, the byte offset is    *
+* reset to zero and the record number is incremented instead.    *
+* After the file pointer is also adjusted (via INCFILPT, $B194), *
+* the input byte is pulled off the stack and execution returns   *
+* to the READONE routine at $AC8D.  Finally, the byte just read  *
+* is stored in the one-byte buffer (ONEIOBUF; $B5C3, $B5C4) and  *
+* the file manager is exited via a jump to GOODFMXT ($B37F).     *
+*                                                                *
+*      Because the read-one-byte (READONE, $AC8A) and write-one- *
+* byte (WRITEONE, $ACBE) subfunctions must be called repeatedly  *
+* to read or write successive byte, most DOS commands only use   *
+* these routines sparingly.  However, the one-byte subfunctions  *
+* are the only vehicles employed by the READ and WRITE commands. *
+* No wonder text files operate at a snail's pace!!!              *
+*                                                                *
+*----------------------------------------------------------------*
+
+
+(AC8A)
+READONE JSR RDDATA    ;Read data byte into data sector buffer.
+                      ;(Update present data sector buffer if necessary.)
+
+                      * Subroutine to read a data byte.
+                      (ACA8)
+                      RDDATA   JSR NXTDATRD ;Read byte from data sector buffer.
+                                            ;(Write present data buffer and read new data
+                                            ;sector if necessary.)
+
+                                            * Check if need to read next data sector
+                                            * buffer into the data sector buffer.
+                                            *
+                                            * - Is data sector we want already in memory?
+                                            * - If so, does it require updating?
+
+                                            * If sector offset into file (FILPTSEC) equals
+                                            * the relative sector number of the last sector
+                                            * read or written (RELPREV), then sector we want
+                                            * is presently in memory.  If it is not in memory,
+                                            * read in the data sector wanted.  However, first
+                                            * check if the data sector has changed since the
+                                            * last read or write.  If it has, the disk must
+                                            * be updated before we read in the new data
+                                            * sector so we don't overwrite the data sector
+                                            * buffer and loose information.
+                                            * NOTE:  - if this subroutine is called from a
+                                            *          write subfunction and FILPTSEC is not
+                                            *          equal to RELPREV, then the data sector
+                                            *          buffer must be full & there4 should be
+                                            *          written to the disk before any more
+                                            *          information is read in.
+                                            *        - if the file was just opened, the open
+                                            *          subfunction set FILPTSEC = #$0000 and
+                                            *          RELPREV = #$FFFF so always forces reading
+                                            *          of new data sector even if the correct
+                                            *          sector is already in memory.
+                                            (B0B6)
+                                            NXTDATRD LDA FILPTSEC ;Last sector used versus sector wanted?
+                                                     CMP RELPREV
+                                            (B0BC)   BNE CKWCURDA ;Not same - will eventualy have to read in
+                                                                  ;a new data sector.
+                                            (B0BE)   LDA FILPTSEC+1 ;Maybe same - check hi bytes.
+                                                     CMP RELPREV+1
+                                            (B0C4)   BEQ XITNXDAT ;Same so go exit.
+
+                                            * Write data sector if necessary.
+                                            * Data sector we want is not presently
+                                            * in memory.  Check if need to write
+                                            * current data sector buffer before we
+                                            * read in the wanted data sector.
+                                            (B0C6)
+                                            CKWCURDA JSR CKDATUP  ;Check update flag to see if the data sector
+                                                                  ;buffer has changed since the last read or write.
+                                                                  ;If it has, write the data sector buffer to the disk.
+
+                                                                  * Check if data sector buffer has changed
+                                                                  * since the last read or write was done.
+                                                                  (AF1D)
+                                                                  CKDATUP  BIT UPDATFLG ;Check bit 6 to see if data sector
+                                                                                        ;buffer requires updating.
+                                                                  (AF20)   BVS WRITDATA ;Take branch if data requires updating.
+                                                                  (AF22)   RTS
+                                                                           ============
+
+                                                                  * Write present data sector buffer to the disk.
+                                                                  * Updates disk so can read in next data sector
+                                                                  * without overwriting and therefore losing
+                                                                  * previous data that hasn't yet been updated
+                                                                  * on the  disk.
+                                                                  (AF23)
+                                                                  WRITDATA JSR PRPDAIOB
+
+                                                                                        * Prepare RWTS's IOB to read/write
+                                                                                        * the data sector.
+                                                                                        (AFE4)
+                                                                                        PRPDAIOB LDY DATBUFFM ;Get addr of data
+                                                                                                 LDA DATBUFFM+1 ;sec buf from the
+                                                                                                 STY IBBUFP   ;FM parameter list
+                                                                                        (AFED)   STA IBBUFP+1 ;& designate it as
+                                                                                                              ;the I/O buffer for
+                                                                                                              ;RWTS's IOB.
+                                                                                        (AFF0)   LDX CURDATRK ;Enter driver with
+                                                                                                 LDY CURDATSC ;(x)/(y) = trk/sec
+                                                                                        (AFF6)   RTS          ;vals corresponding
+                                                                                                              ;to the data sector.
+
+                                                                  (AF26)   LDA #2       ;Opcode for RWTS's write command.
+                                                                  (AF28)   JSR RWTSDRVR ;Call driver to write data sector buf.
+
+                                                                                        * Read/write track/sector driver.
+                                                                                        (B052)
+                                                                                        RWTSDRVR .
+                                                                                                 .
+                                                                                        (See dis'mbly of RWTSDRVR using WRITE.)
+                                                                                                 .
+                                                                                                 .
+                                                                                                 (RTS)
+         
+                                                                  (AF2B)   LDA #%10111111 ;Shut bit 6 off in the update flag to
+                                                                           AND UPDATFLG ;signal that the data sector buffer is
+                                                                           STA UPDATFLG ;now up to date.
+                                                                  (AF33)   RTS
+                                                                           =============
+
+                                            * Should current T/S list be used?
+                                            * (That is, should the data sector be listed in
+                                            * the present T/S list sector?  If not,
+                                            * then will need to read in the correct
+                                            * T/S list.)
+
+                                            * Is the sector offset into the file of the present
+                                            * data sector less than the relative sector number
+                                            * of the FIRST DATA SECTOR that can be described in 
+                                            * in the T/S list presently in memory?  (If less,
+                                            * then need to read in a different T/S list sector.)
+                                            (B0C9)
+                                            CKCURTS  LDA FILPTSEC+1 ;Sector offset into file associated with
+                                            (B0CC)   CMP RELFIRST+1 ;the present data sector versus the
+                                                                  ;relative sector number of the 1rst data
+                                                                  ;sector that can be described in the present
+                                                                  ;T/S list.
+                                            (B0CF)   BCC NEEDNXTS ;Data sector wanted represents a SMALLER
+                                                                  ;offset into file so need a different T/S list.
+                                                                  ;(Start by reading file's first T/S list.)
+                                            (B0D1)   BNE CKCURTS1 ;Sector offset of wanted data sector is
+                                                                  ;LARGER than that of the first data sector
+                                                                  ;that can be described in the present T/S list
+                                                                  ;so it may still belong to this T/S list.
+                                            (B0D3)   LDA FILPTSEC ;Hi bytes same - so compare low bytes.
+                                                     CMP RELFIRST
+                                            (B0D9)   BCC NEEDNXTS ;Sector offset of wanted file is LESS,
+                                                                  ;so read in a different list.
+                                                                  ;(Start by reading file's first T/S list.)
+      
+                                            * Sector offset associated with the data
+                                            * sector wanted is either GREATER THAN OR
+                                            * EQUAL TO the relative sector offset 
+                                            * associated with the first data sector that can
+                                            * be described in this T/S list.  Therefore,
+                                            * compare the sector offset of the sector
+                                            * wanted with the relative sector number
+                                            * (plus 1) of the LAST sector that can be
+                                            * described in the present T/S list.
+                                            (B0DB)
+                                            CKCURTS1 LDA FILPTSEC+1 ;Sector offset associated with data sector
+                                            (B0DE)   CMP RELASTP1+1 ;we want versus the relative sector number
+                                                                  ;(plus 1) of the LAST data sector that can possibly
+                                                                  ;be described in the present T/S list.
+                                            (B0E1)   BCC GETDATPR ;Sector offset assoc with data sector we
+                                                                  ;want IS described in the present T/S list.
+                                            (B0E3)   BNE NEEDNXTS ;Sector offset of present data sector is
+                                                                  ;LARGER than that of the LAST data sector
+                                                                  ;(plus 1) that can possibly be described in the
+                                                                  ;present T/S list, so we need a new T/S list sector.
+                                            (B0E5)   LDA FILPTSEC ;Hi bytes same - so compare low bytes.
+                                                     CMP RELASTP1
+                                            (B0EB)   BCC GETDATPR ;Sector offset associated with data sector
+                                                                  ;we want is LESS than the relative sector
+                                                                  ;number (plus 1) of the last data sector that
+                                                                  ;can possibly be listed in the present T/S list.
+                                                                  ;There4, data sector wanted should be described
+                                                                  ;in the present T/S list.
+
+                                            * The data sector we want is NOT listed
+                                            * in the present T/S list, so we must read
+                                            * a different T/S list sector.  
+                                            * (NOTE:  Routine is entered with (c) = 1 if need a
+                                            * higher numbered T/S list.  If (c) = 0, then the file
+                                            * pointer was backed up and we need a smaller numbered
+                                            * T/S list.)
+                                            (B0ED)
+                                            NEEDNXTS JSR READTS   ;Read in the next (or first) T/S list.  However,
+                                                                  ;first check the update flag to see if the T/S list
+                                                                  ;presently in memory requires updating before
+                                                                  ;we read in the next (or first) T/S list sector.
+                                                                  ;If updating is required, write the present T/S
+                                                                  ;list.
+
+                                                                  * Writes old T/S list to disk if necessary
+                                                                  * & reads in next T/S list.  If there is no next
+                                                                  * T/S list then a new trk/sec pair is allocated
+                                                                  * & the old T/S list is linked to the new T/S list.
+                                                                  * Also updates ASIGNTRK, UPDATFLG, CURTSTRK,
+                                                                  * CURTSSEC, RELFIRST, RELASTP1, FM parameter list, etc.
+                                                                  * Read T/S list sector.
+                                                                  (AF5E)
+                                                                  READTS   PHP          ;Save (c) denoting if 1rst T/S list or not.
+                                                                                        ;(c) = 0 = read 1rst T/S list sec.
+                                                                                        ;(c) = 1 = read next T/S list sec.
+                                                                  (AF5F)   JSR CKTSUPDT ;Write T/S list sec buf if updating is
+                                                                                        ;required.  (If T/S list buf has changed
+                                                                                        ;since last read or write, then write it
+                                                                                        ;back to the disk so don't overwrite buf
+                                                                                        ;and loose information when read the new
+                                                                                        ;T/S list sector.)
+
+                                                                                        * Check if T/S list requires updating.
+                                                                                        * (i.e. Has T/S list buf changed since
+                                                                                        * the last read or write?)
+                                                                                        (AF34)
+                                                                                        CKTSUPDT LDA UPDATFLG ;If bit 7 set,
+                                                                                                 BMI WRITETS  ;updating required.
+                                                                                        (AF39)   RTS
+                                                                                                 ============
+
+                                                                                        * Write the T/S list buffer.
+                                                                                        (AF3A)
+                                                                                        WRITETS  JSR SETTSIOB ;Prep 4 WRITING the
+                                                                                                              ;T/S list buffer.
+
+                                                                                                              * Prep RWTS's IOB 4
+                                                                                                              * reading or writing
+                                                                                                              * the T/S list buffer.
+                                                                                                              * (Get adr of T/S list
+                                                                                                              * buf from FM parm
+                                                                                                              * list & designate T/S
+                                                                                                              * list buf as the I/O
+                                                                                                              * buf in RWTS's IOB.
+                                                                                                              * Exit with (x)/(y)
+                                                                                                              * = trk/sec of current
+                                                                                                              * T/S list sector.)
+                                                                                                              (AF4B)
+                                                                                                              SETTSIOB LDA TSBUFFM
+                                                                                                                       STA IBBUFP
+                                                                                                                       LDA TSBUFFM+1
+                                                                                                                       STA IBBUFP+1
+                                                                                                                       LDX CURTSTRK
+                                                                                                                       LDY CURTSSEC
+                                                                                                              (AF5D)   RTS
+
+                                                                                        (AF3D)   LDA #2       ;Write opcode 4 RWTS.
+                                                                                        (AF3F)   JSR RWTSDRVR ;Call driver to write
+                                                                                                              ;the T/S list sector.
+
+                                                                                                              * Read/Write
+                                                                                                              * Track/Sector driver.
+                                                                                                              (B052)
+                                                                                                              RWTSDRVR .
+                                                                                                                       .
+                                                                                                              (See dis'mbly of RWTS
+                                                                                                              driver using WRITE.)
+                                                                                                                       .
+                                                                                                                       .
+                                                                                                                       (RTS)
+
+                                                                                        (AF42)   LDA #$7F     ;Clr bit7 of update
+                                                                                                 AND UPDATFLG ;flag to signal that
+                                                                                                 STA UPDATFLG ;T/S list sec is up
+                                                                                        (AF4A)   RTS          ;to date.
+                                                                                                 ============
+
+                                                                  (AF62)   JSR SETTSIOB ;Prepare RWTS's IOB for READing a T/S list.
+
+                                                                                        * Prepare RWTS's IOB for reading or
+                                                                                        * writing the T/S list sector.
+                                                                                        (AF4B)
+                                                                                        SETTSIOB LDA TSBUFFM  ;Get adr of the T/S
+                                                                                                 STA IBBUFP   ;list buf from the
+                                                                                                 LDA TSBUFFM+1 ;FM parameter list
+                                                                                        (AF54)   STA IBBUFP+1 ;& designate T/S list
+                                                                                                              ;buf as the I/O buf in
+                                                                                                              ;RWTS's IOB.
+                                                                                        (AF57)   LDX CURTSTRK ;Set (x)/(y) = trk/sec
+                                                                                                 LDY CURTSSEC ;of current T/S list.
+                                                                                        (AF5D)   RTS
+     
+                                                                  (AF65)   JSR SELTSBUF ;Select the T/S list buffer.
+
+                                                                                        * Point A4L/H at the T/S list sector buffer.
+                                                                                        (AF0C)
+                                                                                        SELTSBUF LDX #2       ;Ndx for T/S list buf.
+                                                                                        (AF0E)   BNE PT2FMBUF ;ALWAYS.
+
+                                                                                        (AF12)
+                                                                                        PT2FMBUF LDA WRKBUFFM,X ;Get adr of the
+                                                                                                 STA A4L      ;desired buf from
+                                                                                                 LDA WRKBUFFM+1,X ;the FM parameter
+                                                                                                 STA A4L+1    ;list & put it in the
+                                                                                        (AF1C)   RTS          ;A4L/H pointer.
+
+                                                                  (AF68)   PLP          ;Get saved (c) back from the stack.
+                                                                  (AF69)   BCS RDNXTTS  ;If (c) = 1, already read the first T/S
+                                                                                        ;list sector, so go read next one.
+
+                                                                  * Read the FIRST T/S list sector.
+                                                                  * (Carry was clear.)
+                                                                  (AF6B)
+                                                                  RDFIRSTS LDX FIRSTSTK ;Set (x)/(y)=trk/sec of first T/S list sec.
+                                                                           LDY FIRTSSEC
+                                                                  (AF71)   JMP RDTSLST  ;Go read T/S list sector into buffer.
+                                                                           ------------
+
+                                                                  * Read NEXT T/S list sector.
+                                                                  * (Carry was set.)
+                                                                  (AF74)
+                                                                  RDNXTTS  LDY #1       ;Index into T/S list buffer.
+                                                                           LDA (A4L),Y  ;Trk for link to next T/S list sector.
+                                                                  (AF78)   BEQ TSLNKZRO ;Link zeroed out, so there are no more
+                                                                                        ;T/S list sectors for the file.
+                                                                  (AF7A)   TAX          ;(x) = track # of next T/S list sector.
+                                                                           INY
+                                                                           LDA (A4L),Y  ;Sector for link to next T/S list sector.
+                                                                           TAY          ;(y) = sec # of next T/S list sector.
+                                                                  (AF7F)   JMP RDTSLST  ;Go read in the next T/S list sector.
+                                                                           ------------
+
+                                                                  * T/S link zeroed out, so now must
+                                                                  * decide if got an error or not.
+                                                                  (AF82)
+                                                                  TSLNKZRO LDA OPCODEFM ;Check read/write status to see if want
+                                                                           CMP #4       ;to add another T/S list or not.
+                                                                           BEQ UPDATETS ;WRITING, so go update link.
+                                                                           SEC          ;We were READING & the link zeroed out, so
+                                                                  (AF8A)   RTS          ;return with (c) = 1 to signal that an
+                                                                           ============ ;error occurred.  (Remember, we previously
+                                                                                        ;set the return code to a default value
+                                                                                        ;corresponding to a file-not-found error.)
+
+                                                                  * Writing and link zeroed out, so
+                                                                  * must assign a new T/S list sector.
+                                                                  (AF8B)
+                                                                  UPDATETS JSR ASGNTKSC ;Find and reserve trk/sec values
+                                                                                        ;for a new T/S list sector.
+
+                                                                                        * Asign trk/sec vals for a new T/S list.
+                                                                                        (B244)
+                                                                                        ASGNTKSC .
+                                                                                                 .
+                                                                                        (See formatted disassembly given in
+                                                                                        the open function handler (FNOPEN).)
+                                                                                                 .
+                                                                                                 .
+                                                                                                 (RTS)
+
+                                                                  * Link the new T/S list sector to
+                                                                  * the last T/S list sector and then
+                                                                  * write the updated version of the
+                                                                  * last T/S list sector to the disk.
+                                                                  (AF8E)
+                                                                  LNKOLDNW LDY #2       ;Offset to sector portion of link.
+                                                                           STA (A4L),Y  ;Put new sector value in link.
+                                                                           PHA          ;Also save it on the stack.
+                                                                           DEY          ;Offset to trk portion of link.
+                                                                           LDA ASIGNTRK ;Put new trk value in link.
+                                                                           STA (A4L),Y
+                                                                           PHA          ;Also save trk value on the stack.
+                                                                  (AF9A)   JSR WRITETS
+
+                                                                                        * Write the T/S list buffer.
+                                                                                        (AF3A)
+                                                                                        WRITETS  JSR SETTSIOB ;Prep 4 WRITING the
+                                                                                                              ;T/S list buffer.
+
+                                                                                                              * Prep RWTS's IOB 4
+                                                                                                              * reading or writing
+                                                                                                              * the T/S list buffer.
+                                                                                                              * (Get adr of T/S list
+                                                                                                              * buf from FM parm
+                                                                                                              * list & designate T/S
+                                                                                                              * list buf as the I/O
+                                                                                                              * buf in RWTS's IOB.
+                                                                                                              * Exit with (x)/(y)
+                                                                                                              * = trk/sec of current
+                                                                                                              * T/S list sector.)
+                                                                                                              (AF4B)
+                                                                                                              SETTSIOB LDA TSBUFFM
+                                                                                                                       STA IBBUFP
+                                                                                                                       LDA TSBUFFM+1
+                                                                                                                       STA IBBUFP+1
+                                                                                                                       LDX CURTSTRK
+                                                                                                                       LDY CURTSSEC
+                                                                                                              (AF5D)   RTS
+
+                                                                                        (AF3D)   LDA #2       ;Write opcode 4 RWTS.
+                                                                                        (AF3F)   JSR RWTSDRVR ;Call driver to write
+                                                                                                              ;the T/S list sector.
+
+                                                                                                              * Read/Write
+                                                                                                              * Track/Sector driver.
+                                                                                                              (B052)
+                                                                                                              RWTSDRVR .
+                                                                                                                       .
+                                                                                                              (See dis'mbly of RWTS
+                                                                                                              driver using WRITE.)
+                                                                                                                       .
+                                                                                                                       .
+                                                                                                                       (RTS)
+
+                                                                                        (AF42)   LDA #$7F     ;Clr bit7 of update
+                                                                                                 AND UPDATFLG ;flag to signal that
+                                                                                                 STA UPDATFLG ;T/S list sec is up
+                                                                                        (AF4A)   RTS          ;to date.
+
+                                                                  * Set up a brand new T/S list sector
+                                                                  * and write it to the disk.
+                                                                  (AF9D)
+                                                                  ZOUTTS   JSR ZCURBUF  ;Zero out the T/S list buffer.
+
+                                                                                        * Zero out the current 256-byte buffer.
+                                                                                        (B7D6)
+                                                                                        ZCURBUF  LDA #0
+                                                                                                 TAY
+                                                                                        ZCURBUF1 STA (A4L),Y
+                                                                                                 INY
+                                                                                                 BNE ZCURBUF1
+                                                                                        (B7DE)   RTS
+
+                                                                  (AFA0)   LDY #5       ;At offsets 5 & 6 into the new T/S list
+                                                                           LDA RELASTP1 ;put the relative sector number (in
+                                                                           STA (A4L),Y  ;relation to the entire file) of the FIRST
+                                                                           INY          ;data sector pair that will described in
+                                                                           LDA RELASTP1+1 ;this new T/S list.  (Possible values:
+                                                                           STA (A4L),Y  ;$007A, 2*$007A, 3*$007A and 4*$007A.)
+                                                                           PLA          ;Get trk/sec values (x/y) of this new
+                                                                           TAX          ;T/S list sector off of the stack.
+                                                                           PLA
+                                                                           TAY
+                                                                           LDA #2       ;Write opcode for RWTS.
+                                                                  (AFB3)   BNE RDWRTS   ;ALWAYS - go write the T/S list sector.
+
+                                                                  * Subroutine to read the T/S list sector.
+                                                                  (AFB5)
+                                                                  RDTSLST  LDA #1       ;Read opcode for RWTS.
+
+                                                                  * Code common to read/write T/S list sector.
+                                                                  (AFB7)
+                                                                  RDWRTS   STX CURTSTRK ;New T/S list sector trk/sec values
+                                                                  (AFBA)   STY CURTSSEC ;(x/y) become current T/S list trk/sec
+                                                                                        ;values.
+                                                                  (AFBD)   JSR RWTSDRVR ;Call RWTS driver to read/write the
+                                                                                        ;current T/S list sector.
+
+                                                                                        * Read or write the current T/S list.
+                                                                                        (B052)
+                                                                                        RWTSDRVR .
+                                                                                                 .
+                                                                                        (See formatted dis'mbly of RWTS driver
+                                                                                        using READ or WRITE.)
+                                                                                                 .
+                                                                                                 .
+                                                                                                 (RTS)
+
+                                                                  * Update the FM work area
+                                                                  * (not in DOS buffer chain).
+                                                                  (AFC0)   LDY #5       ;Offset into current T/S list buffer.
+                                                                           LDA (A4L),Y  ;Get & save the relative sector number
+                                                                  (AFC4)   STA RELFIRST ;of the first data sector that can be
+                                                                                        ;described in this T/S list.  (Value
+                                                                                        ;equals $0000, $007A, 2*$007A, 3*$007A,
+                                                                                        ;or 4*$007A.)
+                                                                  (AFC7)   CLC          ;Add the maximum number of secs that
+                                                                           ADC MXSCURTS ;can be described in this T/S list.
+                                                                  (AFCB)   STA RELASTP1 ;Store the maximum relative sector number
+                                                                                        ;(plus 1) that can possibly be described    
+                                                                                        ;in this particular T/S list.  (That is,
+                                                                                        ;reset RELASTP1.)
+                                                                  (AFCE)   INY 
+                                                                           LDA (A4L),Y
+                                                                           STA RELFIRST+1
+                                                                           ADC MXSCURTS+1
+                                                                           STA RELASTP1+1  ;Value equals $0000, $007A,
+                                                                           CLC          ;2*$007A, 3*$007A, 4*$007A or 5*$007A.
+                                                                  (AFDB)   RTS
+                                                                           ============
+         
+                                            (B0F0)   BCC CKCURTS  ;Go back and check if this is
+                                                                  ;the correct T/S list.
+                                                                  ;Always take this branch when writing.
+                                            (B0F2)   RTS          ;RETURN WITH (c)=1 TO SIGNAL POTENTIAL ERROR
+                                                     ============ ;CAUSE RAN OUT OF T/S LISTS WHILE READING.
+
+                                            * We know that the data sector wanted
+                                            * should be described in the present T/S
+                                            * list so now calculate the offset into
+                                            * the T/S list sector where the data
+                                            * sector pair should be described.
+                                            (B0F3)
+                                            GETDATPR SEC          ;Calculate offset to the data pair:
+                                                     LDA FILPTSEC ;   Sector offset of data sector in file
+                                            (B0F7)   SBC RELFIRST ;   minus the relative index of first data
+                                                                  ;   sector pair described in present T/S list.
+                                            (B0FA)   ASL          ;Times 2 cause 2 bytes used to describe a data pair.
+                                                     ADC #12      ;Add 12 cause 1rst data pair is always listed
+                                                     TAY          ;12 bytes from the start of the T/S list buf.
+                                            (B0FE)   JSR SELTSBUF ;Point A4L/H at the T/S list buffer.
+
+                                                                  * Point the A4L/H pointer at the
+                                                                  * T/S list sector buffer.
+                                                                  (AF0C)
+                                                                  SELTSBUF LDX #2       ;Index to select T/S list sector buffer.
+                                                                  (AF0E)   BNE PT2FMBUF ;ALWAYS.
+
+                                                                  (AF12)
+                                                                  PT2FMBUF LDA WRKBUFFM,X ;Get address of selected buffer from
+                                                                           STA A4L      ;the FM parm list & put it in the pointer.
+                                                                           LDA WRKBUFFM+1,X
+                                                                           STA A4L+1
+                                                                  (AF1C)   RTS         
+
+                                            (B101)   LDA (A4L),Y  ;Get trk number part of data sector pair.
+                                            (B103)   BNE RDDATSEC ;Go read in the data sector.
+
+                                            * The track number part of the data sector
+                                            * pair was zero.  Therefore there are no
+                                            * more data sector pairs described in this
+                                            * T/S list.
+                                            (B105)   LDA OPCODEFM ;Check to see if writing or not.
+                                                     CMP #4
+                                                     BEQ NEWPAIR  ;Branch if writing.
+                                                     SEC          ;NOT WRITING AND RAN OUT OF DATA SECTOR PAIRS
+                                            (B10D)   RTS          ;IN THE PRESENT T/S LIST, SO GO EXIT WITH
+                                                     ============ ;CARRY SET TO SIGNAL POTENTIAL ERROR.
+
+                                            * The data sector pair associated with the
+                                            * data sector wanted was contained in the
+                                            * current T/S list, so now read in the data
+                                            * sector wanted.
+                                            (B114)
+                                            RDDATSEC STA CURDATRK ;Save trk/sec values of current data sector
+                                                     INY          ;in the work area.
+                                                     LDA (A4L),Y  ;Sector number of current data sector.
+                                                     STA CURDATSC
+                                            (B11D)   JSR READDATA ;Go read in the data sector.
+
+                                                                  * Read data sector from disk
+                                                                  * to the data sector buffer.
+                                                                  (AFDC)
+                                                                  READDATA JSR PRPDAIOB ;Set up RWTS's IOB to read a data sector.
+
+                                                                                        * Prepare RWTS's IOB to read/write
+                                                                                        * the data sector.
+                                                                                        (AFE4)
+                                                                                        PRPDAIOB LDY DATBUFFM ;Get addr of data
+                                                                                                 LDA DATBUFFM+1 ;sec buf from
+                                                                                                 STY IBBUFP   ;the FM parm list
+                                                                                        (AFED)   STA IBBUFP+1 ;& designate it
+                                                                                                              ;as the I/O buffer
+                                                                                                              ;for RWTS's IOB.
+                                                                                        (AFF0)   LDX CURDATRK ;Enter driver with
+                                                                                                 LDY CURDATSC ;(x)/(y) = trk/sec
+                                                                                        (AFF6)   RTS          ;vals corresponding
+                                                                                                              ;to the data sector.
+
+                                                                  (AFDF)   LDA #1       ;Read opcode for RWTS.
+                                                                  (AFE1)   JMP RWTSDRVR ;Call RWTS driver to read the data sector.
+                                                                           ------------
+
+                                                                  * Read/write track/sector driver.
+                                                                  (B052)
+                                                                  RWTSDRVR .
+                                                                           .
+                                                                  (See dis'mbly of RWTSDRVR using READ.)
+                                                                           .
+                                                                           .
+                                                                           (RTS)
+
+                                            * Save sector offset into file value
+                                            * associated with the data sector just read.
+                                            (B120)
+                                            SETPREV  LDA FILPTSEC ;Current sector offset into file.
+                                                     STA RELPREV  ;Offset into file of last data sector read.
+                                                     LDA FILPTSEC+1
+                                            (B129)   STA RELPREV+1
+
+                                            * Exit the read-next-data-sector routine.
+                                            (B12C)
+                                            XITNXDAT JSR SELDABUF ;Select the data sector buffer.
+
+                                                                  * Point A4L/H at the data sector buffer.
+                                                                  (AF10)
+                                                                  SELDABUF LDX #4       ;Index to select data sector buffer.
+                                                                  PT2FMBUF LDA WRKBUFFM,X ;Get address of selected buffer from
+                                                                           STA A4L      ;the FM parameter list & put it in the
+                                                                           LDA WRKBUFFM+1,X ;A4L/H pointer.
+                                                                           STA A4L+1
+                                                                  (AF1C)   RTS
+
+                                            (B12F)   LDY FILPTBYT ;(y) = offset into current data sector.
+                                                     CLC          ;Exit cleanly.
+                                            (B133)   RTS
+                                                     ============
+
+                      (ACAB)   BCS NDATERR  ;Branch if ran out of data sectors while READing.
+                                            ;(ie. Either encountered a zeroed-out data pair
+                                            ;or a zeroed-out T/S link in a T/S list sector.)
+                               LDA (A4L),Y  ;Get single byte read from the data sector buffer.
+                               PHA          ;Save it on the stack.
+                      (ACB0)   JSR INCREC   ;Either increment the record number or
+                                            ;increment the byte offset into the record.
+
+                                            * Adjust record number or byte offset
+                                            * into a given record.
+                                            *
+                                            * This routine is used both when reading
+                                            * and writing.  The pattern of execution
+                                            * varies with the structure of the file.
+                                            * However, some files are treated as if
+                                            * they have one type of structure when
+                                            * they are read and another type of
+                                            * structure when they are being written:
+                                            * - random access text files have a fixed
+                                            *   record length assigned by the user.
+                                            * - sequential text & Applesoft files
+                                            *   have a record length of one.
+                                            * - during a LOAD or BLOAD, Applesoft or
+                                            *   Binary files are considered to be 
+                                            *   composed of a collection of one-byte
+                                            *   long records.
+                                            * - when SAVEing or BSAVEing however, these
+                                            *   files are treated as if they consist of
+                                            *   one long record.
+
+                                            * Copy the record number from the work
+                                            * area to the FM parameter list.
+                                            (B15B)
+                                            INCREC   LDX RECNMBWA ;Get the current record number.
+                                                     STX RECNMBFM ;Store it in the FM parameter list.
+                                                     LDX RECNMBWA+1
+                                            (B164)   STX RECNMBFM+1
+
+                                            * Copy the current byte offset into the record
+                                            * from the work area to the FM parameter list.
+                                            (B167)   LDX BYTOFFWA ;Get offset into record from work area.
+                                                     LDY BYTOFFWA+1
+                                                     STX BYTOFFFM ;Store it in the FM parameter list.
+                                            (B170)   STY BYTOFFFM+1
+
+                                            * Increment the byte offset into the record.
+                                            * If it equals the record length, then reset
+                                            * the offset to zero and kick up the record
+                                            * number.
+                                            (B173)   INX
+                                                     BNE BYTVSREC
+                                                     INY
+                                            BYTVSREC CPY RECLENWA+1 ;Fixed value via OPEN command, else
+                                            (B177)                ;L-parameter via SAVE or BSAVE command (from work area).
+                                            (B17A)
+                                            KIKOFF1  BNE SETBYTOF
+                                                     CPX RECLENWA
+                                            KIKOFF2  BNE SETBYTOF
+                                                     LDX #0       ;Offset into record was the same as the
+                                            (B183)   LDY #0       ;record length so prepare to reset the
+                                                                  ;offset into the record to zero.
+                                            (B185)   INC RECNMBWA
+                                            NOKIKOFF BNE SETBYTOF
+                                            (B18A)   INC RECNMBWA+1
+
+                                            * On fall through or entry from NOKIKOFF,
+                                            * reset the offset into the record to zero.
+                                            * On branched entry from KIKOFF1 or KIKOFF2,
+                                            * increment the offset into the record.
+                                            (B18D)
+                                            SETBYTOF STX BYTOFFWA
+                                                     STY BYTOFFWA+1
+                                            (B193)   RTS
+
+                      (ACB3)   JSR INCFILPT
+
+                                            * Increment byte offset into current data
+                                            * sector.  If at the end of the sector,
+                                            * then increment the offset into the entire file.
+                                            (B194)
+                                            INCFILPT INC FILPTBYT ;Kick up offset into sector.
+                                                     BNE INCPTRTN ;Branch if not at end of current sector.
+                                                     INC FILPTSEC ;Offset into sector wrapped around cause
+                                            (B19C)   BNE INCPTRTN ;at end of sector, so kick up offset into
+                                                                  ;entire file.
+                                            (B19E)   INC FILPTSEC+1 ;Increment hi byte if necessary.
+                                            INCPTRTN RTS
+                                            (B1A1)
+
+                      (ACB6)   PLA          ;Get data byte just read (back from stack).
+                      (ACB7)   RTS
+                               ============
+
+                      (ACB8)
+                      NDATERR  JMP ENDOFDAT ;Ran out of data while reading.
+                               ------------
+
+(AC8D)   STA ONEIOBUF ;Put byte just read in the one-byte buffer
+                      ;contained in the FM parameter list.
+(AC90)   JMP GOODFMXT ;Exit the file manager.
+         ------------
+
+
+* Exit File Manager with or without errors.
+(B367)
+RNGERRSB LDA #3
+(B369)   BNE BADFMXIT ;ALWAYS.
+
+(B36F)
+ENDOFDAT LDA #5
+(B371)   BNE BADFMXIT ;ALWAYS.
+
+(B37F)
+GOODFMXT LDA RTNCODFM
+         CLC          ;(c) = 0 to signal good operation.
+         BCC FMEXIT
+BADFMXIT SEC          ;(c) = 1 to signal unsuccessful.
+FMEXIT   PHP          ;Save status on stack.
+         STA RTNCODFM ;Store return code in FM parameter list.
+         LDA #0       ;Avoid that infamous $48 bug.
+         STA STATUS
+(B38E)   JSR CPYFMWA  ;Copy work area to the work buffer.
+
+                      * Copy the FM work area buffer (non-chain)
+                      * to the FM work buffer (in DOS chain).
+                      (AE7E)
+                      CPYFMWA  JSR SELWKBUF ;Select the FM work buffer (in DOS chain).
+
+                                            * Point the A4L/H pointer at the FM work buffer.
+                                            (AF08)
+                                            SELWKBUF LDX #0       ;Set index to select FM work buffer.
+                                            (AF0A)   BEQ PT2FMBUF ;ALWAYS.
+
+                                            (AF12)
+                                            PT2FMBUF LDA WRKBUFFM,X ;Get address of selected buffer from the
+                                                     STA A4L      ;FM parameter list and put it in the pointer.
+                                                     LDA WRKBUFFM+1,X
+                                                     STA A4L+1
+                                            (AF1C)   RTS
+     
+                      (AE81)   LDY #0       ;Initialize index.
+                      STORWRK  LDA FMWKAREA,Y ;Get byte from the FM work area.
+                               STA (A4L),Y  ;Put it in the work buffer.
+                               INY
+                               CPY #45      ;45 bytes to copy (0 to 44).
+                               BNE STORWRK
+                      (AE8D)   RTS
+
+(B391)   PLP          ;Retrieve status of success of operation
+                      ;back from the stack.
+(B392)   LDX STKSAV   ;Adjust the stack  pointer to force exit
+         TXS          ;to the caller of the function handler
+(B396)   RTS          ;(even if several subroutines deeper than
+         ============ ;original entry).  Returns to AFTRFUNC
+                      ;($A6AB) in the FMDRIVER routine ($A6A8).

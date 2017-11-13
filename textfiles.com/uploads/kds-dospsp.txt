@@ -1,0 +1,62 @@
+KDS-DOSPSP: DOS Program Segment Prefix
+======================================
+v1.0 (C)opyright 2010, King Dominic Salemno.
+July 2010.
+
+Disclaimer: I make no guarantees to the accuracy found in this document. My views and opinions are solely based upon my individuality and do not express the views and opinions held by the intellectual property rights owner of the information detailed inside this document. This is not an *OFFICIAL* or *AUTHORITATIVE* source in regards to the subject matter reviewed and explained below. I am not responsible for the damage done to any system and/or data done by testing the information found in this document. One should also consult the intellectual property rights owner in regards to use and/or licensing regarding the technology in this document.
+
+Table of Contents
+=================
+  1. Introduction
+  2. Structural Overview
+  3. Structure
+  4. Analysis/Research Overview
+
+1. Introduction
+===============
+This document details the DOS Program Segment Prefix structure.
+
+2. Structural Overview
+======================
+When a program is called via EXEC, DOS allocates the lowest available address space to the program in question, a.k.a. the "Program Segment". At offset 0 of any particular program segment, DOS constructs a structure called the "Program Segment Prefix". Subsequently, the program code is loaded at offset 0x0100, which is given control by EXEC.
+
+3. Structure
+============
+
+ __________________________________ ______________________________
+| MEMORY OFFSET | BYTES        | EXPLANATORY NOTE                 |
+ -----------------------------------------------------------------
+| xxxx:0000     | 2            | INT 20                           |
+| xxxx:0002     | 2            | Memory Size (Paragraphs)         |
+| xxxx:0004     | 1            | Reserved                         |
+| xxxx:0005     | 5            | Long Call to DOS (CP/M)          |
+| xxxx:000A     | 4            | INT 22                           |
+| xxxx:000E     | 4            | INT 23                           |
+| xxxx:0012     | 4            | INT 24                           |
+| xxxx:0016     | 2            | Parent Program Segment Address   |
+| xxxx:0018     | 20           | Job File Table                   |
+| xxxx:002C     | 2            | Environment Segment              |
+| xxxx:002E     | 4            | SS:SP on entry to last INT 21    |
+| xxxx:0032     | 2            | Handle Array Size                |
+| xxxx:0034     | 4            | Handle Array Pointer             |
+| xxxx:0038     | 24           | Reserved                         |
+| xxxx:0050     | 3            | DOS Function Dispatcher (INT 21) |
+| xxxx:0053     | 9            | Reserved                         |
+| xxxx:005C     | 16           | Unopened File Control Block 1    |
+| xxxx:006C     | 20           | Unopened File Control Block 2    |
+| xxxx:0080     | 1            | Parameter Length                 |
+| xxxx:0081     | 127          | Parameters                       |
+ -----------------------------------------------------------------
+
+
+4. Analysis/Research Overview
+=============================
+All of the material presented in this document was analyzed and tested with the following software:
+
+  4.1. FreeDOS (Operation System / DOS Clone)
+  -------------------------------------------
+    4.1.1. FreeDOS was was used in combination with DEBUG to verify the information in this document.
+ 
+  4.2. DEBUG (DOS Debugging Utility)
+  ----------------------------------
+    4.2.1. DEBUG was was used in combination with FreeDOS to verify the information in this document.

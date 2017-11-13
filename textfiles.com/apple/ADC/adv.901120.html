@@ -1,0 +1,309 @@
+America Online
+APPLE II DEVELOPMENT FORUM CONFERENCE LOG
+Tuesday, November 20, 1990  10:00 p.m. Eastern Time
+Topic:  Apple II Network Programming
+Forum Leader:  Dave Sugar (AFL Dyfet)
+
+AFL Dyfet  Tonight's topic is Network Programming on the Apple II
+AFL Dyfet  Yes Scott, go ahead...let's give Scott some room to talk on the
+           floor folks :)
+AFL Scott  If I use GS/OS Class 1 file calls will my program be able to be
+           run from an AppleShare server?
+AFL Dyfet  On topic...:)  GA Dave...
+EdWatkeys  Can't your programs run from a server provided they don't READ or
+           WRITE BLOCK?
+Dave Lyons Scott, that isn't enough to *guarantee* you'll run with
+           AppleShare, but it's certainly
+Dave Lyons helpful.  You don't have to worry about getting killed by long
+           paths that way (AppleShare
+Dave Lyons pathnames can easily be >64 characters long).
+Dave Lyons The stuff listed in the GS/OS Technical Notes is very good.
+Dave Lyons If you have any hard-coded
+Dave Lyons pathnames, make sure the high bits are turned *off* for regular
+           ASCII characters--the ProDOS
+Dave Lyons FST ignores the high bits, even though they are *supposed* to be
+           off.  AppleShare (and possibly
+Dave Lyons other FSTs in the future) care about all 8 bits of your
+           characters.
+Dave Lyons (ga)
+AFL Dyfet  In regards to Ed's question, there are instances you cannot use
+           block read/
+AFL Dyfet  write on a ProDOS volume :), and certainly not on a server
+           volume.
+AFL Scott  Ok...do you happen to remember the technote number, Dave?
+AFL Scott  And thanks, BTW!:)
+Dave Lyons Sure, just a sec--
+Dave Lyons GS/OS #4, A GS/OS State of Mind is good; also there is material in
+           the GS/OS Reference,
+Dave Lyons of course.
+AFL Scott  Thanks!:) GA, Done, Finito :)
+Dave Lyons Stay completely away from READ_BLOCK, WRITE_BLOCK, DRead, and
+           DWrite whenever you can.
+Dave Lyons (ga)
+EdWatkeys  Dread? RWrite?  What are they (I'm an 8-bitter...)
+AFL Dyfet  The block read/write calls are blocked in the ProDOS FST if any
+           files are open
+AFL Dyfet  on the volume in question due to caching.  Otherwise you could
+           disturb
+AFL Dyfet  something in transition (ugly).  For both ProDOS 8 and the GS/OS
+           AppleShare FST
+AFL Dyfet  block I/O is disabled completely.  Correct Dave??
+Dave Lyons Yes--
+Dave Lyons AppleShare returns errors ($88 I think) if you try to do block
+           reads/writes.
+Dave Lyons (Ed, DRead and DWrite are GS/OS calls.)
+Dave Lyons One more tip--
+Dave Lyons Don't use Read to scan a directory; use GetDirEntry instead.  (I
+           think ProDOS lets you use Read for
+Dave Lyons backward compatibility, but other FSTs do NOT!)
+Dave Lyons ga
+AFL Dyfet  Under ProDOS 8, open and read the directory file through the MLI
+           file access
+AFL Dyfet  calls, and NEVER by following the directory block links with
+           direct block I/O.
+EdWatkeys  Well, what do DRead and DWrite do?
+Dave Lyons (Ed, they stand for "Device read" and "device write"--they let you
+           read and write ranges
+Dave Lyons of blocks on a block device.)
+AFL Dyfet  Okay, who else has a networking/AppleShare question for tonight?
+ShanoJ     I guess I'll make a wild stab at a question: if in Convert/3200 I
+           want to
+ShanoJ     change the suffix of a file (ie. xxxxx.SCR for a $C1 file) in the
+           save dialog,
+ShanoJ     it's not a good idea to just truncate the input filename to 11
+           characters and 
+ShanoJ     add the .SCR, right? I should keep ALL of the characters? What do
+           I do if that
+ShanoJ     doesn't fit in the SFPutFile LE?
+AFL Dyfet  GA Joey...
+AFA JoeyS  Well, IMHO (and probably according to AHIG, too), a suffix should
+           never be
+AFA JoeyS  forcibly added -- naming should be totally the user's option.  You
+           can, however
+AFA JoeyS  take the source (GIF, whatever) filename, truncate to 11, add
+           ".SCR", and pass
+AFA JoeyS  it to SFPutFile as the default name... that'd keep everyone happy.
+            GA.
+Dave Lyons (Yeah, what Joey said.)
+AFL Dyfet  :)
+AFA Gary J (the Dave Lyons stamp of approval :)
+AFA JoeyS  :)
+AFL Dyfet  "Nifty-Stamp" :)
+Dave Lyons :)
+AFA Gary J USDA
+AFA Gary J (DAve :)
+Dave Lyons (Or USDAL?)
+AFA JoeyS  LOL
+Dave Lyons BTW, it has been suggested that Standard File ought to
+Dave Lyons let you specify a default name and have *part* of it selected by
+           default, so you could
+Dave Lyons have something like [UNTITLED].SCR (bracketed part is selected)
+           and type over that part, leaving
+Dave Lyons the suffix (but you could still edit the rest, of course).
+ShanoJ     So even if it's a 64 character name from an AppleShare sever, it'd
+           be okay to
+ShanoJ     truncate the thing?! Say it aint so.... :)
+Dave Lyons (AppleShare names are limited to 31 characters.)
+Dave Lyons What?  I don't understand the question.
+AFA JoeyS  The user could always change it... defaults aren't forced, y'know.
+            :)
+ShanoJ     I know, I'm just thinking of MyVeryVeryLongNamedGIF coming out to
+           be
+ShanoJ     MyVeryVeryL.GIF
+Dave Lyons For the SFxxx2 calls, the edit line is *not* limited to 15
+           characters!  Use the "2" calls!
+AFL Marty  (If they are forced, it's default of deprogrammer.)
+AFA JoeyS  Right, Jonah, but the point is that that's only the program's
+           suggestion;
+AFA JoeyS  it's up to the user to name a file something meaningful.
+ShanoJ     Okay, I see what you're saying....
+AFA JoeyS  I'm not sure if you can use GetFSTInfo to get any specs on
+           maximum
+AFA JoeyS  filename length, and use that... (I'm afraid I don't have GS/OS
+           ref, so never
+AFA JoeyS  ever trust my comments on GS/OS calls. :( )
+Dave Lyons Nope, GetFSTInfo does not provide that sort of info these days. 
+           But *yes*, it would be nice if the
+Dave Lyons system provided some help in constructing valid filenames.
+AFA JoeyS  Maybe validateFilename(desired_name): valid_name?
+Dave Lyons Something like that--there are a bunch of
+Dave Lyons interesting details (like how it constructs a valid name from an
+           invalid one, whether it has to
+Dave Lyons be unique, whether you operate on a whole pathname or just a
+           filename).
+Mac Hater  (but aren't multiple FST's active at once?)
+Dave Lyons MH, Yes, all the FSTs you're using are in your system at once.  So
+           you would have to tell
+Dave Lyons validateFilename which FST you wanted to talk to, or else it would
+           have to figure it out from the
+Dave Lyons path.
+AFA JoeyS  Seems like it could just make the name syntactically valid, and
+           let the
+AFA JoeyS  program do any other checking it wants.
+AFA JoeyS  Can you get the ID of the most recently accessed FST?
+AFA JoeyS  (something like a P16 Get_Last_Dev, but for FST's?)
+Mac Hater  useless.. I just save onto hard drive, but now wanna save onto
+           (hint) 3.5" hfs
+Dave Lyons The most recently accessed FST is not necessarily useful--FSTs get
+           "accessed" a lot.
+Dave Lyons (Besides, what if you've got a background process, like a Find
+           File DA, making OS calls?)
+AFA JoeyS  True.  <sigh>
+Dave Lyons My favorite approach is to pass the FST ID to the validate call.
+Dave Lyons ("Just" making the filename
+Dave Lyons syntactically valid is not that simple--what you *want* is to keep
+           as much of the "interesting"
+Dave Lyons parts of the name as you can, so the user can recognize the files.
+            For example, copy a whole
+Dave Lyons folder of files with long names from AppleShare to ProDOS, and let
+           the Finder translate the names
+Dave Lyons for you.  I don't recall what it does currently, but you want
+           something like chopping out the
+Dave Lyons *middles* of names that are too long--otherwise you get a lot of
+           duplicate filenames.)
+AFA JoeyS  (thinking)... (sorta-solution): after making the SFPutFile2 call
+           (which accepts
+AFA JoeyS  any sort of junk you give it), couldn't you get the FST used by
+           device 
+AFA JoeyS  specified by prefix #8, then pass that ID and the requested
+           filename to the
+AFA JoeyS  validateFilename call?
+Dave Lyons Wait, who sez SFPutFile2 accepts whatever junk you give it?  It
+           actually does a GetFileInfo on the
+Dave Lyons resulting path before it returns.  If there's an error, it
+           complains & you stay in the dialog.
+Dave Lyons (A bad-path error, I mean.)  If there's a file-not-found error it
+           returns.  If there's *no*
+Dave Lyons error it asks if you want to replace the file or not.
+AFA JoeyS  Well, change it.  :-)   LOL, okay, maybe not.
+Dave Lyons Joey, I would actually like to implement something like that,
+           having Standard File help you type
+Dave Lyons a good name.  How should the human interface work?
+Dave Lyons It is complicated by the fact that you can type
+Dave Lyons part of a name and switch to a different disk (possibly of a
+           different file system) without
+Dave Lyons disturbing the "name in progress" field.
+AFA JoeyS  But, the SF dialog always knows what disk it's looking at, and can
+           always
+AFA JoeyS  retrieve the FST type of that volume.
+Dave Lyons True, but are you saying I should *not* be able
+Dave Lyons to do the following?  Tab to a ProDOS volume,
+Dave Lyons type in "this name has blanks", tab to an AppleShare volume, and
+           hit Save?
+AFA JoeyS  No, you should be able to do that.  But after you press RETURN
+           with your
+AFA JoeyS  desired filename, the system knows: what volume you're saving to,
+           what FST that
+AFA JoeyS  volume uses, and what the filename is.  That doesn't help with
+           on-the-fly 
+AFA JoeyS  "guidance", but SF could put up a dialog like "The filename:
+           <what_you_typed> 
+AFA JoeyS  is invalid because <name is too long><the character " " is not
+           accepted>
+AFA JoeyS  <whatever>." and let you tried again.  <shrug>
+Dave Lyons Yeah, that is pretty reasonable.  I am leaning
+Dave Lyons toward giving a generic one- or two-sentence description of the
+           proper syntax for a given
+Dave Lyons file system, rather than telling them exactly what is wrong with
+           their particular path (there can
+Dave Lyons be any combination of problems, including *multiple* illegal
+           characters, so it doesn't seem
+Dave Lyons worth the complication to build a whole sentence!)
+AFA JoeyS  Well, in place of the specific description, the FST could try
+AFA JoeyS  reconstructing the input to a valid path; i.e. "The filename 
+AFA JoeyS  'big long file name' is not acceptable to the ProDOS FST. 
+           'biglongfilename' is
+AFA JoeyS  a valid alternative."  Yeah, getting complicated there, maybe too
+           much so.
+Dave Lyons (Yeah, that too--it can make a valid path from the invalid one &
+           stuff that as the default in a
+Dave Lyons line edit box inside the dialog.  I don't want the dialog more
+           complicated that necessary, but it
+Dave Lyons may work.  Buttons = Cancel (back to main SF dialog), Continue
+           (use the name entered in the
+Dave Lyons sub-dialog).  Reasonable?
+AFA Gary J That's reasonable to me.
+AFA JoeyS  Continue = accept system's altered/valid name?  Sounds good,
+           yup.
+Dave Lyons Continue = accept whatever is in the subdialog line-edit box,
+           which starts out as a system-
+Dave Lyons provided valid name, yeah.
+AFA JoeyS  Yeah... well, err...
+Dave Lyons (And that would be continue saving *or* continue with the "New
+           Folder" operation.  Is that all?)
+AFA JoeyS  I might be missing something, but why have an LE field in the
+           subdialog (the
+AFA JoeyS  warning box)?  Just pass it back as the new default name in the
+           regular
+AFA JoeyS  SFPutFile; that way the user can go change disks again or whatever
+           without
+AFA JoeyS  clicking any extra buttons ('cept OK/RETURN to dispense with the
+           original
+AFA JoeyS  alert -- which users could do without even looking at it.)
+Dave Lyons Hmmm...okay, then you have "Cancel" and "Accept", and once you
+           Accept you have to click Save again,
+Dave Lyons right?
+Dave Lyons That would work too.
+AFA JoeyS  Seems there should be only >one< place to type the filename (the
+           current LE
+AFA JoeyS  box).
+Dave Lyons Okay, I can dig having only one place to type the name.  It seems
+           like there should be an option
+Dave Lyons to ignore the reconstructed name & just fix it yourself, since you
+           might have clicked Save while
+Dave Lyons on the wrong disk (you might have the right name on the wrong
+           filesystem, instead of a bad name on the
+Dave Lyons right filesystem, no?).
+AFA JoeyS  I'm sorry, I don't agree with that... having an option to ignore
+           the regen'd
+AFA JoeyS  name just adds one more option; gets too confusing.  The =worst=
+           that could
+AFA JoeyS  happen if the system just passed the regen'd name to the regular
+           SF dialog LE
+AFA JoeyS  box is that you accidentally hit save, and get a misnamed but
+           recognizable
+AFA JoeyS  file.  There's no way to avoid accidentally clicking buttons. 
+           %)
+AFL Dyfet  :)
+AFA Gary J I don't know.  I think I'd get ticked at the computer altering my
+           file name if
+AFA Gary J I had it right, but just selected the wrong volume.
+AFA JoeyS  You shouldn't have selected the wrong volume, then.  :P   LOL
+Dave Lyons :)
+AFA JoeyS  <re-shrug>  I guess if the "This name is invalid; 'blah...' is an
+           acceptable
+AFA JoeyS  alternative." had Cancel (OA/.) (ignore changed name) and OK
+           (RETURN) (accept
+AFA JoeyS  changed name) buttons I'd live.
+AFA Gary J True :)  But what if you have "Big long path name for a HFS
+           volume", and had
+AFA Gary J to re-type?  I guess you'd learn fast to get the volume right the
+           first time!
+AFL Dyfet  I think we could probably do better discussing this in a message
+           area :)
+AFA JoeyS  LOL... right, Gary.  Who types names like that anyway? :)
+AFA Gary J Only the mac types, I guess.
+Dave Lyons (Gary, your name is 3 characters too long, I think.)
+AFA JoeyS  :) Dave
+AFA Gary J I think so, Dave :)
+A2GS       <--- My name just makes it   :-)
+AFA Gary J :)
+AFA Gary J AFA Gar
+Dave Lyons :)
+AFL Dyfet  I hate when that happens...
+AFA Gary J :)
+AFC TAP    so do I..
+A2GS       Never seems to happen to me...wonder why? (looking at ceiling)
+AFA JoeyS  Be thankful we're not using MS-DOS...  we'd be stuck with
+           filename.dat.  :(
+AFA Gary J That's got to be the worst.
+AFL Marty  I like MSDOS :)
+A2GS       Messy-Dos....the way of the future
+AFA Gary J But wait, what about DOS 3.3 file names?  :)  (just kidding)
+Dave Lyons (The Tandy 200 has FILNAM.XXX.  That's worse.)
+A2GS       DOS 3.3 was/IS great
+AFA JoeyS  Well, it's a bitty machine, though.
+AFA Gary J (DOS 3.3 names are nice compared to ProDOS, although ProDOS is
+           more practical)
+
+

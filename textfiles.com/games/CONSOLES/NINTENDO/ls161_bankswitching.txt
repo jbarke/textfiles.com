@@ -1,0 +1,157 @@
+(r) this line goes to the ROM only.
+(s) this line is Shared between the ROM, MMC/chip, and Nintendo
+(n) this line connects to the NES cart edge only, and not the ROM
+(w) this line connects to the WRAM only and nowhere else
+
+
+LS161 bankswitching  [Excerpt from NESTUFF.TXT by Kevin Horton (khorton@iquest.net)]
+-------------------
+
+Quite a few carts seem to use either a single 74LS161, or a combination
+of an LS161 and LS32, or an LS161 and LS02.
+
+There are two main styles of LS161-only carts:
+
+NES-CN-ROM-256-[02,05]
+----------------------
+
+You can select either H or V mirroring; PRG ROM is *not* bankswitched
+and is either 16K or 32K.  CHR ROM, however is bankswitched.  It's set
+up as up to 4 8K pages.  CHR ROM is either 16K or 32K.
+
+
+                                  .---\/---.
+                            +5V - |01    16| - +5V
+                        PRG /CE - |02    15| - NC
+                         PRG D0 - |03    14| - CHR A14 (r)
+                         PRG D1 - |04    13| - CHR A13 (r)
+                         PRG D4 - |05    12| - CHR A12 control
+                         PRG D5 - |06    11| - CHR A11 control 
+                            GND - |07    10| - GND
+                            GND - |08    09| - R/W
+                                  `--------'
+
+                                     '161
+
+
+NES-AOROM-03
+------------
+
+Very similar to above; however cart does not bankswitch CHR area; instead
+just has an 8K RAM chip.  P-ROM is 256K in both carts I have.
+
+
+                                  .---\/---.
+                            +5V - |01    16| - +5V
+                        PRG /CE - |02    15| - NC
+                         PRG D0 - |03    14| - PRG A15
+                         PRG D1 - |04    13| - PRG A16
+                         PRG D2 - |05    12| - PRG A17
+                         PRG D4 - |06    11| - CIRAM A10
+                            GND - |07    10| - GND
+                            GND - |08    09| - R/W
+                                  `--------'
+
+                                     '161
+           
+NES-BN-ROM-01
+-------------
+
+Identical to above, except has a 28-pin 128K ROM instead.
+
+
+NES-UN-ROM-05 & Konami #531320
+------------------------------
+
+This uses both an LS161 and an LS32.  The ROM is set up like on a non-
+bankswitched cart except this time only A0-A13 go to the ROM's A0-A13.
+A14 is used to control the LS32 and hence which bank the processor 'sees'.
+When A14 is high, it forces all the bankswitch address lines high; so the
+processor sees the last bank no matter what.  When A14 is low, the OR gates
+will pass whatever is on the other input (which happens to be connected
+to the outputs of the '161).   There is an 8K RAM for the CHR area.
+
+The Konami board is functionally the same; however the routing is slightly
+different (Uses a different gate from the '32 so you must take that in
+account when tracing the board with the followin pin-outs...)
+
+
+
+
+                                  .---\/---.
+                            +5V - |01    16| - +5V
+                        PRG /CE - |02    15| - NC
+                         PRG D0 - |03    14| - Pin 13 of '32
+                         PRG D1 - |04    13| - Pin 2 of '32
+                         PRG D2 - |05    12| - Pin 9 of '32
+                            GND - |06    11| - NC
+                            GND - |07    10| - GND
+                            GND - |08    09| - R/W
+                                  `--------'
+
+                                     '161
+
+
+
+
+                                  .---\/---.
+                            A14 - |01    14| - +5V
+                 Pin 13 of '161 - |02    13| - Pin 14 of '161
+                        ROM A15 - |03    12| - A14
+                            GND - |04    11| - ROM A14
+                            GND - |05    10| - A14
+                             NC - |06    09| - Pin 12 of '161
+                            GND - |07    08| - ROM A16
+                                  `--------'
+
+                                     '32
+
+
+
+
+NES-ANROM-03
+------------
+
+
+This cart has an 8K RAM chip for the CHR area.  It contains an LS161
+for the selecting the current bank, and an LS02 to disable to PRG ROM
+during any write to the bankswitch circuit.  Marat was saying he didn't
+know why the programs would write to an address associated with a bank;
+i.e.  To switch to bank #05:
+
+LDA #$05
+STA $FFF5
+
+The reason is to avoid a bus conflict with the ROM;  The ROM has the
+value 0$5 stored in address $FFF5.  This is required, because the ROM is
+*not* disabled during a data write to the ROM's area!!!  However, the
+LS02 added to this cart allieviates those problems.  It disables the
+ROM during any data write to the cart area.
+
+                                  .---\/---.
+                            +5V - |01    16| - +5V
+                        PRG /CE - |02    15| - NC
+                         PRG D0 - |03    14| - PRG A15
+                         PRG D1 - |04    13| - PRG A16
+                            +5V - |05    12| - NC
+                         PRG D4 - |06    11| - CIRAM A10
+                            GND - |07    10| - GND
+                            GND - |08    09| - R/W
+                                  `--------'
+
+                                     '161
+
+
+
+                                  .---\/---.
+                      To pin 12 - |01    14| - +5V
+                           R/W  - |02    13| - To pins 8 & 9
+                           R/W  - |03    12| - To pin 1
+                             NC - |04    11| - PRG /CE
+                            GND - |05    10| - To /CE of ROM
+                            GND - |06    09| - To pin 13
+                            GND - |07    08| - To pin 13
+                                  `--------'
+
+                                     '02
+

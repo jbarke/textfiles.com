@@ -1,0 +1,319 @@
+
+EXEC(2)	SYSTEM CALLS	EXEC(2)
+
+
+
+NAME
+exec   - load an executable file and launch as a new process
+
+SYNOPSIS
+#include <kerntool.h>
+
+int exec(char *pathname, char *cmdline);
+
+DESCRIPTION
+exec is an alternative method for lanching a new process under GNO.  It is a combination of the fork() and execve() calls, and in fact is written in terms of them.  The difference between exec and execve is that exec returns in all cases- it is a simplified interface for those who don't need to affect  process information before a new executable begins (such as process group IDs or I/O redirection information).
+
+The algortithm for exec (simplified somewhat) is as follows:
+
+void exec2() {
+	return execve()
+}
+int exec() {
+    return fork(exec2);
+}
+
+RETURN VALUE
+exec returns the process ID of the child, or SYSERR (-1) if an error occurs in the fork() call. 
+
+BUGS
+See BUGS in execve(2) and fork(2).
+If an error occurs in the execve phase of this call, it can't be detected by normal means.  The wait system call must be used to get the return code of the process, which will be SYSERR (-1) if the execve fails.
+
+SEE ALSO
+execve(2), fork(2), wait(2)
+
+
+
+EXECVE(2)	SYSTEM CALLS	EXECVE(2)
+
+
+
+NAME
+execve   - replace current process with an executable image from a file
+
+SYNOPSIS
+#include <kerntool.h>
+
+int execve(char *pathname, char *cmdline);
+
+DESCRIPTION
+execve is the preferred method for loading program files to be executed under the GNO system.  A new userID is allocated for the process, and the GS/OS System Loader is used to bring the executable file specified by pathname into memory. pathname can be a partial or complete path.  The executable loaded replaces the executable associated with  the current process.
+
+If the executable file does not contain an OMF Stack Segment (SEGKIND = $12), a default stack of 1024 bytes is allocated to the process.  The direct-page pointer is set to the bottom of the stack memory (for C programs this is irrelevant).
+
+The parameter cmdline is the list of arguments to be passed to the new process (a copy is actually passed).  C programs parse cmdline automatically, and the individual pieces can be accessed through the argc/argv arguments to main(). cmdline can be accessed from assembly langugage through the X (high-order word of cmdline) and Y (low-order word) registers.  However, if the executable file is of filetype S16 ($B3), the cmdline argument is ignored and the X&Y registers are set to null (i.e. the command line is only passed to an EXE executable).   The 8 characters "BYTEWRKS" are prepended to cmdline  before being passed to the process (this is the same identifier used by the Orca shell).  This Shell Identifier  distinguishes the GNO and Orca environments from others that don't support the full range of shell calls, and can be accessed from C with the library function shellid().  The A register is set to the userID allocated for the process.
+
+GS/OS prefixes 1 and 9 are set to the pathname of the directory containing the executable file;  if the length of the path exceeds 64 characters prefix 1 is set to the null prefix (length 0).
+The following information is inherited by the child: current machine state, controlling TTY, and process group ID.  
+
+Signal handling information is set to defaults. Any signals in the parent's queue are not passed to the child, and the child is started with no signals blocked.  The child begins with no open files.
+
+RETURN VALUE
+A successful execve does not return, as the current executable is replaced with the one specified in the call.  If for some reason the call fails, execve returns SYSERR (-1).
+
+BUGS
+Orca/C currently ignores any stack space allocated for it by the GS/OS  Loader (which execve calls) or by default in execve.  Stack space in Orca/C programs is determined by code in the .root object file, and can be set with the #pragma stacksize directive.  Read the section on GNO Compliance in the GNO Kernel Reference Manual for more information on this topic.
+
+SEE ALSO
+exec(2), fork(2), wait(2)
+
+
+
+FORK(2)	SYSTEM CALLS	FORK(2)
+
+
+
+NAME
+fork   - start a new process from inside the current application space
+
+SYNOPSIS
+#include <kerntool.h>
+
+int fork(void *addr);
+
+DESCRIPTION
+fork's argument is typically the address of a C function, although it can be any address inside the IIGS RAM space.  fork creates a new entry in the process table, and sets up some default settings.  The process is allocated 1K of stack space, and the direct page is set to the beginning of this memory.  The process is executed in 16-bit full native mode, and the registers are set as follows:
+	A: the userID assigned to the process
+	X: 0
+	Y: 0
+
+The child inherits the memory shadowing and machine state parameters of the parent, as well as signal blocking information and the ID of the controlling TTY.  In addition, the child inherits the open file refNums of its parent.  This can cause errors if the child closes an inherited file and the parent later tries to access it.
+
+A forked process may share code with other children or the parent.  However, this is only allowed in a forward manner- any forked process that exits by function return will be terminated.  Note that any shared global variables will need to be moderated with some type of mutual exclusion, either the kernel semaphore(2) routines or custom routines.
+
+RETURN VALUE
+fork returns the process ID of the child, or -1 (SYSERR) if an error occurs.
+
+BUGS
+If a child closes a file refNum inherited from the parent, system accounting can become confused.  Note that this shouldn't result in a crash, but spurious "Invalid reference number" ($43) errors can be generated.  We need the equivalent of dup() for GS/OS refnums to make this problem go away (and a more reasonable limitation on multiple access of open files).
+
+SEE ALSO
+exec(2), execve(2), wait(2), semaphore(2)
+
+GETPID(2)	SYSTEM CALLS	GETPID(2)
+
+
+NAME
+getpid  - return process ID of caller
+
+SYNOPSIS
+#include <kerntool.h>
+
+int getpid(void);
+
+DESCRIPTION
+The process ID is a unique value associated with a process, and is needed for many system calls.  Note that GNO pid's cover only a small range of numbers, as opposed to *nix pid's which range from 0-65535.  Some programs use getpid to seed random number generators.  A much better approach on the IIGS is to use the horizontal and vertical positions of the electron gun, which can be obtained by reading the word value at absolute memory location $E0C02E.
+
+RETURN VALUE
+The process ID of the caller is returned.  No errors are possible.
+
+KILL(2)	SYSTEM CALLS	KILL(2)
+
+
+
+NAME
+kill    - send a signal to a process
+
+SYNOPSIS
+#include <kerntool.h>
+
+int kill(int pid, int sig)
+
+DESCRIPTION
+kill is used to send a signal to a process or group of processes. Signals are software interrupts; they act just like hardware interrupts and can also be used for basic IPC (Inter-process communication).   The various signals are described in signal(3).
+
+sig can be a signal number, or it can be 0, in which case no signal is sent, but error checking is done (this can be used to verify a process ID).  If sig has been blocked (sigblock(2)), the signal is deferred until it is unblocked, and kill returns immediately.  Any previously pending signals of the same sig are lost (i.e. signals are not stacked).
+
+If pid is 0, the signal is sent to all processes with the same process group ID as the caller, except for system processes.
+
+Processes may signal themselves, in which case the signal handler is invoked immediately (if installed).
+
+RETURN VALUE
+Normally kill returns SYSOK (0).  The following conditions can cause kill to return SYSERR (-1):
+	pid does not correspond to an existing process
+	sig specifies an invalid signal number
+
+BUGS
+Currently there is no way to distinguish the types of errors that can cause kill to fail.There is no obvious way to return such a value from the toolbox routines that are the kernel (and are written in C).
+
+
+KSIGNAL(2)	SYSTEM CALLS	KSIGNAL(2)
+
+
+NAME
+ksignal  - a simplified software signal interface
+
+SYNOPSIS
+     #include <signal.h>
+
+     void (*ksignal(sig, func))()
+     void (*func)();
+
+DESCRIPTION
+Signals are a basic form of IPC (inter-process communication), and are generally used to notify a process of some atypical event (although there is little restriction on actual use).  For example, signals are sent in each of the following situations: user typing certain chars at a terminal (^C, ^Z, etc.);  execution of an invalid instruction;  by request of another process (kill); stack overflow; and a process making an input request while running in the background
+
+Most signals cause termination, unless a handler is installed, or the signal is set to be ignored.  Certain signals cannot have their default action modified;  the system silently enforces this restriction.  The following is a list of signals and default actions (taken from signal.h).  	
+
+	SIGHUP	1	 hangup
+  	SIGINT	2	 interrupt
+  	SIGQUIT	3	 quit
+  	SIGILL	4	 illegal instruction
+  	SIGTRAP	5	 trace trap
+  	SIGABRT	6	 abort (generated by abort(3) routine) 
+	SIGEMT	7	 emulator trap 
+	SIGFPE	8	 arithmetic exception 
+	SIGKILL	9	 kill (cannot be caught, blocked, or ignored) 
+	SIGBUS	10	 bus error 
+	SIGSEGV	11	 segmentation violation 
+	SIGSYS	12	 bad argument to system call 
+	SIGPIPE	13	 write on a pipe or other socket with no one to read it 
+	SIGALRM	14	 alarm clock 
+	SIGTERM	15	 software termination signal 
+	SIGURG	16@	 urgent condition present on socket 
+	SIGSTOP	17 | +	 stop (cannot be caught, blocked, or ignored) 
+	SIGTSTP	18 | +	 stop signal generated from keyboard 
+	SIGCONT	19@	 continue after stop (cannot be blocked) 
+	SIGCHLD	20@	 child status has changed 
+	SIGCLD	20	 System V name for SIGCHLD 
+	SIGTTIN	21 | +	 background read attempted from control terminal 
+	SIGTTOU	22 | +	 background write attempted to control terminal 
+	SIGIO	23@	 input/output possible on a file descriptor 
+	SIGPOLL	SIGIO	 System V name for SIGIO 
+	SIGXCPU	24	 exceeded CPU time limit 
+	SIGUSR1	30	 user defined signal 1 
+	SIGUSR2	31	 user defined signal 2 
+
+If func is SIG_DFL, the defult action for the signal is reinstalled.  This is normally termination if the signal isn't ignored or caught. Signals marked with an @ are discarded, and signals marked with | + cause the process to stop.  If func is SIG_IGN, any future occurences of the signal are discarded, as well as any pending instances.  Any other value is treated as the address of a shandler routine.  The system will block further occurences of the signal before the handler is called, and will unblock the signal automatically upon return from the handler.  The handler remains installed after return, unlike earlier Unix signal facilities.
+
+If a signal occurs during certain system calls (wait(), and input from a TTY), the call is automatically restarted upon return from the handler.
+
+A forked child inherits all signal information, including pending signals and blocking and handler information.  exec and execve restore all signal information to defaults and purge pending signals.
+
+NOTES
+The signal handler should be defined as follows:
+
+void handler (int sig, int code)
+
+sig is the signal that invoked the handler, and code is additional information about the interrupt condition.  Currently, code is always 0.
+
+RETURN VALUE
+The previous action is returned on a successful call. Otherwise,  -1 is  returned.  Errors will occur on any of the following conditions:
+	sig specifies an invalid signal number.
+	An attempt is made to ignore or supply a handler for SIGKILL or SIGSTOP.
+	An attempt is made to ignore SIGCONT (by default SIGCONT is ignored).
+
+BUGS
+This call should be named signal, not ksignal.  However, Orca/C already specifies a function named signal, although it's not useful for anything but SANE exceptions.  It was decided to leave Orca's signal alone, to allow trapping of SANE stuff, and add our routine under a slightly different name.  This may well change when we supply custom libraries.
+
+SEE ALSO
+kill(1), execve(2), fork(2), getrlimit(2), kill(2V), sigblock(2), sigpause(2), sigsetmask(2), sigvec(2), wait(2), setjmp(3), termio(4)
+
+
+
+
+SCREATE(2)	KERNEL SEMAPHORE FUNCTIONS 	SCREATE(2)
+
+
+
+NAME
+screate, sdelete, swait, ssignal    - semaphore operations
+
+SYNOPSIS
+#include <kerntool.h>
+
+int swait(sem)
+int sem;
+
+int ssignal(sem)
+int sem;
+
+int screate(count)
+int count;
+
+int sdelete(sem)
+int sem;
+
+DESCRIPTION
+screate is used to allocate a semaphore from the kernel semaphore manager.  Semaphores are the most basic form of interprocess communication, and these routines provide the power necessary to solve a large number of synchronization and communication problems. (See an Operating Systems text).
+
+The initial  count  determines how many times swait can be called before processes are blocked.  count must be >= 0, and is usually set to 1.  screate returns a semaphore ID number as an integer.  This ID must be used in all the other semaphore calls.
+
+sdelete releases the specified semaphore, and returns all processes that were blocked to a ready state.
+
+swait decrements the value of the semaphore (initially specified by  count ) by 1. If the semaphore count is less than zero, the process is blocked and queued for release by ssignal.
+
+ssignal increments the semaphore count by one.  If the semaphore count is less than zero, ssignal releases arbitrarily a process that had been blocked.
+
+RETURN VALUE
+All the functions return SYSERR (-1) if an error occurs, and an OK (0) if no error occurs.
+     
+
+     
+
+
+SIGBLOCK(2)	SYSTEM CALLS	SIGBLOCK(2)
+
+
+NAME
+sigblock,sigmask  - temporarily block signals
+
+SYNOPSIS
+#include <signal.h>
+
+long sigblock(long mask);
+#define sigmask(signum)
+
+DESCRIPTION
+sigblock is used to temporarily block the reception of signals.  The input parameter mask is a bit vector that specifies which signals are to be blocked; a 1  in a bit n will block signal n+1.  The mask is bitwise-ored with the current signal mask to create the new signal mask.
+
+sigmask is a macro that can be used to calculate signal masks for sigblock.  It takes a signal number (as listed in KSIGNAL(2)) as an argument and returns a mask.
+
+If a signal is sent to a process but is blocked, the event is recorded for later release by sigsetmask.  Blocked signals are not stacked; further occurrences of a blocked signal will overwrite any previous pending signal of the same signum.
+
+It is not possible to block SIGKILL, SIGCONT, or SIGSTOP.  This restriction is silently imposed by the system.
+
+RETURN VALUE
+The previous value of the signal mask is returned.
+
+SEE ALSO
+kill(2V), sigsetmask(2), ksignal(2)
+
+
+SIGSETMASK(2)	SYSTEM CALLS	SIGSETMASK(2)
+
+
+NAME
+sigsetmask  - set signal mask
+
+SYNOPSIS
+#include <signal.h>
+
+long sigsetmask(long mask);
+#define sigmask(signum)
+
+DESCRIPTION
+sigsetmask is usually used to restore signal masks after modification by sigblock.  The parameter mask is the absolute value the process signal mask will be set to (compare to sigblock, which adds the argument to the set of blocked signals).
+
+If there are pending instances of signals which become unblocked by the sigsetmask call, they are 'released': they are released into the system signal queue and their 'pending' status is cleared.  [The system signal queue is maintained by the kernel null process, and is used in situations where signals could not normally be sent (such as interrupt handlers)]
+
+sigmask is a macro that can be used to calculate signal masks for sigsetmask.  It takes a signal number (as listed in KSIGNAL(2)) as an argument and returns a mask.
+
+RETURN VALUE
+The previous value of the signal mask is returned.
+
+CAVEATS
+If somehow the process re-blocks a signal released by sigsetmask before the system signal queue processes it, it will be blocked and marked as pending.  This can happen if a signal handler makes a sigblock call.  
+
+SEE ALSO
+kill(2V), sigblock(2), ksignal(2)

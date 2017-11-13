@@ -1,0 +1,416 @@
+*::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*
+*                                                                *
+*                     INIT function handler                      *
+*                                                                *
+*----------------------------------------------------------------*
+*                                                                *
+*      The INIT function handler (FNINIT, $AEBE) is only called  *
+* by the INIT command handler (CMDINIT, $A54F).  The execution   *
+* pattern of FNINIT is described in the preamble accompanying    *
+* the formatted disassembly of the INIT command handler.         *
+*                                                                *
+*::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*
+
+
+(AE8E)
+FNINIT   JSR ZWRKAREA ;Initialize the work area.
+
+                      * Zero out the FM work area so it can be customized
+                      * in accordance with the calling function.
+                      * (Although some work bytes may not be subsequently
+                      * altered, don't be lulled into thinking that they
+                      * are not important.  Zero values are just as relevant
+                      * as non-zero values.)
+                      * (P.S.  Don't confuse the FM work area with its
+                      * image (FM work buffer) that is housed in the
+                      * chain of DOS buffers.)
+                      (ABDC)
+                      ZWRKAREA LDA #0
+                               TAX          ;Initialize the x-index.
+                      ZEROWRKA STA FMWKAREA,X ;Put a $00 byte in work area.
+                               INX
+                               CPX #45      ;Work area is 45 bytes long.
+                      (ABE5)   BNE ZEROWRKA
+
+                      * Begin customizing the work area.
+                      * Get volume, drive, slot  & catalog track
+                      * values from the FM parameter list.  Put
+                      * drive, slot*16, catalog track and
+                      * complemented volume number in the work area.
+                      (ABE7)   LDA VOLFM    ;Volume number.
+                               EOR #$FF     ;Calculate 1's complement of volume #.
+                               STA VOLWA
+                               LDA DRVFM    ;Drive #.
+                               STA DRVWA
+                               LDA SLOTFM   ;Get slot #.
+                               ASL          ;Calculate slot * 16.
+                               ASL
+                               ASL
+                               ASL
+                               TAX          ;Set (x) = slot * 16.
+                               STX SLOT16WA
+                               LDA #$11     ;Normal catalog trk = #17.
+                               STA TRKWA
+                      (AC05)   RTS
+
+(AE91)   LDA #4       ;Opcode for format.
+
+* Go format the disk.
+(AE93)   JSR RWTSDRV1 ;Call RWTS driver to FORMAT the disk.
+
+                      (B058)
+                      RWTSDRV1 .
+                               .
+                      (See dis'mbly of RWTSDRV1 using FORMAT.)
+                               .
+                               .
+                               (RTS)
+
+* Put volume, number of next track to be
+* assigned and assignment direction in the
+* VTOC sector buffer.
+(AE96)   LDA VOLWA    ;Complemented volume number (from work area).
+         EOR #$FF     ;Uncomplement it & put volume # in VTOC.
+         STA VOLUSED
+         LDA #$11     ;Use trk # 17 for catalog track.
+(AEA0)   STA NXTRKUSE ;Set the catalog trk as the next track to
+                      ;assign.  (NXTRKUSE is located in the VTOC.)
+(AEA3)   LDA #1       ;Assignment direction is forward.
+(AEA5)   STA DRECTION
+
+* Zero out the VTOC buffer from TRKMAP0 to
+* the end of the VTOC sector.  (Note:  This
+* allocates all tracks.)
+(AEA8)   LDX #56      ;Offset to TRKMAP0 in the VTOC.
+         LDA #0
+ZVTOC    STA VTOCBUFF,X ;Zero out a TRKMAP byte.
+         INX
+(AEB0)   BNE ZVTOC
+
+* Free up all tracks except tracks
+* 0, 1, 2 & catalog track (#17).
+*
+* NOTE:  DOS only occupies sectors
+* 0 to 4 on track 2, but this routine
+* takes the rest of the sectors on
+* track 2 out of circulation.
+(AEB2)   LDX #$0C     ;Offset to start of trkmap3.
+FREETRK  CPX #$8C     ;Offset 1 past the end of TRKMAP34.
+         BEQ FREEDTKS ;Done up to end of TRKMAP#$34?
+         LDY #3       ;Initialize the index to the end of FRETKMSK.
+FREEIT   LDA FRETKMSK,Y ;Free most TRKMAPs.  (Starting with
+(AEBA)                ;TRKMAP3.)  NOTE:  Not freeing up VTOC
+                      ;sector or tracks used by DOS.
+(AEBD)   STA TRKMAP0,X ;Free tracks by placing the following bytes
+                      ;in each TRKMAP:  "FF FF 00 00".
+(AEC0)   INX          ;Kick up index to byte in TRKMAP.
+(AEC1)   DEY          ;Reduce index to FRETKMSK cause loading from
+                      ;the end of FRETKMSK:  "00 00 FF FF".
+(AEC2)   BPL FREEIT   ;(4 bytes/TRKMAP & 4 bytes/FRETKMSK)
+         CPX #$44     ;Offset to start of TRKMAP17 (ie. cat trk).
+(AEC6)   BNE FREETRK  ;Have we freed trks 3 to 16 yet?
+                      ;If not, take branch.
+(AEC8)   LDX #$48     ;Offset to trk 18 (ie. skip the cat trk).
+         BNE FREETRK  ;ALWAYS - go free trks 18 to 34.
+FREEDTKS JSR WRITVTOC ;Write freed up VTOC to disk.
+(AECC)
+
+                      * Write the Volume Table of Contents (VTOC).
+                      (AFFB)
+                      WRITVTOC LDA #2       ;Write opcode for RWTS.
+
+                      * Common to read/write the VTOC.
+                      (AFFD)
+                      RDWRVTOC LDY ADRVTOC  ;Get the address of the VTOC from the FM
+                               STY IBBUFP   ;constants table & designate it as the
+                               LDY ADRVTOC+1 ;I/O buffer in RWTS's IOB.
+                               STY IBBUFP+1
+                               LDX TRKWA    ;Enter RWTS driver with (x)/(x) = trk/sec values of
+                               LDY #0       ;the VTOC.
+                      (B00E)   JMP RWTSDRVR ;Call RWTS driver to read/write the VTOC.
+                               ------------
+
+                      * Read/Write Track/Sector driver.
+                      RWTSDRVR .
+                               .
+                      (See dis'mbly of RWTS driver using WRITE.)
+                               .
+                               .
+                               (RTS)
+
+* Clear out the directory sector buffer.
+(AECF)   LDX #0
+         TXA
+CLRDIREC STA DIRECBUF,X
+         INX
+         BNE CLRDIREC
+(AED8)   JSR PT2DIRBF
+
+                      * Designate the directory sector buffer
+                      * as the I/O buffer in RWTS's IOB.
+                      (B045)
+                      PT2DIRBF LDA ADRDIRBF ;Get the addr of the directory sec buf
+                               STA IBBUFP   ;in the FM constants table.
+                               LDA ADRDIRBF+1 ;Store it in RWTS's IOB.
+                               STA IBBUFP+1
+                      (B051)   RTS
+
+(AEDB)   LDA #$11     ;(a) = number of catalog track.
+         LDY SECPERTK ;Number of sectors/track = 16.
+         DEY
+         DEY
+(AEE2)   STA IBTRK    ;Put catalog track in IOB.
+
+* Write the directory sectors
+* (trk17, secs 15 to 1).
+(AEE5)
+SETLNKTK STA DIRLNKTK ;Set the trk/sec values for the link to the
+SETLNKSC STY DIRLNKSC ;next directory sector.
+         INY          ;Get the number of the sector to be written
+         STY IBSECT   ;and put it in RWTS's IOB.
+         LDA #2       ;Write opcode for RWTS.
+(AEF1)   JSR RWTSDRV1 ;Write the directory sector to the disk.
+
+                      (B058)
+                      RWTSDRV1 .
+                               .
+                      (See dis'mbly of RWTS driver using WRITE.
+                               .
+                               .
+                               (RTS)
+
+(AEF4)   LDY DIRLNKSC ;Sector value of the next directory sec to write.
+         DEY          ;Kick it down (will increment it later).
+         BMI DOIMAGE  ;Don't do sector 0 cause that is the VTOC.
+         BNE SETLNKSC ;Go write sectors 2 to 15.
+         TYA
+(AEFD)   BEQ SETLNKTK ;Go back to write sector 1 and zero out
+                      ;the directory sector links.
+
+* Routine to write the DOS image
+* on tracks 0 to 2.
+(AEFF)
+DOIMAGE  JSR PRPWRDOS ;Get ready to write the DOS image.
+
+                      * Set up RWTS's IOB to write DOS.
+                      (B7C2)
+                      PRPWRDOS LDA FIRDOSPG ;Designate the start of DOS as the address
+                               STA IBBUFP+1 ;of the I/O buffer in RWTS's IOB.
+                               LDA #0
+                               STA IBBUFP
+                               LDA VOLWA    ;Complement the volume number.
+                               EOR #$FF
+                               STA IBVOL
+                      (B7D5)   RTS
+
+(AF02)   JSR WRDOSIMG ;Write the DOS image
+
+                      * Write the DOS image in trks 0 to 2.
+                      * That is, write trk02/sec04 ($B5FF) down
+                      * to trk00/sec0C ($9D00).
+                      (B74A)
+                      WRDOSIMG LDA BTSTAGE+1 ;Calculate the number of pages to write:
+                               SEC          ;         (#$B6 - #$9D = #$19 or #25).
+                               SBC IBBUFP+1
+                               STA BT2PGCTR ;Set counter for 25 pages.
+                               LDA BTSTAGE+1
+                               STA IBBUFP+1
+                               DEC IBBUFP+1 ;Start with page #$B5.
+                               LDA #2       ;Start with trk02/sec04.
+                               STA IBTRK
+                               LDA #4
+                               STA IBSECT
+                               LDA #2       ;Write opcode for RWTS.
+                               STA IBCMD
+                      (B76C)   JSR RWPAGES  ;Write trk2/sec4 to trk0/sec0.
+
+                                            * Read/write a group of pages.
+                                            (B793)
+                                            RWPAGES  LDA ADROFIOB+1 ;Initialize (a)/(y) with hi/low bytes
+                                            (B796)   LDY ADROFIOB ;of the addr of RWTS's IOB for entry
+                                                                  ;into RWTS.
+                                            (B799)   JSR ENTERWTS ;Enter into RWTS to read/write a sector.
+
+                                                                  * Entry to RWTS.
+                                                                  (B7B5)   PHP          ;Save status on stk.
+                                                                                        ;(c) = 0 if seek or read.
+                                                                                        ;(c) = 1 if write or format.
+                                                                  (B7B6)   SEI          ;Set the interrupt disable flag to prevent
+                                                                                        ;any further interrupts from occurring when
+                                                                                        ;doing real-time programming.
+                                                                  (B7B7)   JSR RWTS     ;Enter RWTS proper to do operation:
+                                                                                        ;        $00=seek, $01=read,
+                                                                                        ;        $02=write & $03=format.
+
+                                                                                        * RWTS proper.
+                                                                                        (BD00)
+                                                                                        RWTS     .
+                                                                                                 .
+                                                                                        (See dis'mbly of RWTS in formatted
+                                                                                        dis'mbly of RWTS driver using WRITE.)
+                                                                                                 .
+                                                                                                 .
+                                                                                                 (RTS)
+
+                                                                  (B7BA)   BCS ERRENTER ;Operation was not successful.
+                                                                           PLP          ;Throw status off the stack.
+                                                                           CLC          ;Signal operation was successful.
+                                                                  (B7BE)   RTS
+                                                                           ============
+
+                                                                  (B7BF)
+                                                                  ERRENTER PLP          ;Throw status off the stack.
+                                                                           SEC          ;Signal operation was unsuccessful.
+                                                                  (B7C1)   RTS
+                                                                           ============
+
+                                            (B79C)   LDY IBSECT   ;Get # of sector just read or written.
+                                            (B79F)   DEY          ;Value for next sector to read/write
+                                                                  ;(when executing BOOT1, #$09 --> #$FF).
+                                            (B7A0)   BPL SAMETRK  ;Branch to use the same track.
+
+                                            * Start a new track.
+                                            (B7A2)   LDY #$0F     ;Start with sector 15.
+                                                     NOP
+                                                     NOP
+                                            (B7A6)   DEC IBTRK    ;Reduce # of trk wanted.
+
+                                            * Adjust pointer to IOB and test if there
+                                            * are any more sectors to read/write.
+                                            (B7A9)
+                                            SAMETRK  STY IBSECT   ;Store number of sector wanted.
+                                                     DEC IBBUFP+1 ;Reduce buffer's page address.
+                                            (B7AF)   DEC BT2PGCTR ;Reduce counter for # of pages
+                                                                  ;(ie. sectors) to read or write.
+                                            (B7B2)   BNE RWPAGES  ;More sectors to read or write.
+                                            (B7B4)   RTS
+
+                      * Write trk00/sec09 ($BFFF) down
+                      * to trk00/sec00 ($B600).
+                      (B76F)   LDA BTSTAGE+1 ;Store hi byte of address of the
+                               STA IMG8D+1  ;start of Boot1 (#$B6).
+                               CLC          ;Calulate the hi byte of the address of
+                               ADC #9       ;trk00/sec09 (#$B6 + #$09 = #$BF).
+                               STA IBBUFP+1 ;Set buffer to send info to page #$BF.
+                               LDA #10      ;Designate that there are 10 pages to
+                               STA BT2PGCTR ;write (#$BFFF - #$B600).
+                               SEC
+                               SBC #1
+                      (B783)   STA IMG8FF   ;Designate that 9 pages are to be read
+                                            ;when BOOT1 is executed.
+                      (B786)   STA IBSECT   ;Start writing with trk0/sec9.
+                      (B789)   JSR RWPAGES  ;Go write trk0/sec9 to trk0/sec0.
+
+                                            * Read/write a group of pages.
+                                            (B793)
+                                            RWPAGES  LDA ADROFIOB+1 ;Initialize (a)/(y) with hi/low bytes
+                                            (B796)   LDY ADROFIOB ;of the addr of RWTS's IOB for entry
+                                                                  ;into RWTS.
+                                            (B799)   JSR ENTERWTS ;Enter into RWTS to read/write a sector.
+
+                                                                  * Entry to RWTS.
+                                                                  (B7B5)   PHP          ;Save status on stk.
+                                                                                        ;(c) = 0 if seek or read.
+                                                                                        ;(c) = 1 if write or format.
+                                                                  (B7B6)   SEI          ;Set the interrupt disable flag to prevent
+                                                                                        ;any further interrupts from occurring when
+                                                                                        ;doing real-time programming.
+                                                                  (B7B7)   JSR RWTS     ;Enter RWTS proper to do operation:
+                                                                                        ;        $00=seek, $01=read,
+                                                                                        ;        $02=write & $03=format.
+
+                                                                                        * RWTS proper.
+                                                                                        (BD00)
+                                                                                        RWTS     .
+                                                                                                 .
+                                                                                        (See dis'mbly of RWTS in formatted
+                                                                                        dis'mbly of RWTS driver using WRITE.)
+                                                                                                 .
+                                                                                                 .
+                                                                                                 (RTS)
+
+                                                                  (B7BA)   BCS ERRENTER ;Operation was not successful.
+                                                                           PLP          ;Throw status off the stack.
+                                                                           CLC          ;Signal operation was successful.
+                                                                  (B7BE)   RTS
+                                                                           =============
+
+                                                                  (B7BF)
+                                                                  ERRENTER PLP          ;Throw status off the stack.
+                                                                           SEC          ;Signal operation was unsuccessful.
+                                                                  (B7C1)   RTS
+                                                                           ============
+
+                                            (B79C)   LDY IBSECT   ;Get # of sector just read or written.
+                                            (B79F)   DEY          ;Value for next sector to read/write
+                                                                  ;(when executing BOOT1, #$09 --> #$FF).
+                                            (B7A0)   BPL SAMETRK  ;Branch to use the same track.
+
+                                            * Start a new track.
+                                            (B7A2)   LDY #$0F     ;Start with sector 15.
+                                                     NOP
+                                                     NOP
+                                            (B7A6)   DEC IBTRK    ;Reduce # of trk wanted.
+
+                                            * Adjust pointer to IOB and test if there
+                                            * are any more sectors to read/write.
+                                            (B7A9)
+                                            SAMETRK  STY IBSECT   ;Store number of sector wanted.
+                                                     DEC IBBUFP+1 ;Reduce buffer's page address.
+                                            (B7AF)   DEC BT2PGCTR ;Reduce counter for # of pages to
+                                                                  ;read or write.
+                                            (B7B2)   BNE RWPAGES  ;More sectors to read or write.
+                                            (B7B4)   RTS
+                                                     ============
+
+                      (B78C)   RTS
+                               ============
+
+(AF05)   JMP GOODFMXT ;Exit cleanly.
+         ------------
+
+
+* Exit the file manager.
+(B37F)
+GOODFMXT LDA RTNCODFM
+         CLC          ;(c) =  0 to signal good operation.
+         BCC FMEXIT
+BADFMXIT SEC          ;(c) = 1 to signal unsuccessful.
+FMEXIT   PHP          ;Save status on stack.
+         STA RTNCODFM ;Store return code in FM parameter list.
+         LDA #0
+         STA STATUS
+(B38E)   JSR CPYFMWA  ;Copy the work area to the work buffer.
+
+                      * Copy the FM work area (non-chain) to
+                      * the FM work buffer (in DOS chain).
+                      (AE7E)
+                      CPYFMWA  JSR SELWKBUF ;Select the FM work buffer (in DOS chain).
+
+                                            *  Point the A4L/H pointer at the FM work buffer.
+                                            (AF08)
+                                            SELWKBUF LDX #0       ;Set index to select work buffer.
+                                            (AF0A)   BEQ PT2FMBUF ;ALWAYS.
+
+                                            (AF12)
+                                            PT2FMBUF LDA WRKBUFFM,X ;Get address of selected buffer from the
+                                                     STA A4L      ;FM parameter list & put it in the pointer.
+                                                     LDA WRKBUFFM+1,X
+                                                     STA A4L+1
+                                            (AF1C)   RTS
+
+                      (AE81)   LDY #0       ;Initialize index.
+                      STORWRK  LDA FMWKAREA,Y ;Get byte from the FM work area.
+                               STA  (A4L),Y ;Put it in the work buffer.
+                               INY
+                               CPY #45      ;45 bytes to copy (0 to 44).
+                               BNE STORWRK
+                      (AE81)   RTS
+
+(B391)   PLP          ;Retrieve status of success of operation
+                      ;from the stack.
+(B392)   LDX STKSAV   ;Adjust stack pointer to force exit to the
+         TXS          ;caller even if we are several subroutines
+(B396)   RTS          ;deeper than the original entry point.
+         ============ ;(Returns to AFTRFUNC ($A6AB) in the
+                      ;FMDRIVER routine ($A6A8).

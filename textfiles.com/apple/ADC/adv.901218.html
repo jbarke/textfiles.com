@@ -1,0 +1,336 @@
+America Online
+APPLE II DEVELOPMENT FORUM CONFERENCE LOG
+Tuesday, December 18, 1990  10:00 p.m. Eastern Time
+Topic:  Assembly Language Programming
+Forum Leader:  Dave Sugar (AFL Dyfet)
+
+
+AFL Dyfet  Okay, good evening all, and welcome to the Apple II Development
+AFL Dyfet  Forum.  Tonight we will be discussing Assembly Language
+           Programming
+AFL Dyfet  and the latest in Coach Hayden's life :).
+AFL Dyfet  I see Scott has snuck in with the first question for tonight
+           :)...GA Scott...
+AFL Scott  Does anyone have an alternative method of detecting low memory
+           situations?   The method in the IIGS
+AFL Scott  Technotes and the method in TB Ref Vol3 doesn't really work
+AFL Scott  with my application.
+AFL Dyfet  GA Dave...
+Dave Lyons Why/when doesn't it work?  We can probably come up with some
+           refinements.
+AFL Scott  Well, basically, when the 32k handle gets purged, some damage has
+           already occurred.  This leaves 
+AFL Scott  my app in a rotten state (note that this is just for testing
+           purposes.  The method I used
+AFL Scott  in the final release of Allison is still employed in the release).
+            See, I changed things to 
+AFL Scott  allow the memory manager to do it's stuff.  The release version of
+           Allison _depends_ on memory
+AFL Scott  to be fragmented, but this is very wasteful, IMHO.
+AFL Scott  I decided to change it to see what happens.  The results weren't
+           good. GA.
+Dave Lyons I'm missing something--do you know how the damage is occuring?
+Dave Lyons I don't see how fragmentation helps.
+AFL Scott  Well, for starters, the text in several dialogs gets trashed. 
+           Fragmentation ensures Quickdraw has 
+AFL Scott  enough memory in most cases.  And the chunks in varied memory
+           configurations are 32k.
+AFL Scott  On my machine, I've not seen this method fail no matter what I run
+           or what I do.  
+AFL Scott  I haven't seen it fail on other machines, but I don't trust it. 
+           It's very dependant on what the 
+Dave Lyons So is the problem that your app can suck up all the big chunks,
+           leaving QD insufficient memory?
+AFL Scott  user does and has loaded. 
+AFL Scott  Big chunks.. in 32k and 85 byte swatches, yup.
+Dave Lyons How 'bout this: Keep a *second* chunk of throw-away memory
+           allocated,
+Dave Lyons and when you notice that your watchdog 32K handle got purged (and
+           maybe all got re-used!), you can
+Dave Lyons dispose of the second one & be guaranteed enough free memory to
+           put up an out-of-memory dialog.
+Dave Lyons Does that make sense?
+AFL Scott  Yes.  You're saying reserve 64k and use the first 32k as a signal.
+            Well, that's fine, except the 
+AFL Scott  app has to run in a 1meg ROM03 GS.  The app needs alot of memory
+           to do what it has to do.
+AFL Scott  It's a toughie, and I don't think there's going to be a good
+           answer given the memory requirement of 
+AFL Scott  the App.
+Dave Lyons Understood, but keeping two chunks would seem to be at least as
+           good as creating extra fragmentation,
+Dave Lyons no?
+AFL Scott  Yes, it would.  I just cannot guarantee there will be 64k at the
+           outset.  I'll try it again and see 
+AFL Scott  what happens.  
+Dave Lyons Maybe both chunks don't have to be 32K--consider
+Dave Lyons the relationships of the sizes of handles your app allocates,
+           maybe.
+AFL Scott  Explain.  I don't follow.
+Dave Lyons Well, I'm trying to get at this--
+Dave Lyons if you allocate a lot of 32K handles normally, then you're likely
+           to
+Dave Lyons make your watchdog 32K handle go away *and get completely reused*
+           all at once.  So the technote
+Dave Lyons is a good starting point, but you can fine-tune it to your
+           application by being paranoid & seeing
+Dave Lyons how to let the system always have enough memory to put up your
+           warning dialogs.
+Dave Lyons You could even do stuff like:
+Dave Lyons Whenever you allocate a big handle, allocate some slop, allocate
+           your handle, and deallocate your
+Dave Lyons slop.  Then you haven't sucked up the last available memory if you
+           succeed in getting your
+Dave Lyons handle.  (If you have a watchdog handle, locking it during your
+           big allocation would have the same
+Dave Lyons effect, as long as you're prepared for your big NewHandle to
+           fail).
+Dave Lyons (ga)
+AFL Scott  Ok.. that makes sense.  How about trying to allocate memory until
+           a failure, counting the handles and 
+AFL Scott  using that as a watchdog, instead?
+AFL Scott  (should read.. gobble everything, give it back and 
+Dave Lyons Not sure I understand--have lots of smaller watchdogs instead of
+           one big one??
+Dave Lyons Doesn't sound like a plan--if you allocate until failure all the
+           time, you'll make everything
+Dave Lyons that's purgable get purged, unnecessarily.
+AFL Scott  Not really.. Just do it at startup, count the chunks subtract two
+           or so from the count, save the count
+AFL Scott  then kill all the "count handles".  If I understand you right,
+           you're saying that I can purge restart
+AFL Scott  able apps doing it this way, right?  I mean if the tools are
+           started before this happens, their memory
+AFL Scott  shouldn't get purged, right?
+Dave Lyons DAs/etc could allocate memory while your app is up, though.
+Dave Lyons Yes--not just restartable apps, but other stuff in
+Dave Lyons memory that is purgable, like QD's work buffer & who knows what
+           else.  If you can avoid purging
+Dave Lyons everything, that's good.  That why I'm recommending stuff like
+           "allocate with temporary slop".
+Dave Lyons ga
+AFL Scott  Ok... I see your point.  I'll try your suggestion and see how that
+           works.  Thanks, Dave!
+AFL Scott  Done.
+Dave Lyons okee dokee
+AFL Dyfet  Okay, who has the next question for tonight?
+Dave Lyons I think Matt does.
+Matt DTS   My question:  "Can we talk about something other than Scott's
+           memory allocation?"
+Matt DTS   :)
+AFA Gary J Sure, Matt :)
+AFL Scott  (Sounds good to me.  I'm tired of it, too.)
+Coach101   What do you want to talk about Matt ?:)
+AFL Scott  :)
+Matt DTS   Something that more than Dave and Scott can get involved in.  :)
+AFL Scott  Printing!:)
+AFL Dyfet  GA Scott :)
+AFL Scott  Is it necessary for the application to check what type of printer
+           is being used?  Serious question.
+AFL Scott  (some how I knew he'd answer!:)
+AFL Dyfet  Yes, go ahead Matt...
+Matt DTS   It depends on what you're going to do with the information. 
+           Usually not.
+Matt DTS   If you want to use driver-specific features, though, you should
+           check the iDev value for the one you
+Matt DTS   want (or use some other identification for $8001 iDev values -
+           maybe the driver file name).  GA.
+AFL Scott  Ok, so Pic Comments shouldn't mess up well behaved
+AFL Scott  drivers?
+Matt DTS   Most PicComment *numbers* are reserved, so they shouldn't mess up
+           well-behaved drivers.  However, if
+Matt DTS   you're using driver-specific PicComments, it certainly wouldn't
+           hurt to compare the iDev value just to
+Matt DTS   be safe.  GA.
+AFL Scott  (make PicComments one word :))
+AFL Scott  Ok, I think I may have to do that.  Harmonie seems to not like
+           PicComments.  Thanks.  Done!:)
+Matt DTS   Be sure to tell BurgerBill about it, Scott.
+AFL Scott  Wheels are in motion!:) 
+AFA Gary J :)
+AFA Gary J How are the Seven Hills drivers?
+Matt DTS   (Was that fun?)
+AFA Gary J Have you tried them?
+AFL Scott  Not here, I didn't have time test them at Applefest.
+Matt DTS   I've been impressed by what I've seen of the Seven Hills
+           drivers.
+AFA Gary J That's good to know  :)   
+Matt DTS   I'm really impressed with how fast Steve learned how to write
+           Printer Drivers for Independence.
+AFL Dyfet  Okay, does anyone else have a non memory manager and non printer
+           question :)?
+AFL Dyfet  GA Scott
+AFL Scott  I haven't tried this yet, but it's going to pop up... is it
+           possible to start a user toolset using 
+AFL Scott  StartTools?  If not, and I wish to use StartTools to start the
+           "native" tools, how does one obtain the
+AFL Scott  direct page page space necessary for user toolset and does the
+           user toolset have to have the same 
+AFL Scott  direct page as the "native" tools?
+AFL Scott  (dumb question, right?)
+AFL Dyfet  GA Dave...(I'm interested in user tools too :)
+Dave Lyons LoadOneTool, LoadTools, and StartUpTools only know about system
+           tool sets.  So, you have to
+Dave Lyons get the code into memory on your own.  For ex:  Imbed it in your
+           app (ick), use InitialLoad or
+Dave Lyons InitialLoad2, or use LoadResource with the CodeResConverter logged
+           in for your resource
+Dave Lyons type.
+Dave Lyons Once the code is in memory, use SetTSPtr (which *does* have a
+           System vs. User tool set flag) to
+Dave Lyons tell the system where your tool set's function pointer table (FPT)
+           is.
+Dave Lyons Direct page space--either have the app allocate it with NewHandle,
+           attributes $C015, and pass the
+Dave Lyons pointer to the toolset's StartUp function, or have the toolset
+           allocate it itself (using its own
+Dave Lyons ID, as determined by calling MMStartUp from the
+Dave Lyons tool set), or using a memory ID specified by the application (as a
+           parameter to the StartUp function,
+Dave Lyons or whatever).  The tool set can use its work area pointer (GetWAP,
+           SetWAP) to store whatever
+Dave Lyons information it wants--usually you'll just have the pointer to your
+           direct-page space, if any.
+Dave Lyons ga
+AFL Scott  Thanks Dave!:)
+AFL Scott  done.
+Dave Lyons (Of course, see technotes, too.)
+AFA Gary J Any more questions, Scott????  :)
+AFL Dyfet  Thanks Dave!
+AFL Dyfet  Go ahead Coach!
+Coach101   If two or more items (app & DA for example) utilize the same Run
+           Time Library, will the system
+Coach101   have one or two copies of the library in memory?
+AFL Dyfet  I don't believe the IIgs loader has a concept of shared code
+           images....
+AFL Dyfet  (shades of VMS here)
+Dave Lyons [I don't know.  Never used run-time libraries.  I thought they
+           were there to be shared, but I'm
+Dave Lyons not sure.]
+AFL Dyfet  GA Winkie...
+WinkieJim  SHouldn't be a problem, because almost no one uses them :)
+AFA Gary J Q = Coach (WinkieJim)
+Coach101   But, they are a real neat idea and do work with the APW linker
+           (LinkIIGS).....  done
+AFL Dyfet  I think you stumped 'em Coach :)
+WinkieJim  Neat idea that never took off...
+Dave Lyons (Yeah, you win a prize--you get to write in to DTS and wait until
+           the dude responsible for
+Coach101   Yeah, I thought for sure Matt would jump on it since it was a ?
+           from other than Scott :)
+Dave Lyons the Loader comes back from vacation. :)
+AFL Scott  :)
+Coach101   Nah, its real easy to test.  I was just curious and would rather
+           avoid the time to do the test....
+Coach101   ga
+AFL Dyfet  My guess is that it will load a seperate image :)...I guess we
+           will eventually
+AFL Dyfet  find out who is right...
+AFA Gary J I'd guess the same thing, Dave.
+Matt DTS   I *believe* the loader knows about run-time libraries and only
+           keeps one copy in memory.
+Matt DTS   I would also bet that this part of the Loader hasn't been
+           extensively field-tested.  :)
+Coach101   I tend to agree with Matt & Dave, but given the ill use of RTLs,
+           who knows....
+Coach101   the system may even barf in that situation...
+WinkieJim  Since the library could change values in itself it would be
+           dangerous not to
+WinkieJim  have separate copies...I'd think.
+AFL Dyfet  I could see the possibility of stomping on data in the RTL if two
+           apps are
+AFL Dyfet  working with the same image (or as Winkie just said)
+Coach101   I know it works fine for the single user RTL though...  (cuts
+           linker time too!) 
+Dave Lyons (*If* the loader supports shared RTLs, the idea would be that RTLs
+           are supposed to be prepared
+Dave Lyons to have multiple clients.  Perfectly possible.)
+Coach101   But, there is little value to an RTL if it is a single user entity
+           (barring the reduction in 
+Coach101   linker time).
+Coach101   It is kind of like a *callable* user tool set....
+Dave Lyons And reduction in disk space, if you have several apps that use the
+           same library at different times.
+AFL Dyfet  If the library only uses stack reference or dynamically allocated
+           work space,
+AFL Dyfet  it certainly could function as a shared image if supported by the
+           loader in
+AFL Dyfet  that manner.  The burden would then simply be on the programmer to
+           write it
+AFL Dyfet  carefully :)
+WinkieJim  Oh, in that case it would always work perfectly...:)
+Coach101   A big advantage of them, is that you can have
+Coach101   several apps that use a common library.  If you
+Coach101   enhance the common library, you do not even need
+Coach101   to re-link the apps.  Just reform the library and
+Coach101   immediately all the apps are using the new, improved, enhanced,
+           faster, less buggy, etc. library
+AFL Dyfet  Well, I guess we will have to wait to find out about how RTL's are
+           supported...
+AFL Dyfet  Okay, do we have any other questions for tonight?
+Coach101   I will run the test next week....
+AFL Dyfet  GA Winkie...
+WinkieJim  I don't suppose there's any other way to put up a modal dialog
+           from a resource
+WinkieJim  other than using FakeModalDialog?
+Dave Lyons Sure, just do part of what FakeModalDialog does, but do it
+           yourself.  Call NewWindow2 to create
+Dave Lyons your window, and go into a sepaate TaskMaster loop where you only
+           turn on the TaskMask bits you
+Dave Lyons want.  (For example, leave off the one that brings windows to the
+           front when you click on them.)
+Dave Lyons If you're doing a complicated dialog, it's probably worth your
+           while to use FakeModalDialog instad
+Dave Lyons of doing a lot of the work yourself.  ga
+WinkieJim  Errr...that would be great for an App, but it's an NDA...
+Dave Lyons Why not from an NDA?
+WinkieJim  I've always thought NDA's can ony have one window?
+Dave Lyons You can do *modal* loops in your NDA--just *don't* allow
+           TaskMaster to do window updating for you,
+Dave Lyons or you'll make the app's window-update routines get called with
+           the wrong CurResourceApp set.  Turn
+Dave Lyons off the task-mask update bit & respond to selected updates
+           yourself, when the event comes back from
+Dave Lyons TaskMaster.
+Dave Lyons You can only have one *modeless* window in an NDA--modal ones are
+           a different story.  Just
+Dave Lyons the main window is special to the system (no need to call
+           SetSysWindow on your modal windows, and
+Dave Lyons I actually recommend your don't).
+WinkieJim  ah....
+WinkieJim  Now I just have to decide if it's worth the trouble to use the
+           resource window
+WinkieJim  or just do it the old fasioned way...
+WinkieJim  Wish List: Dialog Resources :)
+Dave Lyons I suppose you want all the neat stuff that Extended Controls can
+           do added to the Dialog Manager,
+Dave Lyons right?)
+WinkieJim  Not really, just want to be able to keep the dialog in a resource
+           so it can
+WinkieJim  be changed and updated easy.
+Dave Lyons Well, once you have FakeModalDialog *or* a small collection of
+           your own routines, if you don't
+Dave Lyons like FMD, existing window/control resources make great dialog
+           resources!
+Dave Lyons Extended controls are spiffy and will be spiffier.
+WinkieJim  I have nothing against FMD, but I didn't realize I could open
+           another window
+WinkieJim  in a NDA...
+WinkieJim  Does FMD handle the updates right?
+Dave Lyons (Never seen Memory Bar's about box? :)
+Dave Lyons FMD has a flag bit where you tell it whether to update windows
+Dave Lyons besides the dialog window.  Just *don't* set that bit when you
+           call FMD from a NDA, and life
+Dave Lyons is good.
+WinkieJim  Sounds good.
+Dave Lyons Eventually I would like to make the restriction unnecessary--that
+           would
+Dave Lyons mean the Window Manager would have to "know" the right resource
+           app for each window.  This is
+Dave Lyons probably do-able, but not in 5.0.4.
+Dave Lyons (ga)
+WinkieJim  (and I don't use Memory Bar...I use a better memory bar NDA :)
+WinkieJim  IBdone
+Dave Lyons (How 'bout the Control Panel's "Help" window?  That's modal.)
+
+

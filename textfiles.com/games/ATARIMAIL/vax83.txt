@@ -1,0 +1,845 @@
+Atari/Atari Games VaxMail 1983			Jed Margolin
+___________________________________________________________________________
+From:	MCCARTHY        6-AUG-1983 13:40  
+To:	ALBAUGH,MARGOLIN,SHERRILL
+Subj:	VAX/16032 development board
+
+
+DB16000 DEVELOPMENT BOARD SETUP.
+
+After 4 hours of trial and error, and some "Oh, did we forget to tell you .."
+from NATIONAL, the 16032 development board is up and ready for VAX 
+communications.  The forrowing are the basic setup procedures and 
+requirements as of 8-5-'83, with version 2.00 monitor roms in the DB16000.
+
+HARDWARE:
+1. Connect DB16000 to terminal using supplied cable.
+   ( 26 pos. edge connector to 25 pos. D SUBMINIATURE female connector with
+   pins.  Cable is transparent. i.e. 1-1,2-2,3-3,etc., pin 26 not used. )
+
+2. Verify terminal setup for :
+     no parity, full duplex, RTS-CTS disabled,
+     8 bits/char, bit 8 on transmit=8, 1 stop bit on transmit.
+     UPPER CASE.
+
+Steps 3,4 & 5 are not necessary for stand-alone operation.
+
+3. Plug BLX-351 expansion board into DB16000 board at J3.
+
+4. IGNORE the hardware manual setup instructions of 4.4.3 . See 4.4.4 .
+
+5. Connect the BLX-351 to the vax cable ( that should go to the terminal)
+   using an adaptor cable.
+   ( 26 pos. edge connector to 25 pos. D SUBMINIATURE male connector with
+   sockets. Cable is transparent. i.e. 1-1,2-2,3-3,etc., pin 26 not used. )   
+
+POWER ON:
+1. Connect power to the DB16000 and terminal.
+
+2. Press DB16000 reset switch ( S2, the more recessed of the two switches).
+
+The terminal should display :
+R VERSION_2.00_10-FEB-83
+
+SOFT INITIALISATION
+1. Enter an exclamation mark followed by return key. ( R changes to asterisk)
+
+2. Type OMN=C followed by return key. (OMC=C is not echoed)
+
+DB16000 is now up and running in STAND ALONE mode.  To put it into transparent
+mode continue as follows.
+
+3. Type after promt :
+CMB C00056=96
+CMB C00054=8
+   This sets the baud rate of the BLX-351 to 9600.
+
+4. Type :
+* OMT
+   The DB16000 is now in transparent mode and you are talking to the VAX.
+
+If the vax talks to your terminal with a different protocol than shown in
+HARDWARE point 2 above, then have Steve Suttles change the VAX communications
+protocol for your terminal so you dont have to change setup every time.
+
+To return to STAND ALONE mode, (to examine memory, etc. ), press the 
+DB16000 reset switch and repeat the !,OMN=C part of the initialisation.
+
+PMcC 
+___________________________________________________________________________
+From:	MCCARTHY       19-AUG-1983 13:14  
+To:	ALBAUGH,MARGOLIN,SHERRILL
+Subj:	DB16000 update
+
+
+An updated initialisation procedure for the DB16000 development board 
+is available in [MCCARTHY.ROADTEST]DB16000.LIS
+Notable changes are MMU installation, uppercase not required and using 
+CTRL B in transparent mode to send a command to the DB16000.
+			PMcC.
+___________________________________________________________________________
+From:	MCCARTHY       23-AUG-1983 13:14  
+To:	MARGOLIN,ALBAUGH,SHERRILL
+Subj:	DB16000 , MMU BUG FIX.
+
+
+Solution to the problem of Transparent mode operation with the MMU installed.
+
+After getting into Stand Alone mode (!,omn=c) type
+CMM =80000         before setting BLX bd. baud rate with cmb commands. 
+
+Apparently, when the monitor initialises the MMU, the port addresses 
+for the BLX board get mapped to the fourth dimension.
+
+Once more, an updated initialisation procedure for the DB16000 development 
+board is available in [MCCARTHY.roadtest]DB16000.LIS
+			PMcC.
+___________________________________________________________________________
+From:	MCCARTHY       30-DEC-1983 16:23  
+To:	@DB16K
+Subj:	NEW INFO.
+
+
+Some new solutions to some old problems with the NS16032 development 
+system.
+
+1. The MMU we had installed was BAD.  It was not doing proper 
+translations and protection.  I got a new MMU (rev. 8) from NATIONAL
+and it works just fine. So anyone that had the fix in their DBG16.INI 
+file can remove it. (R .MMSR_TU 0)
+
+2. The BLX board and the DB16000 have been jumpered properly for 
+automatic baud rate selection. So you no longer have to program baud 
+rate in Stand Alone mode on power up. 
+
+The power up routine now consists of :
+
+Switch power on.
+Press reset (S2).
+Type   !  <cr>
+Type   OMT
+
+Press <return> or <control Y> to log onto the VAX.
+Please let me know of any problems.
+
+				PMcC
+___________________________________________________________________________
+From:	KIM::SUTTLES        11-JUL-1983 17:38  
+To:	@SYS$MAIL:COINOP
+Subj:	BASIC-plus?
+
+	As with any computer program, nothing is immune to enhancements.
+The 'basic computer' of a week or so ago has become an 'extended basic
+computer'.  Here is the new, improved documentation (believe it or not!)
+
+	Modify your login.com file to include:
+		$ GOSUB :== @sys$sysdevice:[utilities.com]gosub
+		$ RETURN :== @sys$sysdevice:[utilities.com]return
+		$ GOBACK :== @sys$sysdevice:[utilities.com]goback
+		$ WHERE :== @sys$sysdevice:[utilities.com]where
+... and you will have these four words defined.  You can use any word you
+like (an example is STACK instead of WHERE) but the right sides must be the
+same.  These will NOT be installed on a system-wide basis because there is
+still hope that GOSUB and RETURN may become legal, real words in command
+procedures, and we would then have to pick something else for these things.
+
+	GOSUB works like set default (that's what it is for), but it saves
+the current default (device included) on a symbolic stack.  Return does the
+obvious thing.  Gosub takes one argument, the place to gosub to.  (what
+you would feed set default).  If you don't supply it, you will be prompted.
+Return reminds you a) where you are returning to, or b) that you blew it
+and don't have anywhere to return to; in which case it sets you up in your
+"login directory", which has the permanent logical name SYS$LOGIN .
+
+	GOBACK is intended for those people who can't make up their mind (like
+Owen and me) and shuttle back and forth between the directories.  GOBACK is
+for when you did too many returns; another word for GOBACK might be UNRETURN.
+
+	WHERE lets you know what kind of a mess you are in.  Specifically, it
+lists, in order, all the places you've "visited".  It points out (quite
+literally) where you are (your current default directory, no matter HOW you
+got there (gosub, set default, return, goback) and where you would go if you
+used the GOBACK and RETURN verbs (it assumes you would use those words).
+
+	It should be mentioned that your current default is saved, when you
+do a GOSUB, a RETURN, or a GOBACK; so that SET DEFAULT is still consistent
+with the meaning of all these words.  The best way to understand what they
+do is to play with the words (use WHERE a lot).  Hopefully, it should be
+obvious what is going on.
+
+	I believe it is working properly, but if you find something wrong,
+please let me know.
+
+	I know I will be sorry, but "let me know if you have suggestions for
+improvement."
+
+	PS:  RESTART will blow this away, as expected; you will have nowhere
+to return to.
+
+
+sas
+___________________________________________________________________________
+From:	KIM::BABCOCK        18-JUL-1983 12:04  
+To:	@SYS$MAIL:ENGINEER.UAF
+Subj:	Automated compilation
+
+For any programmer who builds game programs in bits and pieces (and for those
+who would like to but get a bad taste in their mouthes), there is now a .COM
+file for you.
+
+Called MAKE (as in SYS$SYSDISK:[UTILITIES.COM]MAKE.COM), it will compile your
+new sources or any with errors and link them together into the game program.
+MAKE works off your .LNK file (which you probably need to get the program 
+linked properly), extracting file names, compiling those .MAC files which
+are newer than their .OBJ files, or older than their .ERR files, and if no
+errors are indicated, linking the game program together with the .LNK file.
+There are options for printing .LIS files (no print is the default),
+and using alternate compilers (MAC65 is the default).
+
+At present, there is no provision for handling include files; if you change
+an include file, you'll need to either delete the corresponding .OBJ files
+or update the .MAC files using the include file.
+
+Examples:
+
+$ MAKE := @SYS$SYSDISK:[UTILITIES.COM]MAKE
+$ MAKE SAMURI     ! MAKE SAMURAI GAME PROGRAM
+$ MAKE SAMURI /L MAC68   ! LIST COMPILED PROGRAMS AND USE 6809 ASSEMBLER
+
+$ MAKE
+_Link file: SAMURI
+_List/Nolist: L
+_Assembler: MAC65
+
+Remember, no longer will you worry about which files need to be compiled,
+or whether the game program is the latest version.  Just use MAKE and be sure!
+(Any suggestions or comments may be directed to Eddie Babcock).
+
+edb
+___________________________________________________________________________
+From:	KIM::SUTTLES        19-JUL-1983 13:46  
+To:	@SYS$MAIL:COINOP
+Subj:	Private data backups
+
+	Due to a severe increase in demand, we are forced to state some
+kind of policy on private archival backup tapes.  Effective immediately,
+anyone can have a backup done on a BYOT (bring your own tape) basis.
+
+	If you provide a tape to Sharron, along with a specification of
+files to be backed up, she will process the backup and return the tape.
+Deletion of the files is UP TO YOU.  The safekeeping of the tape is also
+your own responsibility.  We will continue the current backup schedule
+as normal (every noon, to be kept til noon the next day; every morning, to
+be kept a week, except for fridays, which are kept a month, except for
+the LAST friday of each month, to be kept a year).  These tapes we will
+retain; but we don't have the storage nor the media for everyone to have
+a tape or two of their own.
+
+	If you choose this approach, redundancy is YOUR HEADACHE.  If something
+happens to your own tape, and it is not on any of the tapes we still have,
+your data will be lost.  Note that there is the possibility of damage to the
+tape, as well as accidental erasure, when adding to an existing set.  It
+is reccommended that you keep separate tapes for separate projects, instead
+of trying to "cheap out" and fit twenty sets on one tape.  If sets one
+thru 19 get blown away when you add number 20, you would be very upset.
+
+	The moral of the story is that if the data is important enough to keep,
+you should keep it as a set, intact, and seperate.  We will not mount the
+media write-enabled for a restore; but in order to add to the set, you run
+the risk of accidental overwrite.
+
+
+	All of the above applies to floppies, as well as tape; floppies are
+a little more convenient to store, but don't hold as much.  Rough figures
+follow:
+
+	Tape (2400 ft, 8KB block size) = 40MB storage, or 80,000 disk blocks
+(figure 75K blocks after backup adds its own overhead)
+
+	Floppies (single density, our default) = .25MB, or 500 disk blocks.
+
+	Floppies (double density, YOU MUST SPECIFY) = .5MB, or 1,000 disk
+blocks.  If you want double density, all of the floppies to be written on
+must be pre-initialized before the backup starts.  Therefore, you need to
+KNOW beforehand just how many floppies are to be used.
+
+	Floppies can be file structured, meaning they can have directories
+on them, and are much easier to update (as opposed to backup sets, which have
+to be created all at the same time).  Multi-volume sets only apply to the
+backup program; if it won't fit on one floppy, you need a backup set on more
+that one floppy, or one or more tapes.  Do a $DIR/SIZ to find out how much
+data you have.  This should probably make the answer obvious.
+
+
+	If I can help you determine your needs, give me a call.
+
+sas
+___________________________________________________________________________
+From:	ERNIE::SHEPPERD       21-JUL-1983 20:02  
+To:	@SYS$MAIL:COINOP
+Subj:	Cross talk
+
+Effective the next time you login, 3 new commands that allow users on Kim to
+inspect things on Ernie and visa-versa.
+
+	$ KSHO*W argument1[,...,argument8]	!show Kim's stuff
+	$ ESHO*W argument1[,...,argument8]	!show Ernie's stuff
+
+		where "argument" is any legal argument available
+		to the DCL SHOW command. If an argument begins
+		with a non-alphanumeric character (/ for example),
+		then the argument must be enclosed in double
+		quotes (").
+
+The following commands are short hand versions of the SHOW QUE command.
+
+	$ KSQ  [que]		!show Kim's device que(s)
+	$ ESQ  [que]		!show Ernie's device que(s)
+
+If the "que" argument is ommited, you'll get a listing of all jobs in all
+ques.
+
+The following commands are useful for removing jobs from remote print
+ques (cuz you decided you didn't want the listing or its spitting out
+reams of paper or the printer broke etc.)
+
+	$ KDELE job_number que	!delete entry from remote que
+	$ EDELE job_number que	!delete entry from remote que
+
+The "job_number" and the "que" are required paramaters and can be obtained
+by doing the "xSQ" command described above. You will be prompted if you
+leave them off.
+___________________________________________________________________________
+From:	KIM::SHEPPERD       26-JUL-1983 18:55  
+To:	@engineer.uaf
+Subj:	New assembler MAC65C
+
+MAC65C (available the next time you login or RESTART) is the new assembler
+for the 65C02 CMOS processor. This processor, in case you've never heard
+of it, is object code compatible with the 650x but has some extra goodies.
+
+It was deemed better to have a different assembler for the CMOS part rather
+than slow down MAC65 more to accomodate all the "special case" instructions.
+
+MAC65C assembles everything MAC65 assembles exactly the same (I hope). MAC65C,
+however, assembles the following extra stuff:
+
+	Indirect addressing on ADC,AND,CMP,EOR,LDA,ORA,SBC and STA
+		example-  LDA N,page_zero_address
+		or	  LDA @page_zero_address
+
+	Branch on bit BBR (Branch if Bit Reset) and BBS (Branch if Bit Set)
+		example- BBS bit_number,page_zero_address,destination
+
+	BIT #, BIT ZX, and BIT AX, instruction address modes
+
+	BRA branch always
+
+	DEC and INC accumulator (no operand implies accumulator)
+
+	JMP NX,address or JMP @address(X) jump indirect (address=16 bits)
+
+	PHX, PHY, PLX and PLY stack X or Y instructions
+
+	RMB (reset memory bit) and SMB (set memory bit) instructions
+		eaxmple- RMB bit_number,page_zero_address
+
+	STZ (store zero) with 4 address modes
+		example- STZ Z,page_zero_address
+			 STZ A,absolute_address
+			 STZ ZX,page_zero_address
+			 STZ AX,absolute_address
+
+	TRB (Test and Reset Bits) and TSB (Test and Set Bits) with
+	    2 address modes
+		example- TRB Z,page_zero_address
+			 TSB A,absolute_address
+___________________________________________________________________________
+From:	KIM::SHEPPERD        6-SEP-1983 14:25  
+To:	@SYS$MAIL:ENGINEER
+Subj:	Using the DIO model 29 gangpak
+
+The VAX can make the gangpak work now. The gangpak can program up to 65k of
+data into up to 8 EPROMs. All you have to do is tell the DIO how much data you
+want programmed by specifying a range of addresses to program. For example:
+suppose your program is 32k bytes long and you want to program it into 4
+2732's. The procedure would appear:
+
+	$ DIO
+	DIO_COMMAND: FILE your_file_name
+	DIO_COMMAND: DEVICE 2732
+(place 4 EPROMs in sockets 1 through 4)
+	DIO_COMMAND: PROGRAM 8000-FFFF
+
+The DIO procedure will check that all the EPROMs are blank (that may take a few
+seconds) and if one or more is not blank will turn on the LED under the failing
+part and prompt you for a go-ahead. It then down loads your data (which may
+take a few minutes) and checks that the EPROMs are programmable (illegal bit
+test). If one or more EPROMs is not blank and can't be programmed it will give
+you the option of replacing the EPROM's whose LED is on and testing again
+(saves the download time). Once programming starts the LED's under the parts
+detected in sockets are lit and data is programmed into them (this is F A S T).
+If you don't specify an ending address, it assumes as before that only 1 EPROM
+is to be programmed.
+
+After all programming is done, the DIO computes and displays the checksum for
+each EPROM in the programming set.
+
+At some time in the near future the DIO will display a map of what data is
+written in which EPROM. As it is now though, you'll have to figure out for
+yourself what is where. Its pretty easy for 8 bit data words:
+
+	socket 1 = start_address thru start_address+EPROM_size-1
+	  "    2 = start_address+EPROM_size thru start_address+<EPROM_size*2>-1
+	etc.
+
+	I.E. in the previous example:
+	socket 1 = 8000-9FFF
+	  "    2 = A000-BFFF
+	  "    3 = C000-DFFF
+	  "    4 = E000-FFFF
+	sockets 5-8 not used
+
+If your EPROM set takes 4 or fewer sockets then you can program more than one
+set at the same time. All you have to do is stuff the EPROMS into the empty
+sockets before you start the programming and the system will figure out that
+you did that and program them for you. In the above example you could have
+stuffed EPROMS into sockets 5-8 and they too would have been programmed (and
+checked for blank and illegal bits). Note, however, that the second set gets
+programmed beginning with the first empty socket not with any particular row or
+column. For example if your EPROM set consisted of 3 parts and you wanted to
+program 2 sets, the first set would go into sockets 1-3, the second set would
+go into sockets 4-6 and sockets 7 and 8 would have to remain empty. 
+
+	Happy programming,
+		ds
+___________________________________________________________________________
+From:	KIM::SUTTLES        23-SEP-1983 08:22  
+To:	@SYS$MAIL:JUNK
+Subj:	"DAILY" has been added;  lots of new users: try this.
+
+	It has come to my attention (regularly) that ALARM is nice, but
+what we REALLY need is for the computer to remind us of the things to do
+that day.  You'll have to make other arrangements for fetching the paper
+and breakfast in bed (no crackers), but I think I may help with the other
+motherly aspects.
+
+	You can now have the computer remind you that (since today is friday)
+your time card is due.  Or that you have a dentist appointment.  Or whatever.
+You have a number of choices, which will become evident shortly.
+
+	First, create a subdirectory [.NAG] off of your main directory.
+Then edit your LOGIN.COM file to include the line:
+	$ @SYS$SYSDEVICE:[UTILITIES.COM]NAG
+... which will run each time you log in.
+
+What NAG does, is look in your
+subdirectory (and create a name SYS$NAG to get at it) for files.  It will:
+
+	Figure out where your NAG directory is.
+
+	Find out what is todays date, ala 830717 (1983, 7'th month, 17'th day)
+as well as what day of the week it is (Sunday) and the standard three letter
+abbreviation (coincidently the first three letters of the long name) (Sun in
+this case).  The proper spelling for Wed is WEDNESDAY, by the way.
+
+	Look for each of the following and do the appropriate thing (execute
+the command file or type the text file):
+
+	'weekday'.com	! as in "SUNDAY"
+	'weekday'.day	! SUNDAY.DAY will be typed
+	'dow'.com	! SUN.COM will be executed
+	'dow'.day	! SUN.DAY will be typed
+	'date'.com	! 830717.com, remember?
+	'date'.day	! this gets typed
+	daily.com	! every day (7 days a week, not 5)
+	daily.day	! this one too
+
+	Each time it finds something to do, it will follow it with a blank
+line, for separation.  You can leave notes to yourself, by creating a file
+FRIDAY.DAY that contains the note about time cards; or a command file
+FRIDAY.COM that does anything you want to do on friday (copy an empty status
+report template over an existing one, for example).  You can leave notes
+by date (in 831223.day, you might put a message "DO YOUR SHOPPING!!!").
+
+	Note that NOTHING is guaranteed (no such thing as a free breakfast in
+bed); you have to log in to make it happen.  And it is not neccesarily unique;
+if you log in more than once in the same day, you will go through it twice.
+But, it might make things a little easier.
+
+	As usual, if you should discover any errors, I will disavow any
+knowlege of this message.
+
+sas
+___________________________________________________________________________
+From:	KIM::SHEPPERD       23-SEP-1983 16:31  
+To:	@SYS$MAIL:ENGINEER.UAF
+Subj:	New MACXX and Linkm
+
+	Warning Warning Danger Danger
+
+I just released a new version of MAC65,MAC69,MAC11,MACRO and LINKM. These
+have been tested extensively but as any programmer knows, sometimes a bug
+or 2 can sneak through. Most of the changes were put in to help the AMAC
+user's to convert to MAC65 (further changes forthcoming). But in case your
+intrested this is what's different:
+
+	MAC65, MAC69, MAC11 and LINKM have new unary operators:
+
+	^^glbexp - use the upper 8 bits of the "glbexp"
+		   equivalent to <glbexp>&0FF00/100
+	^Vglbexp - use the lower 8 bits of the "glbexp"
+		   equivalent to <glbexp>&0FF
+	^~glbexp - switch the bytes around (no equivalent)
+	glbexp1\glbexp2 - modulo expression 1 by expression 2
+		           (not too sure about it if exp2 is negative)
+	glbexp1{glbexp2 - shift expression 1 left expression 2 bits
+	glbexp1}glbexp2 - shift expression 1 right expression 2 bits
+
+The term "glbexp" is any legal assembler expression which may contain
+any combination of local and global symbols and/or other "glbexp"'s.
+
+The minor changes to RT-11 MACRO include .RADIX 16 and it displays
+assembly errors at the terminal as MAC65 does.
+
+	ds
+___________________________________________________________________________
+From:	KIM::SHEPPERD       29-SEP-1983 21:12  
+To:	@SYS$MAIL:ENGINEER.UAF
+Subj:	More about MAC65, MAC69, MAC11
+
+
+	WARNING WARNING   DANGER DANGER
+
+Once again I've released another version of MACxx (6.1) and LINKM (6.7).
+They shouldn't mess up but.....
+
+The addition to MAC65 and MAC69 is the .ENABL GBL directive that causes
+ALL undefined symbols to automatically be declared global. This is handy
+when you break your program in pieces and don't want to be bothered with
+.GLOBL'ng everything. The disadvantage is that real undefined symbols
+won't be detected until after you've linked your files.
+
+MAC65 has also had added the .ENABL MOS directive that changes the
+address mode syntax to be the MOS TECHNOLOGY standard format (AMAC
+format). Note that if the MOS is .ENABL'd then the other formats are
+flagged with an error. All illegal address modes in either format will
+now be flagged with a "Q" error instead of the all encompassing "A"
+error. Also "P" errors are not likely to occur anymore because I put
+in forward reference handling. I.E.
+
+      .DSABL MOS	      .ENABL MOS
+      ----------	      -----------
+	LDA #addr	==>	LDA #addr	;no change
+	LDA I,addr	==>	LDA #addr	;immediate mode
+	LDA addr	==>	LDA addr	;abs or zpage
+	LDA Z,addr	==>	LDA addr	;abs or zpage
+	LDA A,addr	==>	LDA addr	;abs or zpage
+	ASL		==>	ASL		;accum mode no change
+	CLC		==>	CLC		;implied mode no change
+	LDA NX,addr	==>	LDA (addr,X)	;indexed by X indirect
+	LDA @addr(X)	==>	LDA (addr,X)	;indexed by X indirect
+	LDA NY,addr	==>	LDA (addr),Y	;indirect indexed by Y
+	LDA ZX,addr	==>	LDA addr,X	;abs or zpage indexed by X
+	LDA X,addr	==>	LDA addr,X	;abs or zpage indexed by X
+	LDA AX,addr	==>	LDA addr,X	;abs or zpage indexed by X
+	LDA AY,addr	==>	LDA addr,Y	;abs or zpage indexed by Y
+	BCC addr	==>	BCC addr	;relative no change
+	JMP N,addr	==>	JMP (addr)	;indirect
+	JMP @addr	==>	JMP (addr)	;indirect
+	LDA N,addr	==>	LDA (addr)	;zpage indirect (MAC65C only)
+	LDX ZY,addr	==>	LDA addr,Y	;abs or zpage indexed by Y
+
+dms
+___________________________________________________________________________
+From:	KIM::SUTTLES         4-OCT-1983 14:23  
+To:	@SYS$MAIL:ENGINEER
+Subj:	Programming in C ... and then what?
+
+
+	Hi there, UnixPhiles.
+
+	Everyone and their brother has been wanting to know how to make
+their C programs runnable after running them through the C Compiler (CC),
+with Vax-11 C.
+
+	Due to Dave's discovery of the location of the elusive object library,
+the story can now be told.
+
+	You may:
+
+		$LINK your_file_list,SYS$LIBRARY:CRTLIB/LIB
+
+	...but if you are gonna work mostly in C, you will probably want to
+put in your LOGIN.COM:
+
+		$ ASSIGN SYS$LIBRARY:CRTLIB LNK$LIBRARY
+
+	...which will cause the linker to look there by default, WHETHER OR NOT
+THE SOURCE WAS WRITTEN IN C.  That's why we won't be doing it for everybody.
+
+sas
+___________________________________________________________________________
+From:	KIM::FXL             6-OCT-1983 12:57  
+To:	@SYS$MAIL:ENGINEER
+Subj:	uploading from the development system to the VAX
+
+
+Yes indeed, you can now upload data directly from the development
+system to the VAX.  Just look at the file [FXL]UPLOAD.DOC to find
+out how.  Let me know of any bugs or suggestions for improvements.
+
+				Franz
+___________________________________________________________________________
+From:	KIM::HODGES         25-OCT-1983 15:32  
+To:	@SYS$MAIL:COINOP
+Subj:	Sound Effect Records
+
+The following sound effect records are available on a check-out basis.
+Please see me if you would like to check any of them out.
+
+Authentic Sound Effects - Volume 1
+Authentic Sound Effects - Volume 2
+Authentic Sound Effects - Volume 3
+Authentic Sound Effects - Volume 4
+Authentic Sound Effects - Volume 5
+Authentic Sound Effects - Volume 6
+Authentic Sound Effects - Volume 7
+Authentic Sound Effects - Volume 8
+Authentic Sound Effects - Volume 9
+
+Environments - Turn your hi-fi into a phychoacoustic device
+Environments - The magic of psychoacoustics sound
+Environments - An amazing piece of wax
+Environments - Disc 1
+Environments - Disc 2 (2)
+Environments - Disc 3
+Environments - Disc 4 (2)
+Environments - Disc 5 (2)
+Environments - Disc 6
+Environments - Disc 7
+Environments - Disc 8
+Environments - Disc 11
+
+Solitudes - Volume 3
+Solitudes - Volume 4
+Solitudes - Volume 7
+
+Sound Effects, Aircraft - Volume 1
+Sound Effects, Automobiles - Volume 3
+Sound Effects, Crowds - Volume 4
+Sound Effects, Industrial/Household 
+Sound Effects, Military - Volume 7
+Sound Effects, Weather/Water - Volume 9
+Sound Effects, Miscellaneous - Volume 10
+
+Sounds of Antiques
+Sound Effects - Volume 6
+___________________________________________________________________________
+From:	KIM::VICKERS        22-NOV-1983 10:36  
+To:	@SYS$MAIL:JUNK
+Subj:	A Computer Bulletin Board for Disarmament
+
+
+	Another item for your ever-growing directory of nukewar mail:
+
+	The Stanford Arms Control and Disarmament Forum announces the
+establishment of a computer based conference tree dedicated to discussion
+and dissemination of information on this crucial topic.  We welcome your
+participation.  Instructions for use and a sample conference tree dialog
+follow.  You may add to the conference tree if you wish without a password.
+
+	1) You will need a personal computer or terminal and a 300 baud
+modem.
+
+	2) Dial (415)948-1474.  If you get a busy signal hang up and try
+again in a few minutes.  If the node is not busy you should hear 2 or 3 
+rings followed by a whistling tone indicating that the node is sending 
+carrier.
+	If using a modem with an acoustic coupler, put the telephone handset
+into the rubber cups.
+
+	3) Press the CARRIAGE RETURN (CR) key several times.  The node should
+respond with the start-up message, followed by the line:
+
+COMMAND?
+
+	4) If you need help, type READ HELP (CR).  This will show you the on-
+line help messages.
+
+	5) Type BROWSE CONFERENCES (CR) to see a summary of the information
+on the node.
+
+COMMAND?  read conferences
+
+*** CONFERENCES		0-JAN-80
+  PARENT= NONE		    USAGE=389
+CURRENT CONFERENCES ON THIS CONFERENCE TREE SYSTEM ARE:
+	+++ SUBMESSAGES +++
+HELP
+USERS
+SYSTEM
+GENERAL-INFO
+REFERENCES
+CPSR (COMPUTER PROFESSIONALS FOR SOCIAL RESPONSIBILITY)
+SACDF
+LEGISLATIVE-ACTION
+CALENDAR
+BUY-SELL
+HARDWARE-PROB
+PROJECTS
+MAIL
+COMMENT
+STRATEGIC-ISSUES
+RUSSIANS
+OTHER-BULL-BOARDS
+NUC-WAR-PREVENTION
+
+	I haven't called it yet, for I haven't a modem.  Let me know if you
+try it, if it is interesting, etc.  
+			
+				Earl
+___________________________________________________________________________
+From:	KIM::RUBIN          12-DEC-1983 17:18  
+To:	@SYS$MAIL:JUNK
+Subj:	help save your fingers.....
+
+
+	The following is a public service announcement to all of
+you who are as lazy as I:
+
+	Imagine if you will....you log onto KIM (sorry ERNIE, I have not
+yet written this for you, but its comming soon!!!!) and you see the
+message "You have 1 new mail", or at least something like that. After
+everything clever in your login.com file finishes, wouldn't be nice to
+simply go straight into mail? And while on your way there, how about if
+the computer shows you all the MAI files (old or filed mail) you have, so
+just in case you might want to file this new message away and can't remember
+all the names, you'll know where it could go!
+	Well wait no longer.......LAZY PEOPLES ANNOMYOUS , a division of
+RUBIN industries is proud to present you with a new energy savings
+vax "UTILITY"(?). Now you no longer have to type ' DIR *.MAI' followed
+by MAIL. Now the computer will do this for you. But wait, there's more!
+When you are done reading and filing your mail, this new utility will
+update the proper flags so if any new mail occures after you log out,
+you will go directly to mail the next time you log in (or do a restart).
+
+	So I'll bet you are all asking yourself "How do I get this nifty
+program???" OH, your not????? Well here's how to order:
+
+	Add to your LOGIN.COM file the following:
+
+	1). MAIL :== @SYS$SYSDEVICE:[UTILITIES.COM]MAIDIR
+You should define this near the top of you login.com file, but at the
+least before the next line, which should be the last item before your
+EXIT in your login.com:
+	2) @SYS$SYSDEVICE:[UTILITIES.COM]MAILCK
+The above will check for a change in revision numbers for mail (which will
+happen if a) you delete mail, b) you recieve mail) and if different from
+the last time your EXIT'ed mail, will enter mail directly.
+
+	A few words of caution: If you do this and then call MAIL with
+anything but MAIL (such as MAI), the proper update will not occure and
+you may enter mail the next time you log in, even though no new mail exists.
+Also, you should always exit mail with EX. I'm not sure what a CTRL-Y will do
+here. If you goofed in mail, then get out with QUIT. Also note that these 
+routines create a file called MAIL.RVN in your directory. Don't worry about 
+this file, its very small and is necessary for this nifty little gadget 
+to work correctly
+
+	Questions regarding this, or any problems should be directed to
+RUBIN, and not to SHEPPERD or SUTTLES (please!!!!!)
+	Try it, you might like it!!!
+
+	Owen <lazy> Rubin
+___________________________________________________________________________
+From:	KIM::PETROKA        12-DEC-1983 19:41  
+To:	@SYS$MAIL:JUNK
+
+
+While we're on the subject, I might mention that Ronald Wilson Reagan anagrams
+into Insane Anglo Warlord.  A public service message.
+
+	Earl
+___________________________________________________________________________
+From:	KIM::CALFEE         16-DEC-1983 13:50  
+To:	@SYS$MAIL:COINOP
+Subj:	Atari 800 Software Theft
+
+It has been brought to my attention that some stolen Atari computer 
+software may now be residing on one or more of our VAXes. 
+
+This is intolerable.
+
+We are a company whose existance depends on software sales, and every
+ATARI game that was in a cartridge and has been put on disc and then
+on the VAX is a potential leak to the outside world that can impact
+sales. Any competitors' games that might be on the system could 
+substantially weaken Atari's cases against piracy in court. People
+who participate in stealing software are risking their jobs and the
+company's future. 
+
+Please delete all questionable files immediately!!!
+
+As Jed would say, Thank you or else.
+                  Steve Calfee
+___________________________________________________________________________
+From:	KIM::ZIEGLER        21-DEC-1983 11:21  
+To:	@SYS$MAIL:JUNK
+Subj:	And you thought you had a bad day...
+
+
+Dear Sir:
+
+  I am writing in response to your request for additional information in block 
+#3 of the accident reporting form.   I put "poor planning" as the cause of my
+accident.   You said in your letter that I should explain more fully and I
+trust that the following details will be sufficient.
+
+  I am a bricklayer by trade.  On the day of the accident, I was working alone
+on the roof of a new building.   When I completed my work, I discovered that I
+had about 500 pounds of bricks left over.   Rather than carry the bricks down
+the stairs by hand, I decided to lower them in a barrel by using a pulley which
+was attached to the side of the building at the sixth floor.
+
+  Securing the rope at ground level, I went up to the roof, swung the barrel
+out and loaded the bricks into it.  Then I went down to the ground and untied
+the rope, holding it tightly to insure a slow descent of the 500 pounds of
+bricks.  You will note in block #11 of the accident reporting form that my
+weight is 182 pounds.
+
+  Due to my surprise at being jerked off the ground so suddenly, I lost my
+presence of mind and forgot to let go of the rope.  Needless to say, I went
+at a rather rapid rate up the side of the building.
+
+  In the vicinity of the third floor, I met the barrel which was proceeding in
+a downward direction at an equally impressive rate of speed.  This explains the
+fractured skull, minor abrasions and broken collarbone, as listed in section 3
+of the accident reporting form.
+
+  Slowed only slightly, I continued my rapid ascent, not stopping until the
+fingers of my right hand were two knuckles deep into the pulley, which I
+mentioned in paragraph #2 of this correspondence.
+
+  Fortunately, by this time, I had regained my presence of mind and was able to
+hold tightly to the rope in spite of the excruciating pain I was now beginning
+to experience.
+
+  At approximately the same time however, the barrel of bricks hit the ground!
+The bottom fell out of the barrel.  Now devoid of the weight of the bricks, the
+barrel now weighed approximately 50 pounds.
+
+  I refer you again to my weight in block #11.  As you might imagine, I began a
+rapid descent down the side of the building.
+
+  In the vicinity of the third floor, I met the barrel coming up. This accounts
+for the two fractured ankles, broken tooth, the severe laccerations of my legs
+and the lower body.
+
+  Here my luck began to change slightly.  The encounter with the barrel seemed
+to slow it enough to lessen my injuries when i fell into the pile of bricks and
+fortunately only three vertebrae were cracked.
+
+  I am sorry to report, however, that as I lay there on the pile of bricks in
+pain, unable to move and watching the empty barrel six stories above me, I 
+again lost my composure and presence of mind and let go of the rope.

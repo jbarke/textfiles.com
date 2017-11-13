@@ -1,0 +1,380 @@
+
+[===========================================================================]
+[                                                                           ]
+[                        Ogre Strategy and Notes                            ]
+[                              Part Three                                   ]
+[                                                                           ]
+[===========================================================================]
+                      [Ogre Artificial Intelligence]
+[===========================================================================]
+
+     The first step in designing the Ogre's Artifical Intelligence (OAI), was
+to determine just what an Ogre should do.  This required much research into
+how "experts" played the game, in addition to many hours of game play to test
+various OAI concepts.  The single most difficult aspect of designing the OAI
+was the fact that Ogre is a game based on probabilities.  Every time the Ogre
+fires at a defender there is a chance of hitting, disabling, or missing.
+Assessing all of these chances for every possible combination of targets the
+Ogre may have, for every possible move the Ogre can make, evolved into a
+monumental task.
+     The Ogre's ultimate goal is to destroy the Command Post (CP) and get
+away.  Its highest priority is to destroy the CP.  Its secondary priority is
+to get away.  On its way to the C
+P, the Ogre will be trying to destroy as many
+defenders, while sustaining as little damage to itself, as it can.  This means
+the Ogre must not blindly dog a path straight to the CP, or the defense would
+merely set up a gauntlet that would destroy the Ogre before it could reach the
+CP.
+     The Ogre employs two intelligence techniques: strategic and tactical.
+Ogre Strategy involves long-range targetting of howitzers and the CP and
+avoiding terrain traps created with the editor.  Ogre Tactics involve
+short-range maneuvers while enroute to its next long-range target.
+     At any given time, there is a limited number of hexes the Ogre can't
+legally move to.  Some of these hexes are more advantageous to the Ogre than
+others.  The Ogre's tactical intelligence determines which hex has the highest
+value.
+
+The factors involved in determining the value of a hex are:
+    
+     1) The distance of the hex from the current long range target (i.e.
+        Howitzer or CP.)
+     2) The value of the defenders the Ogre can attack from that hex.
+     3) The amount of damage the Ogre may suffer in that hex.
+
+The steps in determining the Ogre's best move look something like this:
+     
+     1) Find a legal path to a target hex.
+     2) Determine the value of the defenders the Ogre can attack from the
+        target hex (henceforth referred to as "AttackVal").
+     3) Determine the amount of damage the Ogre may suffer in the target
+        hex (henceforth referred to as "DamageVal").
+     4) Determine the value of the target hex using its distance from the
+        current long-range target, and the hex's AttackVal and DamageVal.
+
+     These steps are performed for every hex the Ogre can reach from any given
+position.  The Ogre then moves to the hex with the highest value. 
+     Each defender is assigned a relative value by which the Ogre assesses
+their worth.  For each hex the Ogre can reach, every defender that can be
+fired upon from the target is assigned a percent chance of being hit (%HIT).
+As the Ogre rams, overruns, or hits the various targets, those targets %HIT
+will be increasing (usually).  As soon as the Ogre has completed its simulated
+attack from the target hex, each piece will have its relative value modified
+by the Ogre's percent chance to hit it.  The summation of the piece's modified
+relative values will be the target hex's AttackVal.
+     The same %HIT will be used to modify each piece's ability to damage the
+Ogre from any given target hex and the summation of these values will be the
+target hex's DamageVal.
+     The remainder of this section explains the techniques that are used in
+determining stragegic targetting and in performing the four steps outlined
+above for computing the next best hex.
+
+Strategic Long-Range Intelligence
+=================================
+
+     Due to the long-range striking power of howitzers, it is necessary for
+the Ogre to be able to plan an overall strategy concerning howitzers.  If it
+weren't for the howitzers, the Ogre co
+uld play a good game without looking
+more than 1 move ahead (except for being drawn towards the CP).  Sometimes it
+is best to make the CP the only long-range target and disregard any howitzers.
+Other times it is necessary to target certain howitzers, or a sequence of
+howitzers, before heading for the CP.
+     There are two main considerations when planning Ogre strategy strictly
+around the howitzers and the CP.  1) getting to the CP in the least number of
+turns, and 2) suffering the fewest number of howitzer hits in the process.
+     The strategies the Ogre will consider will vary in value based on the
+defenders howitzer setup.  One approach will be to target the CP alone.
+Another will be to target each howitzer, prior to the CP, in varying orders.
+The prime strategy will be the one that gets the Ogre to the CP in the fewest
+number of turns with the least number of hits.
+     The final long-range goal the Ogre will consider is leaving the map.
+This is a goal the Ogre will never consider unless the CP has been destroyed.
+Once the CP has been destroyed, the Ogre will try to leave the map as quickly
+as it can.
+
+Tactical Short-Range Intelligence
+=================================
+
+     A finite number of PATHS are available to the Ogre and a complete list of
+these paths was compiled.  The list consisted of 58 paths for any one of the
+six facings from a source hex.
+
+Selecting a Path
+================
+
+     +-----------------------------+      In the path representation, the
+     |                             |   letter "S" denotes the Source hex (or
+     |                             |   starting hex), and the letter "T" 
+     |      Diagram #1 Here        |   denotes the Target hex (or destination
+     |                             |   hex).  The arrows show direction of
+     |    (See Ogre Strategy       |   movement.  The numbers label each move.
+     |       Diagram Pic)          |   The shaded circles represnent craters.
+     |                             |   The example below illustrates using two
+     |                             |   movements to go a distance of two
+     +-----------------------------+   hexes.
+
+     The Ogre will start looking at paths that have a distance of 1 and work
+up to paths that have a distance equal to its current movement value.
+
+     +-----------------------------+       Certain paths are designated as RAM
+     |                             |   paths (Rpath).  An Rpath is a path that
+     |                             |   does not use the direct route to the
+     |                             |   target hex.  The purpose of an Rpath is
+     |      Diagram #2 Here.       |   to attempt to ram a defender (or to
+     |                             |   overrun infantry) while enroute to the
+     |     (See Ogre Strategy      |   target hex.  Illustrated is an Rpath 
+     |        Diagram Pic)         |   that is almost identical to the above
+     |                             |   path.  Both paths have the same source
+     |                             |   and target hexes.  The difference is
+     |                             |   that upon arriving at the target hex
+     |                             |   the Ogre expends a third move to  
+     |                             |   potentially ram a defender a second
+     +-----------------------------+   time.
+
+     If no ram, or overrun, has occurred upon reaching the end of an Rpath,
+then no attempt is made to evaluate the target hex for its AttackVal and
+DamageVal, since the target hex will already have been evaluated by a
+previous, more direct path.
+     Actual game play allows a 50% chance of destroying a mobile armor unit
+with a single ram.  For simulation purposes, however, if an active mobile
+armor unit is rammed, it will be marked as disabled and assigned a 75 %HIT.
+If a disabled, or immobile, unit is rammed it will be assigned a 100 %HIT.  If
+an INF 1 is overrun it will be assigned a 100 %HIT.  If an INF 2 or INF 3 is
+overrun it will be reduced to an INF 1 or INF 2, respectively, and AttackVal
+will be increased by the value of an INF 1.
+     Ramming an armor unit costs the Ogre 1 tread unit.  It was therefore
+necessary to assign a value to the Ogre's treads so that the DamageVal could
+be increased whenever the Ogre decides to ram.  Decreasing this tread damage
+constant causes the Ogre to ram more frequently.
+     If, after all legal paths have been simulated and the Ogre is actually
+moving along the selected path, a single ram destroys an active, mobile armor
+unit anywhere before the end of that path, then the Ogre will re-evaluate a
+new path using the remainder of its movement value.  This is necessary due to
+the fact that, in actuality, the Ogre has a 50% chance of destroying a mobile,
+active armor unit with one ram only, whereas the simulation logic always
+counts a single ram as a disable with a 75 %HIT.
+     The Ogre must have at least 3 treads to ram a heavy tank and 2 treads to
+ram all other armor units, except the CP (so it won't immobilize itself).
+
+Evaluating a Hex's Attack Value
+===============================
+
+     The "attack value" of a position to the Ogre is represented by AttackVal.
+Each defender will have a relative value assigned to it, referred to as
+AttackVal (defender).  These relative values look something like this:
+
+       1) CP               :255            5) Heavy Tank          :100
+       2) Howitzer         :200            6) Infantry 3          :60
+       3) GEV              :100            7) Infantry 2          :40
+       4) Missile Tank     :100            8) Infantry 1          :20
+
+     AttackVal will be based upon the cumulative AttackVal(defender) for each
+defender the Ogre can bring weapons against.  The Ogre will deploy its weapons
+against all possible defenders and assess the potential value of those
+defenders.  The weapons are deployed in this order:
+
+     1) Antipersonnel (AP)
+     2) Secondary Batteries (SB)
+     3) Main Batteries (MB)
+     4) Missiles (MSL)
+
+ 
+    If there are no defenders at exactly 3 hexes away from the Ogre's
+targetted hex then MB's will be processed before SB's.  This is because there
+is no point in holding the MBs for a target out of reach of the SBs if there
+aren't any.
+     Each time the AttackVal of a hex is determined, every defender will be
+initially assigned a 0% chance of being hit (%HIT) by the Ogre.  As the Ogre
+simulates a hit against a target, the target's %HIT will be increased.  As
+soon as the Ogre has completed its simulated attack for all weapons, each
+piece will have its %HIT multiplied by its relative value.  The summation of
+the piece's modified relative values will be the target hex's AttackVal.
+     In Determining a target's %HIT for any given weapon, the ratio of the
+Ogre weapon's attack strength to the target's defense strength is used.  The
+%HIT values for both enabled and disabled targets for each of the various odds
+are as follows:
+
+                     Percent Chance To          Percent Chance To
+     Odds            Hit Enabled Pieces        Hit Disabled Pieces
+  -------------------------------------------------------------------
+
+     less than 1-2          0%                          0%
+     1-2                   25%                         33%
+     1-1                   50%                         67%
+     2-1                   67%                         83%
+     3-1                   83%                        100%
+     4-1                   92%                        100%
+     better than 4-1      100%                        100%
+
+Infantry 1 targets are counted as disabled pieces.
+
+----------------------------------------------------------------------
+
+1) Antipersonnel
+================
+
+     Since the Ogre only gets one attempt with antipersonnel (AP) against
+infantry, it must deploy its AP with optimum efficiency.  The algorithm
+outlined below assumes optimum deployment consists of hitting as many pieces
+as possible, it, therefore, deploys starting with the lowest odds (1-2) and
+works its way up.
+
+The Algorithm goes as follows:
+     
+     * Sort the infantry within 1 hex of the Ogre in descending order
+       of defense points (D).
+     * Go 1-2 starting at the bottom of the list and working up.
+     * Go 1-1 starting at top and working down.
+     * Go 2-1 starting at top and working down, skipping 1s (D=1).
+     * Go 3-1 starting at top and working down, skipping 1s.
+     * Go 4-1 starting at top and working down, skipping 1s.
+     * Go 2-1 starting at top and working down, including 1s.
+     * Go 3-1 starting at top and working down, including 1s.
+     * Go 4-1 starting at top and working down, including 1s.
+     * Put remaining AP on lowest infantry.
+
+     The diagram below depicts the Ogre surrounded by 5 infantry units that
+have a combined defense value (D) of 9.  The following example uses the above
+algorithm to determine the AP values represented in the diagram.
+
+     +-------------------------------+    1) Sort them in descending order:
+     |                               |       D = 3 2 2 1 1
+     |                               |
+     |                               |    2) Deploy at 1-2 from bottom to top:
+     |                               |       D = 3 2 2 1 1
+     |      Diagram # 3 Here         |       ---------------------------------
+     |                               |       A = 1 1 1 1 1
+     |     (See Ogre Strategy        |           1
+     |      Diagram Picture)         |       It defaults to 1-1 against D=1
+     |                               |       since you can't get a 1-2.
+     |                               |
+     |                               |    3) Deploy at 1-1 from top to bottom:
+     |                               |       D = 3 2 2 1 1
+     |                               |       ---------------------------------
+     |                               |       A = 1 1 1 1 1
+     |                               |           1
+     +-------------------------------+           1 1
+
+     The last AP was deployed against the first "2" in the list, so the loop
+is exited.
+
+     The AP deployment now equals the values you see in the diagram above.
+
+     Once the AP are deployed, they will be used in a simulated attack against
+the selected targets.  The ratio of AP to DP will be used to determine the
+%HIT used in modifying the AttackVal(defender) and the defender's damage
+potential next turn.  If, for example, the Ogre deploys 2 AP against an
+infantry 3, then the ratio will give 1-2 odds which renders a 25% chance to
+hit the infantry.
+
+2) Secondary Batteries
+======================
+
+     First, all targets within range (2 hexes) of SBs are listed.  Then the
+cumulative %HIT for those targets is computed.  Deploy 1 SB against the
+defender with the most valuable target with the lowest comulative %HIT.  If
+there is a tie for the most valuable target, then the defender that is closer
+to the Ogre's current long-range target has priority.  Using the ratio of the
+attack strength of the SB and the target's defense strength, determine the
+cumulative %HIT.  Use the new %HIT to re-compute the target's value.  Repeat
+the SB deployment until all SBs are used or until all targets have a 100 %HIT.
+
+3) Main Batteries
+=================
+
+     This is done the same way as the SBs.
+
+4) Missiles
+===========
+
+     Missiles will be deployed similarly to the main and secondary batteries
+but with a few modifications.  It is desirable that missiles be reserved as
+long as possible for use against howitzers or the CP.  The missiles will,
+however, be deployed if it appears they may be destroyed.
+     Once all weapons have been deployed, the targetted pieces will have heir
+relative values modified by their %HIT and the total of there values will be
+assigned to AttackVal.
+
+Evaluating a Hex's Damage Value
+===============================
+
+     All of the defenders that can strike against the Ogre for a particular
+move contribute to a hex's DamageVal.
+     It was necessary to establish a mea
+ningful relationship between AttackVal
+and DamageVal.  The first step in doing this was to determine what the Ogre
+would consider an even trade of damage inflicted for damage received.  A
+constant was arrived at that is multiplied by the total attack points of the
+defenders that can reach the Ogre in the target hex.
+     The formula to determine DamageVal for a particular hex looks something
+like this:
+
+        DamageVal=(Defender Attack Points) x Damage Constant
+
+     Modifying the Damage Constant makes the Ogre play more aggressively or
+more cautiously.
+     All defenders are checked to see if they can strike the Ogre on their
+turn (taking into account the defender's attack range, movement value and
+terrain).  The attack strength of each defender is modified by their %HIT
+computed by the attack evaluation logic.
+
+[===========================================================================]
+               [Evaluating the Draw of a Long-Range Target] 
+[===========================================================================]
+
+     TargetVal is the variable that causes the Ogre to move towards the curent
+long-range target (i.e. a howitzer or the CP).  There are three situations
+when considering the Ogre's movement relative to its current target:
+
+     1) decreasing its distance (a positive effect)
+     2) not changing its distance (a negative effect)
+     3) increasing its distance (a strong negative effect)
+
+     When moving towards its current target, the best the Ogre can do is
+decrease the distance by the amount of its movement value.  Anything less than
+this is suboptimal when considering movemen only.  If the Ogre can increase
+its advantage by not moving as close to its target as it can in order to
+destroy a defender(s), then it should do so.
+     The technique for determining TargetVal is to divide a constant by the
+Ogre's maximum movement value and multiply the result by the number of hexes
+that the Ogre moves towards its current target (a positive value) or away from
+its current target (a negative value).
+
+     Several factors may modify the attraction of a target.  Some of the
+factors are:
+
+* Often it is desirable to move away from the current target in order to
+destroy a relatively defenseless defender(s).  Thus, a path that shows a high
+attack value with little or no damage value is weighed positively, whether it
+is far away fom the current long-range target or not.
+
+* If the Ogre is in a howitzer umbrella, then the Ogre will have a greater
+tendency to move towards its current long-range target, thus keeping the
+howitzer from getting too many shots at it.
+
+* If the current long-range target shows at least 50% chance of being
+destroyed (which is also a sure disable), then the Ogre will be pulled to the
+next long-range target.  This will keep the Ogre from getting closer to the
+current target than it has to in order to destroy it.
+
+* In order to keep the Ogre from "wimping out" (i.e., running scared), a path
+that moves away from the current long-range target that shows zero
+AttackValue, is weighted negatively.
+
+     Once all of the factors for a hex have been evaluated, they can be
+combined to arrive at the overall value for that hex.
+
+     The formula for determining the value of a hex is:
+
+           HexVal = AttackVal - DamageVal + TargetVal
+
+     The Ogre performs these computations for every legal move it can make
+from its current location, then selects the hex that has the greatest value.
+
+[===========================================================================]
+
+[End of Ogre Strategy Notes]
+Courtesy of L.S.D.  Remember-you always have a friend in Texas!
+Strategy Notes typed by Sector Seventeen.
+
+

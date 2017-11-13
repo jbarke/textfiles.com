@@ -1,0 +1,241 @@
+.cj
+SYSOP NOTES
+.lj
+
+
+     Congratulations!  You are now about to become a Computer Bulletin Board System (CBBS) Operator.  As System Operator (SYSOP), you will be responsible for maintaining a useful and informative service for your club, your organization, your friends, or the general public.
+     This program is called an Apple Bulletin Board System (ABBS), since it is a CBBS that runs on an Apple ][.  As to hardware, you will need:
+     An Apple ][+ computer (or an Apple ][ with Applesoft on a ROMCARD or on a 16K Card);
+     Two standard Apple (or compatible) 5 1/4" disk drives running under DOS 3.3;
+     A D.C. Hayes Micromodem II in slot 3 (you may move it to slot 2 after making certain changes in the program);
+     The two disks containing this file, the WAPABBS program and sample files ready for your own adaptation;
+     A viewing device such as a monitor, CRT, or TV set that will allow you to see what the ABBS is doing;
+     A text editor for the addition, deletion and maintenance of the text files that the ABBS uses.  The DOS Tool Kit, sold by Apple Computer, is adequate for your needs; a word processing program that uses text files will probably also work.  Many Apple users' groups have excellent text editors in their program libraries;
+     A Mountain Hardware CPS Multifunction Card in slot 4 (this is optional -- the ABBS will work without the clock card, but you must change the date manually);
+     A printer to print out listings and preserve a record of messages (this is optional also).  In order for the printer to record what the ABBS is doing while in operation, you must have a printer that uses an Apple parallel interface card in slot 1 or is otherwise able to print out a character POKEd to $C090; and
+     Additionally, you will want to give serious consideration to giving the ABBS its own private telephone line.  No matter what times you tell your users that your system is up, they will call in at all hours of the day or night.
+     This is not a "turnkey" system.  In order to run an ABBS effectively, you will need to know BASIC reasonably well.  It would not hurt to know some assembly language.  You should either know or expect to acquire by experience some knowledge of modems.  You should have the Apple and Micromodem II manuals; try also to obtain a copy of manuals for the Novation Apple Cat II and the D.C. Hayes Smartmodem because people with these popular modems will probably ask you how to use the ABBS with them.
+     This program is copyright (1982) by Thomas S. Warrick.  Sale of these programs for any price more than a nominal amount in excess of the value of the media is prohibited without express permission of the copyright holders.  (In other words, you can't sell a copy of anything on these disks for a profit.)
+
+     THE FILES ON THESE DISKS:
+     The files on these disks are designed to run in specific disk drives.  In drive 1 should be the disk with these files:
+     WAPABBS -- This is the ABBS program.  Disk 1 will run this program on boot-up so that if your system suffers a temporary power outage the system will restart itself.  This program will be described in great detail below.
+     ABBS1.OBJ0 -- This binary file contains the input/output routines and the "&" routines, which handle the message summary strings.  To run the ABBS with your Micromodem in slot 2, change one of the first line numbers in the program's source code (on disk 2) and re-assemble it.  (You will also have to change line 10 of WAPABBS to set SL = 2.)
+     ABBS3.OBJ0 -- This binary file loads several machine language routines into page 3.  Most important is the line input routine, which begins at 768 ($300).  The source file, ABBS3, is on disk 2.
+     STARTUP -- This text file contains 5 entries:  today's date (in a special form discussed below in connection with  field 3 of the MESSAGES file), the date of the last bulletin, the password for uploading files to the ABBS, the userid (pronounced YOU-zer-eye-dee, this string is used to identify a person, such as WAP001 or WP2027) for a person other than the SYSOP who is allowed to change the date, and the userid for a person other than the SYSOP who is allowed to change the date and to look at the password file.  Note that if you have the CPS card, you will not need to worry about setting the date (except for the bulletin date).  These will be discussed more below.
+     MESSAGES -- This is the principal file to which your users will be reading and writing; thus, it is first on the disk in order to make disk access as fast as possible.  Understanding the structure of Messages is very important to an understanding of WAPABBS.  Messages is a random-access text file with a record length of 452 characters.  The file is initialized with 138 "EMPTY " records.  When a message is in use, it consists of up to 14 fields, each followed by a return:
+     The userid of the sender (6 characters);
+     The userid of the recipient (6 characters);
+     The date of the message (13 characters in the form YYMMDD.HHMMSS, where YY=year, MM=month, DD=day, HH=hour, MM=minute, SS=second; this is the format for the date that must always be used in the STARTUP file)
+     A summary of the message (20 characters); and
+     The text of the message in up to 10 lines of up to 39 characters each.  If the message is less than 10 lines, the last line of text is followed by a null line, i.e., a line with no characters prior to the return that ends the line.
+     USERS -- This text file contains 40-character records with this information:
+     characters 1-4:  The numeric portion of the userid, in 4-digit form.  Thus user 1 is "0001"; user 2027 is "2027";
+     characters 5-8:  The password;
+     characters 9-23:  The user's name with last name first;
+     characters 24-33:  The last date the user called in, in the form YYMMDD.HHX, where X is 1/10ths of an hour.  This is the maximum precision of Applesoft;
+     characters 34-37:  The number of times the user has signed on;
+     character 38:  The letter "N".  This character is available for manipulation; you may, for example, use this character to record whether or not someone has answered the Opinion question;
+     character 39:  The "!" character.  This is used to make a border on printouts of the file.  It is also available for manipulation by your own revisions of WAPABBS; and
+     character 40:  A carriage return.
+Note that after the return that ends the last user record there must be another return to signify the end of the file.  The text editor you use to add or change passwords should be able to show you the length of this file.  It must always be 1 greater than a number evenly divisible by 40 (e.g., 41 or 3961) in order for WAPABBS to work.  WAPABBS accesses this file as a random-access file in order to check the passwords of users when they sign on, but as a sequential text file when printing out a list of passwords in response to a several command.
+     USERS.OBJ -- This binary file allows the USERS file to contain non-sequential userid numbers.  Each location contains 255 ($FF) if the user is allowed on the system and 0 if the user is not allowed on the system.  Thus where the USERS file begins with user numbers 0001, 0002, 0004, 0006 and 0008, USERS.OBJ would begin $FF $FF $00 $FF $00 $FF $00 $FF.  USERS.OBJ is loaded into memory at $8400 and is $1000 (4096 decimal) bytes long; the first userid, 0001, is stored at $8401 and thus WAPABBS can have userid numbers up to 4095.  An Applesoft program on disk 2, BUILD USERS.OBJ, allows you to update this file after you change the USERS file.
+     BULLETIN -- This text file is your way of communicating to all users any new information about the system, yourself, your club, or anything else.  Everyone who signs on will be asked whether they want to read the bulletin before proceeding further.  The bulletin is a sequential text file, and -- as with virtually all such files used by WAPABBS -- the last line entered must be a null line in order for the program to work properly.  To keep your users' interest, you should change the bulletin at least weekly.
+     BBS -- This sequential text file gives phone numbers and other information of other CBBS systems in your area.  Asterisks have been added as a border for esthetic purposes.  This file also ends with a null line.
+     MEETINGS -- This sequential text file gives the dates, times and places of meetings of potential interest to your users.  As this file comes to you, it gives the meeting information for Washington Apple Pi.  This file also ends with a null line.
+     CLUB STORE -- This sequential text file provides information about any quasi-commercial ventures you, your organization, or anybody else may have.  If you don't have any such activity, you may want to use this file as a "Shopper's Guide" to products, services and stores in your area.  This file also ends with a null line.
+     In drive 2 should be the disk with these files:
+     INSTRUCTIONS -- This sequential text file gives instructions in the use of the ABBS to your new users.  You should read these carefully.  This file also ends with a null line.  Insert your name in the file where appropriate.
+     BUILD USERS.OBJ -- This Applesoft program should be run every time you add or delete an entry to or from the USERS file.  It looks at each record in the file and builds the USERS.OBJ file according to whether a particular userid is listed in the USERS file. BUILD USERS.OBJ then runs WAPABBS to restart the system.
+     TO SYSOP -- This sequential text file stores messages left to you by up to 9 people who do not have passwords.  The first entry in the file is a one-digit number of the number of messages in the file.  The text of the messages follows.  This file may be retrieved only by you.
+     UPLOAD1 -- This sequential text file gives the instructions for uploading and downloading files from the ABBS.  "Uploading" means sending files from other computers to the ABBS; "downloading" means sending files from the ABBS to other computers.
+     UPLOAD2 -- This sequential text file contains a list of files available for uploading.  A null line terminates the listing; this is necessary so that uploads will adjust this file properly.
+     OPINION -- This sequential text file has as its first record a question to which everyone can respond.  Answers are stored right after the question.  Only you can see the answers, however.  No check is made to see whether someone has answered more than once.
+     REMEMBER II -- This text file is available for downloading.  You should EXEC it with MON I in effect, and BSAVE it as it says.  This is, if I may say, an excellent terminal program for the Micromodem II.  Non-commercial distribution is permitted, and this program may not be sold without express permission of Washington Apple Pi.
+     REM II INSTRUCTIONS -- This text file contains the instructions for REMEMBER II.  You should EXEC it in the same manner to create a file called REM II.OBJ1, which REMEMBER II will access when you request instructions in its use.
+     ABBS1 and ABBS3 are source code for the binary files discussed above.
+
+     AN ANALYSIS OF THE PROGRAMS:
+
+I.   THE INPUT/OUTPUT ROUTINES
+     ABBS1.OBJ0 handles I/O for WAPABBS.  The I/O routines are activated by a "CALL 37888" in line 32 of WAPABBS.  This routine changes the CSW/KSW vectors ($36-$39) to the ABBS's I/O routines, sets the "&" vector ($3F5-$3F7), and jumps to the DOS routine that reconnects DOS's I/O hooks.
+     The Output routine, which begins at $9420, first does a test to see if the character being output is lowercase.  If so, the character is EOR'ed against LOCSE.  If lowercase-to-uppercase conversion is on, LOCSE is set to $20; if off, it is $00.  Following this, the accumulator (hereafter referred to as "A") and the X and Y registers are saved on the stack.
+     Next, the keyboard is checked for an interrupt character such as ctrl-C.  Since only the SYSOP can enter a key from the ABBS's Apple, this is given priority.  If a key was not pressed, the Receiver Register Full bit is checked to see if an interrupt character has arrived through the modem.  If not, the character in the accumulator is sent out through the modem, the A, X, and Y registers are restored, and the character is printed on the ABBS's computer's monitor in uppercase form.
+     If a character was entered at the keyboard or from the modem while output was in process, several tests are made.  If the character was a ctrl-S, the program waits for another character to be received or entered before resuming output.  Next, CKMASK is checked to see if a ctrl-C or ctrl-K is allowed.  If either is allowed (i.e., if CKMASK = 0) and if the character received is indeed a ctrl-C or ctrl-K, the program clears the stack and jumps to Applesoft line 2000.  If the character received was neither a ctrl-C nor a ctrl-K, it is ignored and the character is sent out anyway.
+
+     The input routine, which begins at $9488, first saves the X register, which is the offset from $200 (the start of the input buffer), into CLL, "Current Line Length."  X is also saved on the stack and tested against LINEMAX.  This prevents the user from entering a line longer than WAPABBS is expecting.  If the line is too long, the user is sent a bell (ctrl-G).
+     After saving Y on the stack, WAPABBS checks ACTIVE ($E3).  If ACTIVE >= 128, the ABBS hangs up the phone, clears the stack, and jumps to Applesoft line 1000.  Next, the timer is reset to 0 unless WAPABBS is awaiting a call (ACTIVE=0).  The timer is discussed in detail below.
+     If the ABBS is awaiting a call, the standard Micromodem input routine is used.  This routine returns only when a call is answered.  If carrier is detected -- which would not be the case if a human had dialled the ABBS by mistake -- ACTIVE is set to 2, the X and Y registers are restored, and the input routine is concluded.  If carrier is not detected, ACTIVE is unchanged, and the next request for input will continue to await a call.
+     The next sequence of code hangs up the phone, using the Micromodem routine at $CAB5.  ACTIVE is reset to 0, LOCSE is set to $20 so that lowercase characters will be translated to uppercase for the next caller, the stack is cleared, and control falls into the GOTO routine.
+     The GOTO routine, at $94D0, immediately outputs a return to clear any active input lines and outputs a ctrl-D followed by a return to terminate any active DOS commands.  The line number passed to GOTO in the A,Y registers is used to set Applesoft's TXTPTR vector ($B8-$B9), the stack is cleared, and execution of the appropriate Applesoft line number begins.
+     The HANG routine, at $94FB, forces the ABBS's Apple to freeze up if program execution terminates for any reason.  This prevents anyone from getting "inside" your computer.  You will see a flashing "$33" if this routine has been triggered.  Ctrl-C will return you to BASIC.
+     The regular input routine resumes at $951B.  The timer is incremented by one.  This timer will automatically hang up the phone if no one has entered a character for 7 minutes, 8 seconds.  This prevents someone from tying up the ABBS by leaving their computer connected inadvertently.
+     If bit 6 of ACTIVE is set, the ABBS will ignore the modem.  This is so that when you want to use the ABBS yourself, WAPABBS will not answer the phone.  Thus if ACTIVE=64, no modem input is recognized.
+     If modem input is allowed, the modem is checked to see if the user's modem's carrier tone has been lost.  If it has, WAPABBS hangs up the phone.  If not, the modem is polled for data.  If a character has arrived, the most significant bit is set and processing begins.  If no data has arrived from the modem, the keyboard is checked.  If a ctrl-A has been pressed by the SYSOP, WAPABBS responds:
+     MM II:
+You may now enter these characters with these results:
+ctrl-Z    Hangs up on the user
+ctrl-B    Begins Chat mode by doing a jump to 4300
+ctrl-I    Flashes an "I" on the screen, meaning that the SYSOP is now "in"
+ctrl-O    Flashes an "O" on the screen, meaning that the SYSOP is now "out"
+ctrl-R    Sends a ctrl-R out over the modem
+ctrl-T    Sends a ctrl-T out over the modem
+ctrl-U (right-arrow)  Prints the userid of the current user (or the most recent user if no one is on the ABBS at the moment)
+Otherwise, the character is ignored and input resumes.  Note that anything sent by the user during the interval between the ctrl-A and the next character is neither received nor echoed.
+     If a character has been received, the ABBS's screen is set to non-flashing, which is Apple convention to let you know that a character has been received.
+     If a rubout has been received (ASCII $7F), the user is sent a bell and the character is ignored.  If carrier has been lost, WAPABBS hangs up the phone.  If a parity error, receiver overrun error, or framing error is detected, the character is ignored.  The user will notice that his character was not echoed.
+     At this point, FLAGS is checked to ensure that DISPO, TRAN and KBDE are always set.  (See the Micromodem manual.)  Unpleasant results would ensue if one of these bits was cleared by static electricity or a cosmic ray.
+     If the character is lowercase and lowercase is not allowed by the ABBS, it is converted to uppercase.  The most significant bit of a lowercase character must be cleared in order to fool the Apple's System Monitor.
+     Finally, the character that was received is checked to see if it is a control character.  If not, LINEMAX is checked, and if the character would make the line too long, the character is ignored with a beep.  If line length is acceptable, the X and Y registers are restored and the character is loaded into the accumulator, printed out through $C010, and the input routine is concluded.
+     If the character is a control character, special handling may be required.  A carriage return is treated normally.  A backspace is ignored with a beep if you backspace before you have entered anything that could be backspaced-over.  A backspace is sent out over the modem as a backspace, a blank space, and another backspace.  This erases the character from the user's screen, but not from the screen of the ABBS.
+     A ctrl-U (the right-arrow) picks up the current character from the ABBS's screen and treats that as the input character.  This allows users to retrieve previously-erased characters.
+     The ABBS next checks to see if a ctrl-C or a ctrl-K is permitted.  If so, and if the character is a ctrl-C or a ctrl-K, it is treated in the same manner as ctrl-C or ctrl-K were by the output routine.
+     A linefeed (ctrl-J) turns on LFI (see the Micromodem manual) which will send linefeeds after each carriage return.  This affects modem output, not screen output.
+     A ctrl-X acts exactly as ctrl-X does on regular Apple input:  it cancels the input line and asks for another one.  X and CLL are returned to the left margin, i.e., zero.
+     Ctrl-L toggles LOCSE, which allows lowercase input.  Ctrl-L has the function of a shift-lock key.
+     The short routines that follow handle the ignore-this-character routine and the cursor.
+
+     The next group of routines handle the ampersand ("&").  These routines manipulate the message summary strings, which begin at $6B00.  These strings would require more than 1K of overhead if handled as traditional Applesoft strings.
+     1.  Assign a string to the message summary array:
+     & A J,K,A$
+where A means "assign", J is the message number, K is which part of the message summary the string is to be stored (0=the user the message is from, 1=the user the message is to, 2=the date, and 3=the summary of the text of the message), and A$ is the string to move into the message summary array.
+     2.  Print a string:
+     & P J,K
+where P means "print", and J and K have the same meaning as above.
+     3.  Assign one of the elements of the array to B$:
+     & B J,K
+where B means "LET B$ = ", and J and K have the same meaning as in string assignment.  Note that only the variable B$ can be used in this manner.  Furthermore, B$ must already have been set equal to something by an earlier program line or direct command such as:  B$ = "HELLO"
+     4.  Test an element of the message summary array:
+     & T J,K,A$,L
+where T means "test", J and K have their usual meaning, A$ refers to the string being tested against the message summary item, and L is the variable used to store the result.  The result will be:
+          1 if message summary item > A$
+          0 if message summary item = A$
+         -1 if message summary item < A$
+
+II.  THE PAGE 3 ROUTINES
+     ABBS3.OBJ0 has three routines.  The first, called INLIN, is a revision of the well-known "Input Anything" routine.  This modification, however, uses this syntax:
+          CALL INLIN [,X]
+where INLIN=768 and X is the maximum allowable line length (LINEMAX).  If X is not specified, the previous maximum line length is used.  X must be between 0 and 255; note that if X>248, both you and the user will hear beeps after the entry of the 249th through 255th character.  In order for INLIN to work, the first variable in the main Applesoft program must be a character string; WAPABBS uses A$.  The routine accepts commas, colons, and quotation marks; only a return will terminate input.  The routine ends by setting A$ equal to what was just entered, but A$ is still in the input buffer and will be written over by the next input request or by the next DOS command.  To save the string, you must use the command:
+          A$ = MID$ (A$,1)
+Note that a simple assignment statement such as B$ = A$ will not work.
+     The next routine does an index function:
+          CALL 804,A$,B$,J
+This looks for the first character of A$ in the string B$, and returns with J equal to the relative position of the first occurrence of the character.  So if A$="HELLO" and B$="ABCDEFGHIGHHH", J would become 8.  If "H" did not occur in B$, J would be set to 0.
+     The third routine looks up the userid number and calculates the record number in the USERS sequential text file.  Its syntax is:
+          CALL 892,J
+where J is the userid number.  J is returned as the record number.  For example, if user WAP538 calls in, J would be set by a WAPABBS routine to 538.  This routine would go through the USERS.OBJ file in memory and would calculate how many userid numbers between 1 and 538 were "active."  The result would be the record number of user 538's password entry in the USERS file.  If user 538 were not on the system, J would become 0.  Note that this routine is used in the signon process and in the W and Y commands.
+
+III.  VARIABLES USED IN WAPABBS
+
+     A$ must be the first variable used in the program in order for the machine language routine at $300 to work.  A$ is the workhorse string variable; all string input passes through A$.  Note that if A$ has been set by the routine at $300, for so long as A$ is not assigned to another variable, A$ will not take up regular memory space and will not create "garbage."
+
+     ACTIVE is a flag used to tell the I/O routines whether the SYSOP, a user, or no one is currently using the ABBS.  See above for a further description of the values ACTIVE can have.
+
+     AC$ [Allowable Commands] is a list of the letters of allowable commands.  CALL 804 uses this to compute the index value of the response to the "COMMAND?" prompt for use by the ON J GOTO in line 2011.  The CALL 804 routine requires that AC$ be a variable.
+
+     AL$ is "ALL   ", and is used by the message handling routines to prevent errors that would occur if a user entered "ALL", which is only 3 characters long, instead of the 6-character response that the ABBS expected.
+
+     B$ is the secondary string variable.  It is used by the "&" message summary routines and for other general purposes.
+
+     BD$ [Bulletin Date] is a 4-character string that tells users when the bulletin was most recently updated.
+
+     B(6) is an array used by the sorting routine that organizes the messages into date order.
+
+     C80 is 1 if the user has selected 80-column mode with the "+" command, 0 otherwise.
+
+     CH [CHat] is 1 if you have indicated your availability for a chat, 0 otherwise.  See the description of the ABBS1 routines and program lines 1010 and 1020.
+
+     CK [CKmask] is 0 if the user is permitted to interrupt program execution and return to the "COMMAND?" prompt; 1 means interruption is not permitted.
+
+     CM$ is a comma (",").  This must be a variable so that the CALL 804 routine can tell whether what should have been a file name has a comma.
+
+     CRDLY is the delay (in 0.1 seconds) sent after each carriage return if the user has specified linefeed insertion.  This is the standard Micromodem delay.  Note that setting this to 0 is equivalent to specifying a delay of 2.56 seconds.
+
+     D$ is ctrl-D.
+
+     D1$ [Date1] is ">     " and is used to create a date value higher than any valid date.  In this way, WAPABBS will sort the messages in proper date order.
+
+     DA$ [DAte] is the current date as specified in the STARTUP file or by the clock.
+
+     DA(MS) [DAte order; see below for meaning of MS] is used to store the messages in date order.  DA(1) is equal to the message number of the oldest message, DA(2) is the number of the second oldest, etc.
+
+     DR [DRive] is a location within DOS 3.3 that, when poked with 1 or 2, will access that disk drive for the next DOS command without requiring ",D1" or ",D2".
+
+     E$ contains "E" and is used by CALL 804 to check that a number entered was not in exponential notation.
+
+     EM$ [Empty] contains "EMPTY ", and is used to erase the "From" value in message summaries and on disk.
+
+     ER [ERror] is used to store error codes.  Certain errors are ignored, some are processed, and some stop program execution.  See the description of the lines of WAPABBS beginning with 40000.
+
+     F [File number] is used to store the number of the file being accessed.
+
+     FC$ contains ctrl-D + "CLOSE".  When printed, this will close all disk files.
+
+     FG [FlaGging messagesg] is 1 if, when reviewing message summaries, the user has chosen to flag those messages he wishes to read in full.  It is 0 if the user has chosen not to be asked whether he will read the full text of certain messages.
+
+     FG(MS) [FlaGged messages; see below for MS] contains a 1 in an element if that message has been flagged for a reading of its complete text, and a 0 if the message has not been flagged.
+
+     FLAGS is the location of the Micromodem's FLAGS byte.  See the Micromodem manual for complete details.
+
+     FO$ contains ctrl-D + "OPEN".
+
+     FP$ contains ctrl-D + "POSITION".
+
+     FR$ contains ctrl-D + "READ".
+
+     FW$ contains ctrl-D + "WRITE".
+
+     F$(12) contains the 12 file names used by WAPABBS.
+
+     INLIN is 768.  This is the address of the line input routine beginning at $300.
+
+     J is the workhorse numeric variable.  It is often the message number being printed or processed or an index in a FOR-NEXT loop.
+
+     JJ is a secondary general-purpose numeric variable.
+
+     K is the second most-commonly used numeric variable.  It is often a line counter, used to make sure that message lengths are no more than 10 lines long.
+
+     KK is another secondary general-purpose numeric variable.
+
+     KU [Knowledgeable User] is 1 if the user claims to be familiar with the operations of the ABBS, 0 otherwise.  If KU = 1, many prompts are shortened or eliminated.
+
+     L [Logical variable] is usually used as the result of a logical test of a message summary string using the &T function.  It is usually -1, 0, or +1.
+
+     LC [Last Call] holds the date and time (to the nearest 0.1 hour) that the user last called in to the ABBS.
+
+     MC [Message Count] is the number of messages currently in use.  Given the way DA(MS) works, DA(MC) is the message number of the most-recently entered message and DA(MC+1) is the message number of the most recently-deleted message and will become the message number assigned to the next-entered message.  Think about this for a while.
+
+     MI$ is ctrl-D + "MON I".  All files are printed out with MON I in effect because this is fast and causes no unnecessary interruptions between lines.
+
+     MO(12) contains the number of days in each month.  Change this during leap years!
+
+     MS is the total number of messages that the system will allow.  The two constraints to increasing this are disk space and space in the message summary area.  Many arrays are dimensioned by MS.
+
+     M$(13) is used to enter and edit messages.  M$(0) has the userid of the sender of the message, M$(1) has the userid of the recipient, M$(2) has the date the message was entered, M$(3) has the message summary, and M$(4)-M$(13) store the lines of the text of the message.
+
+     NM$ is ctrl-D + "NOMON C,I,O".  See MI$ for an explanation of why this is necessary.
+
+     R [Record number] is used by the random-access file routines to select the message number to be read or written.
+
+     S1$ [Sysop1] has the SYSOP's userid in 4-digit numeric form.  If the SYSOP's number were WAP001, for example, S1$ should be set to "0001".  This is necessary to keep the "Y" routine from printing the SYSOP's password.
+
+     SL [SLot] contains the Micromodem's slot number.
+
+     SO [SignOns] contains the number of users who have successfully signed on.  If someone signs on more than once, they are counted more than once.
+
+     SY$ [SYSOP] contains the userid of the SYSOP.  Observe when going through the program listing that the SYSOP can do many things forbidden to others.
+
+     T1$ [T user 1] is the userid of a person who is able to change the date if you are unable to do so.
+
+     T2$ [T user 2] is the userid of the person who can change the date and print the password file.  If you have no one to whom you want to allow access to the date or password file, set these to your own userid to prevent anyone from having this much access.
+
+     U$ [Userid] is the userid of the user currently on the ABBS.  In case you have not guessed, a userid is a 6-character string with a 2 or 3 letter prefix and a numeric suffix in the range 1-4095.
+
+     UL$ [UpLoad] contains the letters of the four commands allowed during uploads.
+
+     UP$ [UPload] is the password necessary to begin uploading a file into the ABBS.
+
+     Z is a general-purpose numeric variable.
+
+ ble.
+

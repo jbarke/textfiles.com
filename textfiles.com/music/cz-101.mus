@@ -1,0 +1,192 @@
+
+                        CZ-101 MIDI DATA FORMAT
+ 
+[R] : Reception
+[T] : Transmission
+ 
+1. Channel Voice Message
+ 
+NOTE ON EVENT   [R] [T]
+  First      1001nnnn    KEY ON and CHANNEL NUMBER  (n=0: Ch-1)
+  Second     0kkkkkkk    KEY NUMBER  (k=36:C1 - k=72:C5)
+  Third      0vvvvvvv    KEY VELOCITY  (v=0:KEY OFF, v=64:KEY ON)
+ 
+CONTROL CHANGE   [R] [T]
+  First      1011nnnn    CONTROL CHANGE and CHANNEL NUMBER  (n=0: Ch-1)
+  Second     0ccccccc    CONTROL NUMBER
+  Third      0vvvvvvv    CONTROL VALUE
+  
+   c     Parameter          Transmission  Reception         v
+  ----------------------------------------------------------------
+   1     VIBRATO ON/OFF       YES           YES        0=OFF, 127=ON
+   5     PORTAMENT TIME       NO            YES        0 - 99
+   6     MASTER TUNE          NO            YES        0 - 127
+  65     PORTAMENT ON/OFF     YES           YES        0=OFF, 117=ON
+  
+NOTE OFF EVENT   [R]
+  First      1000nnnn    KEY OFF and CHANNEL NUMBER  (n=0: Ch-1)
+  Second     0kkkkkkk    KEY NUMBER  (k=36:C1 - k=72:C5)
+  Third      0vvvvvvv    KEY VELOCITY  (v=0)
+ 
+PROGRAM CHANGE   [R] [T]
+  First      1100nnnn    PROGRAM CHANGE and CHANNEL NUMBER  (n=0: Ch-1)
+  Second     0ppppppp    PROGRAM NUMBER
+                         p =  0 - 15: Preset#    1 - 16
+                         p = 32 - 47: Internal#  1 - 16
+                         p = 64 - 79: Cartridge# 1 - 16
+ 
+PITCH WHEEL CHANGE   [R] [T]
+  First      1110nnnn    PITCH BEND and CHANNEL NUMBER  (n=0: Ch-1)
+  Second     0v(vvvvvv)  PITCH BEND VALUE  LS byte
+              *          * Upper 1 bit
+  Third      0vvvvvvv    PITCH BEND VALUE  MS byte
+ 
+     65.....0000000                MS byte           LS byte
+    .       0100001               ----------------------------
+    .       0100000                 0 - 64          Upper 1 bit
+    .       0100000                65 - 127         Upper 1 bit
+ Center 64..0000000...LS
+    .       0100000...MS
+    .       0100000
+    .       0111111
+    .       0000000
+     63.....0111111
+ 
+2.  Channel Mode Messages
+ 
+LOCAL CONTROL OFF, ON   [R]
+  First      1011nnnn    (n=0: Ch-1)
+  Second     01111010
+  Third      00000000    LOCAL CONTROL  OFF
+or  "        01111111    LOCAL CONTROL  ON
+ 
+MONO MODE   [R]
+  First      1011nnnn 
+  Second     01111110
+  Third      0vvvvvvv    M=4  (The same value as that of the 
+                =M       sounding channel on CZ-101)
+{Comment: The next 3 voices are automatically assigned to the
+ next 3 Midi channels}
+ 
+POLY MODE   [R]
+  First      1011nnnn
+  Second     01111111
+  Third      00000000
+  
+3.  System Common Mesages
+ 
+END OF SYSTEM EXCLUSIVE   [R] [T]
+  First      11110111     (NO following byte)   (F7 hex)
+ 
+4.  CZ-101 Exclusive Messages
+ 
+    n: Basic Channel
+    d1d2:   0 - 32  Preset      
+           32 - 63  Internal
+           64 - 95  Cartridge
+           96       Sound Area
+{d1d2 represents a data byte made up of 2 4-bit nibbles, d1 and d2}
+           
+SEND REQ  (Transmit tone data from CZ-101)
+ 
+      (computer)                          (computer)           (computer)
+ F0 44 00 00 7n 10 d1d2 \     (CZ-101)    / 7n 31 \    (CZ-101)  / F7
+                         F0 44 00 00 7n 30         [tone data] F7
+ 
+RECEIVE DATA  (Writing tone data into CZ-101)
+ 
+      (computer)                             (computer)
+ F0 44 00 00 7n 20 d1d2 \     (CZ-101)    / [tone data] F7 \ (CZ-101) 
+                         F0 44 00 00 7n 30                     F7
+ 
+EFFECT CHANGE  (Effective only on the RECEPTION mode)
+ 
+     (computer)
+ F0 44 00 00 7n 4k d1d2 F7
+ 
+  k=0      BEND RANGE     d1d2 = 0 - 11
+  k=1      KEY TRANSPOSE  d1d2           d1    d2    -5 - 0 - 6
+                                        xxxx | xxxx
+              Bit 6 controls sign        ^    |----|
+                                         1 -   0 - 6
+                                         0 +
+ 
+  k=2      TONE MIX       d1d2         d1     d2    1 - 9
+                                      xxxx | xxxx
+              Bit 6 controls on/off    ^    |----|
+                                       1 ON  1 - 9
+                                       0 OFF
+  
+EFFECT REQ  (Transmitting EFFECT ON/OFF STATUS from CZ-101)
+ 
+      (computer)                          (computer)           (computer) 
+ F0 44 00 00 7n 19 d1d2 \     (CZ-101)    / 7n 31 \    (CZ-101)  / F7
+                         Fn 44 00 00 7m 30          d3d4 d5d6 F7
+ 
+  d1d2        No use
+  d3d4        Tone Memory Number
+ 
+               d5     d6
+  d5d6        0xPV | xxxx 
+   P=1: Portament ON   ( Bit 5 )
+   V=1: Vibrato ON     ( Bit 4 )
+   m:   Voice Channel Number
+ 
+{Additional comments}
+  Midi Commands NOT used by CZ-101:
+      Omni on/off  
+      Velocity
+      Aftertouch
+      System clock 
+      Song commands 
+      Reset Active sensing
+      All notes off
+ 
+Suggested reading:
+ 
+   MIDI for Musicians  by Craig Anderson    ( includes MIDI specs)
+                       Amsco Productions  1986
+                       Division of Music Sales Corporation, New York
+                       Distributed in US by:
+                         Music Sales
+                         24 East 22nd Street
+                          New York, NY   10010
+                         ( or any keyboard music store )
+ 
+Other references:
+ 
+   Jerry Kovarsky
+   Product Manager E.M.I
+   c/o  CASIO
+   15 Gardner Rd.
+   Fairfield,  NJ  07006
+   (201) 575-7400
+ 
+   IMA  (International MIDI Association)
+   11857 Hartsook Street
+   North Hollywood, CA  91607
+   (818) 505-8964
+                                   -Scott Squires  76545,573
+
+Sent 1 files OK
+
+File Area #12: -Midi Programs and Utilities
+A)rea-Change  L)ocate       F)iles        
+T)ype         G)oodbye      U)pload       
+D)ownload     S)tatistics   M)ain-Menu    
+
+File: A L F T G U D S M or ? for help: ==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==-==
+        _  _
+\      (_><_)             And if you enjoyed this Text-file, Call:
+ \_______[]_____       The Works "914's Text-file BBS" at (914)/238-8195
+               _\    300/1200 N,8,1 1200 baud only from 6:00pm to 12:00mid
+  ___________  \>\      10 Megabytes on-line    Anti-RBBS and Networks
+ /           >    \         SysOps: Jason Scott & Terror Ferret
+/            =======            (900) Text-files on-line!
+-----------------------------------------------------------------------------
+The following names compose a monument to last forever in the electronic
+highway: Patrizia Bravi  Alessandra Bravi  Glenda Frank   Marcelle Dumont
+         Donna Reznik    Valentina Bravi   Britt Warner   Jennifer Gruen
+--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--=--
+Call The Works BBS - 1600+ Textfiles! - [914]/238-8195 - 300/1200 - Always Open
+

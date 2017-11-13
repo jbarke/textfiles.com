@@ -1,0 +1,233 @@
+Assorted Cracks 1
+
+Wings of Fury, VCR Companion, CrossWord Magic 4.0,
+Tetris, RoboCop, Ikari Warriors
+
+Plus
+
+Dream Zone
+Great Western Shootout
+Task Force
+Hard Ball
+
+
+
+From: Michael Kelsey
+
+Wings of Fury, VCR Companion, CrossWord Magic 4.0, Tetris, RoboCop, Ikari
+Warriors, etc. etc.  I have a solution.  It took many days to come across this
+one.
+    First, you need Copy II+ 6.5 or later, or the equivalent of a Bit Copier with
+a Nibble Editor and then some patience.  Also, it is much easier if you have a
+Sector Editor with a string or hex search mode.
+
+    If you don't have a sector editor then skip this step.  If you do, go to the
+mode to patch the sector editor.  Change all the YES's to NO's.  Copy II+ will
+overlook any checksum errors this way.  Next, start from track $00, sector $00 
+and scan for these bytes:
+
+AC 00 AC 00
+
+In short this consists of periods and control-@'s.  Write down the track of the
+occurrence.  If you get a "string not found" error than this method won't work.
+     Next, go into the Bit Copier and set it to edit mode.  For those of you who
+have Copy II+ press "/" when right before the copy process begins.  Type in "0B"
+and <RETURN> then "02" and <RETURN>.  By the way, only copy that track where the
+occurrence is found.  Once the drive light stop spinning on the original drive
+type "f" (I think that is the command) and enter:
+
+E7E7E7
+
+If you see this pattern repeated many times than you have found the copy-
+protection.  Starting from the first E7 (and including) count skip over six
+of them and press "C" when on the seventh.  Now type the following:
+
+AF F3 FC EE E7 FC EE E7 FC EE EE FC <RETURN>
+
+Press "Q" to quit the editor mode and continuing with Copy II+ like normal.
+DO NOT COPY ONTO YOUR ORIGINAL!!!!!  That is a very unwise thing to do
+especially if the program doesn't use exactly this protection scheme.
+
+Now, (if you like) got to you sector editor and read from that Track and Sector
+that you wrote down earlier.  If your Custom Patch settings have not been changed
+then read that spot.  No error should occur unless a disk drive copied poorly.
+Now, go back to the PATCH screen and change it to DOS 3.3 PATCHED.  Escape back
+to the sector editor (the place with all the numbers and characters) and write
+the sector to you BACKUP disk.
+
+Reboot, you are done.   This works with many Broderbund, Epyx, and other programs
+where Roland Gustaffson implemented his floppy drive routine.
+
+If you have questions, comments, send them to mkelsey@eecs.wsu.edu
+
+Background behind the unprotection scheme:
+------------------------------------------
+
+After picking apart the protection scheme I found the bytes that were being used
+to protect the disk:
+
+EE E7 FC EE E7 FC EE EE FC 
+
+These bytes can be shifted around and even changed to suit the purpose of the
+author.  Thus, this protection scheme is flexible and changes from program to 
+program.  The Hex bytes above have almost become a standard.
+
+When sychronizing to the disk the floppy drive uses sync FF's.  These bytes have
+a binary construction of so:
+
+1111111100  1111111100  1111111100
+ 
+ sync FF      sync FF     sync FF
+
+The copy protection searches for the E7 bytes on the drive.  Once it finds a few
+it begins to read the copy protection.  There is one limitation to the Disk II
+Floppy drives.  Zero bits (any more than two consecutively) are considered
+invalid.  Thus, raw bytes on the disk cannot start with zero bits.  This
+protection scheme is implemented because those zero bits, without special
+hardware, cannot be read by conventional drives reliably.  Specific programs
+like Essential Data Duplicator 4.9 have the capability to control the write
+process of the conventional floppy drive.  This also works.  But not everybody
+has EDD 4.9, but most have Copy II+.
+
+Any way, here is the raw bit structure of the Copy Protection
+
+11100111 11100111 11100111 11100111 11100111 11100111
+   E7       E7       E7       E7        E7      E7
+
+Well by adding those zero bits, the bits that the drive can't read once
+sychronized,  the manufacturer is able to "fool" the floppy drive.
+
+By using the AF F3 FC combination the floppy drive is forced to sychronize onto
+the normal disk data and then reads like normal DOS or ProDOS.
+The Copy Protection scheme jumps midway into a bit stream to catch the necessary
+data. Thus, by adding one or two zero bits to the E7 byte patterns you can
+obtain the EE E7 FC EE E7 FC EE EE FC data pattern.
+
+For example:
+
+Data read by a conventinal copier including the zero bits.
+    / E7   \**/  E7  \/  E7  \*/  E7  \**/  E7  \/  E7  \*/  E7  \*/  E7  \               
+11101110011100111001111110011101110011100111001111110011101110011101110011111100 
+\ EE   / \  E7  /  \  FC  /\   EE / \  E7  /  \  FC  /\  EE  / \  EE  /\  FC  /
+
+   AF         F3       FC
+10101111  11110011  11111100
+    \   FF   /  \  FF    /
+Seeing as I didn't mention this earlier, the copy protection scheme jumps in
+midway into the seventh E7 byte.  I placed 1010 to make the byte noticeable to
+other people and to be a filler space.  At the fifth bit the drive will read the
+last four bits of the AF byte and the first four bits of the F3 and get an FF
+byte.  The next to zero bits in F3 act to sychronize the drive.  Next, the drive
+skips over the invalid zero bits and then takes the last two bits of the F3 byte
+and then gets the first six bits of the FC byte.  This, once again, fills the
+eight bit data register and the last two zero bits force the drive to sychronize.
+I tried many methods of implementing this program.  The first four zero bits
+1010 in the AF byte were needed simply because the IIgs and //c have a different
+drive circuitry than an Apple IIe.  With any more or any less bytes the copy 
+protection scheme on the original would just fail.  So, if you come across
+another method that generic copiers can duplicate (like this scheme) please let
+me know.
+
+Understand that the "/  nn  \" for the top, and the "\ nn /" for the bottom
+includes the bit that the slash is above or below, respectively.  The top 
+demonstrates the original's data stream with the zero bits below the "*".  The 
+bottom line illustrates how to obtain the special data from those extra undetect-
+able zero bits.  Hope this hasn't been too confusing.  If you need help or would 
+like more information I can be E-mailed at:
+
+
+Michael Kelsey
+mkelsey@eecs.wsu.edu
+
+Note:  if enough people ask for me write a program do this automatically then I
+       will go ahead and write one up.
+
+ 
+___________________________________________
+
+
+  
+From: jnichol@tso.cin.ix.net (Jim Nichol)
+
+Dream Zone:
+
+Change 22 DB C4 00 to AF DB C4 00 at all 4 of the following locations on Disk 1:
+
+Block $1B7, Byte $A9
+Block $1B7, Byte $DF
+Block $1BC, Byte $F6
+Block $1BC, Byte $12C
+
+This supposedly is a HD compatible patch.
+
+
+***************
+Great Western Shootout:
+
+Block  Byte  From                   To
+-----  ----  ----                   ---
+$593   12B   20 00 BF 80 3A 09      2C 00 BF EA EA EA
+$596   01B   B0 1D                  EA EA
+$596   02C   D9 00 14 D0 08         B9 00 14 EA EA
+
+***************
+Tower of Myraglen:
+
+Block $40F, Byte $72, change $22 CB 1B 00 to EA EA EA EA
+
+
+***************
+Task Force:
+
+To make a deprotected copy of Task Force, you must enter a little program
+to read the block into memory, then save the data to disk, etc.
+
+1. Make a copy of both disks
+2. Get into BASIC and BLOAD TF.READ.B63F,A$1000
+3. Insert your ORIGINAL Task Force Disk 1.
+4. Type the following:
+   CALL-151
+   1000G
+   (insert temp storage disk)
+   BSAVE TF.BLOCK.63F,A$1800,L$200
+5. Insert your COPY of Task Force Disk 1, and do the following:
+   BLOAD STARTUP.SYSTEM,A$2000,TSYS
+   2026:A9 00 0E
+   2034:4C 43 0A
+   20C9:5C 88 41 02
+   2243:A9 FF 01 A2 00
+   2248:14 A0 00 98 54 02 00 4B
+   2250:AB 18 4C 37 08
+   EA<2255.2290Z
+   2291:18
+   (insert disk with TF.BLOCK.63F)
+   BLOAD TF.BLOCK.63F,A$2C00
+   (reinsert the copy of Task Foce Disk 1)
+   BSAVE STARTUP.SYSTEM,A$2000,TSYS,L$E00
+
+I have a further handwritten note that says:
+
+"The memory-clearing routine for Battle Chess is needed to make Task Force
+work on a hard disk with 6.0.1, etc."
+
+
+***************
+Hard Ball:
+
+Block  Byte  Change to
+-----  ----  ---------
+31D    009   2C 5D 6B 24
+31D    014   2C 5D 6B 24
+31E    054   60
+321    1A3   08 60
+329    07D   60
+32C    1EE   18 60
+32F    0FF   18 60
+335    1DE   60
+339    067   60
+33D    109   04
+
+This supposedly is hard disk compatible.
+
+Jim
+

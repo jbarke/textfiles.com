@@ -1,0 +1,508 @@
+             
+                                                                  *-----------------------*
+                                                                  *                       *
+                                                                  * RWTSDRV1 USING FORMAT *
+                                                                  *       CONTinued       *
+                                                                  *                       *
+                                                                  *-----------------------*
+                                                                           .
+                                                                           .
+                                                                           .
+                                                                  (BF1F)   BCS VRFYRTN  ;Irrelevant -already chkd write-protect
+                                                                                        ;switch when we wrote the address.
+                                                                  (BF21)   INC FRMTSEC  ;Increase sec #.
+                                                                           LDA FRMTSEC
+                                                                           CMP #$10     ;Done all 16 secs yet?
+                                                                  (BF27)   BCC FRMTASEC ;No - go do some more.
+
+                                                                  * VERIFY a single track.
+
+                                                                  * Note:  We just finished formatting
+                                                                  * sector $0F.  Because sector $OF
+                                                                  * shouldn't overwrite too much of the
+                                                                  * sync gap (originally 128 syncs long)
+                                                                  * that was written prior to sec $00, and
+                                                                  * because we don't waste too much time
+                                                                  * between writing the last byte of sec $0F
+                                                                  * and looking for the next addr header, we
+                                                                  * expect to begin our verification with
+                                                                  * sec $00.
+
+                                                                  * Initialize counters.
+                                                                  (BF29)   LDY #$0F     ;SET COUNTER FOR # OF SECS VERIFIED.
+                                                                           STY FRMTSEC
+                                                                           LDA #48      ;SET COUNTER FOR # OF ATTEMPTS.
+                                                                  (BF2F)   STA READCNTR
+
+                                                                  * Fill sector map with POSITIVE #'s.
+                                                                  (BF32)
+                                                                  FILSECMP STA SECFLGS,Y
+                                                                           DEY
+                                                                  (BF36)   BPL FILSECMP
+
+                                                                  * Delay to let some syncs pass by.
+                                                                  (BF38)   LDY SYNCNTR  ;Initialize (y).
+                                                                  BYPSYNCS JSR VRFYRTN  ;(12 cyc)
+                                                                           JSR VRFYRTN  ;(12 cyc)
+                                                                           JSR VRFYRTN  ;(12 cyc)
+                                                                           PHA          ;(3 cyc)
+                                                                           PLA          ;(4 cyc)
+                                                                           NOP          ;(2 cyc)
+                                                                           DEY          ;(2 cyc)
+                                                                  (BF47)   BNE BYPSYNCS ;(3 cyc on branch, 2 on fall thru)
+
+                                                                  * Read address of first sector encountered.
+                                                                  * (THIS BETTER BE SECTOR 0!!!!  If it isn't,
+                                                                  * our drive is a bit too fast & we will
+                                                                  * eventually have to reformat the track.)
+                                                                  (BF49)   JSR RDADDR   ;Read addr of first sec encountered.
+                                                                                        ;(See dis'mbly below.)
+                                                                  (BF4C)   BCS REREADDR ;Bad read, try again.
+                                                                           LDA SECDSK   ;Was sec read = sector 0?
+                                                                  (BF50)   BEQ RDNXTDAT ;Yes - go read next data sec.
+  
+                                                                  * DIDN'T FIND SECTOR $00 WHEN EXPECTED.
+                                                                  * Drive must be faster than anticipated
+                                                                  * because sector $0F overlaid too much of
+                                                                  * the long sync gap (gap 1) that was 
+                                                                  * originally written before sector $00.
+                                                                  * We will have to reformat this track using
+                                                                  * 128 self-syncs before sector $00 (gap 1)
+                                                                  * and less sync bytes between other sectors
+                                                                  * (gap 3).  This will insure that less gap-1
+                                                                  * syncs will be overwritten by sector $0F.
+                                                                  * Note that, depending on just how much too
+                                                                  * fast the drive is, we may have to reformat
+                                                                  * this track several times before we get it
+                                                                  * right.  Each time we reformat, we reduce
+                                                                  * the number of gap-3 syncs.  If the sync
+                                                                  * counter is greater than or equal to 16,
+                                                                  * we write two less syncs.  If the counter
+                                                                  * is less than 16, we only reduce the gap-3
+                                                                  * by one sync.  In order to give the machine
+                                                                  * time to decode information, we won't
+                                                                  * allow a gap less than five syncs long.
+                                                                  * (Note that we won't reformat the track
+                                                                  * until we find the address header for sec $0F.
+                                                                  * This presumably keeps like-numbered sectors
+                                                                  * in adjacent tracks in some semblance of order.)
+                                                                  (BF52)   LDA #16
+                                                                           CMP SYNCNTR  ;Condition carry.
+                                                                           LDA SYNCNTR  ;If sync count < 16, subtract 1.
+                                                                           SBC #1       ;Else subtract 2.
+                                                                           STA SYNCNTR
+                                                                           CMP #5       ;Do we have at least 5 syncs?
+                                                                           BCS REREADDR ;Yes.
+                                                                           SEC          ;No - signal error cause need
+                                                                  (BF61)   RTS          ;at least 5 syncs.  Drive is
+                                                                           ============ ;so fast that it is out-to-lunch.
+
+                                                                  * Read the sector address.
+                                                                  (BF62)
+                                                                  RDNXTADR JSR RDADDR   ;Read the address header.
+                                                                                        ;(See dis'mbly below.)
+                                                                  
+                                                                  (BF65)   BCS BADREAD  ;Branch if addr read was bad.
+
+                                                                  * Read the data proper.
+                                                                  (BF67)
+                                                                  RDNXTDAT JSR READATA  ;Read the actual data bytes.
+                                                                  (BF6A)   BCC CKSECMAP ;Read was good so chk if this
+                                                                                        ;sec has already been read.
+
+                                                                  (BF6C)
+                                                                  BADREAD  DEC READCNTR ;Either got a bad read or else we
+                                                                                        ;already verified this sector.
+                                                                                        ;Reduce the number of chances left.
+                                                                  (BF6F)   BNE RDNXTADR ;More chances left.  Go try again.
+
+                                                                  * Doing a re-read.  Will definitely
+                                                                  * have to reformat.
+                                                                  (BF71)
+                                                                  REREADDR JSR RDADDR   ;See dis'mbly below.
+                                                                  (BF74)   BCS NOTLAST  ;Got a bad read.
+
+                                                                  * We will reformat but we don't want
+                                                                  * to do so until we read sector $0F.
+                                                                  * Have we found sector $0F yet?
+                                                                  (BF76)   LDA SECDSK   ;Get phys # of sec just read.
+                                                                           CMP #$0F     ;Was it sector 15?
+                                                                           BNE NOTLAST  ;No, go look some more.
+                                                                  (BF7C)   JSR READATA  ;Yes.  Read the data in sec $0F.
+                                                                                        ;(See dis'mbly below.)
+                                                                  (BF7F)   BCC FORMATRK ;Good read on sec 15 so now the timing
+                                                                  (BF81)                ;is right to GO REFORMAT THIS TRACK.
+                                                                  NOTLAST  DEC READCNTR ;Bad read, chk if more chances left.
+                                                                           BNE REREADDR ;Yes - go try again.
+                                                                           SEC          ;Exhausted all chances, so set
+                                                                  VRFYRTN  RTS          ;(c) as error flag & exit.
+                                                                  (BF87)   ============
+
+                                                                  * Check if this sector was previously
+                                                                  * verified.  If not, update sector
+                                                                  * verification map.  (If timing is
+                                                                  * right, should never encounter an
+                                                                  * already verified sec before FRMTSEC
+                                                                  * decrements from $00 to $FF.)
+                                                                  (BF88)
+                                                                  CKSECMAP LDY SECDSK   ;Use # of sec found as index
+                                                                                        ;to the verification map.
+                                                                  (BF8A)   LDA SECFLGS,Y ;Get map byte (neg = prev verified).
+                                                                           BMI BADREAD  ;Oh Oh!  Already verified this one.
+                                                                           LDA #$FF     ;Set byte in map to signal that
+                                                                           STA SECFLGS,Y ;this sector was just verified.
+                                                                           DEC FRMTSEC  ;Any secs left to verify?
+                                                                  (BF96)   BPL RDNXTADR ;Yes - go do some more.
+
+                                                                  * All secs verified. Check if
+                                                                  * we just did track $00.
+                                                                  (BF98)   LDA FRMTKCTR ;Was trk just formatted = trk $00?
+                                                                  (BF9A)   BNE NOTRK0   ;No - so exit cleanly.
+
+                                                                  * Just formatted & verified trk $00.
+                                                                  * Trk $00 is the outside track and 
+                                                                  * therefore has the largest length
+                                                                  * in which to write bytes.  Because
+                                                                  * subsequent tracks have a smaller
+                                                                  * circumference, we must reduce the
+                                                                  * number of syncs to write between
+                                                                  * sectors (gap-3) so we can get all
+                                                                  * the needed info into a smaller space.
+                                                                  (BF9C)   LDA SYNCNTR  ;Check sync count.
+                                                                           CMP #16      ;Less than 16 syncs?
+                                                                  (BFA0)   BCC VRFYRTN  ;Yes - exit cleanly.
+                                                                                        ;Don't want to start off with a
+                                                                                        ;smaller gap, so skip the following
+                                                                                        ;code which reduces the gap size.
+
+                                                                  * Reduce the size of gap-3.
+                                                                  (BFA2)   DEC SYNCNTR  ;Gap > = 16 syncs long, so can afford to
+                                                                           DEC SYNCNTR  ;reduce it by two, so can accommodate
+                                                                  NOTRK0   CLC          ;a tighter track.  Exit cleanly.
+                                                                  (BFA7)   RTS
+                                                                           ===========
+
+                                            (BEDC)   LDA #8       ;Set (a) as default value in case
+                                                                  ;couldn't format.
+                                            (BEDF)   BCS ERRFRMT  ;Branch if couldn't format.
+
+                                            * Do a read of trk just formatted.
+                                            * (Eventhough track verified, read
+                                            * it again until locate track 0.
+                                            * Presumably, this (partially)
+                                            * double checks verification and
+                                            * keeps sectors in different tracks
+                                            * somewhat adjacent?)
+                                            (BEE0)   LDA #48      ;Set 48 attempts to read.
+                                                     STA READCNTR
+                                            RDAGAIN  SEC          ;Default (c)=1 to signal error.
+                                                     DEC READCNTR ;Reduce chances to read.
+                                                     BEQ ERRFRMT  ;Exhausted all chances.
+                                            (BEEB)   JSR RDADDR   ;Go read addr header to find sector
+                                                                  ;that we want to read or write.
+
+                                                                  * Read the address header.
+                                                                  (B944)
+                                                                  RDADDR   LDY #$FC     ;Designate 772 chances (#$FCFC to #$10000) 
+                                                                                        ;to find the correct address prologue.
+                                                                  (B946)   STY PROSCRTH
+                                                                  KICKNTR  INY
+                                                                           BNE TRYD5
+                                                                           INC PROSCRTH
+                                                                  (B94D)   BEQ ERRTN    ;Error - can't find proglogue.
+
+                                                                  * Look for address prologue ("D5 AA 96").
+                                                                  (B94F)
+                                                                  TRYD5    LDA Q5L,X
+                                                                           BPL TRYD5    ;Wait for a full byte.
+                                                                  VERSUSD5 CMP #$D5     ;Was it a "D5"?
+                                                                           BNE KICKNTR  ;No - try again.
+                                                                           NOP          ;Wait 2 cycles.
+                                                                  TRYAA    LDA Q6L,X
+                                                                           BPL TRYAA    ;Wait for full byte.
+                                                                           CMP #$AA     ;Was it an "AA"?
+                                                                           BNE VERSUSD5 ;No - retry sequence.
+                                                                  (B962)   LDY #3       ;Set (y) for later reading of
+                                                                                        ;vol, trk, sec, checksum info
+                                                                                        ;from address field.
+                                                                  (B964)
+                                                                  TRY96    LDA Q6L,X
+                                                                           BPL TRY96    ;Wait for full byte.
+                                                                           CMP #$96     ;Was it a "96"?
+                                                                  (B96B)   BNE VERSUSD5 ;No - retry sequence.
+
+                                                                  * Read odd-even encoded volume, track,
+                                                                  * sector and checksum values from the
+                                                                  * address field.  (When reading,
+                                                                  * calculate a running checksum.)
+                                                                  * From: byte1:  1  b7  1 b5  1 b3  1 b1
+                                                                  *       byte2:  b6 1  b4 1  b2 1  b0 1
+                                                                  *       -------------------------------
+                                                                  * To:   byte:   b7 b6 b5 b4 b3 b2 b1 b0
+
+                                                                  (B96D)   LDA #0       ;Initialize running checksum val.
+                                                                  CALCK    STA CKSUMCAL
+                                                                  GETHDR   LDA Q6L,X    ;Get odd-encoded byte.
+                                                                           BPL GETHDR   ;Wait for a full byte.
+                                                                  (B976)   ROL          ;Shift bits & put set
+                                                                                        ;carry in bit0 pos'n.
+                                                                  (B977)   STA PROSCRTH ;Save shifted version.
+                                                                  RDHDR    LDA Q6L,X    ;Get even-encoded byte.
+                                                                           BPL GETHDR   ;Wait for full byte.
+                                                                           AND PROSCRTH ;Merge the bytes to normal.
+                                                                  (B980)   STA: CKSUMDSK,Y ;Store info read from addr
+                                                                                        ;field in zero page:
+                                                                                        ;$2F = vol found, $2E = trk found,
+                                                                                        ;$2D = sec found, $2C = checksum found.
+                                                                                        ;(Use ":" to force 3-byte instruction.)
+                                                                  (B983)   EOR CKSUMCAL ;Update running checksum.
+                                                                           DEY
+                                                                           BPL CALCK
+                                                                           TAY          ;Put checksum found in (y).
+                                                                  (B989)   BNE ERRTN    ;If chec sum found < > 0, then error.
+                                                                                        ;Hackers often change these two bytes
+                                                                                        ;to "CLC" and "RTS" instructions in
+                                                                                        ;order to defeat the address checksum
+                                                                                        ;and ignore the address epilogue.
+         
+                                                                  * Read first 2 bytes (only) of
+                                                                  * the address epilogue ("DE AA").
+                                                                  (B98B)
+                                                                  TRYEPIDE LDA Q6L,X    ;Get first byte.
+                                                                           BPL TRYEPIDE ;Wait for a full byte.
+                                                                           CMP #$DE     ;Was it a "DE"?
+                                                                           BNE ERRTN    ;No - try again.
+                                                                           NOP          ;Stall 2 cycles.
+                                                                  TRYEPIAA LDA Q6L,X    ;Get second byte.
+                                                                           BPL TRYEPIAA ;Wait for a full byte.
+                                                                           CMP #$AA     ;Was it an "AA"?
+                                                                           BNE ERRTN    ;No - retry sequence.
+                                                                  GOODRTN  CLC          ;Signal good read.
+                                                                  (B99F)   RTS
+                                                                           ============
+
+                                                                  (B942)
+                                                                  ERRTN    SEC          ;Signal bad read.
+                                                                  (B943)   RTS          ;Hackers often change the "SEC" to
+                                                                           ============ ;a "CLC" in order to defeat error
+                                                                                        ;checking.
+
+                                            (BEEE)   BCS RDAGAIN  ;Bad read - try again.
+                                                     LDA SECDSK   ;Was it sector 0?
+                                                     BNE RDAGAIN  ;No - try again.
+                                            (BEF4)   JSR READATA  ;Last chance to read data.
+
+                                                                  * Read data sector into RWTS's buffers.
+                                                                  * Look for data prologue.
+                                                                  (B8DC)
+                                                                  READATA  LDY #32      ;Set (y) to designate 32
+                                                                  REDUCEY  DEY          ;attempts to find data prologue.
+                                                                           BEQ ERRTN    ;Error - couldn't find data prologue.
+                                                                  PRODATD5 LDA Q6L,X    ;Get byte from data prologue.
+                                                                           BPL PRODATD5 ;Wait for a full byte.
+                                                                  VERSD5   EOR #$D5     ;Check if byte was a "D5".
+                                                                           BNE REDUCEY  ;Wasn't a "D5, reduce counter.
+                                                                           NOP          ;Stall 2 cycles.
+                                                                  PRODATAA LDA Q6L,X    ;Read next data prologue byte.
+                                                                           BPL PRODATAA ;Wait for a full byte.
+                                                                           CMP #$AA     ;Was it an "AA"?
+                                                                           BNE VERSD5   ;No - restart sequence.
+                                                                  (B8F4)   LDY #86      ;Set (y) for later use
+                                                                                        ;in the read data routine.
+                                                                  (B8F6)
+                                                                  PRODATAD LDA Q6L,X    ;Read next byte in data prologue.
+                                                                           BPL PRODATAD ;Wait for a full byte.
+                                                                           CMP #$AD     ;Was it an "AD"?
+                                                                  (B8FD)   BNE VERSD5   ;No - restart search sequence.
+
+                                                                  * Read first 86 bytes of data into
+                                                                  * RWTSBUF2 ($BC55 --> $BC00).
+                                                                  *
+                                                                  * Use disk byte as index to the
+                                                                  * NDX2NIBL table which contains
+                                                                  * offsets that we would be using
+                                                                  * if we were accessing a table
+                                                                  * of disk bytes when writing.
+                                                                  * (That is, we are just doing
+                                                                  * the opposite of writing.)
+                                                                  * EOR value from NDX2NIBL table
+                                                                  * with the previous EOR result.
+                                                                  * (On entry, use #$00 for previous
+                                                                  * EOR result.)
+                                                                  (B8FF)   LDA #0       ;Initialize (a) for later EORing.
+                                                                  RDUCY    DEY          ;Reduce index to RWTSBUF2.
+                                                                           STY PROSCRTH ;Save index.
+                                                                  RDSKBYT  LDY Q6L,X    ;(y) = disk byte.
+                                                                           BPL RDSKBYT  ;Wait for a full byte.
+                                                                  (B909)   EOR NDX2NIBL-$96,Y ;Use (y) as index to tbl
+                                                                                        ;      of 2-encoded nibbles.
+                                                                  (B90C)   LDY PROSCRTH ;Store 2-encoded nibble in RWTSBUF2.
+                                                                           STA RWTSBUF2,Y
+                                                                  (B911)   BNE RDUCY    ;Conditioned from the "LDY PROSCRTH".
+
+                                                                  * Read rest of sector into RWTSBUF1
+                                                                  * ($BB00 --> $BBFF).
+                                                                  *
+                                                                  * Use disk byte as index to the
+                                                                  * NDX2NIBL table which contains
+                                                                  * offsets that we would be using
+                                                                  * if we were accessing a table
+                                                                  * of disk bytes when writing.
+                                                                  * (That is, we are just doing
+                                                                  * the opposite of writing.)
+                                                                  * EOR value from NDX2NIBL table
+                                                                  * with the previous EOR result.
+                                                                  (B913)
+                                                                  SAVYNDX  STY PROSCRTH ;Save index to RWTSBUF1.
+                                                                  RDSKBYT2 LDY Q6L,X    ;(y) = disk byte.
+                                                                           BPL RDSKBYT2 ;Wait for a full byte.
+                                                                           EOR NDX2NIBL-$96,Y ;Get 6-encoded nibble from tbl.
+                                                                           LDY PROSCRTH ;Get index to RWTSBUF1.
+                                                                           STA RWTSBUF1,Y ;Store 6-encoded nibble in RWTSBUF1.
+                                                                           INY
+                                                                  (B923)   BNE SAVYNDX  ;More disk bytes to read.
+
+                                                                  * Read the data checksum.
+                                                                  (B925)
+                                                                  RDCHECK  LDY Q6L,X    ;Get data checksum.
+                                                                           BPL RDCHECK  ;Wait for full byte.
+                                                                  (B92A)   CMP NDX2NIBL-$96,Y ;Converted checksum = val in $BBFF?
+                                                                                        ;Remember:  Val in $#BBFF is result of
+                                                                                        ;previous cummulative EORing.  There4,
+                                                                                        ;this comparison with (a) detects any
+                                                                                        ;(non-cancelling) error(s) that may
+                                                                                        ;have occurred in the entire sector!!!
+                                                                  (B92D)   BNE ERRTN    ;No - got an error.
+                                                                                        ;Hackers often change these two bytes
+                                                                                        ;to "CLC" and "RTS" instructions in
+                                                                                        ;order to defeat the data checksum
+                                                                                        ;and ignore the data epilogue.
+
+                                                                  * Read the first two bytes (only)
+                                                                  * of the data epilogue ("DE AA").
+                                                                  (B92F)
+                                                                  EPIRDDE  LDA Q6L,X    ;Read first byte of data epilogue.
+                                                                           BPL EPIRDDE  ;Wait for a full byte.
+                                                                           CMP #$DE     ;Was it a "DE"?
+                                                                           BNE ERRTN    ;No - got an error.
+                                                                           NOP          ;Stall for 2 cycles.
+                                                                  EPIRDAA  LDA Q6L,X    ;Read 2nd data epilogue byte.
+                                                                           BPL EPIRDAA  ;Wait for a full byte.
+                                                                           CMP #$AA     ;Was it an "AA"?
+                                                                           BEQ GOODRTN  ;Yes - got a good read.
+                                                                  ERRTN    SEC          ;Signal bad read.
+                                                                  (B943)   RTS          ;Hackers often change the "SEC" to a
+                                                                           ============ ;"CLC" in order to defeat error checking.
+
+                                                                  (B99E)
+                                                                  GOODRTN  CLC          ;Signal good read.
+                                                                  (B99F)   RTS
+                                                                           =============
+
+                                            (BEF7)   BCS RDAGAIN  ;Last chance bombed out!!!
+                                                     INC FRMTKCTR ;Kick up trk counter.
+                                                     LDA FRMTKCTR ;Set (a) for next trk count.
+                                                     CMP #$23     ;Done all trks yet (#0 to #34)?
+                                                     BCC FRMNXTRK ;No - GO FORMAT THE NEXT TRACK.
+                                                     CLC          ;Signal finished all tracks.
+                                            (BF02)   BCC DONEFRMT ;ALWAYS - ONLY GOOD EXIT.
+                                                     ------------
+
+                                            * Note:  No matter what kind of error we
+                                            * might have encountered when formatting,
+                                            * the IOB error code is always set to $08.
+                                            * This is later translated to an FM error
+                                            * code (also $08) which DOS displays as
+                                            * a I/O error message.  (This is why trying
+                                            * to format a write-protected disk results
+                                            * in a an I/O error message instead of a
+                                            * disk-write-protected message.)
+                                            * If no error occurred, the IOB error byte
+                                            * will be set to some random number (as a result of
+                                            * referencing a hardware switch).
+                                            (BF04)
+                                            ERRFRMT  LDY #13      ;Index to return code in IOB.
+                                                     STA (PTR2IOB),Y ;Store return code.
+                                                     SEC          ;Signal that an error occurred.
+                                            DONEFRMT LDA MTROFF,X ;Turn motor off & exit with (c)
+                                            (BF0C)   RTS          ;denoting success status.
+                                                     ============
+
+                      (B7BA)   BCS ERRENTER ;Branch if operation unsuccessful.
+                               PLP          ;Throw status off stk.
+                               CLC          ;Signal successful.
+                      (B7BE)   RTS
+                               ============
+
+                      (B7BF)
+                      ERRENTER PLP          ;Throw status off stk.
+                               SEC          ;Signal UNsuccessful.
+                      (B7C1)   RTS
+                               ============
+
+(B093)   LDA IBSMOD   ;Get vol found from IOB
+         STA VOLFM    ;& put it in Fm parm list.
+         LDA #$FF     ;Designate vol wanted in
+(B09B)   STA IBVOL    ;IOB as 255 for next time.
+                      ;(Actually using 0 cause FF EOR FF = 0.)
+(B09E)   BCS ERRWTSDR ;Branch if UNsuccessful operation.
+(B0A0)   RTS
+         =============
+
+* Operation was NOT successful.
+(B0A1)
+ERRWTSDR LDA IBSTAT   ;Get RWTS'S error code.
+
+* Translate IOB error code (a) to
+* FM error code (y).  (DOS later employs
+* the FM error code in the routine used
+* to print error messages.)
+(B0A4)   LDY #7       ;Set (y) for FM vol mismatch.
+         CMP #$20     ;Vol mismatch?
+         BEQ SETFMERR ;Yes.
+         LDY #$04     ;No.
+         CMP #$10     ;Write protected?
+         BEQ SETFMERR ;Yes.
+         LDY #8       ;Must have been other, so
+SETFMERR TYA          ;designate as general I/O error.
+(B0B3)   JMP BADFMXIT ;Go handler error.
+         ------------
+
+(B385)
+BADFMXIT SEC          ;(c) = 1 to signal UNsuccessful.
+FMEXIT   PHP          ;Preserve success of operation on stk.
+         STA RTNCODFM ;Put appropriate return code in FM parm list.
+         LDA #0       ;Avoid that infamous $48 bug.
+         STA STATUS
+(B38E)   JSR CPYFMWA
+
+                      (AE7E)
+                      CPYFMWA  JSR SELWKBUF
+
+                                            * Point the A4L/H pointer at the DOS work buffer (chain).
+                                            (AF08)
+                                            SELWKBUF LDX #0       ;Designate work area buffer.
+                                            (AF0A)  BEQ PT2FMBUF ;ALWAYS.
+
+                                            (AF12)
+                                            PT2FMBUF LDA WRKBUFFM,X ;Get addr of DOS's work buffer
+                                                     STA A4L      ;(chain) from FM parm list and put
+                                                     LDA WRKBUFFM+1,X ;it in the A4L/H pointer.
+                                                     STA A4L+1
+                                            (AF1C)   RTS
+
+                      * Copy work area buffer (non-chain)
+                      * to DOS work buffer (chain).
+                      (AE81)   LDY #0
+                      STORWRK  LDA FMWKAREA,Y
+                               STA (A4L),Y
+                               INY
+                               CPY #45
+                               BNE STORWRK
+                      (AE8D)   RTS
+
+(B391)   PLP          ;Exit with (c) conditioned accordingly.
+         LDX STKSAV   ;Reset the stack pointer so execution will
+         TXS          ;return to the caller of the function.
+(B396)   RTS          ;(Normally returns to AFTRFUNC ($A6AB)
+         ============ ;located in the FMDRIVER routine ($A6A8).)

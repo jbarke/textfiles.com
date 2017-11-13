@@ -1,0 +1,210 @@
+
+
+
+
+GNO Kernel Reference Manual
+
+
+Version 1.0 alpha
+August 10, 1991
+Written by Jawaid Bazyar
+
+
+
+
+
+
+
+Copyright 1991 by Procyon, Inc. All Rights Reserved
+
+
+The GNO Multitasking Environment for the Apple IIgs 
+Copyright 1991, Procyon Software and Tim Meekins
+
+This program contains material from the ORCA/C
+Run-Time Libraries, copyright 1987-1989
+by Byte Works, Inc.  Used with permission.
+
+distributed by and leased to Procyon, Inc.
+Please direct all inquiries to:
+
+Procyon, Inc.
+1005 N. Kingshighway, Suite 309
+Cape Girardeau, MO 63701	
+(314) 334-7078
+
+For on-line technical assistance, contact:
+
+  GEnie    : J.BAZYAR
+  Internet : bazyar@uiuc.edu
+
+written by:
+   Jawaid Bazyar 	Kernel
+   Tim Meekins     	Shell
+   Derek Taubert   	Kernel support
+   Greg Thompson   	Shell support
+
+With many thanks to:
+   Bill Gulstad, Rob Knauerhase, and everyone in UIUC Apple II R&D and the A2RD Technical Discussion group
+   Dave Lyons, for tolerating my endless questions since the beginning of time, and for getting me started in IIgs programming.
+   Mike Westerfield, for your technical assistance and all your work in making decent development tools for the IIgs.
+
+Special thanks to:
+   Matt Deatherage, for telling me it couldn't be done, so that I could do it.
+
+
+
+Table of Contents
+
+Chapter	
+0.	Introduction
+1.	Modifications to GS/OS to support the multitasking environment
+	A.	Prefixes
+	B.	Open Files
+	C.	True TTY Support
+	D.	ToolBox  modifications
+2.	OrcaTM Compatible shell calls
+3.	Process Management
+	A.	Process IDs
+	B.	fork() and exec()
+	C.	kill()
+	D.	KVM routines (a slight misnomer)
+4.	Interprocess Communication
+	A.	Semaphores (screate, swait, etc).
+	B.	Software Signals
+	C.	Pipes
+5.	GNO Compliance
+	A.	Detecting GNO
+	B.	Terminal I/O
+	C.	Stack usage	
+	D. 	Disk I/O
+
+Appendices
+	A.	Kernel system call manuals	
+
+
+
+PREFACE
+
+This is a draft copy of the GNO Kernel Reference Manual for the alpha version of the GNO kernel and shell. The is to forewarn you that there may exist differences between this manual and the system as it exists in your computer. At this moment in time, the GNO software is very dynamic and is changing daily. This manual may at times mention features which are forthcoming. When possible, these are marked with a Alpha release note.
+
+INTRODUCTION
+
+Computers are tools.  The flexibility of a tool determines how useful it is.  Early computers were much like the one this software was written for: the Apple IIgs.  They could only run one program at a time, and their usefulness was limited to what the particular program the user was executing offered.  In the late 1960's, a team of researchers at AT&T began developing the Unixª operating system.  Unix's design was partially based on the premise that most programs are I/O bound, i.e. most of the time the program executes is spent waiting for user input or other I/O operations.  While one program is waiting for I/O, why not allow another program to execute?  This is what they did, and the result was one of the most successful computer projects ever.
+The Apple IIgs, like the Macintosh it is modelled after, provides very limited multitasking abilities in the form of desk accessories (NDAs). The programs in the NDA menu are available in whatever application you us as long as it follows Apple's guidelines.  However, there are many graphics based programs that don't support NDAs, and in addition there is a wealth of software that has been developed for the Byte Works' Orca environment.  This environment is mainly text-based, and thus makes access to NDAs impossible.  As if that wasn't enough, it's very difficult to write an NDA to allow the application to keep running.  So the benefits are lost, and we're back at ground zero.
+Enter the GNO system.  What was once just dreamed about is now a reality.  GNO provides an environment that is almost entirely compatible with software developed for the Orca environment.  But GNO provides a wealth of new abilities, lots of new ground for developers and users alike.
+Before we begin describing, we'd like to rebuttal those who say such a multitasking system isn't possible on the IIgs.  Obviously it is: you hold it in your hands.  Some say the IIgs isn't powerful enough to make multitasking useful.  We point out that the IIgs is much more powerful than the first computers Unix was designed to run on (they only had 64K of real memory! and were 16 bit machines).  Some ask why you'd ever need to run more than one program at once.  These are the same people who asked why we'd ever need more than 64K of memory, or more than 140K of storage on disks. (end soapbox)
+First off, GNO provides pre-emptive multitasking.  Many programs can be executing at the same time- each is called a 'process'.  Each process is allowed to run for a short period of time (1/60th of a second on average).  When its time runs out, the current process is set aside and another one chosen to run next.  This cycle continues until there are no more processes left (i.e. when you exit GNO).  Starting up processes to run 'in the background' is a simple matter of adding a few characters to the Orca shell commands you're already familiar with.  As mentioned before, most existing utilities are compatible with GNO.
+GNO provides a new shell that takes full advantage of the multitasking ability provided.  The most important feature of the shell is process control (starting them up, killing them, and suspending them).  But the shell also provides power never before seen on the Apple IIgs.  The ability to choose files by 'wildcard' has been around for a while, but GNO takes this to a new level with 'regular expressions', a very powerful yet simple programming language.  Other benefits of the GNO shell are too numerous to mention. (see the chapter on the Shell for details).
+In addition to being compatible with the Orca system, GNO is a very powerful programming environment.  Available to the programmer are all the calls needed to control processes, support Inter-Process Communication, and other tools needed in a multitasking environment. (see the Chapter on Kernel calls for details).
+GNO also boasts the first completely consistent method for accessing serial and console I/O.  The IIgs TextTools have been incredibly enhanced to provide a truly all-encompassing interface for serial, console, and IPC applications.  Imagine being able to attach terminals to your GS, and have a useful shell in each one.  Multiuser BBSs, remote dial-ups, UUCP or SLIP that doesn't take over your computer- the applications are endless!
+GNO works wonderfully with accelerator boards- in fact, software can work faster under the GNO environment than normal!  Because programs no longer take processor time waiting for an I/O event to occur, they also aren't constantly accessing the I/O memory- accelerator boards have to slow down and flush their caches when I/O is accessed.  As an example, a GS/OS telecommunications program was 10%-15% faster during file transfers.
+With all this talk of shell utilities, have desktop users (users of programs like Prizmª) been left behind?  Absolutely not.  GNO doesn't allow more than one desktop program to run concurrently, but it DOES let you run a desktop program with as many text applications as you like.  In other words, no functionality is lost from the IIgs by using GNO.
+Finally, the GNO environment comes with a large number of free utilities that bring some of the power of a Unix system to the IIgs.  Also, a number of programming libraries are included that make it easy to port programs from Unix or MS-DOS systems to the IIgs.  A whole new world of software awaits the IIgs.
+GNO by itself does not require any resources above what you normally use in your development environment.  However, if you're going to be running several large programs at once (for instance, background communications software or multiple compiles in the background), then you're definitely going to need as much RAM as you can afford.  Also, since the IIGS is by no means a speed demon, an accelerator card is recommended.
+The next several chapters describe the resources provided by the GNO system in a general manner.  They deal mainly with concepts, and exist to provide an overview and a sort of 'textbook' understanding of how the system as a whole works.  At the end of the manual you will find a canonical list of all the functions that GNO provides: the system calls.  These are presented in a Unix manpage format.  This means you will also find these call descriptions on the GNO distribution disk.  They are provided in this way so that one need not constantly refer  to a printed manual. It also provides  a method of impeccable indexing, via the grep program.  The manpages detail exactly what the programmer must do in order to use the system calls, and also exactly what effects the call has.
+NOTE: The material in this manual is of a technical nature.  It is intended mainly for programmers who wish to write applications which take advantage of GNO's features.  For information on using the shell, see the GNO Shell User's Manual.
+
+
+
+Chapter 1: Modifications to GS/OS
+
+The GNO system modifies the behavior of a number of GS/OS calls in order to allow many programs to execute concurrently, and to effect new features.  The changes are done in such a way that old software can take advantage of these new features without modification.  Following is a complete description of all the changes affected.  Each section has details in text, followed by a list of the specific GS/OS or ToolBox calls effected.
+
+Mutual Exclusion in GS/OS and ToolBox calls
+The Apple IIGS was not designed as a multitasking machine, and GS/OS and the ToolBox reflect this in their design.  The most notable problem with making a multitasking environment work on the IIGS is the use of global (common to all processes) information, such as prefixes and direct page space for tool sets which includes information like SANE results, QuickDraw drawing information, etc.  In most cases we've corrected these deficiencies by keeping track of such information on a per-process basis, that is, each process has it's own copy of the information and changes to it do not affect any other process' information.
+However, there were many other situations where this could not be done.  Therefore, task switching is turned off during all GS/OS and ToolBox calls (except for User Tools and the TextTools).  This was the best solution for this problem, and doesn't hurt system performance much.
+
+Prefixes
+Normally under GS/OS there are 32 prefixes, and these are all under control of the current application.  GNO extends this concept to provide each process with it's own copies of certain prefixes (0, 1, and 9).  When a process modifies one of these prefixes via the GS/OS SetPrefix call, it modifies only it's own copy of that prefix- the same numbered prefixes of any other processes are not modified.
+
+ $2004 ChangePath                      
+ $200B ClearBackupBit
+ $2001 Create
+ $2002 Destroy
+ $200E ExpandPath
+ $2006 GetFileInfo
+ $200A GetPrefix
+ $2010 Open
+ $2005 SetFileInfo
+ $2009 SetPrefix
+
+(Note: The corresponding ProDOS-16 interface calls are also supported).
+
+Open File Tracking
+Previously, a major problem with the way GS/OS handled open files was this: a Desk Accessory (or a background program of any sort) could open a file and have it closed without it's knowledge by the main application program.  This presented all kinds of problems for desk accessory authors.   Apple presented a partial solution with System Software 5.0.4, but it wasn't enough for a true multitasking environment.  GNO keeps track of exactly which process opened which file.  It also discontinues the concept of a global File Level, opting instead for a per-process File Level.  To summarize, if process A opens several files, and process B subsequently makes a Close(0) call, only files opened by process B and above process B's current File Level will be closed.  Process A's files are unaffected, even if process A had opened the same files.
+In addition to this behavior, when a process terminates in any manner all files that it currently has opened will be closed automatically.  This prevents problems of the sort where a program under development terminates abnormally, often leaving files open and necessitating a reboot.
+The Flush() GS/OS call is not modified in this manner.  The effects of a Flush(0) call are basically harmless, but it will decrease system performance if executed often.
+
+ $2010 Open
+ $2014 Close
+ $201B GetLevel
+ $201A SetLevel
+ 
+Quitting applications
+
+The GS/OS Quit call has been modified to simply terminate the calling process.  It no longer supports transferring to other applications or maintenance of a return stack, neither of which are necessary with the functionality of the exec() system call (which is how all applications are launched under the GNO system).  Note that this will possibly change in the future to support the Finderª.  
+
+Chapter 3: Process Management
+
+Before discussing process management using Kernel calls, it would be wise to define just exactly what we refer to when we say process.  A process is generally considered to be a program in execution.  "A program is a passive entity, while a process is an active entity." (Operating Systems Concepts p.73, Silberschatz and Peterson, Addison-Wesley, 1989).  The concept of process includes the information a processor needs to execute a program (such as the program counter, register values, etc).  
+In order to execute multiple processes, the operating system (GNO and GS/OS in this case) has to make decisiions about which process to run and when.  GNO supports what is termed pre-emptive multitasking, which means that processes are interrupted after a certain amount of time (their time slice), at which point  another process is allowed to run.  The changing of machine registers to make the processor execute a different process is called a context switch, and the information necessary for this is called it's context.    The kernel maintains a list of all active processes, and assigns time slices to each process according to their order in the list.  When the kernel has run through all the processes, it starts again at the beginning of the list.  This is called round-robin scheduling.  Under certain circumstances, a process can actually execute longer than it's allotted time slice because of a GS/OS or ToolBox call.  In these cases, as soon as the system call is finished the process is interrupted.
+Processes can give up the rest of their time slice voluntarily (but not necessarily explicitly) in a number of ways, terminal input being the most common.  In this case, the rest of the time slice is allocated to the next process in line (to help smooth out scheduling).  A process waiting on some event to happen is termed blocked.  There are many ways this can happen, and each will be mentioned in its place.
+An important item to remember is the process ID.  This is a number which uniquely identifies a process.  The ID is assigned when the process is created, and is made available for reassignment when the process terminates.  A great many system calls require process IDs as input.  Do not confuse this with a userID, which is a system for keeping track of memory allocation by various parts of the system, and is handled (pardon the pun) by the Memory Manager toolset.  Finally, do not confuse Memory Manager userID's with Unix userID's- numbers which are assigned to the various human users of a multiuser machine.
+There are two methods for creating new processes- the system calls fork() and exec() (specifics for calling these functions and others is in the appendix "System calls").  fork starts up a process which begins execution at an address you specify.  exec starts up a process by loading an executable file (S16 or EXE).  fork is used mainly for use inside a specific application, such as running shell built-ins in the background, or setting up independent entities inside a program.  Forked processes have some limitations, due to the hardware  design of the IIGS.  The parent process (the process which called fork) must still exist when the children die, either via kill() or by simply exiting.  This is because the forked children share the same memory space as the parent; the memory the children execute from is tagged with the parent's userID.  If the parent terminated, the children's code would be deallocated and likely overwritten.  A second caveat with fork is the difference between it's Unix counterpart.  Unix fork begins executing the child at a point directly after the call to fork.  This cannot be accomplished on the IIGS because virtual memory is required for such an operation; thus the need to specify a fork child as a C function.  Note that an appropriately written assembly language program need not necessarily have these restrictions.  When a process is forked, the child is given it's own direct page and stack space under a newly allocated userID, so that when the child terminates this memory is automatically purged.
+exec is used when the process you wish to start is a GS/OS load file (file type S16 and EXE).  exec follows the procedure outlined in the GS/OS Reference Manual for executing a program, and sets up the new program's environment as it expects.  After exec has loaded the program and set up it's environment, the new process is started and exec returns immediately.  
+Both fork and exec return the process ID of the child.  The parent may use this process ID to send signals to the child, or simply wait for the child to exit; indeed, this is the most common use.  The system call to accomplish this is wait.  It takes no parameters, and blocks the caller.  Whenever a child process terminates or is stopped (see the section on Signal management), wait unblocks the caller and returns the process ID of the affected child.
+exec is actually implemented as two other system calls- fork, and one called execve.  execve loads a program from an executable file, and begins executing it.  The current process' memory is deallocated.  The shell uses a fork()/execve() pair explicitly, so it can set up redirection and handle job control.  See the appropriate manpages for details.
+
+Chapter 5: GNO Compliance
+
+	For a program to work effectively under the GNO system, certain rules must be followed.  Most of these rules boil down to one underlying concept - never directly access features of the machine.  Always use GS/OS, the ToolBox, or GNO to accomplish what you need.  We have taken great care to provide the sorts of services you might need, such as checking for input without having to wait for it.  GNO compliance isn't just a matter of trying to make applications work well under the environment- it ensures that those applications stay compatible, no matter what changes the system goes through.  Below are summarized the points you must consider when you're writing a GNO compliant application.
+
+Detecting the GNO Environment
+If your applications requires the GNO Kernel to be active (if it makes any kernel calls), you can make sure this is so by making a kernStatus call at the beginning of your program.  The call will return no error if the kernel is active, or it will return an error code of $0001 (Tool locator - tool not found), in which case the value returned will be invalid. The call returns a 1 if no error occurs, but the value returned will be indeterminate if the kernel is not active, so you should only check for an error (toolerror() or _toolErr in C, the value in the A register in assembly).
+You can also determine the current version of GNO by making the kernVersion call.  The format of the version number returned is the same as all the standard tools, and is documented in the Toolbox Reference.
+
+Terminal I/O
+	The Apple II has always been lacking in standardized methods for reading keyboard input and controlling the text screen. This problem was compounded when Apple stopped supporting the TextTools in favor of the GS/OS Console Driver.  The Console Driver has a number of problems that prevent it from being a good solution.  There is high overhead involved in using it.  It must be accessed like a regular file, which means any I/O on it must filter through several layers before being handled.  There is no provision for patching the low-level routines, so it can be used over a modem or in a desktop program. And GS/OS must be called to access it, which means that while  a Console Driver access is occuring, no other processes can execute (see Chapter 1).  
+	GNO ignores the console driver and replaces the TextTools with a high-performance, very flexible generic terminal control system.  GNO directly supports the console (keyboard and screen), as well as the serial ports, as terminals.  In order for a user program to take advantage of these features and to be GNO compliant, you must do terminal I/O only through the TextTools.  Calls to the GS/OS console driver will not crash the system, but they will make other processes stop until the call is completed. You must not get input directly from the keyboard latch (memory location $E0C000), nor may you write directly to the screen memory.  The TextTools Terminal I/O system has been designed so you don't have to do either of these things.  If you need to wait for keyboard input without stopping your application, you can make the appropriate Control call (see the chapter on Terminal I/O) to put  the tools in the proper mode.
+(Note: late breaking news has it that Apple has modified the Console Driver to allow patching of the low-level I/O routines.  This means that Console Driver support can very likely be added to GNO while still maintaining current functionality.  We salute this move on Apple's part- keep up the good work!)
+
+Stack Usage
+	Stack space is at a premium on the IIgs.  Process stacks can only be located in Bank 0- a total of 64K.  This theoretical limit doesn't apply, however, as GS/OS and other bits of system software reserve a large chunk of this without any way to reclaim it.  There is approximately 48K of usable stack space.  This space also has to be shared with direct page space for Tools and certain types of device drivers, however. For a program to be GNO compliant, stack usage analysis must be done and acted upon.  Use of the stack should be minimized, in order that many processes can coexist peacefully.  From experience we've found that 1K usually suffices for well-written C applications, and at a maximum 4K can be allocated.
+	Assembly language programs are very efficient when it comes to use of the stack.  The 1K provided by default to applications is usually more than enough for assembly language programs.  However, C programs can use up tremendous amounts of stack space, especially if recursion is employed or string manipulation is done without concern for stack usage.  Below are some hints to keep stack usage at a minimum.
+
+  o	Avoid use of large local arrays and character strings.  Instead, dynamically allocate large structures such as GS/OS strings with malloc() or the Memory Manager.
+  o	Try not to use recursion unless absolutely necessary.  All recursive functions can be rewritten using standard loops and creative programming.  This is a good general programming rule- your program will run faster.
+  o	Orca/C generates 8K of stack by default, in case the desktop is started up.  Since GNO compliant programs generally will not be desktop-based, make sure you judge how much stack your program will require and use the #pragma stacksize directive to limit how much stack space Orca/C tries to allocate for your program.
+
+Disk I/O
+Since the Apple IIgs doesn't have coprocessors to manage disk access and the serial ports, either of these requires the complete  attention of the main 65816 processor.  This can wreak havoc in an environment with slow disks or high-speed serial links, as accessing disks usually results in turning off interrupts for the duration of the access.  This situation is lessened considerably with a DMA disk controller, such as the Apple High Speed SCSI or CV Technology RAMfast.  But this isn't as bad as it sounds; the IBM PC and Macintosh also suffer from this problem, and the solution is robust programming.  Make sure your communications protocol can handle errors where expected data doesn't arrive quite on time, or in full.  The best solution would be an add-on card with serial ports and an on-board processor to make sure all serial data was received whether or not the main processor was busy (this is a hint to some enterprising hardware hacker, by the way).
+Yet another concern for GNO applications is file sharing.  GS/OS provides support for file sharing, but it is up to the application author to use it via the  requestAccess field in the Open() call.  GS/OS only allows file sharing if all current references to it (other instances of the file being opened) are read-only.   GNO authors should use read-only access as much as possible.  For example, an editor doesn't need write permission when it's initially  reading in a file.  Note that the fopen() call in C supports read-only mode.
+
+
+
+INTERMEDIATE ALPHA RELEASE NOTES (August 10, 1991)
+
+Known Bugs
+GNO crashes if AppleTalk in turned on
+Some programs (most notably editors like emacs and ROSE) lose characters due to conflicts with the GNO keyboard buffering scheme.
+There is a random error that occasionally closes files when loading a program.  This most often manifests itself when running programs in the gshrc file, but can wreak havoc elsewhere.  Try 'ls & ls'.
+I've had trouble with an old version of macgen not being able to find files.
+
+Features
+GNO now supports restartable programs, if they terminate with a Quit call and set the appropriate flags (the way Apple recommends it be done).  Programs that I know support this: emacs.  All applicable Shell Utilities will also support this at the next release.
+
+
+
+
+About this special alpha version of GNO:
+We have decided to release GNO in this partially-finished state for a couple reasons:
+1) We want as much outside user commentary and suggestions as we can get.  The feedback we receive on this alpha version will to a large degree determine the course of GNO, regarding functionality and features.
+2) We want to make a statement that this project is here, it's real, it's NOW.  We want to make this clear to Apple and to other development community members.  We want your support, and the best way of achieving that is showing what we have, and asking you where we should go.
+
+Thanks for trying out the GNO system.  I believe it can be a tremendous boost to the Apple II community; and it starts with you.
+
+Sincerely,
+Jawaid Bazyar
+
+p.s. Remember - if someone comes up to you on the street and offers you some IBM, Just Say GNO!

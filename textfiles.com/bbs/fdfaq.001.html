@@ -1,0 +1,186 @@
+
+---------------------------------------------------------------------------
+FD-FAQ.001 - September 24th, 1991
+
+Frequently asked questions about FrontDoor, TosScan, and related utilities.
+
+Copyright 1991 Advanced Engineering sarl; All rights reserved.
+
+Published by Advanced Engineering sarl with assistance from the users of
+FrontDoor, TosScan, and related utilities, as well as the FrontDoor Help
+nodes. This document may be freely distributed for noncommercial and
+informational purposes. This document may not, under any circumstance, be
+traded, sold, or otherwise used for commercial gain or purposes without the
+prior written consent of Advanced Engineering sarl.
+---------------------------------------------------------------------------
+     These questions and answers do not appear in any specific order.
+---------------------------------------------------------------------------
+FD=FrontDoor Mailer            FM=FrontDoor Editor               TS=TosScan
+---------------------------------------------------------------------------
+
+Q: In FD version 2.01, and later, occasionally various indicators will
+   appear in the lower right hand corner. Amongst these are MAIL and
+   NU. What are they?
+
+A: Four possible symbols might pop up there in the lower right:
+
+     NU: No Users. Event configured to not allow users, or is toggled
+         off at the FD screen with ALT-Y, Human callers "NO". Also
+         displayed when FD detects the semaphore file FDNOUSER.NOW in
+         its SYSTEM or SEMAPHORE (commercial versions only) directory.
+
+     UD: One or more nodes have been marked as undialable, since your
+         system has called them, got a connect, but then failed when
+         attempting to establish a mail session. When this has occured
+         the number of "Resend retries" you've defined in FDSETUP, FD
+         will set one check mark for this node. When the node has got
+         three check marks, FD will not call this node again, until
+         you've removed the check marks.
+
+         Press ALT-V to review the list of undialable nodes, and edit
+         the check marks.
+
+     NE: No exit. The flag FDNOEXIT.NOW is present in the FD SYSTEM
+         directory. When present FD will not exit (event if event is
+         configured to exit) when mail arrives.
+
+   MAIL: Unread mail for your system has arrived (if this is configured
+         to be displayed in FDSETUP).
+
+---
+
+Q: On my point system I always get an error "Unable to open INBOUND.HIS:
+   File not found". What does this error mean and what can I do to prevent
+   it?
+
+A: The message means that FD was looking for the file which records all
+   inbound calls to your system. FD tries to reorganize the two activity
+   files (INBOUND.HIS and OUTBOUND.HIS) on a daily basis, as defined in
+   FDSETUP. If you haven't had any inbound calls yet (or if you don't ever
+   have inbound calls) then obviously no file with inbound history exists.
+   The message itself does cause any harm. Nevertheless, if you want to
+   avoid the error message then create a zero byte INBOUND.HIS on your
+   disk with the DOS command "ECHO > INBOUND.HIS" and FD will no longer
+   report the error.
+
+---
+
+Q: Since I have installed FrontDoor 2.01 the system doesn't seem to accept
+   file/update requests anymore from certain system of which it previously
+   did accept and honour them.
+
+A: Check your logfile whether you can find a report "remote refused
+   pickup". One of the changes between FrontDoor 1.99c and 2.01 is that
+   FrontDoor 2.01 will also honour this flag for file requests. That means
+   that if the requesting node has setup his system in such a manner that
+   it should not pick up traffic then your FD will honour that request and
+   will not attempt to send anything to that system.
+
+---
+
+Q: In the FrontDoor Technical Note on using HST Dual Standard modems (FDTN-
+   001) there is a mention that I should use "CONNECT 1200/" as the connect
+   string for 1200 bps connects. Must I also include the slash in the other
+   connect messages?
+
+A: No. The reason why you must include the slash for 1200 BPS connects is
+   that there is also a possibility that your modem reports a "CONNECT
+   12000". If you don't include the slash on the 1200 BPS connect message
+   then the CONNECT 12000 will be interpreted as a 1200 BPS connect and
+   time calculations for transfers and file requests will be wrong.
+
+---
+
+Q: The FrontDoor manual states that FrontDoor 2.01 supports the new connect
+   messages for the new US Robotics high speed modems. However, when I
+   review the connect messages in FDSETUP, I can not find the connect
+   messages for the 7200, 12000 and 14400 BPS speeds. How do I configure
+   FrontDoor for my modem?
+
+A: For compatibility reasons the connect messages for these three speeds
+   have been hardcoded in the FrontDoor software. This means that FD will
+   always recognize these connect messages and use the appropriate speed
+   and time calculations for the session. However, they are not
+   configurable and thus can not be changed.
+
+   Note that if you wish to enable human callers at that speed then you
+   must set the appropriate errorlevels in FDSETUP-> Mailer > Errorlevels.
+
+---
+
+Q: If I poll my boss, 2:512/1 (for example), for mail, then FD logs a
+   message "Unexpected password, XXXXXXXX, from 2:512/1011". What does this
+   mean and is this a security bug in FrontDoor? I don't even have a
+   password for 2:512/1011!
+
+A: That is exactly what the message means. It tells you that you have had
+   a session with a system which presented an unexpected password for one
+   or more AKAs. The password was unexpected because you haven't configured
+   a session password for that particular AKA. The message is part of
+   FD's security system. If the message is not important to you then you
+   might want to consider to disable the (#) logentry in FDSETUP > Mailer >
+   Loglevels. However, please read on to the next question.
+
+---
+
+Q: One of my downlinks has 8 different AKAs on his system and it seems as
+   if he changes them more often than his underwear. Must I really enter
+   all his AKAs in the security manager? He only receives echomail for his
+   primary address from me. Does it help if I just disable the "Present all
+   AKAs.." option?
+
+A: It's not a matter of *YOUR SYSTEM* presenting all AKAs, but the other
+   side. If you feel that some node has so many AKAs that you don't want to
+   include all his passwords in your security manager then make sure that
+   you route mail for his AKAs to ONE of his addresses. If you do that, you
+   only need to password protect that particular address.
+
+   Otherwise, you will either have to accept that mail for his AKAs is not
+   password protected (and can thus be picked up by anyone who puts that
+   address in his AKA list) or you will have to set passwords for his
+   entire AKA list.
+
+---
+
+Q: All the message that I or my BBS users write are displayed as having the
+   'Local' status when I read them in FM. Does this mean that FD will not
+   send these messages?
+
+A: The 'Local' status of any message on your system simply means that the
+   message apparently originates from your system. FD checks the 'Local'
+   flag before honouring any special flags within the message, such as
+   'Direct' or 'Immediate'. If these message don't have the 'Local' bit
+   set then FD will refuse to send these messages. This is part of FD's
+   security systems and its goal is to prevent people from forcing your
+   system to call to places at times where or when you don't want the
+   calls to happen (e.g. for cost reasons).
+
+---
+
+Q: FM doesn't generate a tearline anymore. I have configured my echomail
+   folders with "Echo Info" enabled but FM still does put any text behind
+   the three dashes (---) under each message.
+
+A: It is our belief that we should disturb the readers of echomail messages
+   as little as possible with unnecessary and uncalled for advertisements.
+   Therefor we support the thought that program information should be
+   hidden for the user. If you press ALT-X when reading one of your
+   messages you will see a notice "PID FM <version>". Thus, you are still
+   able to see which software people have used to enter a message, but only
+   when you want to see it. This is compliant with the desire of many
+   people to clean up the echomail from unwanted commercials as much as
+   possible.
+
+---
+
+Q: I can't do anything in the Terminal. Not even leave it with ALT-Q.
+
+A: You have the <Scroll Lock> key on. When it is active, the Terminal is in
+   'Raw mode', which transmits ALL keystrokes to the remote side. Just
+   press <Scroll Lock>, to turn it off, then you can use the Terminal as
+   you're used to.
+
+/* end of file "fd-faq.001" */
+
+
+

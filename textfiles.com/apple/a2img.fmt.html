@@ -1,0 +1,66 @@
+Path: news1.icaen!news.uiowa.edu!news1.chicago.iagnet.net!iagnet.net!howland.erols.net!newsfeed.internetmci.com!193.174.75.126!news-was.dfn.de!news-fra1.dfn.de!news-ge.switch.ch!news-zh.switch.ch!elna.ethz.ch!not-for-mail
+From: GUDATH@EZINFO.VMSMAIL.ETHZ.CH (Henrik 'Ratte' Gudat)
+Newsgroups: comp.emulators.apple2
+Subject: Re: Disk Image formats
+Date: 2 Dec 1997 07:25:20 GMT
+Organization: F.E.Systems Emulation Technologies
+Lines: 52
+Distribution: world
+Message-ID: <660d50$8tj$1@elna.ethz.ch>
+References: <19971201040901.XAA19285@ladder02.news.aol.com> <34831774.6730572@news.bconnex.net>
+NNTP-Posting-Host: ezinfo.ethz.ch
+X-News-Reader: VMS NEWS 1.24
+In-Reply-To: CUTjefbla@bconnex.net's message of Mon, 01 Dec 1997 20:27:03 GMT
+
+Hi guys,
+
+2img is a public format, so here it is : :-)
+
+Please note that subtype 2 (raw nibbles) has not been further discussed and is
+undefined as of this writing.
+
+typedef struct {
+	char	magic[4];	/* "2IMG"                                  */
+	char	creator[4];	/* Creator signature                       */
+	word16	header_len;	/* Length of header in bytes            k  */
+	word16	version;	/* Image version                           */
+	word32	image_format;	/* Image data format (see below)           */
+	word32	flags;		/* Format flags (see below)                */
+	word32	num_blocks;	/* Number of 512-byte blocks in this image */
+	word32	data_offset;	/* File offset to start of data            */
+	word32	data_len;	/* Length of data in bytes                 */
+	word32	cmnt_offset;	/* File offset to start of comment         */
+	word32	cmnt_len;	/* Length of comment in bytes              */
+	word32	creator_offset;	/* File offset to start of creator data    */
+	word32	creator_len;	/* Length of creator data in bytes         */
+	word32	spare[4];	/* Spare words (pads header to 64 bytes)   */
+} image_header;
+
+Format numbers:
+
+0 = DOS 3.3-order dump of disk data. This is really only valid for
+    a floppy disk image.
+1 = ProDOS-order dump of the disk data. This is the only valid format
+    for a hard disk image.
+2 = Raw dump of the disk nibbles. This is only valid for a floppy disk
+    image.
+
+Flags:
+
+0x80000000 = Image is write protected (1 = yes, 0 = no)
+
+
+
+Now regarding .po and .do files: these files contain chunks of 256 bytes - the
+logical disk data. Important: the sectors (256 bytes) are arranged in DOS (.po)
+or ProDOS (.po) order. Both OSes have a very specific sector interleaf. This
+means, the disk images contain the sectors in the order as they appear under
+the drive head. So, sector 0 ius the first one but sector 1 is likely to be
+anywhere but the following sector. The interleaf is different fro ProDOS and 
+DOS and described in DOS/ProDOS books.
+
+
+I hope this helps. You can mail me if it's not clear, or post here.
+
+- henrik
+

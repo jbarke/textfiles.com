@@ -1,0 +1,684 @@
+America Online
+APPLE II DEVELOPMENT FORUM CONFERENCE LOG
+Tuesday, October 9, 1990  10:00 p.m. Eastern Time
+Topic:  Debugging and Testing Software
+Forum Leader:  Dave Sugar  (AFL Dyfet)
+
+AFL Dyfet  Good evening and welcome to the Apple II Development
+AFL Dyfet  Forum.  Tonight we will be discussing software testing (not that
+           anyone's
+AFL Dyfet  software ever has bugs...only features)...We will not be using
+           protocol just
+AFL Dyfet  yet....so whomever wishes to start, feel free to grab the floor
+           :)
+AFL Dyfet  Dave, Matt, out of curiosity, what quality control methods does
+           Apple use for
+AFL Dyfet  new software?
+Dave Lyons Well, basically we have "testers" and a
+Dave Lyons "Bug Reporting Center" where they (or whoever) file
+Dave Lyons bugs.  When an engineer claims a bug is fixed, the
+Dave Lyons tester gets to verify that it's fixed, and bugs are later
+           "regressed" to make sure they're
+Dave Lyons really still fixed (in case somebody built the final disk with the
+           wrong version of a
+Dave Lyons source file, or whatever--stuff like that can definitely
+           happen!).
+AFA Parik  (like setting the beta bit on a system software version?  ;)
+ShanoJ     Anyone know what's up with the Scheduler? It just flat out don't
+           seem to work
+ShanoJ     on some peoples computers. :(
+AFL Marty  <-- some people (I think)
+ShanoJ     Ya, Marty, you classify as some people. For more than one reason.
+           :)
+AFL Marty  Thanks, I think.
+Dave Lyons Jonah, if the Scheduler doesn't work it's because somebody
+           INCBUSYed more than they DECBUSYed.  I
+Dave Lyons bet if they strip out their DAs & stuff it's fixed.  Oh, Draft
+           mode printing on 5.0.2 and earlier
+Dave Lyons calls SetGrafProcs, which INCBUSYs once too many--does that
+           help?
+ShanoJ     Uh uh, Dave. I check the busy flag, and it's set to 0. I call
+           SchAddTask, and
+ShanoJ     get a result flag of TRUE, but the task is never called.
+Dave Lyons Jonah, the only other thing I can think of is that the "scheduler
+           is busy" flag got set when a
+Dave Lyons scheduled task was dispatched but never returned (i.e., you crash
+           in a scheduled task).  In that
+Dave Lyons case on ROM 1 only the scheduler doesn't work again until you
+           power off or do a self-test.
+ShanoJ     Ya, I've thought about that but my tester turns on the computer
+           and trys my
+ShanoJ     test program IMMEDIATELY. That means that it is HIGHLY unlikely
+           that it's the
+ShanoJ     bug in the Scheduler task flag.
+Dave Lyons Okay, one more thing:  You're calling the scheduler WHILE the busy
+           flag is 0?  In that case, the task
+Dave Lyons should be executed only after somebody calls INCBUSY and then
+           DECBUSY.  SchAddTask never
+Dave Lyons dispatches the task immediately, so if the BUSY flag is 0 you
+           don't normally want to
+Dave Lyons call SchAddTask.
+ShanoJ     Okay, so I've got it backwards? I should only call SchAddTask if
+           the busy flag
+ShanoJ     is SET? Ahh, that might be what's messing me up! Thanks, I'll give
+           that a try
+ShanoJ     (and if it doesn't work... :)
+Dave Lyons Right--if E100FF is 0, the system *isn't* busy, so you don't have
+           to use the scheduler.
+ShanoJ     On a related note, is there any way to recover from a tool break
+           in GSBug?
+AFA Parik  'r'
+ShanoJ     Well, actually, I've only set tool breaks on SchAddTask, and the
+           GS just
+ShanoJ     crahses and sits there.
+Dave Lyons What version?
+ShanoJ     v1.5
+Dave Lyons Should work fine.  UNLESS your stack was in $01xx.  (In that case
+           you can improve
+Dave Lyons the behavior by setting $01/0100 to $80--this will make interrupts
+           not trash your page-1 stack while
+Dave Lyons you're in GSBug.
+ShanoJ     And one more thing: if, from an interrupt, I need to call the
+           Scheduler, what
+ShanoJ     do I do? I'm not supposed to hog the interrupt, but if the busy
+           flag is clear
+ShanoJ     I'm supposed to just go do my thing....
+ShanoJ     What's at $01/0100?
+Dave Lyons Good question.  What's "your thing"?
+ShanoJ     Guess. It's blanking in Twilight, of course! :)
+Dave Lyons $01/0100 is the position of the $01xx stack whenever the stack
+           pointer *isn't* in page 1.  More
+Dave Lyons specifically, it's the main-memory page 1 stack, and $01/0101 is
+           the auxiliary-memory page-1 stack
+Dave Lyons (period)
+ShanoJ     Is there any way to shadow $002000 into $012000?
+AFA Parik  yes
+AFA Parik  readrm=0,writeram=1 in $e0c068
+AFA Gary J Hmmmm..  What do you need to do that for??
+AFA Parik  (don't do it under gs/os)
+AFA Gary J ($002000 into $012000?)
+ShanoJ     I wanna do a weird scroll, and I need to do some strange
+           shadowing.
+ShanoJ     Ya, I knew that, Parik. Then again, I'm not particularly fond of
+           my HD, so I
+ShanoJ     might just do it anyway.... :)
+AFA Gary J Weird, strange... hmmmm.  Sounds like an interesting program :)
+AFL Dyfet  Okay, does anyone have any questions related to tonight's topic??
+ShanoJ     What exactly is tonights topic?
+AFA Gary J You've been touching on in already, Jonah :)
+AFL Marty  (debugging, Jonah)
+ShanoJ     Oh ya, I knew that. :) Just wait till I get going... :)
+AFA Parik  is gs/os vol 3 shippin' yet?
+AFA Parik  er, i mean the addison-wesley one
+WinkieJim  Parik, Toolbox Vol 3 is.
+AFA Gary J GS/OS Reference, he means :)
+AFA Parik  GS/OS Reference:The Book.  The Zen of GS/OS .  Whatever its
+           called.
+WinkieJim  GS/OS re f(only vol) is too
+WinkieJim  <---have both final versions
+AFA Gary J BOTH final versions?  Of GS/OS Reference?
+AFA Parik  GS/OS and you.  How to live in a MSDos world with GS/OS.  Sex,
+           lies, and GS/OS.
+WinkieJim  of GS/OS Reference and Toolbox Vol 3
+ShanoJ     Anyone know what might be screwing up the menu bar in View 3200?
+           I'm 99% sure
+ShanoJ     I'm not BLATANTLY stepping on any memory...
+AFA Gary J Have you used Big Brother to check it?
+AFA Gary J :)
+ShanoJ     No, that I haven't. Good idea!
+WinkieJim  Does it only get messed up when you don't select something?
+ShanoJ     It only gets trashed after you view a 3200 color picture...
+WinkieJim  Shano, make sure you keep the menu titles in no-purgable and
+           non-movable memory
+ShanoJ     Yup, they're in the body of my program (no resources for this one
+           yet) so if
+ShanoJ     THEY get purged, I'm in DEEP trouble. :)
+WinkieJim  Oh...I love purging the code I'm executing code in :) :)
+AFL Dyfet  Self relocating executing code...core wars lives! :)
+WinkieJim  Ok, anyone have any idea how a non-registered developer can get a
+           AuxType
+WinkieJim  reserved for himself?
+ShanoJ     Can't you just send one of those forms to DTS?
+ShanoJ     Oh, and Matt and Dave, should I register Twilight's file type?
+WinkieJim  Dumb Question #1: What form?
+ShanoJ     That is, the blanker file type?
+ShanoJ     There's one in the ADV library that you fill out and they assign
+           you a file and
+ShanoJ     auxType, if you say please a lot and bribe them. :)
+AFA Gary J There's a form, and accompaning instructions available for
+AFA Gary J download in the ADV software library.
+AFA Parik  (when you d/l the filetype tech notes, a form is included.  look
+           in adv/from
+AFA Parik  apple/filetype notes)
+AFA Gary J (3 people, same basic answer :)
+WinkieJim  Ah, will do...(I get the printed versions from APDA)
+Dave Lyons What's "Twilight's file type"?
+ShanoJ     Well, I've been using $B4, $5457. (TW).
+AFL Dyfet  I think your wild use of filetyples will be civilized by Apple yet
+           :)
+AFL Marty  (You mean "Twilight module filetype" don't you?)
+Matt DTS   You can NOT use $B4!  That's previously assigned as run-time
+           libraries!
+ShanoJ     Ya, I meant module file type, Marty. Twilight itself is a CDEV, of
+           course, so
+ShanoJ     it has the $C7 filetype.
+WinkieJim  <---needs a $BC filetype and using $0000 until I get an official
+           AuxType.
+WinkieJim  <----nice programmer :)
+AFL Marty  Okay... wasn't sure.
+Dave Lyons Ack!?  Don't be making up filetypes.  Yes, you should send in a
+           form and be assigned a
+Dave Lyons filetype/auxtype combination.
+ShanoJ     Ya, well modules ARE runtime libraries, kinda. Anyway, the system
+           loader won'y
+ShanoJ     load them unless theyre int the $Bx range somewhere, so it HAD to
+           be one of
+ShanoJ     those reserved types....
+Matt DTS   Jonah:  You're making this up.  You didn't even ask for help
+           before doing this.
+Matt DTS   Did you even *look* at the file type notes to see about file type
+           $BC, which is available for just
+Matt DTS   such purposes?  If you put one of those files in the Libraries
+           directory, the Loader could do very bad
+Matt DTS   things to people's applications.
+Dave Lyons (Actually, you can get the loader to load anything--just load it
+           into RAM first and use
+Dave Lyons InitialLoad2 on it.  Or make it a Code Resource and let the
+           CodeResConverter do the above for you
+Dave Lyons automatically.)
+Matt DTS   It's very depressing to spend years telling people not to steal
+           file types just to have it happen
+Matt DTS   every other week, from people who seem to be paying attention. 
+           <--depressed
+ShanoJ     Ya, well that's about a zillion extra things to do, and eveyone
+           knows how lazy
+ShanoJ     I am. :)
+ShanoJ     Matt, I DID ask for help, just not on that. :)
+Matt DTS   [I'm not impressed.]
+WinkieJim  Do I get a prize for not stealing a fyletype? :)
+ShanoJ     Hey, Matt, it's not that bad. I'm sorry.
+AFA Parik  you get to buy lunch for dts
+ShanoJ     Would it make it up to you if I got Marty to lend you some of his
+           pigs?
+ShanoJ     (sorry, couldn't resist that ONE little joke... :)
+AFA Gary J Matt, Dave - Did you see Winkie's question about if you need to
+           be a registered
+AFA Gary J developer in order to request a file type?  (I can't recall what
+           the
+AFA Gary J request form stipulates )
+Matt DTS   You do not have to be a Partner or Associate - nowhere on the form
+           does it say that you do.
+AFA Gary J Ok.  (I thought not)
+Matt DTS   Jim:  You're also free to use auxtype $0000 in file type $BC, even
+           if you ship it that way.  Just be
+Matt DTS   prepared that other people may be using it as well.
+AFL Dyfet  The point is not to step on other peoples filetypes...before Apple
+           started
+AFL Dyfet  tracking filetype use, it was a REAL MESS out there...I know :)
+WinkieJim  Well that's the problem, I don't want to load the wrong kind of
+           file and
+WinkieJim  blow up the world in the process :)
+ShanoJ     Ya, but that's a real problem. If I use $BC,$0000 and someone else
+           uses
+ShanoJ     $BC,$0000, I'm in deep do-do.
+AFL Dyfet  And if you chose a type that matches something used in future
+           system software,
+AFL Dyfet  all the worse...
+Matt DTS   So did you bother to take the form conveniently provided online
+           and *ask* for a unique auxtype?
+Matt DTS   Nooooo.....
+AFA Gary J :)
+WinkieJim  I can inmagine loading a NifytyList module into SuperInfo and
+           destrying the 
+WinkieJim  world as I know it :)
+Matt DTS   About half the system is held together by developer cooperation,
+           gang, and that means *all* of you,
+Matt DTS   not just the big guys.  PLEASE pay attention before you send
+           programs to several thousand people.
+AFA Gary J (I KNEW this would raise Matt's ire  :)
+ShanoJ     No, you're right, I didn't. I _DID_ download it, though, but it
+           got lossed. :(
+WinkieJim  <---follows the rules....most of the time ;)
+ShanoJ     Ya, I follow a hell of a lot of rules, but I'm also REALLY
+           lazy...
+ShanoJ     I'm sorry Matt. Tell you what: I'm working on Twilight v2.0 right
+           now. I'll
+ShanoJ     send in the file type form, get a new filetype, change all of
+           Twilight's code
+ShanoJ     to the new one AND include a converter from the old to the new
+           file types in
+ShanoJ     the final archive, AND I'll put a note in the docs saying what a
+           naughty boy I
+ShanoJ     was and reminding everyone not to do what I did. Would that make
+           things a
+ShanoJ     little better?
+AFL Dyfet  Lazyness on filetype hurts more than just you, Jonah...
+Matt DTS   So be lazy when you're not sending stuff to a few thousand people.
+            <-- SERIOUSLY unimpressed
+AFL Scott  How long does it take to get a filetype assigned?  I don't want to
+           use BIN as the filetype for raw
+AFL Scott  images.
+AFL Scott  And DTS is closed right now, and I'm shipping at the end of the
+           month.
+Matt DTS   It normally takes about a day, but DTS is currently closed until
+           October 19th so it may be until then.
+Matt DTS   I'll warn you right off that I'm resistant to allocating any new
+           graphic image auxtypes -- all we
+Matt DTS   need at this point is another graphic file format for other
+           programs to deal with.
+AFL Scott  Matt, these are raw images, previously undefined.  I want to make
+           the format well known to everyone
+AFL Scott  not just the people who buy the board.
+AFL Dyfet  Ah...
+Matt DTS   In other words, a fourth or fifth "standard" that everyone should
+           be expected to revise their programs
+Matt DTS   to follow.  I really have trouble believing that one of the
+           existing graphics formats can't suit
+Matt DTS   nearly everyone's needs, especially since Apple Preferred is
+           user-extendable.
+ShanoJ     Matt, we're talking about a format that's COMPLETELY unlike all
+           other GS
+ShanoJ     formats, particularly in the way that it can store ALL of the
+           colors.
+AFL Scott  No, not at all.  Tell me one that deals with raw data and NOT
+           pixelmaps and I'll do it.
+ShanoJ     It's HIGHLY unlikely that any existing paint program will even TRY
+           to load the
+ShanoJ     damn things, but it would be VERY nice for people to be able to
+           get ahold of
+ShanoJ     the format specs so they can include support in programs like
+           SHRConvert,
+ShanoJ     Convert 3200, The Graphic Exchange, etc.
+Matt DTS   I tend to think of pixel maps as raw pixel data. What do you
+           mean?
+Dave Lyons Yeah, what's Raw Data?
+ShanoJ     Raw data= 3 32K chunks of 0-$F.
+AFL Scott  I mean a raw, unformatted, un-quantized, picture that can contain
+           up to 4096 colors.
+WinkieJim  Data that hasn't been cooked
+ShanoJ     No implicit color map or pixel map.
+AFL Scott  What Jonah said.
+AFA Gary J What Winkie said :)
+Matt DTS   In other words, a pixel map at 12 bits per pixel.
+AFL Scott  Yes.
+AFL Scott  But in three 32k planes.
+Matt DTS   Do you see my point about publishing yet another graphic format,
+           though?
+AFL Scott  I see it and I agree with it.  I just don't see how 
+AFL Scott  it can fit into Apple Preferred without you still having to write
+           a FTN to show that the main segment
+AFL Scott  is void.
+Dave Lyons Can you use TIFF, Scott?
+Matt DTS   Who says you have to have a MAIN block?
+Matt DTS   (Dave:  We don't have an auxtype assigned for TIFF, so it may not
+           help.)
+AFL Scott  TIFF would be Ideal, however, under the circumstances, it's really
+           too late to add the
+AFL Scott  all color TIFF files (or those that I can find the spec on) and
+           I'm not up to the coding right now.  
+Matt DTS   I personally prefer to think you could store a GS-type pixel map
+           in a regular Apple-preferred file
+Matt DTS   and add a SCOTT block (or something :) that contains all the rest
+           of your stuff.  If the user tries
+AFL Scott  code for TIFF processing.  Additionally, that opens up another can
+           of worms implying TIFF support for
+Matt DTS   to load an APF file that doesn't contain the SCOTT block, you tell
+           them and just display the picture.
+Dave Lyons (Matt:  We should define an auxtype for TIFF.)
+AFL Scott  Ok... I'll see if I can do it that way, Matt.  I guess I
+           misunderstood APF format, then.  Oh... As 
+AFL Scott  far as a TIFF auxtype goes.. it's a horribly convoluted format
+           that's really a mess.  Just my
+AFL Scott  opinion.
+Matt DTS   (If someone requests it, I will - I don't normally make up
+           auxtypes for stuff no one has said they
+Matt DTS   want>)
+WinkieJim  Why not? :) Make $77 the StuffNoOneWants filetype.
+AFA Gary J Winkie :)
+ShanoJ     Anyone know how to make the DOC interrupt at 50Hz? I wish Parik
+           were here...
+ShanoJ     Gee, Matt, could you create a TIFF file format for the GS so
+           Convert 3200 can
+ShanoJ     identify them?
+Matt DTS   Not that you would know, Jonah, but there's a form you fill out to
+           request auxtypes.
+ShanoJ     Also, I hope I don't have to go through the third degree to get a
+           file/aux typy
+ShanoJ     for Twilight... :(
+ShanoJ     Matt, not to be rude, but you know, you make this REAL easy on a
+           person... :(
+Matt DTS   You make it really easy on me by shipping around 10,000 bogus
+           run-time libraries to the world because
+Matt DTS   you're "too lazy" to fill out a simple form.  I don't mean to be
+           rude (No, really, I don't!  Those
+Matt DTS   of you who've been here for a while may not believe that, though
+           :) but I really lose patience quickly
+Matt DTS   when people treat things like this as unimportant.
+ShanoJ     Hey, Matt, there isn't anything I can do about that now. I've 
+           offered to fix it in
+ShanoJ     the next release, which involves recoding signifigant parts of the
+           program, and
+ShanoJ     I'm even willing to write a converter so that people won't be
+           stranded using
+ShanoJ     the old Twilight modules. If that's not good enough for you, there
+           aint much
+ShanoJ     more I can do...
+AFL Dyfet  I think a good start, Jonah, is the fill out the form...
+ShanoJ     Hey, that's DONE. I found one in my binder while I was sitting
+           here and its all
+ShanoJ     typed out and ready to go... It'll be in the mail tomorrow.
+WinkieJim  Then we won 't have to send out the FileType death squad out...
+Nuzz       Just curious, why is DTS closed until the 19th ?
+AFL Dyfet  Long memory Nuzz :)
+WinkieJim  Two week columbus day closing :) :)
+Matt DTS   Nearly everyone is working on Sample Code and other projects that
+           we can't do while keeping up the
+Matt DTS   current Email load.  All Apple Partners were sent an AppleLink
+           explaining it.
+Matt DTS   (All partners with AppleLink accounts, Andy.  :)
+AFL Dyfet  :)
+Paladin100 There are 10,000 Apple users left? I thought Apple converted
+           everyone to Macs!
+AFA Gary J :)
+ShanoJ     So, no takers on the 50Hz interrupts? Shucks. :( Not my day, huh?
+           :)
+AFA Gary J Conversion is an individual thing, Paladin.  Apple can't do it
+           for you :)
+Paladin100 But they're trying!
+ShanoJ     No, I swaer, my GS was turning into a Mac when I wasn't looking.
+           Then I turned
+ShanoJ     back and it was back to normal, but if I'd been gone for an hour
+           or so.... :)
+ShanoJ     Ya, as long as the squad can come out tonight so I won't have to
+           do my English
+ShanoJ     paper.... :)
+ShrinkIt   I like that idea... "The Filetype Death Squad"... hmmm what
+           possibilities...
+Tamira     :>
+AFL Marty  You been putting Mac disks in it again Jonah?
+Tamira     must be one of those pesky Mac cloning viruses  :>
+AFA Gary J Debugging type question:  Dave, what's in the future for Nifty
+           List?
+Dave Lyons The future for Nifty List?  Probably 3.1, 3.2....  What do you
+           mean?
+AFA Gary J Heheh... No, I mean, are you actually going to be able to IMPROVE
+           what you've
+AFA Gary J done so far?  It seems to be very complete.  Any new features in
+           the works?
+WinkieJim  There's always room for inpovement...
+Dave Lyons There's always room for improvement...
+Dave Lyons :)
+WinkieJim  (my spelling could stand improvement :)
+AFA Gary J :)
+Dave Lyons Geez, it doesn't even have command-line history yet!
+Dave Lyons And Big Brother is only half done.
+AFA Gary J True.  But I consider Big Brother as a module improvement.
+Dave Lyons And the \find command doesn't have wildcard bytes!
+Dave Lyons And there's no NDA interface to NL!
+Dave Lyons And no NL command scripts, and no redirection to disk.
+AFA Gary J NDA interface?  Interesting :)
+Dave Lyons And no OS calls from the command line.
+WinkieJim  Dave, don't worry about a NDA NiftyList...I've got that covered
+           :)
+Dave Lyons And you have to enter strings into "scratch" memory and type their
+           addresses, instead of typing
+Dave Lyons them inside a tool-call expression.
+Dave Lyons LOTS of stuff to do....
+AFA Gary J You are full of ideas.  :)  Sounds fantastic!
+Matt DTS   (Don't forget about no NL-provided notify proc)
+Dave Lyons Eh?
+Dave Lyons Oh, okay...there will be an \addnp command
+Dave Lyons in 3.1 that lets you see what things are being sent to GS/OS
+           Notify Procs.
+Matt DTS   (And a waning when the stack is in page one and tool calls could
+           toast you.)
+AFA Gary J :)
+Dave Lyons (Yeah, everybody will be relieved when that feature shows up.)  (
+           <-- sarcasm )
+
+ShanoJ     Okay, what's everyone's favorite debugging aid?
+AFA Gary J GSBug/Nifty List combo.
+ShanoJ     Ya, me to. (GSBug/NiftyList). I think GSBug is God's gift to GS
+           Assembly
+WinkieJim  <---favorite debugging The thing crashes on me durring the tool
+           call
+WinkieJim  err two thoughts in  one there :)
+ShanoJ     programmers, and Nifty List is God's gift to ALL GS programmers.
+           :)
+ShanoJ     And ORCA/Diss has quickly become one of my favorites, too.... :)
+Matt DTS   That's funny - I know several people who would swear that
+           *they're* God's gift to GS programming.
+AFA Gary J Matt :)
+ShanoJ     Hell, I've sworn that, but they made me stop over in the DC. And I
+           can't use
+ShanoJ     'Well...' as a subject, either. :)
+
+WinkieJim  Anyone know if there's a problem with NEwControl2 loading a
+           rTextForLETextBox2
+WinkieJim  resource for a Static Text Control?
+Dave Lyons WJ, what sort of a problem?  I don't know of one.
+Dave Lyons Do you have all the descriptor and flag bits set to indicate
+           what's a resource and what isn't?
+WinkieJim  Yup, the Call takes a pointer to a Static Text Control Template
+           and the
+WinkieJim  template points to the resource.
+ShanoJ     'Points to the resource'?
+ShanoJ     You mean it has the resource's ID?
+WinkieJim  Well...gives the Resource ID
+Dave Lyons What's the moreFlags value in the template?
+WinkieJim  $1002
+WinkieJim  wait a sec.....hmmmm
+WinkieJim  $1002 is what it should be :) my binary number has an extra zero
+           in it so it's
+WinkieJim  $2002....god I hate it when  it's such a simple thing. :/
+
+ShanoJ     Is there any hope of the runtime version of GSBug being updated to
+           handle 
+ShanoJ     the _StartTools call properly, or can't you guys talk about
+           that?
+Matt DTS   "runtime version"?  There's a source-level version?
+AFA Gary J I thought "application" version is being dumped.
+ShanoJ     I mean the stand-alone version.
+AFA Gary J (The NON-Init version)
+Matt DTS   It is most likely at this point that the non-INIT version of GSBug
+           will go away with the next release.
+ShanoJ     Oh, that's too bad. It had it's uses, particularly for startup
+           code. I hate
+ShanoJ     having to put a brk 00 and recompile to debug the startup. Also,
+           there's NO
+ShanoJ     hope of the INIT version not returning GSBug's MemID when
+           _MMStartUp is called
+ShanoJ     from within it, huh?
+Dave Lyons Jonah, can't you set a tool break on TLStartUp instead of
+           recompiling with a BRK?
+Dave Lyons Yes, there's hope that the next version will return the right
+           MemID for things like MMStartUp.
+ShanoJ     Hmm, hadn't thought of that, Dave. Will it work? I haven't had
+           much luck with
+ShanoJ     tool breaks on SchAddTask....
+AFA Gary J Can you give us any info on approximately WHEN the update of
+           GSBug will be out?
+AFA Gary J (I know you hate that kind of question! :)
+Matt DTS   The 1.5b9 and 1.5b10 versions (KansasFest and beyond) are on
+           Developer CD, Volume V
+Matt DTS   ("Night of the Living Disc") which is being pressed as we speak.
+Matt DTS   (give or take two corrupted text files.  :( )
+ShanoJ     Matt, who thinks up the titles for the CD's? And, how much have
+           they had to 
+ShanoJ     drink when they do it? :)
+AFA Gary J Ahh.  Neat. 
+Matt DTS   The Developer CD's are named by various people within Apple - it's
+           kind of like a contest.
+Matt DTS   It so happens that "Night of the Living Disc" was thought of by
+           me.
+ShanoJ     Ya, it sound's like your kind of stuff. :) I must say that I'm
+           glad you write
+ShanoJ     tech notes. They'd be INCREDIBLY boring without your humor! :)
+ShanoJ     Now, if you had just written my history textbook... :)
+AFA Gary J A perfect name for an October release, I might add :)
+Matt DTS   I thought so. :)
+
+ShanoJ     Matt, Dave, how are NDA's called (ie. what calls them)? Would it
+           be legal for
+ShanoJ     me to try to show a 3200 color picture from an NDA?
+ShrinkIt   yeah, just put up a modal dialog asking what to do, then show the
+           3200 pic and
+ShrinkIt   return... simple...
+Dave Lyons Well, OpenNDA calls an NDA's Open routine.  You're allowed to be
+           "modal" at that time
+Dave Lyons and return much later (returning NIL for your window pointer).
+ShanoJ     So it would be okay for me to hog all of the interrupts? Also, is
+           it okay for
+ShanoJ     an NDA to call RefreshDesktop?
+ShanoJ     (Oh, putting aside the AppleTalk issue, for the moment...)
+Dave Lyons It might be easier (than calling RefreshDesktop) to open a
+           full-screen window (after doing a
+Dave Lyons HideMenuBar).  That way when you close the window the system knows
+           to refresh the desktop, and if
+Dave Lyons some strange application is updating any of its windows at
+           interrupt time (carefully!), then the
+Dave Lyons visRgns for its windows will indicate that they aren't visible, so
+           you don't have to worry about
+Dave Lyons it.  Interrupts are still necessary, not only for AppleTalk but
+           for typing, if you're reading
+Dave Lyons keypresses through the event manager.  Be very careful about
+           disabling interrupt sources that
+Dave Lyons aren't yours.
+ShanoJ     Okay, Parik suggested just grabbing 32K and storing the screen
+           there, and then
+ShanoJ     blasting it back when I was done. This is a no-no, right?
+ShanoJ     Hmm... What's the rule about disabling interrupts? I was hoping
+           that I could
+ShanoJ     shut them all down as long as I promised to start them back up
+           again. Is it
+ShanoJ     not quite that easy?
+Dave Lyons It's always better to assume as little as possible, but for a
+           3200-color display program you may have
+Dave Lyons to assume a lot.  You can save the screen without assuming its
+           size or location (open a fresh port
+Dave Lyons and examine the locInfo structure).  Or you can use
+           RefreshDesktop--nothing wrong with that.
+Matt DTS   "Don't do it unless absolutely necessary, and then only for very
+           short periods of time."
+ShanoJ     Hmm... Well, how do I judge 'absolute necessity'? For instance
+           it's absolutely
+ShanoJ     required to do it to show 3200 color pictures. Is that a good
+           enough justifi-
+ShanoJ     cation?
+ShanoJ     Or, should I include a message in the NDA that says 'this NDA does
+           naughty 
+ShanoJ     stuff, use it at your own risk' and let the user decide if that's
+           enough
+ShanoJ     justification? (then again, with my programs I should probably do
+           that anyway:)
+Dave Lyons If you disable certain ADB interrupts, the keyboard and/or mouse
+           will *not* work with certain
+Dave Lyons "universal access" utilities, even if you're reading the
+           keyboard/mouse softswitches directly.
+ShanoJ     Well, with all the interrupts I disable for View 3200 I still seem
+           to be able
+ShanoJ     to read the mouse register (forgotten the address at the moment)
+           and $E0C000.
+ShanoJ     That indicates that I'm not shutting TOO much down, right?
+ShanoJ     And finally, anyone know what's with the VOC? I've heard that none
+           of the 
+ShanoJ     existing 3200 color displayers work with it.... :(
+Dave Lyons No, I said *with certain universal access utilities*.  Send me a
+           copy of your app and I can
+Dave Lyons try it out.
+ShanoJ     Oh, and is there any way to tell what Hz the display is running
+           at, and is
+ShanoJ     it legal to CHANGE this behind the user's back, and then change it
+           back when
+ShanoJ     I'm done?
+Dave Lyons The Video Overlay Card has its own scanline counters--they
+           aren't
+Dave Lyons synchronized with the GS's.  APDA has the "Video Overlay Card
+           Developer Notes" or something,
+Dave Lyons which you might want to get.
+Matt DTS   It is definitely not legal to change from 60 Hz to 50 Hz.
+Dave Lyons If you change the scan rate of the monitor, you're going to make
+           the display toasty, or at least
+Dave Lyons bouncy.
+ShanoJ     I take it that means 'no'?
+Dave Lyons If somebody has their display scanning at 50Hz, it's probably
+           because they're in a European country
+Dave Lyons using a PAL display--they need it set that way to get a picture.
+Matt DTS   I think "definitely not" means "no", yes.
+ShanoJ     Ya, that's my problem. My code won't work for Europeans, and I get
+           lots of
+ShanoJ     nasty notes saying 'how could you release a program that doesn't
+           even work (and
+ShanoJ     they're NOT talking about Twilight) and it turns out they're
+           running at 50Hz 
+ShanoJ     which is screwing things up...
+Matt DTS   Switching it to 60 Hz isn't going to help - they run at 50 Hz for
+           a reason.
+ShanoJ     Well, they say that if they set it to 60Hz in the control panel it
+           fixes 
+ShanoJ     things....
+AFL Scott  It's an interesting problem... how to code for international
+           compatibility.
+Matt DTS   Yeah, your program runs but other things (like some timing for
+           peripherals) might not.
+ShanoJ     Haven't the slightest idea how that works, though.... 
+ShanoJ     Ya, Scott. FOr Australia you have to do everything upside down.
+           The disks
+ShanoJ     John MacLean send me go in the wrong way up.... :)
+AFA Gary J And disks spin in the opposite direction, too :)
+Dave Lyons Actually, I don't know exactly how the scanline counters work for
+           PAL.  When I revised the
+Dave Lyons technical note on VBL, I left it a little wishy-washy on the PAL
+           stuff because I had no
+Dave Lyons PAL equipment to play with.
+ShanoJ     Gee, Dave, you mean Apple doen't sponsor trips to Europe for tech
+           note 
+ShanoJ     research? Jeez.... :)
+ShanoJ     Any last minute advice for what I should do on the 50Hz
+ShanoJ     Apples?
+Matt DTS   Write alternate timing code for 50 Hz machines, maybe. 
+Dave Lyons Yeah, get one of your users to tell you what you have to
+           do to make it work for 50Hz!
+ShanoJ     Heh, make that 50 Hz MONITORS. And I thought 2.5 Mhz was slow...
+           :)
+AFA Gary J (Heck, I'll try a 50 mhz machine :)
+ShanoJ     Dave, do you know if the VERTCNT register is incremented the same
+           on the 50 and
+ShanoJ     60 Hz mahines?
+ShanoJ     That's ALL I'm reading for the 3200 color pics, so SOMETHING about
+           it must be
+ShanoJ     screwey... :(
+Dave Lyons VERTCNT is $C02E, right?  (Sorry, I think in hex.)  I believe it's
+           similar but slightly different,
+Dave Lyons since there are a different number of scan lines (not in the
+           useful display area, obviously).  The
+Dave Lyons 0..199 super-hires lines probably -don't- have the same numbers,
+           though!
+Dave Lyons You might try some experimentation--On all the machines I've
+           tried, you *can* set your GS to
+ShanoJ     Ya, somewehere around there. Lesse....... yup, $C02E.
+AFL Dyfet  Hmm...interesting thought...
+Dave Lyons 50Hz and still get a readable (though slightly flickery)
+           display.
+ShanoJ     Hmm, mine completely flips out. The whole thing jumps up and down
+           and looks 
+ShanoJ     most awful. :(
+AFL Dyfet  You need 50hz AC power :)
+ShanoJ     Also, I'm not sure that would tell me what I need to know...
+ShanoJ     Right, I'll just plug the GS into my friendly local 50Hz
+           Alternating Cat, and
+AFA Gary J Yes, the AC power would make the difference.
+ShanoJ     away I'll go! :)
+AFL Dyfet  The monitor is still synced for 60hz...
+AFL Dyfet  I just bet it freaks out :)
+Dave Lyons Jonah, do you have RGB?
+ShanoJ     Ya, I've got the standard GS RGB monitor (not the fancy Mac
+           one).
+Dave Lyons Did you try adjusting the vertical-position/roll control?
+ShanoJ     Ya, didn't help much. I couldn't get a stable picture....
+Dave Lyons Bummer...
+ShanoJ     Ya. I'll try again, though. Maybe the new position of the moon
+           will help 
+ShanoJ     things....
+ShanoJ     :)
+

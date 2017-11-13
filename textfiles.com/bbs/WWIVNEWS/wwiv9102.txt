@@ -1,0 +1,573 @@
+                          WWIVNEWS Volume 1, Issue 2
+                                 February 1991
+
+
+                               Table of Contents
+                               ~~~~~~~~~~~~~~~~~
+    WWIV v4.20: A New Twist In Modem Handling....................Random 1@1
+    WWIV and Zygote: The Dynamic Duo......................Tony Godfrey 1@18
+    NetZip II Revision 6................................East Bay Ray 1@9964
+    Thoughts on a Multi-Line WWIV..........................John Wash 1@8403
+    Bug in the Main Menu Prompt....................The Dunghill Fowl 1@2371
+    The Pending File.........................................WWIVNEWS Staff
+    Letters to the Editor...........................................Various
+    Official Jargon..............................................Random 1@1
+    The Editor's Corner.................................East Bay Ray 1@9964
+    Acknowledgements.........................................WWIVNEWS Staff
+    =======================================================================
+
+
+                   WWIV v4.20: A New Twist In Modem Handling
+                                 by Random 1@1
+                 (Originally captured from Amber: Dec 1, 1990)
+
+          The text at the end of this article is my first cut at a modem
+    configuration file. You first notice that it is in ASCII text, for ease
+    of editing by users, and it is much easier to expand upon later. In the
+    final release, there will be a configuration file such as the one
+    below. configurations for will be: USR HST/V.32/DS, Hayes compat. 300,
+    Hayes compatible 1200, Hayes compatible 2400, plus slightly modified
+    versions of the Hayes compatible ones for modems that have timing
+    problems.
+          Here is a description of the file. Comments are lines that begin
+    with a #. Blank lines are ignored. The first four characters on a line
+    (followed by a colon) describe what type the line is. The first section
+    has a couple of strings that are sent to the modem (INIT, SETU, ANSR,
+    PICK, HANG, DIAL). The SETU string will be sent to the modem when the
+    BBS first starts up, setting up various modem parameters. The INIT
+    string will be sent to the modem after each user loggs off, the same as
+    the current init string. The other strings should be self-explanatory.
+          The next part of the file deals with result codes and several
+    switches that can be set. It tells what state the modem is in based
+    upon the result codes received. These are listed at the top of the file
+    for your reference. The first few "state switches" tell what state the
+    modem is in (NORM, RING, RINGING, ERR, DIS, CON). The next few set
+    various other options, modem speed, com speed, asymmetrical baud rates
+    (such as for the USR HST protocol), error correcting protocols (MNP2-4,
+    LAPM) and data compression protocols (MNP5, V.42bis). Also, flow
+    control is thrown in there, although most likely that will not change
+    based on result codes. The "DEFL" line defines the default modem
+    switches, which are set before the modem init string is sent. It mostly
+    just tells flow control and the com port speed to use.
+          The rest of the file defines the result codes or partial result
+    codes. A result code from the modem can be split up into numerious
+    partial result codes. For example, from the HST, you can get a result
+    code such as "CONNECT 2400" as well as "CONNECT 9600/ARQ/V32/LAPM/
+    V42BIS". The "SEPR" definition defines which characters to use. It
+    separates the full result code into partial result codes. It can be
+    nothing, in which case there aren't really any "partial result codes".
+    Another possibility is that the characters could not be present in the
+    string, in which case the full result code is a "partial result code".
+          Here is a working example. Suppose the modem is sitting there at
+    WFC, and it gets a string from the modem ("RING"). It finds no "/" in
+    it (the SEPR character), so searches the result code listing for
+    "RING". It finds it, and finds the state switch "RING", meaning the
+    phone is ringing. It then sends the ANSR string, answering the phone.
+          At this point, say it gets "CONNECT 2400". It finds no "/", so
+    searches for that string, and finds it. It sets the description to
+    "2400", sets the modem speed to 2400, the com speed to 2400, and
+    notices that it is now connected. At this point, it continues with the
+    logon.
+          Suppose that it got "CONNECT 9600/ARQ/V32/LAPM/V42BIS". It
+    notices a couple slashes, so interprets all the parital result codes
+    ("CONNECT 9600", "ARQ", "V32", "LAPM", and "V42BIS") one at a time.
+    First it finds the CONNECT 9600, so it sets the description to "9600",
+    sets the two baud rates to 9600, and notices that it is connected. It
+    does not actually consider itself connected until it has processed all
+    the partial result codes from the full result code, so it continues.
+    Next is "ARQ", meaning we have an error correcting connection (EC=Y).
+    Also, the way the modem is configured for all ARQ connections, the com
+    port baud rate is locked at 38400. It will set the com speed to that.
+    Next comes "V32". This is a symmetrical protocol, so AS=N. Since AS=N
+    is the default (as defined at the top of the file), this is not really
+    necessary to put in, but puttting it in is clearer that way. Also, the
+    string '/V.32' is defined. This is in SINGLE QUOTES, so the "/V.32" is
+    added on to the description instead of overwriting it (as would be the
+    case if it were in double quotes). The desription is now "9600/V.32".
+    Next we get 'LAPM', which adds "/LAPM" on to the description, and sets
+    EC=Y again, which is not really necessary. Again, it is clearer that
+    way. Finally, "/V42BIS". Adds the string '/V.42bis', and sets DC=Y,
+    indicating data compression is in use.
+          It is now done with the full result code, so it recognizes that
+    it is connected (due to the CON), and continues with the logon. Now we
+    notice that the switches are set: MS=9600, CS=38400, EC=Y, DC=Y, AS=N,
+    FC=Y. This means:
+          The modem is talking at 9600 to the other modem, while we are
+    talking to the modem at 38400. Also, we are using flow control (FC=Y).
+    This is what we would know using the current setup for the result
+    codes. We also get additional information informing us that we are
+    using error correction, data compression, and that we have a
+    symmetrical baud rate (9600 in both directions). The description at
+    this point is "9600/V.32/LAPM/V.42bis".
+          In addition to being more free form and more easily extensible,
+    we get three additional pieces of information: whether error correction
+    is being used, whether data compression is being used, and if we have a
+    symmetrical baud rate setup. The symmetrical/asymmetrical flag can be
+    used in the BBS to determine if BiModem should be used or not (same
+    with the net software), and error correction can be used to determine
+    if protocols like YMODEM-G should be allowed.
+          So that is the way it will be implemented in INIT, instead of
+    entering the modem info and result code info as you do now, you'll get
+    a menu of known modem types, and be able to pick one. It will then
+    parse through the file and create a machine-readable format for the BBS
+    (and net software) to use.
+
+#
+# NORM      normal state of modem
+# RING      phone is ringing
+# RINGING   remote phone is ringing
+# ERR       error encountered
+# DIS       disconnected (No connection)
+# CON       connection established
+# MS=       modem speed
+# CS=       com port speed
+# AS=       asymmetrical baud rates (Y/N)
+# EC=       error correcting (Y/N)
+# DC=       data compression (Y/N)
+# FC=       flow control (Y/N)
+
+NAME: "USR Dual Standard"
+
+# some strings sent to the modem
+INIT: "ATB0H0M0{"
+SETU: "ATC1E0F1H0M0Q0V1X6&A3&B2&C1&D2&H1&I0&K2&N0&R2&S0S0=0S2=1{"
+ANSR: "ATA{"
+PICK: "ATH1{"
+HANG: "ATH0{"
+DIAL: "ATB1DT"
+
+# separator in result code for partial result codes
+SEPR: "/"
+
+# default settings of switches
+DEFL: MS=38400 CS=38400 EC=N DC=N AS=N FC=Y
+
+# list of partial (or full) result codes from modem.  Descriptions in
+# double quotes ("") overwrite the previous description, those in single
+# quotes ('') append to the previous description.
+#
+#     RESULT CODE       DESCRIPTION     SWITCHES
+#
+RESL: "OK"              "Normal"        NORM
+RESL: "RING"            "Ring"          RING
+RESL: "NO CARRIER"      "No Carrier"    DIS
+RESL: "ERROR"           "Error"         ERR
+RESL: "NO DIAL TONE"    "No Dial Tone"  DIS
+RESL: "BUSY"            "Busy"          DIS
+RESL: "NO ANSWER"       "No Answer"     DIS
+RESL: "RINGING"         "Ringing"       RINGING
+RESL: "VOICE"           "Voice"         DIS
+
+RESL: "CONNECT"         "300"           MS=300   CS=300   CON
+RESL: "CONNECT 1200"    "1200"          MS=1200  CS=1200  CON
+RESL: "CONNECT 2400"    "2400"          MS=2400  CS=2400  CON
+RESL: "CONNECT 4800"    "4800"          MS=4800  CS=4800  CON
+RESL: "CONNECT 7200"    "7200"          MS=7200  CS=7200  CON
+RESL: "CONNECT 9600"    "9600"          MS=9600  CS=9600  CON
+RESL: "CONNECT 12000"   "12000"         MS=12000 CS=12000 CON
+RESL: "CONNECT 14400"   "14400"         MS=14400 CS=14400 CON
+
+RESL: "ARQ"                             EC=Y     CS=38400
+RESL: "HST"             '/HST'          AS=Y
+RESL: "V32"             '/V.32'         AS=N
+RESL: "MNP"             '/MNP'          EC=Y
+RESL: "LAPM"            '/LAPM'         EC=Y
+RESL: "MNP5"            '/MNP5'         DC=Y
+RESL: "V42BIS"          '/V.42bis'      DC=Y
+RESL: "NONE"                            EC=N
+RESL: "SYNC"
+    =======================================================================
+
+
+                       WWIV and Zygote: The Dynamic Duo
+                             by Tony Godfrey 1@18
+
+          One of the nice things about a registered WWIV is that you can
+    modify the source code to your heart's content. Sysops modify their
+    boards to make WWIV easier to use for themselves and the users. Some
+    modifications spice up the board by adding more color, or more ANSI-
+    extensive routines. This can decrease the speed of WWIV by a fairly
+    large amount, and speed is one of WWIV's strong points.
+          Zygote Term is a terminal program on the PD/Shareware market. It
+    isn't quite as popular as Telix or Procomm, but it is gaining popu-
+    larity every day. Each new version of Zygote contains new features that
+    surpass other term programs many times over. The best thing about
+    Zygote is that it has special features accessible by a WWIV BBS. On any
+    other board, Zygote would act as any other terminal program would
+    (except with a few more features that cannot be found on other term
+    programs). When Zygote is used on a WWIV BBS that makes use of Zygote's
+    features, however, a whole new realm of BBSing is entered.
+          The Zygote/WWIV Multitask Chat is the first of these features to
+    be released. WWIV currently comes with two chat modes: standard, and
+    two-way. Zygote/WWIV Multitask Chat looks much like two-way chat,
+    except chatting takes place on one half of the screen. In the other
+    half, normal BBS functions can be performed. While the sysop and a user
+    are chatting, either the sysop or the user can switch between chat
+    window and BBS window. In the BBS window, functions such as reading
+    messages, listing files, writing messages, moving, sorting, removing
+    files, editing users, etc. can all be performed while the chat window
+    remains intact. This is especially useful if you want to discuss a
+    certain message or look for a certain file and chat about it, or to
+    have something else to do while the chatter rambles on. Version 1.0 of
+    this modification was released in October 1990, and version 1.1 is
+    scheduled to be released in late December 1990 or early January 1991.
+          A new feature still in the testing stages, but very close to
+    release, is the Zygote/WWIV Binary Screen Feature. This modification
+    gives WWIV a complete facelift. Any part of the BBS can be made into a
+    full-screen ANSI picture. With regular terminal programs, WWIV would
+    have to send an ANSI picture over the modem, and then send codes to
+    place prompts on the screen. With Zygote, WWIV simply tells it which
+    binary screen (an ANSI screen saved in binary format) to display, and
+    in less than 2 seconds, a full screen ansi is displayed on both ends,
+    ready for input. Positioning of the cursor still has to be done, which
+    WWIV then takes care of. Since binary screens are only 4000 bytes in
+    size, having several of these binary screens on disk would not consume
+    a large amount of disk space. If either the BBS or the Zygote user does
+    not have a matching screen, then WWIV will simply display the screen
+    normally (albeit much slower than the speed of binary screen display).
+          WWIV sysops will see this modification released in modules. Each
+    module will contain documentation on what part of the board to modify
+    as well as a standard WWIV binary screen. The first modules to be re-
+    leased will be logon and message bases. Binary screens can be custo-
+    mized, but at the same time the customizer must know where to position
+    the cursor and make the necessary changes. These features are just the
+    beginning in a series of featues to be released. Zygote continues to
+    grow, as does WWIV, and these features make them both 10 times as
+    powerful as any other term program or BBS.
+
+    Zygote Term by Miguel Sanchez a.k.a. My Nguyen
+    =======================================================================
+
+
+                             NetZip II Revision 6
+                            by East Bay Ray 1@9964
+
+          Many people who have seen how other networks, such as FidoNet,
+    use compression to make their net packets smaller. They have been doing
+    this for years with the help of SEA's ARC program and PKWare's PKZIP
+    program. WWIVnet now has the same opportunity. NetZip, written by East
+    Bay Ray, provides network compression for any node in WWIVnet or
+    WWIVlink.
+          This idea is not a new one to WWIVnet. There were two previous
+    tries by Alph 1@8403 and Benny Hill 1@7400. They both were stopped by a
+    strange bug that would produce a Divide Overflow on some computer
+    systems, but not on others. East Bay Ray was also previously stopped by
+    a conflict with Wayne's ZIP routines that resulted in lost mail. At
+    last, however, a version was found that worked.
+          Installation of NetZip is quite easy. An INSTALL batch file does
+    most of what minimal work there is (thoughtfully provided by Filo #1
+    @5252). All that is left, after running INSTALL, it to create
+    ZIPSYS.NET. This is a plain text file which contains a list of nodes
+    you wish to use NetZip with (they must also have NetZip installed, or
+    be using NET22). It is that simple.
+          How does NetZip work internally? NetZip first takes the un-
+    compressed Sxxxx.NET file and renames it to a P*.NET file (one higher
+    than the last existing P*.NET file in the current archive). Then it
+    adds this to Sxxxx.ZIP. The Sxxxx.ZIP is then renamed to Sxxxx.NET, and
+    CONTACT.NET is updated to reflect the adjusted sizes of each Sxxxx.NET
+    file that was compressed. If you wish to see the ratio of compression,
+    all you have to do is view the Sxxxx.NET with PKZIP or PKUNZIP. NetZip
+    is an excellent, which has finally been purged of the bugs present in
+    the previous versions, along with the stigma of Revision 3, which lost
+    mail. If you have a chance, download it and share it with your
+    neighbors. It will save you a lot of transmission time. Over long
+    distance lines, it will save money also.
+    =======================================================================
+
+
+                         Thoughts on a Multi-Line WWIV
+                              by John Wash 1@8403
+                      with input from Richi Shinn 4@8404
+
+          Before I get started, please note that this article was written
+    in response to an article of like subject, written by Jeff Garzik
+    1@9964, that originally appeared in WWIVNEWS Vol. 1, Issue 1.
+          First, I wholly agree with Jeff on possible solutions: You can
+    either make the program itself single-tasking but multi-user, or you
+    can run it in a multi-tasking -- and optionally a multi-user -- envi-
+    ronment.
+          At this point, though, I begin to differ with Jeff. A LAN would
+    indeed be an expensive solution (as he said, "4 nodes = 4 PCs"), but it
+    would NOT be a slow one. The standard in PC networking today is
+    Novell's Netware, a distributed-processing system. In a LAN
+    implementation, you have a server system and client systems. The server
+    controls the shared resources of the LAN--storage, printers, modems,
+    etc.--and each client (or workstation) uses its own resources--a local
+    hard drive or a local printer, for example. A multi-line WWIV running
+    in a Novell Netware environment, and sharing data files with other
+    nodes by storing them on the server's drive, would not be noticeably
+    slower than individual PCs running individual BBSes--that's the entire
+    idea behind distributed processing, and part of the reason that
+    educated administrators choose Netware as a networking solution rather
+    than packages that run on the server and treat client systems as
+    dependents rather than autonomous entities.
+          If you MUST run PC-DOS, it is possible to have multiple WWIVs
+    running concurrently with, as Jeff said, a "commercial multitasker"
+    such as Windows 3.0 or Quarterdeck's DESQview. However, they're going
+    to be individual copies of WWIV, sharing perhaps only the FILES in the
+    transfer and G-File sections.
+          What needs to be done to WWIV is a total re-write. Wayne Bell
+    knows this. He hinted at it when he suggested that he wouldn't port
+    WWIV to UNIX. He stated that would re-write it for UNIX.
+          Internal multi-node capability would not be that difficult to
+    implement. If you have handlers processing I/O for all com ports as
+    well as the console, half of your battle is over. It remains, however,
+    that you have no facilities for file and record locking, an integral
+    part of almost any multi-user system.
+          So why go the extra step? Don't bother making WWIV multi-line.
+    Instead, make WWIV support file and record locking. You'd save oodles
+    of memory, because you wouldn't have to allocate a chunk to store a
+    .SUB file, a .DIR file, or anything like that. If you wanted a user's
+    record, open USER.LST, lock the record, read the record, unlock the
+    record, and close the file. If you wanted to read a message, or upload
+    a file, or anything that requires file I/O, you would do basically the
+    same thing. If you get file and record locking working properly, there
+    would not be any need to "make WWIV a multi-line BBS"-- you'd just need
+    a copy of MS-Windows 3.0, or Novell Netware, or PC-MOS, or
+    DESQview/386, a good machine and some patience in getting it set up.
+          This is my opinion on multi-line systems. Summing it all up,
+    making WWIV talk to several com ports at once is a waste of time. Worry
+    about file sharing and you'll be set. If anyone would like me to
+    discuss file and record locking in a future issue of WWIVNEWS, drop me
+    a note at 1@8403 and I'll see what I can do.
+
+    (About the author: John Wash is a professional UNIX zealot and a
+    full-time social irritant.)
+    =======================================================================
+
+
+                          Bug in the Main Menu Prompt
+                          by The Dunghill Fowl 1@2371
+
+          This problem only happens if you are on a board where you have
+    access to all 32 Subs (I don't know about boards with the 64 Sub Mod).
+    While at the main menu prompt, at sub #31, if you hit the plus key (+),
+    instead of going to sub #32 it will jump to sub #1. However, hitting
+    the minus key (-) at sub #1 will bring you to sub #32. For example:
+
+    T - 00:32:48
+    [31] [Fred's Fried Fish Sub]:+    <--- Hitting plus from sub #31
+
+    T - 00:32:26
+    [1] [General Messages]:-    <--- Skipped sub #32, hitting minus key
+
+    T - 00:31:53
+    [32] [Underwater Basket Weaving]:    <--- Now at the long lost sub #32
+
+    Ok, that's all there is to it, it isn't that big of a deal, but it's
+    there...
+
+    [This only occurs on the aforementioned sub numbers EXACTLY. I easily
+    spotted the problem in the code, and I notified Wayne about it.  - Ed.]
+    =======================================================================
+
+
+                               The Pending File
+                           (Tips, Tricks, and News)
+                               by WWIVNEWS Staff
+
+    The next WWIV release will be v4.20. It HAS NOT been released, nor will
+    it be released any time soon. Wayne has not set a release date.
+    Features will include batch uploads, BiModem support, a complete
+    rewrite of the modem handling routines, and several other smaller
+    features. For more information on the modem handling routines, see the
+    earlier article in this issue.
+
+    WWIVnet also has a new SUBS.LST coordinator. 1 @7100 now receives the
+    new information for subs and sends out regular SUBS.LST/SUBS.1 updates.
+    Do NOT send any e-mail to 1 @6860 regarding sub list changes.
+
+    Intel is offering a Sysop deal on their 9600EX high speed modem. It's a
+    V.22, V.32, V.42/42bis compatible, and will connect to standard v.32 /
+    v.42 modems at speeds up to 38,400 Baud. It WILL NOT connect to a USR
+    HST at any speed higher than 2400 Baud, so there is a downside. It's a
+    good deal if you can't afford a $699 USR DS or a $675 Microcom, but
+    "let the buyer beware." (Charles Boyer 1@9962)
+
+    NETEDIT v1.27 by Black Dragon #1 @2380 has just recently been released.
+    It fixes a potential bug in v1.26. v1.26 (which was not annouced in
+    WWIVNEWS) makes a couple improvements over v1.25, including handling of
+    NET22's partial updates, and a technical correction on one of the
+    menus. (Black Dragon 1@2380)
+
+    WWIVNEWS has some competition on WWIVlink. WWIVlink now distributes a
+    newsletter much like this one, called "The Link Post". These will also
+    be made available on my board as I get them.
+
+    My new program, NETPURGE, goes through the specified network pending
+    data file (defaults to DEAD.NET) and deletes all non-e-mail. It returns
+    all E-mail of types 1-0, 2-0, 7-0, and 8-10 to the originator with a
+    few extra lines in the header telling the originator what type of
+    E-mail he sent, to whom, and that it was undeliverable.
+    (Black Dragon 1@2380)
+    =======================================================================
+
+
+                             Letters to the Editor
+
+
+    WWIVNEWS,
+          I noted with interest the appearance of WWIVNEWS.NET in my data
+    directory today. It's an interesting idea, and I hope it works out to
+    the benefit of WWIVnet sysops. However, I have a couple of suggestions
+    for distribution:
+
+        1. Announce its presence. I had no earthly idea that WWIVNEWS was
+        going to be distributed along with updates. I'm not complaining,
+        just suggesting that you flaunt it a little bit more than you have.
+
+        2. Change the name. I assume will to come out once a month, and I
+        also assume that volumes change once a year. With that in mind,
+        perhaps I can suggest another naming convention:
+
+            a. Do it Fido-nodelist-style. Call it WWIVNEWS.<num>, where
+            <num> is the number of days into the year on which that issue
+            was released.
+
+            b. Do it Another Way. If you are only going to have 16 volumes
+            and 12 issues per volume, then use hexidecimal format. For
+            example, WWIVNEWS.1-1 would be volume 1, issue 1, and
+            WWIVNEWS.A-3 would be volume 10 (0Ah), issue 3. Or provide 256
+            issues per volume: WWIVNEWS.AFF (volume 10 (0Ah), issue 255
+            (FFh)).
+
+            c. Here is yet another possibility. How about this:
+            0006-0010.NWS (Volume 6, Issue 10, WWIVNEWS).
+
+          What this boils down to is that I don't want to lose WWIVNEWS
+    every time a new one comes out, and why not make provisions to keep 'em
+    rather than having me COPY 'em?
+                                           John Wash #1 @8403
+
+    [All of these are excellent suggestions. My favorite idea overall is
+    naming it WWIVNEWS.v-i (v = volume number in hex, i = issue number in
+    hex). However, it will stay the same way basically because Wayne
+    already put it in the code that way, and he is reluctant to change it
+    so quickly after its birth. I do, however, provide on my board back
+    issues for anyone not collecting them.  -Ed.]
+    =======================================================================
+
+
+                                Official Jargon
+                                 by Random 1@1
+                        (Wayne's All-Mail for January)
+
+    A couple things:
+
+    1. When you wish to be removed from distribution for a subboard, please
+    do >NOT< post a message about it on the subboard.  The correct thing to
+    do is to email the host of the sub and inform him/her that way.
+
+    2. NET22 apparently has some problems receiving net updates. I am not
+    precisely sure why this did not also happen in NET21, but it apparently
+    doesn't. So, for now, it would be a good idea to use the network2.exe
+    file from NET21. NET23 (which fixes that problem) should be out about
+    January 27th or so.
+
+    3. Also about January 27th, we will be going to multiple CONNECT files.
+    In addition to the CONNECT.0 file, you will find CONNECT.1 through
+    CONNECT.12 files in your DATA directory (with the exception of
+    CONNECT.6, as there is no group 6). The network will continue to
+    function the same, however. This should not affect anyone except GCs
+    and maybe ACs.
+
+    Due to the way the connection updates will be handled, it is now
+    REQUIRED that AC's forward connection updates to the GC. You will NOT
+    be able to send connection update requests directly to me. So, to
+    reiterate, for anything in the network (connection update, bbslist
+    update, complaint, etc), the correct order is to first contact your AC,
+    then your GC and finally the NC (me). if you have been unable to
+    resolve A few people have come to me with things that they should have
+    contacted their GC about and I have simply referred them back to the
+    GC. Going directly to me tends to slow things down, not speed them up.
+
+    4. Starting with WWIV v4.20 (for which a release date has not yet been
+    set, but will be in a few months), the source code to WWIV will also be
+    distributed (to registered sysops ONLY) on certain select WWIVnet
+    systems. It will work like this:
+
+    a. About 5-10 WWIVnet systems will be selected as source distribution
+    points.
+
+    b. I will make up a list, based on inputs from registered WWIV users,
+    of which users on those systems are, in fact, registered WWIV users.
+    Those users, and only those users, will be able to download the source
+    code to WWIV from those systems.
+
+    c. The sysops of the source distribution points will have a special
+    file transfer section for WWIV source distribution. The file section
+    will have a specific DAR. Only the users listed on the 'master list'
+    will have that DAR, and hence be allowed to download the source code.
+
+    The list will look something like:
+
+    Reg num Accounts
+    1       Random #1 @1, Random #2 @1234
+    90999   Hector #123 @1, Hector #22 @1234, Hector #67 @1177
+    90888   Dude #321 @1, Dude #198 @1177
+
+    Where @1234 and @1177 are the source distribution points.
+
+    We are now at step "a": selecting source distribution points. If you
+    are a registered WWIV sysop, have been registered for over a year, have
+    been in WWIVnet for over a year, would like to be a source distribution
+    point, and agree to release the source code to users only on the list,
+    then please reply and tell me you are interested. Remember, there will
+    only be around 5-10 distribution points, and I'd like to have them in
+    various areas of the country, so if 20 people reply from Rhode Island,
+    only one of them will actually be selected.
+    =======================================================================
+
+
+                              The Editor's Corner
+                            by East Bay Ray 1@9964
+
+
+          One of the several network subs to investigate this month is the
+    "Alternative SysOp's Sub", sub type 9999, hosted by John Hardman @9954
+    (send mail to 2@9954 for speed answering), the GC of group 5. It boasts
+    less flames than other sysop subs. Check it out, it might make a nice
+    Valentine's gift for yourself.
+          Observant people will notice that the text is no longer justified
+    to the right margin. I wanted to be able to fit more text into less
+    space, so the decision was made. Thanks are due to Omega Man for his
+    suggestion regarding that one.
+          I also decided that I would stop publishing real names unless so
+    requested. I thought about it a while and came to the conclusion that
+    aliases were for people to hide their real names. I will continue to
+    publish their net addresses.
+          There has been some flak about my policy on the ownership of the
+    articles printed in WWIVNews. I thought the original policy was fair,
+    but apparently some people did not. I have modified it, so now my
+    position on the ownership of WWIVNews article is that all articles,
+    unless copyrighted by the author (whether stated copyright or official
+    copyright) become my property. If the article is copyrighted, then the
+    article's author retains full ownership and distribution rights of that
+    article. He MUST, if the article is copyrighted, give me specific
+    written (electronic or otherwise) permission to print the article in an
+    upcoming issue of WWIVNews.
+    =======================================================================
+
+
+                               Acknowledgements
+
+    WWIV (c) 1988 by Wayne Bell.
+    NetZip II (c) 1990,1991 by Jeff Garzik.
+    PKZip, PKUnZip, and PKLite are registered trademarks of PKWare, Inc.
+    ARC is a registered trademark of SEA Enhancement Associates.
+    BiModem (c) 1988-90 by Erik Labs.
+    USR, USR HST, and USR Dual Standard are trademarks of US Robotics, Inc.
+    Hayes is a registered trademark of Hayes Microcomputer Products, Inc.
+    MNP (Microcom Networking Protocol) is a trademark of Microcom, Inc.
+    Windows is a trademark of Microsoft Corporation.
+    DesqView is a trademark of Quarterdeck Office Systems, Inc.
+    PC-MOS is a trademark of The Software Link.
+    NetWare is a trademark of Novell Data Systems.
+    All other products mentioned are either registered trademarks or
+      copyrighted by their respectives manufacturers.
+    =======================================================================
+
+
+                                    The End
+
+ 

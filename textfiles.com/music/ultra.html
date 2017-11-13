@@ -1,0 +1,695 @@
+                       ³  ** UltraDox **  v2.0  ³
+                     ÚÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄ¿
+                     ³         Created by:        ³
+                     ³ CyberStrike of Renaissance ³
+                     ³     Tran of Renaissance    ³
+                     ³(: ...and a few others... :)³
+                     ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+OK, everyone, here is the second document describing the Gravis Ultrasound.
+Through the ingeniousness of Forte Technologies and Advanced Gravis, this
+32-channel CD-quality digital playback card has been created.  It can, under
+the right mail-order sources, be bought for less than a Soundblaster!
+
+Advanced Gravis:  Please, please, make an official document describing the
+functions.  We've done our best, and through Internet, we have become YOUR
+support group for both programming the card and the technical aspects of the
+card.  There are 4 or 5 of us on Internet that spend our time on comp.sys.
+ibm.pc.soundcard responding to questions, requests, etc, about the Ultrasound.
+We thought that you did have net access...
+
+We BELIEVE in the Ultrasound!  We don't believe it is a dead card!  At first,
+Usenet was ragging on the Ultrasound badly.  We defended it, and now, it
+appears that comp.sys.ibm.pc.soundcard has become comp.sys.ibm.pc.soundcard.
+gus.
+
+Enough of that.  European demo groups and anyone else who can't understand this
+document.  I only wrote it in a few hours, and while it is better than the
+last doc, it still lacks.  If you can't understand how something is
+implemented, take a look at GUSMOD 1.1 and GUSMOD 1.2 when it finally comes
+out.
+
+This document is intended as a more advanced supplement to the previous
+UltraSound Programming Docs.  As a supplement, it is advisable to pick up
+the previous UltraSound Programming Docs, GUSMOD, or any other utilities
+that are released with source code in order to determine how this system
+works.
+
+If all else fails, contact me at Internet address: cstrike@gompers.gompers.edu
+
+Have fun, all!  (And Gravis, let's see some real stuff coming out.)
+
+                                  * CyberStrike from America's BEST
+                                    group, Renaissance!
+
+ş All trademarks belong to their respective companies and trademark holders.
+
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+Card architecture:
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+      The Gravis Ultrasound has onboard capabilities of playing up to 32
+digital voices through 2 DACs, one left and one right.  Each voice may be
+played at sampling rates up to 44.1khz and may be 8 or 16-bit.  The voices
+are individually pannable through 15 different pan positions.
+			The Gravis Ultrasound is allowed up to a megabyte of on-board RAM to be
+installed on the card.  It is highly recommended that Gravis Ultrasound
+users upgrade this to a meg of RAM as new products will require this.
+      By use of the Ultrasound Poke and Peek functions or by DMA
+transfers, data can be transferred to and from the card.  The data that
+is loaded to the card MUST be in two's compliment form.  DMA transfers
+can adjust this as the data is loaded to or from the card.  If the Poke
+and Peek methods are used, the data must be manually converted.
+      Lastly, on the subject of DRAM, the sampled data may be 8- or 16-
+bit.  If the data is 16-bit, it will take twice the DRAM to store it.
+16-bit data is stored as a low-byte and then a high-byte immediately
+following it.
+      Each voice may also have a specific volume setting.  This is NOT a
+linear volume but rather a logarithmic volume.  It is advisable to make a
+table to control this.  When panning voices, it appears the volume is
+adjusted according to the pan position.
+      Volume ramping is a technique used to control the popping of the card.
+If the volume is changed by a large degree, a pop will occur.  By ramping the
+volume into an inaudible range (usually below 2000), anything can be set on
+the voice without hearing it.
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+Methods:
+
+@DELAY = (in byte 300h)*7
+
+; CX:AX  - Number      ;  Same as 32-bit   shr eax,7    or whatever.
+RShift    proc
+      mov   bx,cx
+      shr   ax,7
+      shr   cx,7
+      shl   bx,9
+      or    ax,bx
+      ret
+RShift    endp
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+Ports:
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+  BASE        - Mixer Control Port            (u_Base)
+    ÚÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄ¿
+    ³ 7 ³ 6 ³ 5 ³ 4 ³ 3 ³ 2 ³ 1 ³ 0 ³
+    ÀÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÙ
+      ³   ³   ³   ³   ³   ³   ³   ³
+      ³   ³   ³   ³   ³   ³   ³   ÀÄÄÄÄ 0 = Line-In On, 1 = Line-In Off
+      ³   ³   ³   ³   ³   ³   ÀÄÄÄÄÄÄÄÄ 0 = Output On, 1 = Output Off
+      ³   ³   ³   ³   ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄ 0 = MicIn Off, 1 = MicIn On
+      ³   ³   ³   ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ ?
+      ³   ³   ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ ?
+      ³   ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ ?
+      ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ 0 = u_IRQDMAControl is DMA, 1 is IRQ
+      ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ ?
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+  BASE +   6h - Status Register Port          (u_Status)
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+  BASE +   8h - Timer Control Port            (u_TimerControl)
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+  BASE +   9h - Timer Data Port               (u_TimerData)
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+  BASE +   Bh - IRQ-DMA Control Port          (u_IRQDMAControl)
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+  BASE + 100h - Midi Control Port             (u_MIDI_Control)
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+  BASE + 101h - Midi Data Port                (u_MIDI_Data)
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+  BASE + 102h - Active Voice Port             (u_Voice)
+    Output to u_DataHi the voice number to make the active voice.  All
+    commands that pertain to the active voice through the u_Command port will
+    be routed to this voice until it is changed again.
+
+      Example:
+          mov   dx,u_Voice
+          mov   al,1                  ; Use voice #1.
+          out   dx,al
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+  BASE + 103h - Function Select Port          (u_Command)
+
+ÄÄÄ 00h - Write Voice Mode                      (Byte to u_DataHi)
+    NOTE: This bit layout may be incorrect. If so, I will post a fixed version
+          of this document later.
+    ÚÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄ¿
+    ³ 7 ³ 6 ³ 5 ³ 4 ³ 3 ³ 2 ³ 1 ³ 0 ³
+    ÀÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÙ
+      ³   ³   ³   ³   ³   ³   ³   ³
+      ³   ³   ³   ³   ³   ³   ³   ÀÄÄÄÄ 1 = Voice is stopped
+      ³   ³   ³   ³   ³   ³   ÀÄÄÄÄÄÄÄÄ 1 = Stop Voice
+      ³   ³   ³   ³   ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄ 0 = 8-bit data, 1 = 16-bit data
+      ³   ³   ³   ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ 0 = No loop, 1 = Loop
+      ³   ³   ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ 0 = Unidirectional, 1 = Bidirectional
+      ³   ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ 1 = IRQ on end of loop
+      ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ 0 = Go forward, 1 = Go backwards
+      ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ ?
+
+      Example:
+          mov   dx,u_Voice
+          mov   al,1                  ; Use voice #1.
+          out   dx,al
+          mov   dx,u_Command
+          mov   al,0                  ; Write Voice Mode.
+          out   dx,al
+          mov   dx,u_DataHi
+          mov   al,00000011b          ; Stop voice #1 immediately.
+          out   dx,al
+
+
+ÄÄÄ 01h - Set Voice Frequency                   (Word to u_DataLo)
+      Based on the number of voices set through register 0Eh (Number of
+      active voices), the divisor changes.  The frequency outputted to the
+      Ultrasound is not a frequency such as 22000hz, but rather the hertz
+      divided by a modifier (only Gravis and Forte know why).
+
+      We've traced the divisors down to 8 active voices.  Apparently, there
+      are a minimum of 14.
+
+          # Voices     Divisor   # Voices     Divisor  # Voices     Divisor
+          ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ   ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ  ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ
+                                                           24          25
+               8          74         16          37        25          24
+               9          66         17          35        26          23
+              10          60         18          33        27          22
+              11          54         19          31        28          21
+              12          50         20          30        29          20
+              13          46         21          28        30          20
+              14          43         22          27        31          19
+              15          40         23          26        32          18
+
+      It is recommended that you don't use values below 14 voices (even
+      though it appears to work).
+
+      Example:
+          mov   dx,u_Command
+          mov   al,0Eh                ; Set active voices.
+          out   dx,al
+          mov   dx,u_DataHi
+          mov   al,13 or 0C0h         ; Set number of active voices to 14.
+          out   dx,al
+          mov   dx,u_Voice
+          mov   al,2                  ; Use voice #2.
+          out   dx,al
+          mov   dx,u_Command
+          mov   al,1                  ; Set Voice Frequency.
+          out   dx,al
+          mov   dx,u_DataHi
+          mov   ax,511                ; 22000/43
+          out   dx,al
+
+      Do yourself a favor and make a table for your notes.
+
+
+ÄÄÄ 02h - Set Loop Start Location               (Word to u_DataLo)
+ÄÄÄ 03h - Set Loop Start Location               (Word to u_DataLo)
+      Through the use of these two registers, the starting location for
+      the active voice can be set.  For an unknown reason, any memory
+      addresses for the BEGIN, START, and END sample locations in DRAM
+      must be divided by 128 and written to u_DataLo, then multiplied
+      by 512 and written to u_DataLo.
+
+      Set Sample Begin Location (0ah,0bh) and Set Sample End Location
+      (4,5) will refer to this example.  They are both done the same
+      way with the exception of the u_Command outs.  @@Lo should be
+      replaced with 2, 4, or 0ah (based on what you are doing), and
+      @@Hi should be replaced with 3, 5, 0bh.
+
+      @@AddrLo is the lower word of the 32-bit DRAM location.
+      @@AddrHi is the upper word of the 32-bit DRAM location.
+
+      Example:
+          mov   dx,u_Voice
+          mov   al,3                  ; Use voice #3.
+          out   dx,al
+          mov   dx,u_Command
+          mov   al,@@Lo               ; Request new position.
+          out   dx,al
+          mov   dx,u_DataLo
+          mov   ax,@@AddrLo
+          mov   cx,@@AddrHi
+          call  RShift
+          out   dx,ax
+          mov   dx,u_Command
+          mov   al,@@Hi
+          out   dx,al
+          mov   dx,u_DataLo
+          mov   ax,@@AddrLo
+          shl   ax,9
+          out   dx,ax
+
+
+ÄÄÄ 04h - Set Loop End Location                 (Word to u_DataLo)
+ÄÄÄ 05h - Set Loop End Location                 (Word to u_DataLo)
+      Through the use of these two registers, the ending location for
+      the active voice can be set.  For an unknown reason, any memory
+      addresses for the BEGIN, START, and END sample locations in DRAM
+      must be divided by 128 and written to u_DataLo, then multiplied
+      by 512 and written to u_DataLo.
+
+
+ÄÄÄ 06h - Set Volume Ramp Rate                  (Byte to u_DataHi)
+    ÚÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄ¿
+    ³ 7 ³ 6 ³ 5 ³ 4 ³ 3 ³ 2 ³ 1 ³ 0 ³
+    ÀÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÙ
+      ³   ³   ³   ³   ³   ³   ³   ³
+      ³   ³   ³   ³   ³   ³   ³   ÀÄÄÄÄ¿
+      ³   ³   ³   ³   ³   ³   ÀÄÄÄÄÄÄÄÄÁ¿
+      ³   ³   ³   ³   ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÁ¿ Increment
+      ³   ³   ³   ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÙ
+      ³   ³   ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÙ
+      ³   ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+      ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿   Scale
+      ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+      Scale defines the rate at which the volume will be ramped based on
+      the increment.  The increment will be added or subtracted from the
+      volume based on the increment.
+
+      The scale bits are:
+          00 - Update every access (fastest)
+          01 - Update every 8th access
+          10 - Update every 64th access
+          11 - Update every 512th access (slowest)
+
+      An increment of 63 will be the fastest possible ramp.  It may,
+      depending on the scale, cause a zipper effect.  Usually, increments
+      of 8 or less are suggested.
+
+      Also, don't ramp below 63 or above 4032.  It creates an interesting
+      but mostly undesirable effect.
+
+
+ÄÄÄ 07h - Set Volume Ramp Start                 (Byte to u_DataHi)
+ÄÄÄ 08h - Set Volume Ramp End                   (Byte to u_DataHi)
+      These two registers set the start and end volumes for the volume
+      ramps.  Note that only 8 bits per volume are sent, not 12 bits.
+      The low 4 bits of the volumes should be stripped off.  The Volume
+      Ramp Start volume MUST be less than the Volume Ramp End volume even
+      if ramping down.
+
+      The bytes that will be output have this format:
+
+          EEEEMMMM
+
+
+ÄÄÄ 09h - Set Current Volume                    (Word to u_DataLo)
+      This is used to set the current volume for the active voice.  Note
+      that the volumes are not linear, but logarithmic.  Volumes can range
+      from 0-4095 but must be shifted up 4 bits.  Bits 3-0 are not used,
+      but bits 15-4 consist of the volume.
+
+      The volume consists of a 4-bit exponent (E) and an 8-bit mantissa (M).
+
+          EEEEMMMMMMMM----
+
+      As an example:
+
+          Current volume value    Output level
+          ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ
+            1111111111110000      Max Volume
+            1110111111110000      Half Volume
+            1101111111110000      Quarter Volume
+            1100111111110000      Eighth Volume
+
+      The mantissa is used to get a finer breakdown between the exponents.
+
+      Example:
+          mov   dx,u_Voice
+          mov   al,4                  ; Use voice #4.
+          out   dx,al
+          mov   dx,u_Command
+          mov   al,9                  ; Set current volume.
+          out   dx,al
+          mov   dx,u_DataLo
+          mov   ax,0fff0h             ; Set max volume.
+          out   dx,ax
+
+      Again, it would be wise to create a volume table covering the range
+      of your volumes.
+
+
+ÄÄÄ 0ah - Set Loop Begin Location               (Word to u_DataLo)
+ÄÄÄ 0bh - Set Loop Begin Location               (Word to u_DataLo)
+      Through the use of these two registers, the beginning location for
+      the active voice can be set.  For an unknown reason, any memory
+      addresses for the BEGIN, START, and END sample locations in DRAM
+      must be divided by 128 and written to u_DataLo, then multiplied
+      by 512 and written to u_DataLo.
+
+      Note that this command is used to set the position of the pointer
+      for the current voice also, even while playing.  Just make sure that
+      the voice is within the bounds you set.
+
+
+ÄÄÄ 0ch - Set Voice Balance                     (Byte to u_DataHi)
+      This register will set the voice balance.  Apparently there are 15
+      pan positions.  However, this doesn't make sense since all the way
+      left is 0, all the way right is 15, and the middle is 7.  Regardless,
+      this is how it works.
+
+      Example:
+          mov   dx,u_Voice
+          mov   al,5                  ; Use voice #5.
+          out   dx,al
+          mov   dx,u_Command
+          mov   al,0Ch                ; Set Pan Position for voice 5.
+          out   dx,al
+          mov   dx,u_DataHi
+          mov   al,7                  ; Put it in the middle.
+          out   dx,al
+
+
+ÄÄÄ 0dh - Set Volume Control Register           (Byte to u_DataHi)
+    ÚÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄÂÄÄÄ¿
+    ³ 7 ³ 6 ³ 5 ³ 4 ³ 3 ³ 2 ³ 1 ³ 0 ³
+    ÀÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÁÄÂÄÙ
+      ³   ³   ³   ³   ³   ³   ³   ³
+      ³   ³   ³   ³   ³   ³   ³   ÀÄÄÄÄ 1 = Ramp is stopped
+      ³   ³   ³   ³   ³   ³   ÀÄÄÄÄÄÄÄÄ 1 = Stop Ramp
+      ³   ³   ³   ³   ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄ ?
+      ³   ³   ³   ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ 0 = No loop, 1 = Loop
+      ³   ³   ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ 0 = Unidirectional, 1 = Bidirectional
+      ³   ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ Enable volume ramp IRQ
+      ³   ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ Direction (1 = decreasing)
+      ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ ?
+
+      Example:
+          mov   dx,u_Voice
+          mov   al,1                  ; Use voice #1.
+          out   dx,al
+          mov   dx,u_Command
+          mov   al,0dh                ; Volume Control Register.
+          out   dx,al
+          mov   dx,u_DataHi
+          mov   al,00000011b          ; Stop voice #1 ramp immediately.
+          out   dx,al
+
+
+ÄÄÄ 0eh - Set Highest Active Voices             (Byte to u_DataHi)
+      This will set the maximum number of voices the card will process.
+      Apparently, the minimum number of voices is 14.  Anything lower
+      is automatically set to 14.
+
+      Bear in mind that the more voices your application uses, not as
+      much oversampling occurs.
+
+      This byte MUST be OR'ed with 0C0h before output, and NumVoices must
+      be one less than those desired!  (i.e. 14 Voices is 13 NumVoices)
+
+      Example:
+          mov   dx,u_Command
+          mov   al,0eh                ; Set Highest Active Voice to:
+          out   dx,al
+          mov   dx,u_DataHi
+          mov   al,NumVoices
+          or    al,0C0h
+          out   dx,al
+
+
+ÄÄÄ 41h - DMA Control Register                  (Byte to u_DataHi)
+      Input :  Clear any pending DMA IRQs.
+      Output:  Unknown.
+
+
+ÄÄÄ 43h - Low Word of DRAM address              (Word to u_DataLo)
+ÄÄÄ 44h - High Byte of DRAM address             (Byte to u_DataHi)
+      DRAM addresses can range from 00000h to fffffh.  By outputting the
+      DRAM address and then accessing u_DRAMIO, direct peeks and pokes from
+      the DRAM memory can be accomplished.
+
+      Example:
+          mov   dx,u_Command
+          mov   al,43h
+          out   dx,al
+          mov   dx,u_DataLo
+          mov   ax,@@LoDRAMAddress
+          out   dx,ax
+          mov   dx,u_Command
+          mov   al,44h
+          out   dx,al
+          mov   dx,u_DataHi
+          mov   al,@@HiDRAMAddress
+          out   dx,al
+          mov   dx,u_DRAMIO
+          ; At this point, you can either:
+          in    al,u_DRAMIO         ; Peek a byte from the address just output
+          ; or:
+          out   dx,al               ; Poke a byte to the address just output.
+
+ÄÄÄ 45h - Timer Control Register ???            (Byte to u_DataHi)
+      Input :  Clear any pending timer IRQs.
+      Output:  Something to do with Adlib Control.  Hard coded into GUSMOD 1.2.
+
+
+ÄÄÄ 46h - Timer Speed Register ???              (Byte to u_DataHi)
+      Used to set the internal 80 microsecond timer.  Equation for output:
+      (256-Desired value)*80 microseconds.
+
+
+ÄÄÄ 49h - Sample Control Register               (Byte to u_DataHi)
+      Input :  Clear any pending Sample Control IRQs.
+      Output:  Unknown.
+
+
+ÄÄÄ 4Ch - Initialization Register               (Byte to u_DataHi)
+      If bit 1 is off, the Ultrasound is in an init state and cannot be
+      accessed.
+
+ÄÄÄ 80h - Read Voice Mode                       (Byte from u_DataHi)
+      Reads what was output to register 0, Write Voice Mode.
+
+
+ÄÄÄ 81h - Read Voice Frequency                  (Word from u_DataLo)
+      An input from here will read the current voice's frequency.  Information
+      for conversion is contained in 01h - Set Voice Frequency.
+
+
+ÄÄÄ 82h - Read Loop Start Location              (Word from u_DataLo)
+ÄÄÄ 83h - Read Loop Start Location              (Word from u_DataLo)
+      Reading these registers will return the loopstart for the active voice.
+      Information on conversion is contained in register 8ah-8bh - Read Voice
+      Position.
+
+
+ÄÄÄ 84h - Read Loop End Location                (Word from u_DataLo)
+ÄÄÄ 85h - Read Loop End Location                (Word from u_DataLo)
+      Reading these registers will return the end location for the active
+      voice.  Information on conversion is contained in register 8ah-8bh -
+      Read Voice Position.
+
+
+ÄÄÄ 86h - Read Volume Ramp Rate                 (Byte from u_DataHi)
+      Reading this register will return the Volume Ramp Rate (described
+      in register 06h - Set Volume Ramp Rate).
+
+
+ÄÄÄ 87h - Read Volume Ramp Start                (Byte from u_DataHi)
+ÄÄÄ 88h - Read Volume Ramp End                  (Byte from u_DataHi)
+      Reading these registers will return the Volume Ramp Start and End
+      information set with registers 07h - Set Volume Ramp Start and
+      08h - Set Volume Ramp End.
+
+
+ÄÄÄ 89h - Read Volume                           (Word from u_DataLo)
+      Reads what was output to register 9, Set Current Volume.
+
+
+ÄÄÄ 8ah - Read Voice Position                   (Word from u_DataLo)
+ÄÄÄ 8bh - Read Voice Position                   (Word from u_DataLo)
+      Returns location of the current voice in DRAM that is the modified
+      address (i.e. divided by 128, multiplied by 512).  The following
+      equation will convert it.
+          LOC = ((TEMP0 << 7) | (TEMP1 >> 9))
+
+      Example:
+        ; In:   AX - Voice
+        ; Out:  DX:AX - Linear Position, not shifted position.
+      U_ReadPos   proc
+        mov   dx,u_Voice
+        out   dx,al
+        mov   dx,u_Command
+        mov   al,8ah
+        out   dx,al
+        mov   dx,u_DataLo
+        in    ax,dx   ; TEMP0
+        mov   cx,ax
+        mov   dx,u_Command
+        mov   al,8bh
+        out   dx,al
+        mov   dx,u_DataLo
+        in    ax,dx   ; TEMP1
+        xor   dx,dx
+        mov   bx,cx
+        shl   cx,7
+        shl   dx,7
+        shr   bx,9
+        or    dx,bx
+        shr   ax,9
+        and   ax,7Fh
+        or    cx,ax
+        mov   ax,cx
+        ret
+      U_ReadPos   endp
+
+
+ÄÄÄ 8ch - Read Voice Balance                    (Byte from u_DataHi)
+      This register will read the voice balance.  More information is
+      available about the returned result in register 0ch - Set Voice
+      Balance.
+
+
+ÄÄÄ 8dh - Read Volume Control Register          (Byte from u_DataHi)
+      Reading this register will return a byte corresponding to the active
+      voice's Volume Control information as described in register 0dh -
+      Read Volume Control Register.
+
+
+ÄÄÄ 8eh - Read Highest Active Voice             (Byte from u_DataHi)
+      Will return a byte corresponding to the number of voices the card
+      is mixing.  Equation for English:  Actual_Voices=(in 8eh)&0c0h+1.
+
+
+ÄÄÄ 8fh - IRQ Status Register                   (Byte from u_DataHi)
+      Input :  Unknown.
+      Output:  Unknown.
+
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+  BASE + 104h - Data Low Port                 (u_DataLo)
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+  BASE + 105h - Data High Port                (u_DataHi)
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+  BASE + 107h - DRAM IO Port                  (u_DRAMIO)
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+Techniques:
+
+ÄÄÄ Ultrasound Reset:
+        mov   bx,u_Command
+        mov   cx,u_DataHi
+        mov   dx,bx
+        mov   al,4Ch
+        out   dx,al
+        mov   dx,cx
+        mov   al,0
+        out   dx,al
+        @DELAY
+        @DELAY
+        mov   dx,bx
+        mov   al,4Ch
+        out   dx,al
+        mov   dx,cx
+        mov   al,1
+        out   dx,al
+        @DELAY
+        @DELAY
+
+        mov   dx,bx
+        mov   al,41h
+        out   dx,al
+        mov   dx,cx
+        mov   al,0
+        out   dx,al
+        mov   dx,bx
+        mov   al,45h
+        out   dx,al
+        mov   dx,cx
+        mov   al,0
+        out   dx,al
+        mov   dx,bx
+        mov   al,49h
+        out   dx,al
+        mov   dx,cx
+        mov   al,0
+        out   dx,al
+
+        mov   dx,bx
+        mov   al,0Eh
+        out   dx,al
+        add   dx,2
+        mov   al,MaxVoices
+        or    al,0C0h
+        out   dx,al
+
+        mov   dx,u_Status
+        in    al,dx
+        mov   dx,bx
+        mov   al,41h
+        out   dx,al
+        mov   dx,cx
+        in    al,dx
+        mov   dx,bx
+        mov   al,49h
+        out   dx,al
+        mov   dx,cx
+        in    al,dx
+        mov   dx,bx
+        mov   al,8Fh
+        out   dx,al
+        mov   dx,cx
+        in    al,dx
+
+        push  bx cx
+        mov   cx,0
+      @@VoiceClearLoop:
+        mov   dx,u_Voice
+        mov   al,cl
+        out   dx,al
+        inc   dx
+        mov   al,0
+        out   dx,al
+        add   dx,2
+        mov   al,3      ; Turn voice off
+        out   dx,al
+        sub   dx,2
+        mov   al,0Dh    ; Turn ramp off.
+        out   dx,al
+        add   dx,2
+        mov   al,3
+        out   dx,al
+        inc   cx
+        cmp   cx,32
+        jnz   @@VoiceClearLoop
+        pop   cx bx
+
+        mov   dx,bx
+        mov   al,41h
+        out   dx,al
+        mov   dx,cx
+        in    al,dx
+        mov   dx,bx
+        mov   al,49h
+        out   dx,al
+        mov   dx,cx
+        in    al,dx
+        mov   dx,bx
+        mov   al,8Fh
+        out   dx,al
+        mov   dx,cx
+        in    al,dx
+
+        mov   dx,bx
+        mov   al,4Ch
+        out   dx,al
+        mov   dx,cx
+        mov   al,7
+        out   dx,al
+        ret
+
+
+ÄÄÄ Starting a Volume Ramp:
+        1) Determine the volume ramp points.
+        2) Set the current volume register.
+        3) Set start volume.
+        4) Set end volume.
+        5) Set rate.
+        6) Set control register bits. (bits 0 and 1 off)
+        7) Wait for bit 0 to turn on.
+
+
+
+

@@ -1,0 +1,809 @@
+******************************************************************
+*                                                                *
+*                    APPEND Command Handler                      *
+*                                                                *
+*----------------------------------------------------------------*
+*                                                                *
+*      The APPEND command is intended to help you lengthen a     *
+* pre-exsiting SEQUENTIAL text file.  This command opens the     *
+* specified file and then locates the end of the file so that a  *
+* subsequent WRITE command can add new data contiguous to old    *
+* data.  A file name must be issued with the command.  Volume,   *
+* drive and slot parameters are optional.                        *
+*      Unfortunately, the append command does not always adjust  *
+* the file pointer correctly eventhough Apple Computer Inc. has  *
+* repeatedly attempted to fix this routine.  Because patches     *
+* have been added to repair previous patches and because         *
+* execution fails on occassion, the append command has evolved   *
+* into a classic case of spaghetti programming.                  *
+*                                                                *
+* Execution pattern and bugs:                                    *
+*      The APPEND command (CMDAPPND, $A298) calls the open       *
+* command (CMDOPEN, $A2A3) to locate the named file, read in its *
+* first T/S list and aim the three-byte file pointer (FILPTSEC,  *
+* $B5E4; FILPTSEC+1, $B5E5; FILPTBYT, $B5E6) at the first byte   *
+* of the file.  If the named file cannot be located, a file-not- *
+* found message is generated.                                    *
+*      After opening the file, the append command repeatedly     *
+* calls RDTXTBYT ($A68C) to read the file byte-by-byte until the *
+* end of the file is located.  RDTXTBYT uses the read function   *
+* (FNREAD, $AC58) and read-one-byte subfunction (READONE,        *
+* $AC8A).  READONE in turn calls RDDATA ($ACA8) to do the actual *
+* reading and examination of the bytes.  (Only a very minor      *
+* portion of the RDDATA routine is shown below.  See the         *
+* formatted disassembly titled "PSNRDONE" for more details.)     *
+*      The first $00 byte encountered denotes the end of the     *
+* file.  This end-of-file marker (eof) can be located in a data  *
+* or T/S list sector.  The eof is found in the last DATA sector  *
+* if that sector is not completely full.  However, if the file   *
+* ends on a sector boundary (ie. the last data sector is full),  *
+* then the eof marker is detected in a T/S list sector.  If the  *
+* last T/S list of the file describes less than 122 ($7A) data   *
+* sectors, the RDDATA routine encounters a zero byte when it     *
+* looks in the T/S list for the trk/sec values of the next data  *
+* sector.  However, if the file has a multiple of 122 data       *
+* sectors, the last T/S list is full of valid data pairs.  In    *
+* this case, the end-of-file marker is detected as a zeroed-out  *
+* T/S link when the RDDATA routine looks for the next T/S list   *
+* sector.                                                        *
+*      The location of the eof marker dictates the subsequent    *
+* execution pattern.  When the first $00 byte is discovered in a *
+* DATA sector, the carry is cleared and the RDDATA routine is    *
+* exited with the filepointer and record numbers adjusted as     *
+* follows:                                                       *
+*          $XX <------ last valid data byte.                     *
+*          $00 <------ RECNMBFM points here.                     *
+*          $00 <------ RECNMBWA & filepointer aimed here.        *
+* Because we eventually want to enter the subsequent WRITE       *
+* command with the record numbers and filepointer aimed at the   *
+* the byte to be overwritten, RECNMBWA and the filepointer need  *
+* to backed up one byte.  However, if an eof is located in a T/S *
+* list, the RDDATA routine is eventually exited with the carry   *
+* clear and the record numbers and filepointer set as follows:   *
+*        $XX <------- last valid data byte                       *
+*                     & target of RECNMBFM.                      *
+*        $00 <------- RECNMBWA & filepointer aimed here.         *
+* RECNMBWA and the filepointer don't require adjusting before    *
+* doing the subsequent write because they already point to the   *
+* byte to be overwritten.                                        *
+*      Actual adjustment of the record numbers and the file-     *
+* pointer occur in the CKAPFLG ($B671) and RSETPTRS ($B6B3)      *
+* routines.  If the end-of-file marker was found in a T/S list   *
+* sector (and the file is not an empty file), the CKAPFLG        *
+* routine is entered with the append flag (APPNDFLG, $B65D) set. *
+* A set append flag forces RECNMBFM ($B5BD)to be incremented.    *
+* By the time the RSETPTRS routine is entered, the append flag   *
+* has been turned off and RECNMBFM corresponds to the eof.       *
+* RSETPTRS copies the contents of RECNMBFM ($B5BD) into RECNMBWA *
+* ($B5FA) and the lower two bytes of the filepointer (FILPTSEC,  *
+* $B5E4 and FILPTBYT, $B5E6).  The append command is then exited *
+* via GOODFMXIT ($B37F.                                          *
+*       Normally, the append command is exited with the record   *
+* numbers and filepointer correctly aimed at the byte to be      *
+* overwritten.  However, because RSETPTRS only adjusts the lower *
+* two bytes of the filepointer, the append command can fail if   *
+* the high byte of the pointer (FILPTSEC+1, $B5E4) needs to be   *
+* backed up.  This situation only occurs if a file contains      *
+* exactly $FFFF (65535) or 2 * $FFFF (131070) data bytes.        *
+* (A file 2 * $FFFF bytes long can only be created if DOS is     *
+* altered to free up some extra sectors.)  The chances of the    *
+* append command failing are therefore very small indeed.  No    *
+* wonder some bugs seem to take forever to surface!              *
+*                                                                *
+******************************************************************
+
+
+* On entry - CUMLOPTN ($AA65) has been updated
+*            to reflect parsed option words.
+*          - the validity of the options issued
+*            with the command (and their numeric
+*            values) have been checked.
+*          - a legal file name has been parsed and
+*            stored in the primary file name buffer
+*            (PRIMFNBUF, $AA75).
+*          - confirmation has been made that the
+*            computer is working in the deferred mode.
+
+
+(A298)
+CMDAPPND JSR CMDOPEN  ;Go open the file to be appended.
+
+                      (A2A3)
+                      CMDOPEN  LDA #0       ;0 = code for text file.
+                      (A2A5)   JMP OPNCKTYP ;Go open the file & chk its type.
+                               ------------
+
+                      (A3D5)
+                      OPNCKTYP STA FILTYPFM ;Put code for file type in the
+                      (A3D8)   PHA          ;Fm parameter list & save it on stk.
+                                            ;($00=Text, $01=Integer, $02=Applesoft,
+                                            ;$04=Binary, $08=S-type, $10=Relocatable,
+                                            ;$20=A-type and $40=B-type.)
+                      (A3D9)   JSR HNDLCMD  ;Use FM cmd handler to open file.
+
+                                            * Common file manager command handler code.
+                                            (A2A8)
+                                            HNDLCMD  LDA #1       ;1 = open opcode.
+                                            HNDLCMD1 STA TEMPBYT  ;Store opcode in temporary location.
+                                                     LDA LENPRSD  ;Get L-parameter from parsed table.
+                                                     BNE SAVLENFM ;Was a non-zero L-parm issued with cmd?
+                                                     LDA LENPRSD+1
+                                                     BNE SAVLENFM
+                                                     LDA #1       ;Length was 0 so make it 1 instead.
+                                                     STA LENPRSD
+                                            SAVLENFM LDA LENPRSD  ;Put length in FM parm list.
+                                                     STA RECLENFM ;(Note:  Record length = 1 for sequential files
+                                                     LDA LENPRSD+1 ;else parsed length for random access files.)
+                                                     STA RECLENFM+1
+                                            CLSLOCBF JSR CMDCLOSE ;Close file if it's already open.
+                                            (A2C8)
+
+                                                                  (A2EA)
+                                                                  CMDCLOSE .
+                                                                           .
+                                                                  (See dis'mbly of CMDCLOSE.)
+                                                                           .
+                                                                           .
+                                                                  - Note that execution flows thru CMDCLOSE twice if the
+                                                                    file is already open.
+                                                                  - The first time thru, the matching DOS filename buffer is
+                                                                    located & then CLOSEONE is used to close the file.
+                                                                  - Execution then jumps back to the start of CMDCLOSE.
+                                                                  - On this second pass, a matching filename is not found
+                                                                    because the DOS filename buffer was released on the
+                                                                    first pass.  Therefore, A5L/H is left pointing at the
+                                                                    highest numbered (lowest in memory) FREE DOS buffer
+                                                                    when CMCLOSE is exited via EVENTXIT and CLOSERTS.
+                                                                  - If the file is not already open on the first entry to
+                                                                    CMDCLOSE, only one pass is made.  This single pass
+                                                                    resembles the second pass mentioned above.
+                                                                           .
+                                                                           .
+                                                                  - If necessary, the CLOSE function updates the data
+                                                                    sector, T/S list sector & the VTOC.  It also fixes
+                                                                    up links in the directory sectors and updates the
+                                                                    file size if needed.
+                                                                           .
+                                                                           .
+                                                                           (RTS)
+
+                                            (A2CB)   LDA A5L+1    ;Hi byte of A5L/H pointer which points at the highest
+                                                                  ;numbered (lowest in memory) free DOS name buffer (in chain).
+                                            (A2CD)   BNE SAVFNPTR ;Branch if found a free buffer.
+                                            (A2CF)   JMP NOBUFERR ;Go issue an out-of-buffers message.
+                                                     ------------ ;(See dis'mbly of errors.)
+                                            (A2D2)
+                                            SAVFNPTR STA A3L+1    ;Reset A3L/H to point at DOS buffer that we
+                                                     LDA A5L      ;will use for file name field buffer (chain).
+                                                     STA A3L
+                                            (A2D8)   JSR CPYPFN
+
+                                                                  * NOTE:  This (re)assigns a DOS buffer to the
+                                                                  * file we want to open.  The buffer may or may
+                                                                  * not be the same one that was just released
+                                                                  * by the CLOSE cmd above.  The highest numbered
+                                                                  * (lowest in memory) free DOS buffer is used.
+                                                                  (A743)
+                                                                  CPYPFN   LDY #29      ;30 bytes to copy (0 to 29).
+                                                                  CPYPRIM  LDA PRIMFNBF,Y ;Copy the name of the file wanted from
+                                                                           STA (A3L),Y  ;the primary filename buffer into the
+                                                                           DEY          ;filename field buffer (in DOS chain).
+                                                                           BPL CPYRIM   ;More chars to get.
+                                                                  (A74D)   RTS
+                                            
+                                            (A2DB)   JSR BUFS2PRM
+
+                                                                  * Get addresses of the various DOS buffers from the
+                                                                  * chain buffer & put them in the FM parameter list.
+                                                                  (A74E)
+                                                                  BUFS2PRM LDY #30      ;Get addr of FM work buf, T/S list
+                                                                  ADRINPRM LDA (A3L),Y  ;buf, data sector buf & next DOS
+                                                                           STA WRKBUFFM-30,Y ;filename buf from chain
+                                                                           INY          ;pointer buffer & put them in FM parm list.
+                                                                           CPY #38      ;(P.S.  Adr of next DOS file name buf is
+                                                                           BNE ADRINPRM ;not used by DOS.)
+                                                                  (A75A)   RTS
+
+                                            (A2DE)   JSR CPY2PARM
+
+                                                                  * Put volume, drive & slot values plus the
+                                                                  * address of the primary filename buffer
+                                                                  * in the FM parameter list.
+                                                                  (A71A)
+                                                                  CPY2PARM LDA VOLPRSD  ;From parsed table.
+                                                                           STA VOLFM
+                                                                           LDA DRVPRSD  ;From parsed table.
+                                                                           STA DRVFM
+                                                                           LDA SLOTPRSD ;From parsed table.
+                                                                           STA SLOTFM
+                                                                           LDA ADRPFNBF ;Get the adr of the primary file
+                                                                           STA FNAMBUFM ;name buf from the constants tbl
+                                                                           LDA ADRPFNBF+1 ;and put it in the FM parm list.
+                                                                           STA FNAMBUFM+1
+                                                                           LDA A3L      ;Save adr of current DOS file name
+                                                                           STA CURFNADR ;buf in table of DOS variables.
+                                                                           LDA A3L+1
+                                                                           STA CURFNADR+1
+                                                                  (A742)   RTS
+
+                                            (A2E1)   LDA TEMPBYT  ;Get open opcode back from temporary buffer
+                                                     STA OPCODEFM ;and put it in the FM parameter list.
+                                            (A2E7)   JMP FMDRIVER
+                                                     ------------
+
+                                            * Use the file manager driver
+                                            * to do the OPEN FUNCTION.
+                                            (A6A8)
+                                            FMDRIVER JSR FILEMGR  ;Call the file manager to do the function.
+
+                                                                  * File manager proper.
+                                                                  (AB06)
+                                                                  FILEMGR  TSX          ;Save stk ptr so can later rtn 2 caller.
+                                                                           STX STKSAV
+                                                                  (AB0A)   JSR RSTRFMWA
+
+                                                                                        * Copy FM work buf (in DOS chain) to
+                                                                                        * FM work area (not in DOS chain).
+                                                                                        (AE6A)
+                                                                                        RSTRFMWA JSR SELWKBUF
+
+                                                                                                           * Get adr of FM work
+                                                                                                           * buf from FM parm
+                                                                                                           * list & put it in
+                                                                                                           * the A4L/H pointer.
+                                                                                                           (AF08)
+                                                                                                           SELWKBUF LDX #0
+                                                                                                           (AF0A)   BEQ PT2FMBUF
+
+                                                                                                           (AF12)
+                                                                                                           PT2FMBUF LDA WRKBUFFM,X
+                                                                                                                    STA A4L
+                                                                                                                    LDA WRKBUFFM+1,X
+                                                                                                                    STA A4L+1
+                                                                                                           (AF1C)   RTS
+
+                                                                                        (AE6D)   LDY #0       ;Zero out return code
+                                                                                        (AE6F)   STY RTNCODFM ;in FM parm list to
+                                                                                                              ;signal no errors as
+                                                                                        (AE72)                ;default condition.
+                                                                                        STORFMWK LDA (A4L),Y  ;Copy FM work buf
+                                                                                                 STA FMWKAREA,Y ;to FM work area.
+                                                                                                 INY
+                                                                                                 CPY #45      ;45 bytes to copy
+                                                                                                 BNE STORFMWK ; (0 to 44).
+                                                                                                 CLC          ;WHY?????
+                                                                                        (AE7D)   RTS
+
+                                                                  (AB0D)   LDA OPCODEFM ;Check if opcode is legal.
+                                                                           CMP #13      ;(Must be less than 13.)
+                                                                           BCS TOERROP  ;Opcode too large so got range error.
+                                                                           ASL          ;Double val of opcode & put it in (x)
+                                                                           TAX          ;so it indexes tables of adrs.
+                                                                           LDA FMFUNCTB+1,X ;Stick adr of appropriate function
+                                                                           PHA          ;handler on stack (hi byte first).
+                                                                           LDA FMFUNCTB,X
+                                                                           PHA
+                                                                  (AB1E)   RTS          ;DO STACK JUMP TO FUNCTION ENTRY POINT.
+
+                                                                  (AB22)   .
+                                                                  FNOPEN   .
+                                                                           .
+                                                                  (See dis'mbly of OPEN function.)
+                                                                           .
+                                                                           .
+                                                                  - uses part of COMNOPEN routine.
+                                                                  - reads in VTOC to get link to 1rst directory.
+                                                                  - reads directory secs in & looks for file
+                                                                    description entry with matching filename.
+                                                                  - if matching name found, reads in the
+                                                                    1rst T/S list sector belonging to the file.
+                                                                  - if no match found, starts a new file by:
+                                                                    (1) creates new file description entry
+                                                                        - copies name to 1rst available spc
+                                                                          in direc sec (if can't find spc, then
+                                                                          issues disk-full error message).
+                                                                        - allocates secs for file.
+                                                                        - writes updated VTOC to disk.
+                                                                        - puts link to first T/S list, file size, etc
+                                                                          in directory entry space.
+                                                                        - writes directory sector buffer to disk.
+                                                                    (2) creates new T/S list & writes it to disk.
+                                                                  - reads T/S list back into T/S list buf.
+                                                                           .
+                                                                           .
+                                                                           (RTS)
+                                                                           ========
+
+                                                                  TOERROP  JMP RNGERROP ;Go handle range error.
+                                                                  (AB1F)   ------------ ;(See dis'mbly of errors.)
+
+                                            * Return here after doing the OPEN function.
+                                            * (Cause after @ function is done, use stack
+                                            * to get back to the original caller.)
+                                            (A6AB)
+                                            AFTRFUNC BCC FMDRVRTN ;(c) = 0 = no errors.
+                                                     LDA RTNCODFM ;Get error code from FM parameter list.
+                                                     CMP #$5      ;End-of-data error?
+                                            (A6B2)   BEQ TOAPPTCH ;Yes.  Got a zeroed-out T/s link or
+                                                                  ;a zeroed-out data pair in T/S list.
+                                                                  ;(Not applicable to the open function.)
+                                            (A6B4)   JMP OTHRERR  ;No - See dis'mbly of errors.
+                                                     ------------
+
+                                            (A6C3)
+                                            FMDRVRTN RTS
+
+                      (A3DC)   PLA          ;Get file type wanted off of stack.
+                      (A3DD)   JMP CHKFTYPE ;Go check if type wanted equals type found.
+                               ------------
+
+                      * Check if file type wanted = file type found.
+                      * (If using open command to open a pre-exisiting file,
+                      * may get a type mismatch.  However, a mismatch error
+                      * is not possible when opening a new file.)
+                      (A7C4)
+                      CHKFTYPE EOR FILTYPFM ;Type found (via open function).
+                      (A7C7)   BEQ CKTYPRTN ;Branch if type wanted = type found.
+
+                      * File types didn't match.
+                      * Check if correct type but locked.
+                      (A7C9)   AND #%01111111 ;Maybe matched - disregard lock bit.
+                      (A7CB)   BEQ CKTYPRTN ;Branch if matched.
+
+                      * Type wanted < > type found!!!!!
+                      * So go close file & then issue a
+                      * type mismatch error message.
+                      (A7CD)   JSR CMDCLOSE ;Wrong kind of file so go close it.
+                                            ;(See dis'mbly of close command.)
+                      (A7D0)   JMP TYPMISM  ;See dis'mbly of errors.
+                               ------------ ;(Eventually goes into DOS's warm start routine.)
+
+                      CKTYPRTN RTS
+                      (A7D3)   ========
+
+(A29B)
+READ2END JSR RDTXTBYT
+
+                      (A68C)
+                      RDTXTBYT LDA #3       ;Set read opcode.
+                               STA OPCODEFM
+                               LDA #1       ;Set one-byte subcode.
+                               STA SUBCODFM
+                      (A696)   JSR FMDRIVER ;Call FM driver to read a data byte.
+
+                                            (A6A8)
+                                            FMDRIVER JSR FILEMGR  ;Call the file manager to do the function.
+         
+                                                                  (AB06)
+                                                                  FILEMGR  TSX          ;Save stk ptr so we can rtn to caller.
+                                                                           STX STKSAV
+                                                                  (AB0A)   JSR RSTRFMWA ;Copy contents of FM work buffer (in DOS
+                                                                                        ;chain) to FM work area (not in chain).
+     
+                                                                                        (AE6A)
+                                                                                        RSTRFMWA JSR SELWKBUF ;Find FM work buffer.
+
+                                                                                                           * Get address of FM
+                                                                                                           * work buf from FM
+                                                                                                           * parm list & stick
+                                                                                                           * it in the A4L/H
+                                                                                                           * pointer.
+                                                                                                           (AF08)
+                                                                                                           SELWKBUF LDA #0
+                                                                                                           (AF0A)   BEQ PT2FMBUF
+
+                                                                                                           (AF12)
+                                                                                                           PT2FMBUF LDA WRKBUFFM,X 
+                                                                                                                    STA A4L
+                                                                                                                    LDA WRKBUFFM+1,X
+                                                                                                                    STA A4L+1
+                                                                                                           (AF1C)   RTS
+
+                                                                                        (AE6D)   LDY #0       ;Zero-out rtn code in
+                                                                                                 STY RTNCODFM ;lst 2 signal no errs.
+                                                                                        STORFMWK LDA (A4L),Y  ;Copy FM work buf
+                                                                                                 STA FMWKAREA,Y ;(in chain) to FM
+                                                                                                 INY          ;wrk area (not in
+                                                                                                 CPY #45      ;DOS buf chain).
+                                                                                                 BNE STORFMWK
+                                                                                                 CLC          ;Why?????
+                                                                                        (AE7D)   RTS
+ 
+                                                                  (AB0D)   LDA OPCODEFM ;Chk if opcode is legal.
+                                                                           CMP #13      ;(Must be less than 13.)
+                                                                           BCS TOERROP  ;Opcode too large, got range error.
+                                                                           ASL          ;Double val of opcode & get addr of
+                                                                           TAX          ;appropriate function handler from tbl.
+                                                                           LDA FMFUNCTB+1,X ;Put the adr on stack (hi byte first)
+                                                                           PHA          ;& then do a "stack jump" to the appropriate
+                                                                           LDA FMFUNCTB,X ;function handler.
+                                                                           PHA
+                                                                  (AB1E)   RTS
+
+                                                                           .
+                                                                           .
+                                                                  (AC58)   .
+                                                                  FNREAD   LDA SUBCODFM ;Check if subcode is legal.
+                                                                           CMP #5       ;(Must be < = 5.)
+                                                                  (AC5D)   BCS TOERRSUB ;Error - illegal subcode.
+                                                                                        ;(Not applicable to append command.)
+                                                                  (AC5F)   ASL          ;Subcode * 2, cause 2 bytes/address.
+                                                                           TAX          ;Index table of subfunction addresses.
+                                                                           LDA RDSUBTBL+1,X ;Get address (minus 1) of subfuction
+                                                                           PHA          ;entry point & stick it on the stack
+                                                                           LDA RDSUBTBL,X ;(hi byte first).  Then do a "stack
+                                                                           PHA          ;jump" to execute the given READ sub-
+                                                                  (AC69)   RTS          ;function.  (APPEND COMMAND ALWAYS USES
+                                                                                        ;THE READ-ONE-BYTE SUBFUNCTION.)
+
+
+                                                                  (AB1F)   ------------
+                                                                  TOERROP  JMP RNGERROP ;Go handle range error.
+                                                                           ------------ ;(See dis'mbly of errors.)
+     
+
+                                                                  (AC6A)   ------------
+                                                                  TOERRSUB JMP RNGERRSB ;Go handle range error.
+                                                                           ------------ ;(See dis'mbly of errors.)
+
+
+                                                                           .
+                                                                           .
+                                                                  (AC8A)   .
+                                                                  READONE  JSR RDDATA
+
+                                                                                        (ACA8)
+                                                                                        RDDATA   .
+                                                                                                 .
+                                                                                        - Read in the file byte-by-byte by
+                                                                                          reading in the data and T/S list
+                                                                                          sectors as required.
+                                                                                        - If an end-of-file marker (eof) is
+                                                                                          detected in a T/S list, SET the carry.
+                                                                                          An eof marker only resides in the T/S
+                                                                                          list if the last data sector is full-
+                                                                                          to-the-brim.  The $00 byte may be 
+                                                                                          picked up as a zeroed-out data pair or
+                                                                                          T/S list link (depending on the length
+                                                                                          of the file).
+                                                                                        - If a DATA sector byte is being read,
+                                                                                          CLEAR the carry (irregardless if the data
+                                                                                          byte is valid or an eof).
+                                                                                        - See formatted disassembly of the read
+                                                                                          function for more details.
+                                                                                                 .
+                                                                                                 .
+                                                                                        (ACAB)   BCS NDATERR
+                                                                                                 -----------
+                                                                                        (ACAD)   LDA (A4L),Y  ;Get single byte read
+                                                                                                              ;from data sector buf.
+                                                                                        (ACAF)   PHA          ;Save it on the stack.
+                                                                                        (ACB0)   JSR INCREC   ;Inc the record #
+                                                                                                              ;or the offset into
+                                                                                                              ;the record.
+                                                                                        (ACB3)   JSR INCFILPT ;Inc the file ptr.
+                                                                                                 PLA          ;Get byte just read.
+                                                                                        (ACB7)   RTS
+                                                                                                 =============
+
+                                                                  (AC8D)   STA ONEIOBUF ;Put byte just read in the one-byte buffer
+                                                                                        ;contained in the FM parameter list.
+                                                                  (AC90)   JMP GOODFMXT ;Exit the file manager.
+                                                                           -------------
+
+                                                                  (B37F)
+                                                                  GOODFMXT LDA RTNCODFM
+                                                                           CLC          ;(c) = 0 to signal good operation.
+                                                                  (B383)   BCC FMEXIT
+
+                                                                  (B386)
+                                                                  FMEXIT   PHP          ;Save status on stack.
+                                                                           STA RTNCODFM ;Store return code in FM parameter list.
+                                                                           LDA #0       ;Avoid that infamous $48 bug.
+                                                                           STA STATUS
+                                                                  (B38E)   JSR CPYFMWA
+
+                                                                               * Copy the FM work area buffer (non-chain)
+                                                                               * to the FM work buffer (in DOS chain).
+                                                                               (AE7E)
+                                                                               CPYFMWA  JSR SELWKBUF ;Select the FM work
+                                                                                                     ;buf (in DOS chain).
+
+                                                                                                     * Point the A4L/H ptr
+                                                                                                     * at work buffer.
+                                                                                                     (AF08)
+                                                                                                     SELWKBUF LDX #0
+                                                                                                    (AF0A)    BEQ PT2FMBUF
+
+                                                                                                    (AF12)
+                                                                                                     PT2FMBUF LDA WRKBUFFM,X
+                                                                                                              STA A4L
+                                                                                                              LDA WRKBUFFM+1,X
+                                                                                                              STA A4L+1
+                                                                                                    (AF1C)    RTS
+
+                                                                               (AE81)   LDY #0       ;Initialize index.
+                                                                               STORWRK  LDA FMWKAREA,Y ;Get byte from work
+                                                                                        STA (A4L),Y  ;area & put it in
+                                                                                        INY          ;the work buffer.
+                                                                                        CPY #45      ;45 bytes to copy
+                                                                                        BNE STORWRK  ;(0 to 44).
+                                                                                (AE8D)  RTS
+
+                                                                  (B391)   PLP          ;Retrieve status of success of operation
+                                                                                        ;back from the stack.
+                                                                  (B392)   LDX STKSAV   ;Adjust the stack pointer to force exit
+                                                                           TXS          ;to the caller even if several subroutines
+                                                                  (B396)   RTS          ;deeper than original entry.  In this
+                                                                           ============ ;particular case, return to AFTRFUNC.
+
+                                                                                        * This routine is entered only if a
+                                                                                        * end-of-file marker was found in
+                                                                                        * a T/S list.
+                                                                                        (ACB8)
+                                                                                        NDATERR  JMP ENDOFDAT ;Ran out of data while
+                                                                                                 ------------ ;reading or appending.
+
+                                                                                        (B36F)
+                                                                                        ENDOFDAT LDA #5       ;Out of data code.
+                                                                                        (B371)   BNE BADFMXIT ;ALWAYS.
+
+                                                                                        (B385)
+                                                                                        BADFMXIT SEC          ;(c)=1=unsuccessful.
+                                                                                        FMEXIT   PHP          ;Save status on stack.
+                                                                                                 STA RTNCODFM ;Save return code.
+                                                                                                 LDA #0       ;Avoid $48 bug.
+                                                                                                 STA STATUS
+                                                                                        (B38E)   JSR CPYFMWA
+
+                                                                                                     * Copy work area
+                                                                                                     * to work buffer.
+                                                                                                     (AE7E)
+                                                                                                     CPYFMWA  JSR SELWKBUF
+
+                                                                                                              * Point A4L/H ptr
+                                                                                                              * at work buffer.
+                                                                                                              (AF08)
+                                                                                                              SELWKBUF LDX #0
+                                                                                                              (AF0A)   BEQ PT2FMBUF
+
+                                                                                                              (AF12)
+                                                                                                             PT2FMBUF LDA WRKBUFFM,X
+                                                                                                                       STA A4L
+                                                                                                                    LDA WRKBUFFM+1,X
+                                                                                                                       STA A4L+1
+                                                                                                             (AF1C)   RTS
+
+                                                                                                     * Do the copying.
+                                                                                                     (AE81)   LDY #0
+                                                                                                     STORWRK  LDA FMWKAREA,Y
+                                                                                                              STA (A4L),Y
+                                                                                                              INY
+                                                                                                              CPY #45
+                                                                                                              BNE STORWRK
+                                                                                                     (AE8D)   RTS
+
+                                                                                        (B391)   PLP          ;Get success of oper-
+                                                                                                              ;ation from stk.
+                                                                                        (B392)   LDX STKSAV   ;Adjust stack ptr
+                                                                                                 TXS          ;to force exit
+                                                                                        (B396)   RTS          ;to the caller even 
+                                                                                                 ============ ;when several sub-
+                                                                                                              ;routines deeper 
+                                                                                                              ;than orig entry.
+                                                                                                              ;In this case,
+                                                                                                              ;return to AFTRFUNC.
+
+                                            * Return here after doing the READ function
+                                            * (Cause after @ function is done, use stack
+                                            * to get back to original caller.)
+                                            *
+                                            * = If dealing with a byte from a data sector
+                                            *   (even if that byte is a $00) enter with:
+                                            *   - RECNMBFM = record # corresponding to byte just read.
+                                            *   - RECNMBWA = record # associated with next potential
+                                            *                byte situated after byte just read.
+                                            *                (ie.  RECNMBWA = 1 greater than contents 
+                                            *                of RECNMBFM.)
+                                            *   - Filepointer aimed 1 byte past byte just read.
+                                            *     (ie. lower two bytes of filepointer contain
+                                            *     the same values as RECNMBWA.)
+                                            *   - Carry is CLEAR.
+                                            *
+                                            * = If dealing with a $00 byte read from the T/S list
+                                            *   then either got a zeroed-out T/S link or a 
+                                            *   zeroed out data pair .  In either case, enter with:
+                                            *   - RECNMBFM = record # of last valid data byte.
+                                            *   - RECNMBWA = record # of next potential data byte.
+                                            *                (ie. RECNMBWA is always 1 > RECNMBFM).
+                                            *   - Filepointer aimed at next potential data byte
+                                            *     byte position. Lowest two bytes of filpointer
+                                            *     (FILPTSEC and FILPTBYT) are same as RECNMBWA and
+                                            *     RECNMBWA+1.
+                                            *   - Carry is SET.
+
+                                            (A6AB)
+                                            AFTRFUNC BCC FMDRVRTN ;Branch if dealing with byte from
+                                                                  ;a data sector (as opposed to byte
+                                                                  ;from a T/S list).
+                                            (A6AD)   LDA RTNCODFM ;Get error code from FM parameter list.
+                                                     CMP #5       ;End-of-data error?
+                                            (A6B2)   BEQ TOAPPTCH ;Yes - not handled like other errors!!!.
+                                                                  ;File ends at a full data sec and so we
+                                                                  ;encountered a zeroed out T/S link or a
+                                                                  ;zeroed out data pair (trk/sec vals for
+                                                                  ;next data sec listed in T/S list).
+                                            (A6B4)   JMP OTHRERR  ;Only take if got an error other than
+                                                     ------------ ;an end-of-data error.  (See dis'mbly
+                                                                  ;of errors.)
+                                            TOAPPTCH JMP APNDPTCH
+                                            (A6B7)   ------------
+
+                                            * Note:  You are now entering an almost
+                                            * undecipherable mess of spaghetti programming.
+                                            * Parts of the following routines seem useless.
+                                            * They may just be residual (but innocuous)
+                                            * instructions that are left over from an
+                                            * earlier version of DOS.
+
+                                            * Check if file pointer and WASTEBYT are zeroes.
+                                            (B692)
+                                            APNDPTCH LDY #$13
+                                            CK4ZEROS LDA (A4L),Y
+                                            (B696)   BNE SETAPFLG ;Unless we are dealing with a 
+                                                                  ;useless file that was previously
+                                                                  ;opened, but never closed, this
+                                                                  ;instruction is always taken.
+                                            (B698)   INY
+                                                     CPY #$17
+                                            (B69B)   BNE CK4ZEROS
+     
+                                            * The purpose of the following instructions is not
+                                            * understood.  This section of code may have been
+                                            * designed to deal with useless files that were
+                                            * opened but never closed.  Whatever the original
+                                            * purpose was, the following code appears to keep
+                                            * the file pointer at #$000000 when a file with no 
+                                            * data is encountered.
+                                            (B69D)   LDY #$19
+                                            COPYRECS LDA (A4L),Y  ;Copy image of RECNMBWA/+1 and BYTOFFWA/+1
+                                                     STA RECNMBFM-$19,Y ;that were just stored in the work
+                                                     INY          ;buffer to RECNMBFM/+1 and BYTOFFFM/+1
+                                                     CPY #$1D     ;in the FM parm list.
+                                                     BNE COPYRECS
+                                            FMDVRTN  JMP BK2FMDRV
+                                            (B6A9)   ------------
+
+                                            * Set the append flag.
+                                            * (Never entered if dealing
+                                            * with an empty file.)
+                                            (B6AC)
+                                            SETAPFLG LDX #$FF
+                                                     STX APPNDFLG ;Set the append flag.
+                                            (B6B1)   BNE FMDVRTN  ;ALWAYS.
+                                                     ------------
+
+                                            (A6BA)   NOP
+                                            BK2FMDRV JSR CKIFAPND
+                                            (A6BB)
+
+                                                                  * Check if using APPEND command.
+                                                                  (BA69)
+                                                                  CKIFAPND LDX NDX2CMD  ;Get command index.
+                                                                           CPX #$1C     ;Are we APPENDing?
+                                                                           BEQ RTNCKAPN ;Yes - leave flag on.
+                                                                           LDX #0       ;No - turn off append flag.
+                                                                           STX APPNDFLG
+                                                                  RTNCKAPN RTS
+                                                                  (BA75)
+
+                                            (A6BE)   LDX #0       ;Zero out the one-data byte parameter in FM parm list.
+                                                     STX ONEIOBUF ;(Also referred to as low byte of CURIOBUF.)
+                                            FMDRVRTN RTS          ;Return to caller of FMDRIVER.
+                                            (A6C3)
+
+                      (A699)   LDA ONEIOBUF ;Get byte just read.
+                      (A69C)   RTS
+
+(A29E)   BNE READ2END ;Take branch if dealing with a valid
+                      ;data byte.  Haven't encountered an end-
+                      ;of-file marker yet, so go back to read
+                      ;rest of file.
+(A2A0)   JMP CKAPFLG  ;Detected an end-of-file marker (a $00 byte).
+         ------------
+
+* Prepare to manually back up file pointer
+* if necessary.  Need to back it up one byte
+* if a $00 byte was encountered in a data sector.
+* However, if a zeroed-out data pair (listed
+* in the T/S list) or a zeroed out T/S link was
+* read, then the filepointer is positioned 
+* correctly.  (P.S.  At one time in the history
+* of DOS 3.3, the position function was used to
+* back up the file pointer.)
+* Enter with append flag set if a $00 was detected
+* in a (non-empty) file's T/S list.
+(B671)
+CKAPFLG  LDA APPNDFLG ;Is append flag on?
+         BEQ CLRAPFLG ;No - flag is off.
+         INC RECNMBFM ;Yes - so increment the file manager's
+         BNE CLRAPFLG ;version of the record number cause
+(B67B)   INC RECNMBFM+1 ;RECNMBFM is pointing at the last
+                      ;valid data byte and we want it to point
+                      ;at the next potential record number.
+                      ;(P.S. Remember that RECNMBFM always lags
+                      ;RECNMBWA by one byte.)
+(B67E)
+CLRAPFLG LDA #0       ;Don't need append flag any more, so
+         STA APPNDFLG ;turn it off.
+(B683)   JMP RSETPTRS ;Go back up the file pointer.
+         ------------
+
+* Buggy routine used to back up the file pointer.
+* If a file is $FFFF (65535) bytes long (or some
+* some multiple thereof), the append will fail
+* because this routine neglects to back up the
+* hi byte of the file pointer (FILPTSEC+1).
+(B6B3)
+RSETPTRS LDA RECNMBFM ;Reconcile record number versions
+         STA FILPTBYT ;and lowest 2 bytes of file pointer.
+         STA RECNMBWA
+         LDA RECNMBFM+1
+(B6BF)   STA WASTEBYT ;Appears to be irrevelvant.  Obviously
+                      ;has something to do with the CK4ZEROS
+                      ;routine described above.
+(B6C2)   STA RECNMBWA+1
+         STA FILPTSEC
+         TSX          ;Reset the stack pointer so we can use the
+(B6C9)   STX STKSAV   ;FMEXIT routine to return to the caller
+                      ;of the append command.  (Note:  This will
+                      ;be an exceptional exit route for FMEXIT.)
+(B6CC)   JMP GOODFMXT ;Exit cleanly.
+         ------------
+(B37F)
+GOODFMXT LDA RTNCODFM
+         CLC          ;(c) = 0 to signal good operation.
+(B383)   BCC FMEXIT   ;ALWAYS.
+
+(B386)
+FMEXIT   PHP          ;Save status on stack.
+         STA RTNCODFM ;Store return code in FM parameter list.
+         LDA #0       ;Avoid that infamous $48 bug.
+         STA STATUS
+(B38E)   JSR CPYFMWA
+
+                      * Copy the FM work area buffer (non-chain)
+                      * to the FM work buffer (in DOS chain).
+                      (AE7E)
+                      CPYFMWA  JSR SELWKBUF ;Select the FM work buffer (in DOS chain).
+
+                                            * Point the A4L/H pointer at the FM work buffer.
+                                            (AF08)
+                                            SELWKBUF LDX #0       ;Set index to selct FM work buffer.
+                                            (AF0A)   BEQ PT2FMBUF ;ALWAYS.
+
+                                            (AF12)
+                                            PT2FMBUF LDA WRKBUFFM,X ;Get addr of selected buffer from the
+                                                     STA A4L      ;FM parameter list & put it in the pointer.
+                                                     LDA WRKBUFFM+1,X
+                                                     STA A4L+1
+                                            (AF1C)   RTS
+
+                      (AE81)   LDY #0       ;Initialize index.
+                      STORWRK  LDA FMWKAREA,Y ;Get byte from the FM work area.
+                               STA (A4L),Y  ;Put it in the work buffer.
+                               INY
+                               CPY #45      ;45 bytes to copy (0 to 44).
+                               BNE STORWRK
+                      (AE8D)   RTS
+
+(B391)   PLP          ;Retrieve status of success of operation
+                      ;back from the stack.
+(B392)   LDX STKSAV   ;NOTE:   The contents of STKSAV ($B39B) were
+         TXS          ;altered above (at $B6C9).  Therefore, the
+(B396)   RTS          ;stack is now reset to return to the caller
+         ============ ;of the append command handler.  Execution
+                      ;actually returns to AFTRCMD ($A17D) located
+                      ;in the command parsing and processing
+                      ;routines.  Note that this is an exceptional
+                      ;route for FMEXIT to take.

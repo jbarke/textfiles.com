@@ -1,0 +1,131 @@
+#include "autotrak.h"
+#include <ascii.h>
+#include "function.h"
+#include "extmem.h"
+
+/*
+	Tom Jennings
+	Communitree Group
+	1047 Sutter St
+	San Francisco CA 94109
+	(415)-441-3088
+
+	mru:	24 Apr 91
+	new:	25 Jun 90
+
+
+	Menu execution engine.
+*/
+
+extern MENU initscrn;				/* top of the tree -- defined in MENU.C */
+static MENU *last_menu = NOMENU;		/* last menu drawn */
+static WINDOW *top_window;			/* first window inited this menu */
+static short first_time;			/* flag first execution */
+
+/* This is the high level state machine engine. */
+
+void engine() {
+int i;
+
+/* These windows are drawn before all others, and are never removed, since
+they are in common with all menus. (The simulate and debug windows overwrite
+them, but are restored upon their returns.) (Oh yeah -- upon exit to DOS,
+we brute-force restore the original 'screen' data. */
+
+	init_window(&screen);			/* clear the screen */
+	init_window(&fkeyback);			/* draw the Fkey background */
+	init_window(&menust);			/* menu name */
+	for (i= 0; i < FKEYS; i++) {		/* draw all the Fkey boxes */
+		init_window(fkeys[i]);
+	}
+	top_window= fkeys[--i];			/* point to last window */
+
+/* Draw the main menu now, then fall into the main menu execution loop. */
+
+	current_menu= &initscrn;		/* set as new current menu */
+
+/* Poll for a keyboard character. If there is a function for this menu, execute
+it, passing it the keystroke. (If it has a use within that function, it's 
+returned as 0. It also allows the menu function to 'lookahead' to see
+if it is about to be closed (ie. keystroke == F7.)) Check to see if its 
+a change-menu key (ie. an Fkey), if so, change menus (and return the
+character as 0.) If after all that the key isnt used, it was an illegal key.
+Also gives the function (if any) a first-time flag, to do one time
+initialization. */
+
+	while (1) {
+		draw_menu();			/* (possibly) draw the menu */
+		current_char= keyhit();		/* get a kbd char (else 0) */
+		switch (current_char) {		/* some are global */
+			case KEY_CTL_F10:
+			case KEY_CTL_F11:
+				exitdos(); break;
+
+			case KEY_F12:		/* help */
+				notsimulated();
+				current_char= NUL;
+		}
+		if ((int)(current_menu-> func))	/* if a function defined, */
+			(*current_menu-> func)(first_time); /* execute it */
+		first_time= 0;			/* then clear it */
+		switch_state();			/* possibly switch state */
+		if (current_char != NUL) beep(); /* unused (illegal) character */
+	}
+}
+
+/* Given the current keystroke (or 0) and the current menu definition,
+change to another menu as indicated. When we switch menus, the millisecond
+clock is cleared (used by functions to do "processing") and zaps the
+last-day and second counters so that the clock will update immediately,
+if it is used. */
+
+switch_state() {
+int i;
+
+	switch (current_char) {
+		case KEY_F1: i= 0; break;	/* convert Fkeys */
+		case KEY_F2: i= 1; break;	/* to indices */
+		case KEY_F3: i= 2; break;
+		case KEY_F4: i= 3; break;
+		case KEY_F5: i= 4; break;
+		case KEY_F6: i= 5; break;
+		case KEY_F7: i= 6; break;
+		default: return;		/* (no change) */
+	}
+	if (current_menu-> fk[i].next != NOMENU) {	/* if Fkey defined */
+		current_menu= current_menu-> fk[i].next;/* change states */
+		draw_menu();
+		current_char= NUL;			/* keystroke eaten */
+	}
+}
+
+/* Given a menu structure, fill in the screen to match. Unlink any
+previous screen (there will be except the first time). */
+
+static draw_menu() {
+int i;
+
+	if (current_menu == last_menu) 		/* if no change, */
+		return;				/* do nothing */
+
+	cursoroff();				/* dont need this */
+	if (top_window-> next_window)		/* if there is one, */
+		unlinkchain(top_window-> next_window); /* unlink previous windows */
+
+	w_fill(&menust,current_menu-> title);	/* display menu name */
+	status(current_menu-> stat);		/* fill the status box */
+	for (i= 0; i < FKEYS; i++) {		/* draw all the Fkey boxes */
+		w_fill(fkeys[i],current_menu-> fk[i].text);
+	}
+
+	for (i= 0; current_menu-> window_list[i] != NOWINDOW; i++) {
+		init_window(current_menu-> window_list[i]); /* init all the optional windows */
+	}
+	for (i= 0; i < sizeof(current_menu-> data); i++)
+		current_menu-> data[i]= 0;	/* initialize the data area */
+
+	millisec= 0L;				/* reset the timer */
+	last_sec= -1;				/* trigger clock display */
+	first_time= 1;				/* flag the first execution */
+	last_menu= current_menu;		/* remember it */
+}

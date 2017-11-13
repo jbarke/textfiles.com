@@ -1,0 +1,366 @@
+SmartBoot 1.1
+-------------
+
+
+             (C)opyright 1989 Zonker Programming
+
+
+FREEWARE --  This program is in the public domain.  It may not be sold, but
+must include the copyright notice if uploaded to any
+information service or BBS.
+
+
+Author:      Steven Weyhrich
+             Zonker Programming
+             2715 N. 112th St.
+             Omaha, NE 68164
+
+
+
+Required:    Runs on any Apple II with a 65c02 or 65816 processor (//c,
+IIc+, enhanced //e, or IIgs).
+             UniDisk 3.5, Apple Disk 3.5, or Smartport/SCSI hard disk (such
+as Chinook)
+
+Recommended: Program Selector (such as ProSel, Davex, ECP, Squirt, or
+EasyDrive)
+
+Files :      SMARTBOOT.DOCS (you're reading it)
+             SMARTBOOT      (the full featured version)
+             SMARTBOOT.TINY (the tiny version, less than 256 bytes)
+             SB.INSTALL     (Applesoft program to install SMARTBOOT or
+SMARTBOOT.TINY)
+
+(For best appreciation of the following discussion, it is recommended that
+you as a potential user of SMARTBOOT read the books that came with your
+Apple to gain a background understanding of the various ways to "boot" a
+disk.)
+
+
+PURPOSE
+-------
+
+   Allows an Apple II family computer to boot ProDOS 8 on a disk device
+other than the ordinary default one.  This is helpful when it is
+inconvenient or impossible to switch the position of disk controller cards
+to change the boot disk drive.  In addition, SMARTBOOT will boot to ANY
+device on a Smartport chain (not just the first one).
+
+   SMARTBOOT is MOST useful for a computer like the IIc+ where there is one
+internal Apple 3.5 drive and a hard disk (such as the superb Chinook
+CT-20c).  That configuration is limited to booting from the internal Apple
+3.5 drive, since that drive comes first in the slot 5 SmartPort chain.  With
+SMARTBOOT, you can boot from the hard disk rather than the internal 3.5
+disk.
+
+   On the //c (my computer), SMARTBOOT is also useful because it will wait
+for the secondary boot disk to come online.  I can turn on my computer AND
+my Chinook CT-20c hard disk at the same time, and SMARTBOOT will not try to
+boot the hard disk until it is ready.
+
+   On a IIgs, SMARTBOOT is only good for booting ProDOS 8 from a disk other
+than the first in a Smartport chain.  Since most IIgs users are heavily into
+ProDOS 16 or GS/OS, I doubt there will be much demand for this program from
+them; however, the program has been tested and will work on a IIgs.
+SMARTBOOT does not, unfortunately, work for GS/OS, the more sophisticated
+operating system for the IIgs, because of that its insistence on booting
+only from drive 1 on a slot.
+
+
+
+GLOSSARY (for those experienced users, skip down to the next section)
+--------
+
+           ProDOS 8 -- the disk operating system for 8-bit Apple computers
+           Firmware -- built-in software that is present at all times in a
+computer; usually controls the hardware attached to
+the computer
+              Slots -- connectors in the //e, ][+, or IIgs into which cards
+can be plugged that allow control of various devices,
+including disk drives, printers, and modems.  In the
+//c or IIc+, these slots are simulated by the
+firmware.
+          Smartport -- the name Apple gave to the built-in software that
+controls any disk device (except for 5.25 drives)
+plugged into the disk port on the back of the //c,
+IIc+, or IIgs
+           Chaining -- attaching several disks to the same disk port by
+plugging one into another
+            Booting -- the process of starting up a disk operating system by
+reading progressively larger segments off of a disk
+into memory, until the entire system is loaded
+  Primary Boot Disk -- the disk usually used to startup the ProDOS 8 disk
+operating system; on a //c or IIc+, this would be the
+internal disk drive
+Secondary Boot Disk -- the disk to which SMARTBOOT transfers control for the
+actual boot process.  Like any ordinary ProDOS boot
+disk, it must have in the main directory the file
+PRODOS (the true one, not a renamed SMARTBOOT as goes
+on the Primary Boot Disk) and at least one SYS file
+whose name ends in ".SYSTEM" (such as BASIC.SYSTEM).
+               Unit -- the disk device at a particular position on a
+Smartport chain.  The first disk device is Unit #1,
+and so on.  On the IIc+, the internal 3.5 drive is
+Unit #1 on the Slot 5 Smartport.
+     Mirrored Disks -- disks that appear to be in a slot other than the one
+they are physically plugged in to.  This is necessary
+when there are more than two devices attached to a
+slot, as ProDOS 8 can only understand two per slot.
+In these cases, the third and fourth are "mirrored"
+to an unused slot, usually slot 2.
+        Volume Name -- a unique name given to a disk by ProDOS, allowing it
+to tell the difference between disks.  It is given a
+name that is preceded by "/" (such as /MYDISK).
+        Device Name -- a name given to specific devices on a Smartport chain
+            Block 0 -- the first block on any disk; for ProDOS disks, this
+contains a short program that looks for the file
+PRODOS, loads it, and transfers control to it (see
+"Booting")
+
+
+WHAT IT DOES
+------------
+
+   Let's take the examples of two Apple systems:
+
+
+SYSTEM A:  a fully loaded Apple //c with       (ProDOS Disk Name)
+
+  Slot 4          = Ramdisk, 1 Meg             (/RAM4  )
+  Slot 5, Unit 1  = UniDisk 3.5 #1             (/DISK.A)
+          Unit 2  = UniDisk 3.5 #2             (/DISK.B)
+          Unit 3  = UniDisk 3.5 #3             (/DISK.C)
+          Unit 4  = Chinook CT-20c hard drive  (/CT    )
+  Slot 6, Drive 1 = Internal 5.25 drive        (/DISK.D)
+
+
+SYSTEM B:  a minimally loaded Apple IIc+ with
+
+  Slot 5, Unit 1  = Internal 3.5 drive         (/DISK.E)
+          Unit 2  = Chinook CT-20c hard drive  (/CT2   )
+
+
+   With this setup, an ONLINE call to ProDOS will return the following:
+
+
+SYSTEM A:
+
+Slot 6, Drive 1 = (/DISK.D) Internal 5.25 drive
+Slot 5, Drive 1 = (/DISK.A) UniDisk 3.5 #1
+Slot 5, Drive 2 = (/DISK.B) UniDisk 3.5 #2
+Slot 4, Drive 1 = (/RAM4  ) Ramdisk
+Slot 2, Drive 1 = (/DISK.C) UniDisk 3.5 #3 (mirrored to this slot by ProDOS)
+Slot 2, Drive 2 = (/CT    ) Chinook CT-20c (mirrored to this slot by ProDOS)
+
+
+SYSTEM B:
+
+Slot 5, Drive 1 = (/DISK.E) Internal 3.5 drive
+Slot 5, Drive 2 = (/CT2   ) Chinook CT-20c hard drive
+
+
+   Ordinarily, if you turned the computer on with ProDOS disks in all drives
+it would boot the 5.25 internal disk on System A, and the 3.5 internal disk
+on System B.  If you removed the disk from the internal drive on System A,
+the computer would automatically try the first device in slot 5 (the UniDisk
+3.5 #1, /DISK.A in this case).  You would NOT be able to boot directly to
+the hard disk on either system.
+
+   Enter SMARTBOOT.  Run the Basic program SB.INSTALL, and follow the
+instructions to install SMARTBOOT or SMARTBOOT.TINY.  If you selected the
+Slot 5, Unit 4 device as the Secondary Boot Disk for System A, or the Slot
+5, Unit 2 device as the Secondary Boot Disk for System B, you would be able
+to boot almost immediately to the hard disk when starting up the computer at
+power-on, or when restarting by pressing Control-Open-Apple-RESET.
+
+
+PROGRAM DESCRIPTION
+-------------------
+
+SMARTBOOT (SYS file)
+
+   This is the full-featured version of the program.  It replaces the file
+PRODOS on the Primary Boot Disk.  When executed, it transfers control to the
+slot and unit numbers specified at relative bytes 7 and 8 in the file.
+
+   If the slot contains a Disk II controller card, it will ignore the unit
+number and simply boot drive 1 on that card.
+
+   If the slot contains a Smartport card (such as slot 5 on the //c, IIc+,
+and IIgs), it will check to see if the disk device is online.  If there is
+an error, it will continue checking that device until it IS online.  For
+instance, if the selected device is a 3.5 disk drive, it will wait until a
+disk has been inserted.  If the selected device is the Chinook CT-20c hard
+disk, SMARTBOOT will continue checking until the "NO DEVICE CONNECTED" (28
+hex) error is gone (that is, until the drive has come up to speed and is
+ready to use.)
+
+   If the disk device is not ready to boot, the error message returned by
+the Smartport firmware is displayed.  (The other bytes displayed refer to
+the place in the program where the Smartport call was made, and is primarily
+for error checking purposes.)  A "clock" will be displayed that advances
+approximately once per second until the Secondary Boot Disk is ready.
+
+   If you manually patched the slot and unit numbers into SMARTBOOT (see
+"HOW TO USE SMARTBOOT" below) and selected a slot and/or unit that does not
+contain a disk device, an error messages is displayed and the program halts
+with a "*" prompt and a cursor.  From there you can switch to an ordinary
+boot disk and try again (and reconfigure your SMARTBOOT program to select a
+slot that really contains a disk device).
+
+SMARTBOOT.TINY (BIN file)
+
+   This is the brief version that is loaded from Block 0 of the Primary Boot
+Disk.  (It is less then 256 bytes long, so will load properly even from a
+5.25 disk.)  It does not do as much error checking as regular SMARTBOOT, and
+will fail with almost any ordinary error that would cause a "Check Disk
+Drive" error on a //c.  It is not sophisticated enough to wait for a hard
+disk to come up to speed (as SMARTBOOT will).  If you don't need all the
+error checking, or don't want to replace the file PRODOS on the Primary Boot
+Disk, this is the version you should use.
+
+
+SB.INSTALL (BAS file)
+
+   This is an Applesoft program that installs either of the two above
+programs, and makes a small alteration to Block 0 on the Secondary Boot Disk
+to ensure that the boot will work for Units 3 or 4 on a Smartport.  This
+patch should not affect ordinary booting; however, should there be a reason
+that it needs to be removed, SB.INSTALL will remove the patch and restore
+the original code (as any good patch program should -- thanks for teaching
+that to me, John Link!)  The patch to Block 0 DOES take into account the two
+different versions of the Block 0 boot code for ProDOS that exist.
+
+
+HOW TO INSTALL SMARTBOOT
+------------------------
+
+   The Applesoft program, SB.INSTALL, expects to find itself running from
+the Primary Boot Disk.  That disk can contain any files you wish it to, but
+must also contain SB.INSTALL and either SMARTBOOT or SMARTBOOT.TINY.  These
+files must not be in a subdirectory.
+
+   Use FILER or the Apple System Utilities Disk to transfer the files
+SB.INSTALL and either SMARTBOOT or SMARTBOOT.TINY to the Primary Boot Disk.
+
+   If installing SMARTBOOT, you must manually change the name of the program
+to PRODOS.  To do this, launch BASIC.SYSTEM and at the "]" prompt insert the
+Primary Boot Disk.  If PRODOS already exists on this disk, type
+
+DELETE PRODOS
+
+   or
+
+RENAME PRODOS,PRODOS.OLD
+
+   Then, type
+
+RENAME SMARTBOOT,PRODOS
+
+   If installing SMARTBOOT.TINY, just make sure that PRODOS is either absent
+from the disk or is the true PRODOS (and not a renamed SMARTBOOT).
+
+   Start the SB.INSTALL program by typing
+
+RUN SB.INSTALL
+
+   and follow the prompts.  You will need to have ProDOS disks in all online
+disk devices in order for the program to properly identify the disks in the
+Smartport devices.
+
+
+HOW TO USE SMARTBOOT
+--------------------
+
+   SMARTBOOT.TINY can be used only by booting through a power-on (cold
+boot), by Control-Open-Apple-RESET (warm boot), or from Basic by PR#6 (if
+slot 6 drive 1 holds the Primary Boot Disk.)
+
+   SMARTBOOT can be used the same way, plus can be invoked from Basic by
+typing
+
+-PRODOS
+
+   It can also be started from various program selectors:
+
+
+PROSEL (by Glen Bredon)
+
+  Set up your menu entry like this:
+
+Screen title:  SmartBoot           (or whatever)
+Prefix:        /PRIMARY            (use your Primary Boot Disk name)
+Pathname:      PRODOS
+Startup:       <empty -- but see below>
+
+   SMARTBOOT will support the ProDOS convention for accepting a startup
+string.  If the startup position above contains the slot and unit numbers,
+SMARTBOOT will replace the default values set by SB.INSTALL and use the new
+numbers to do its booting.  This would allow you to boot to several
+different devices on a Smartport chain with the same SMARTBOOT file
+(renamed, or course, as PRODOS).  For example, to boot to Slot 5, Unit 3:
+
+Screen title:  SmartBoot
+Prefix:        /PRIMARY
+Pathname:      PRODOS
+Startup:       53
+
+
+   Be sure if you want to do this for Unit 3 or 4 on a Smartport chain that
+you have a patched Block 0 on the disks in those drives.  This could be done
+with SB.INSTALL; just run it once for each drive you want to patch,
+finishing with your usual Secondary Boot Drive.  Also, you can do this with
+BLOCK.WARDEN by reading Block 0 off a patched disk and writing it to a
+non-patched disk.
+
+   Also notice that you may use BLOCK.WARDEN to change the startup slot and
+unit in SMARTBOOT (renamed as PRODOS, you recall) just as it can change a
+startup file name.  (See BLOCK.WARDEN documentation for details.)
+
+
+DAVEX (by Dave Lyons) / ECP-8 (by Don Elton)
+
+   SMARTBOOT can be started from DAVEX by typing:
+
+/PRIMARY/PRODOS 53
+
+   at the prompt to boot the disk in slot 5, unit 3.  I am not as familiar
+with ECP-8, but it should work the same from that ProDOS 8 shell program.
+
+
+FOR THOSE INTERESTED...
+-----------------------
+
+   After running SB.INSTALL , even if you don't actually install anything,
+exit to Basic by selecting [3] from the main menu.  Then type
+
+GOTO 20000
+
+and you will see the full list of disk devices that are online when
+SB.INSTALL was run.  "S" refers to Slot, "D" to Drive, "T" to the true
+(actual) slot, and "U" to Unit.  "Dev" refers to the ProDOS device code.
+
+
+FINAL COMMENTS
+--------------
+
+   If you downloaded this file from GEnie, it should be bug- and virus-free.
+If you got it from any other info service or BBS, there is a chance that it
+could have picked up a virus somewhere.  If there is any doubt, as usual for
+downloaded software, MAKE SURE YOU HAVE A BACKUP before you commit your
+disks to it.  As mentioned above, SB.INSTALL does do writing to Block 0 of
+the Secondary Boot Disk (and to the Primary Boot Disk if using
+SMARTBOOT.TINY).  If that makes you nervous, make a backup before you commit
+yourself to using SMARTBOOT.
+
+   This program is FREEWARE.  If you have any problems or suggestions for
+improvements, send me E-mail on GEnie (S.WEYHRICH) or directly to the
+address below.
+
+
+Steven Weyhrich
+Zonker Programming
+2715 N. 112th St.
+Omaha, NE 68164
+
+GEnie Mail: S.WEYHRICH

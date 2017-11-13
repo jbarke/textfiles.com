@@ -1,0 +1,564 @@
+  ZDDDDDDDDDDDDDDDDDD? IMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM; ZDDDDDDDDDDDDDDDDDD?
+  3   Founded By:    3 :  Network Information Access   : 3 Mother Earth BBS 3
+  3 Guardian Of Time 3D:            12APR90            :D3  NUP:> DECnet    3
+  3   Judge Dredd    3 :       Guardian Of Time        : 3Text File Archives3
+  @DDDDDDDDBDDDDDDDDDY :            File 27            : @DDDDDDDDDBDDDDDDDDY
+           3           HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<           3
+           3            IMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM;          3
+           @DDDDDDDDDDDD: VMS: System Manager's Manual  :DDDDDDDDDDY
+                        :         Chapter 4.11          :
+                        HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<
+Here is Chapter 4 of 11 Chapters,  concerning the VMS: System Manager's
+Manual.  Once you have download all 11 chapters,  you will be able to
+enter a Vax system and hack your own accounts with the greatest of ease.
+
+                              MANAGING USERS
+
+As a system manager,  it is your job to create and maintain user accounts
+on the system.  To create accounts for users and effectively manage the
+use of the system, you must determine which users need access to the
+system and what system resources they require.
+
+Once you understand user needs, you can establish controls that customize
+the system appropriately.
+
+The VMS operating system provides the Authorize Utility (AUTHORIZE) to
+authorize and control the use of system resources by individual users.
+This chapter describes the use of AUTHORIZE to do the following:
+
+:     Add a user account
+:  Modify a user account
+:  Remove a user account
+:  List the user accounts
+
+See the Authorize Utility chapter in the Reference section for some
+information on AUTHORIZE.
+
+4.1 THE USER AUTHORIZATION FILE (UAF)
+
+You manage VMS users by creating and maintaining user accounts,  which
+control who can log in to the system and how it can be used.  Use the
+Authorize Utility (AUTHORIZE) to do the following:
+
+:  Create new records and modify existing records in the system user
+       authorization file (SYS$SYSTEM:SYSUAF.DAT) and the network user
+       authorization file (SYS$SYSTEM:NETPROXY.DAT)
+
+:  Create new records and modify existing records in the rights
+       database file (SYS$SYSTEM:RIGHTSLIST.DAT)
+
+Whenever a user logs in,  the system uses the information contained in the
+user authorization file (UAF) to validate the login attempt, establish the
+account's environment, and create a process with appropriate attributes.  In
+this way, the system restricts users to the resources you assign to each
+account.
+
+As system manager, you may want to create a private copy of SYSUAF.  DAT
+in a directory other than SYS$SYSTEM as an emergency backup for the system
+SYSUAF.DAT file.  Note that, to have an effect on user processes, any
+private version of SYSUAF.DAT must be copied to the SYS$SYSTEM directory
+and have the system user identification code (UIC).
+
+Because certain images (such as MAIL and SET) require access to the system
+UAF and are normally installed with the SYSPRV privilege, make certain that
+you always grant system access to SYSUAF.DAT.  The authorization files are
+created with the following default protection:
+
+SYSUAF.DAT     S:RWED, 0:RWED, G, W
+NETPROXY.DAT   S:RWED, 0:RWED, G:RWED, W
+RIGHTSLIST.DAT S:RWED, 0:RWED, G:RWE, W:R
+
+If you need to maximize the protection for SYSUAF.DAT or NETPROXY.DAT, use
+the following DCL command (note, however, that RIGHTSLIST.DAT MUST BE
+WORLD-READABLE);
+
+$ SET PROTECTION=(S:RWED, O,G,W)SYSTEM$SYSTEM: FILENAME
+
+Using the Authorize Utility,  you create and maintain UAF records by
+assigning values to various fields within each record.  The values you
+assign identify the user, define the user's work environment,  and control
+use of system resources.
+EXAMPLE 4-1 presents a typical UAF record for a nonprivileged user
+account.
+
+To gain access to a specific user record, set the default directory to
+SYS$SYSTEM, enter the command RUN AUTHORIZE to invoke the Authorize
+Utility,  and enter the command SHOW username at the UAF> prompt.  You can
+then enter AUTHORIZE commands and such as ADD and MODIFY to create new
+user accounts or change the information in the fields of an existing UAF
+account.
+
+EXAMPLE 4-1: SAMPLE UAF RECORD DISPLAY
+
+$ SET DEFAULT SYS$SYSTEM
+$ RUN AUTHORIZE
+UAF> SHOW WELCH
+
+USERNAME:  WELCH        OWNER:   ROB WELCH
+ACCOUNT:   INVOICE         UIC:  [21.51 ([INV.WELCH])
+CLI:      DCL           TABLES: DCTABLES
+DEFAULT:   USER3: [WELCH]
+LGICMD:
+LOGIN FLAGS:
+PRIMARY DAYS:  MON TUE WED THU FRI
+SECONDARY DAYS:          SAT SUN
+NO ACCESS RESTRICTIONS
+EXPIRATION:       (NONE)   PWDIMINIMUM: 6  LOGIN FAILS: 0
+PWDLIFETIME:      (NONE)  PWCHANGE:    15APR88 13:58
+LAST LOGIN:       (NONE)  (INTERACTIVE), (NONE) (NON-INTERACTIVE)
+MAXJOBS: 0 FILLM:   20    BYTLM:    8192
+MAXACCTJOBS:   0 SHRFILLM: 0    PBYTOLM:     0
+MAXDETACH:  0 BIOLM:   10   JTQUOTA:   1024
+PRCLM:   2 DIOLM:   10   WSDEF:      150
+PRIO:            4 ASTLM:   10    WSQUO:   256
+QUEPRIO:    4 TQELM:   10   QSEXTENT:   512
+CPU:      (NONE) enqlm:   10   pgflquo:      10240
+Authorized Privileges:
+ TMPMBX NETMBX
+Default Privileges:
+ TMPMBX NETMBX
+
+4.1.1  SYSTEM-SUPPLIED UAF RECORDS
+
+The Authorize Utility proves a set of commands and qualifiers to assign
+values to any field in a UAF record.  The software distribution with a new
+VMS system contains a UAF of four records:
+
+:  DEFAULT - Serves as a template for creating user records in the
+       UAF.  A new user record is assigned the values of the DEFAULT
+       record except where you explicitly override those values.  Thus,
+       whenever you add a new account, you need only specify values for
+       fields that you want to be different.  For example, the following
+       AUTHORIZE command creates a new record having the same values as the
+       DEFAULT RECORD, except that the password, UIC, and default directory
+       fields are changed.
+
+       UAF> ADD MARCONI/PASSWORD=QLP6YT9A/UIC=[033, 004]-
+       _UAF> /DIRECTORY=[MARCONI]
+
+       Section 4.2 gives an example of how to use AUTHORIZE to add a user
+       account.
+
+       NOTE: the default record cannot be renamed or deleted from the UAF.
+
+:  FIELD - Permits DIGITAL Field Service personnel to check out a new
+       system.  The FIELD record should be disabled once the system is
+       installed.
+
+:  SYSTEM - Provides a means for you to log in with full privileges.
+       The SYSTEM record can be modified but cannot be renamed or deleted
+       from the UAF.
+
+       CAUTION: Do not change the SYSTEM account UAF record fields for the
+       default device and directory, and privileges.  Installation of VMS
+       maintenance releases and optional software products depends on
+   certain values in these fields.
+
+:  SYSTEST - Provides an appropriate environment for running the User
+   Environment Test Package (UETP).  The SYSTEST record should be
+   disabled once the system is installed.
+
+4.1.2 GENERAL MAINTENANCE OF THE UAF
+
+Usually, you use the UAF supplied with the distribution kit.  (You can,
+however, rename the UAF with the DCL command RENAME, and then create a new
+UAF with AUTHORIZE.)  You should limit any kind of access to this file to
+the SYSTEM account.  Furthermore, each time you modify the file, create a
+backup copy so that in case of a system failure you do not lost the
+modifications.  See Chapter 8 for procedures for backing up files.
+
+The UAF is access as a shared file, and updates to the UAF are made on a
+per record basis, which eliminates the need for both a temporary UAF and a
+new version of the UAF after each AUTHORIZE session.  Updates become
+effective as soon as AUTHORIZE commands are entered, not after the
+termination of AUTHORIZE.  (For this reason, you should not enter
+temporary values with the intent of fixing them later in the session.)
+
+After installing the system, you should make the following modifications
+to the UAF:
+
+:  SYSTEM, FIELD, & SYSTEST ACCOUNTS: If the passwords on these accounts
+   are not secure or if they have not been changed recently, be sure to
+   change the passwords.  Use obscure passwords of six characters or more
+   and continue to change them on a regular basis.  You should not permit
+   general users access to these accounts.
+
+   In addition to changing the password, you can disable an account,
+   especially if it is used infrequently.  To disable an account, specify
+   the following AUTHORIZE command:
+
+   UAF> MODIFY username /FLAGS=DISUSER
+
+   The login flag DISUSER disables the account and prevents anyone from
+   logging into the account.  To enable the account when it is needed, run
+   AUTHORIZE and specify MODIFY users /FLAGS=NODISUSER.  However, you
+   should be cautious about disabling the SYSTEM account, because some
+   optional software and some command procedures may not start up properly
+   if the SYSTEM account is disabled.
+
+   CAUTION: Be careful not to disable all of your privileged system
+   accounts. If you inadvertently do so, you can recover by setting the
+   UAFALTERNATE SYSGEN parameter during a conversational bootstrap
+   operation. See Chapter 2 for information on emergency startup
+   procedures.
+
+:  DEFAULT ACCOUNT: You may want to change several fields in this account.
+   For example:
+
+   UAF> MODIFY DEFAULT/DEVICE=DISK$USER/WSQUO=750
+
+   The default device is set to the name most commonly used for user
+   accounts that will be added.  Likewise the working set value is set to
+   a value appropriate for most users on the system.
+
+Use the SYSTEM account only for system functions such as performing
+backups and installing maintenance updates.  The account comes to you with
+full privileges, so exercise caution in using it.  For example, because
+you have BYPASS privilege.  the system will allow you to delete any file
+no matter what its protection.  If you type an incorrect name or spurious
+asterisk, you may destroy files that you or other users need to keep.  For
+this reason, use another account with fewer privileges for day-to-day system
+management activities.
+
+If you want to receive mail sent to the system account, use the SET
+FORWARD command in the MAIL Utility to have any SYSTEM mail forwarded to
+any other account.  To use the SET FORWARD command for this purpose, do
+the following:
+
+1. Make sure that you are logged in to the SYSTEM account.
+2. Enter the MAIL Utility by entering the MAIL command at DCL Level.
+3. At the MAIL> prompt, enter the command SET FORWARD username.
+
+4.2 ADDING A USER ACCOUNT
+
+How you set up a user account depends on the needs of the individual user.
+In general, there are two types of accounts:
+
+:  INTERACTIVE: A person using an interactive account has access to
+       the system software and can perform work of a general nature
+       (program development, text editing, and so on).  Usually, such an
+       account is considered individual; that is, only one person can use
+   it.
+
+:  CAPTIVE: A person using a captive account (also called a turnkey or
+   application account) has access only to limited user software and
+   can only perform work that is limited to a particular function.
+   Access to a captive account is limited by function; that is, only
+   those who perform a particular function can use it.  For example,
+   you might develop an inventory system.  Anyone whose job entails
+   inventory control can access your system, but that person cannot
+   access other subsystems or the base software.
+
+You should perform the following tasks in conjunction with adding a user
+account:
+
+1. Determine a user name and password.
+2. Determine a unique user identification code (UIC).
+3. Decide where the account's files will reside (the device and
+   directory).
+4. Create a default directory on the appropriate volume, using the
+   following DCL command:
+
+   $ CREATE/DIRECTORY directory-spec/OWNER_UIC= uic
+5.    Determine the security needs of the account (that is, the level of
+   file protection, privileges, and access control).
+
+Once you analyze the purpose of a user account and decide which attributes
+and resources it requires, you can use the Authorize Utility to create the
+account.  Give yourself the SYSPRV privilege.  Then enter the following
+commands to set your default device and directory to that of SYS$SYSTEM
+and invoke the utility as follows:
+
+$ SET DEFAULT SYS$SYSTEM
+$ RUN AUTHORIZE
+
+When the utility responds with the UAF> prompt, use the AUTHORIZE command
+ADD to specify attributes in the UAF fields as shown in this example:
+
+UAF>  ADD JONES/PASSWORD=LPB57WN/UIC=[014,1] -
+_UAF> /DEVICE=DISK$USER/DIRECTORY=[JONES] -
+_UAF> /LGICMD=DISK$USER: [NEWPROD]GRPLOGIN -
+_UAF> /OWNER="ROBERT JONES"/ACCOUNT=DOC
+
+The /OWNER and /ACCOUNT entries are primarily for accounting purposes and
+can be omitted unless required by your site.  The following unspecified
+qualifiers usually take their default values from the DEFAULT record:
+
+:  LIMITES and QUOTAS - (/ASTLM, /BIOLM, /CPUTIME, /DIOLM, ENQLM,
+   /FILLM, /]TQUOTA, /MAXACCTJOBX, /MAXDETACH, /MAXJOBS, /PGFLQUOTA,
+   /PRCLM, /SHRFILLM, /TQELM, /WSDEFAULT, /WSEXTENT, /WSQUOTA) - These
+   qualifiers impose limits on the use of resuable system resources;
+   the default values are adequate in most cases.
+
+:  PRIORITY - (/PRIORITY, /QUEPRIORITY) - The default values are
+   usually adequate for accounts not running real-time processes.
+
+:  PRIVILEGES - (/DEFPRIVILEGES, /PRIVILEGES) - The default privileges
+   (TMPMBX, NETMBX) are usually adequate, depending on the purpose of
+   the account.
+
+:  PRIMARY & SECONDARY LOGIN TIMES; LOGIN FUNCTIONS - (/ACCESS,
+   /DIALUP, /FLAG, /INTERACTIVE, /LOCAL, /PRIMEDAYS, /REMOTE) - By
+   default, users are allowed to log in at any hour of any day.  To
+   override the setting of a particular day, use the DCL command SET
+   DAY.  Use this command if a holiday occurs on a day that would
+   normally be treated as a primary day and you want it treated as a
+      secondary day.
+
+   The following example shows an AUTHORIZE command that adds a UAF
+   record of a captive account:
+
+   UAF> ADD INVENTORY/PASSWORD=QRC7Y94A/UIC=[033,066] -
+   _UAF> /DEVICE=DISK$INVENT/DIRECTORY[INV]/LGICMD=INVENTORY -
+   _UAF> /FLAGS=CAPTIVE/NOACCESS=(PRIMARY, 18-8,SECONDARY, 0-23)
+
+   In this example,  the /FLAGS and /NOACCESS qualifiers restrict
+   users from logging in to the captive account.  The /NOACCESS
+   qualifier limits logins to specific hours.  The /FLAGS=CAPTIVE
+   qualifier adds the login flag CAPTIVE to the captive account
+   record.  The CAPTIVE flag locks the person using the account into
+   the application software by doing the following:
+
+   :  Disabling the CTRL/Y function to prevent users from
+      interrupting the execution of the command procedure and
+      gaining access to the command interpreter
+
+   :  Preventing the user from specifying an alternate command
+      interpreter with the /CLI qualifier at login time
+
+   :  Preventing the user from specifying an alternate default
+      disk device with the /DISK qualifier at login time
+
+   The following examples summarize the steps for setting up an
+   individual user account and a captive account:
+
+$ SET DEFAULT SYS$SYSTEM
+$
+$ RUN AUTHORIZE
+UAF>ADD JONES -      ! User name
+_/PASSWORD=ROCKET -     ! Password
+_/UIC=[014,1] -      ! UIC
+_/ACCOUNT=DOC -      ! Accounting Group Name
+_/OWNER="ROCKET JONES"     ! Owner
+_/DEVICE=$DISK1 -    ! Default directory
+_/DIRECTORY=[JONES]
+UAF>EXIT
+$
+$ ! Create top-level directory for individual
+$ CREATE/DIRECTORY $DISK1: [JONES] -
+_$ /OWNER_UIC=[DOC,JONES] -
+_$ /PROTECTION=(S:RWE,0:RWE,G:RE,W:RE)
+$
+
+4.3 SETTING UP A CAPTIVE ACCOUNT WITH AUTHORIZE
+
+You use the automatic login facility (ALFMAINT) to set up a terminal that
+accepts automatic logins from authorized users.  For example, a terminal
+might be set up for the account INVENTORY, which automatically logs a user
+into a captive account when INVENTORY is specified as the user name.
+
+First, you must follow the steps described in the previous sections to
+create the toplevel default directory and add the account.  Once the
+account has been added, you set your default directory to SYS$MANAGER and
+invoke the ALFMAINT command procedure.  ALFMAINT prompts you for the name
+of the terminal that you want assciated w/ the user name of the automatic
+login account.
+
+The following example summarizes the steps for setting up automatic logins
+for an individual user account and a captive account:
+
+INDIVIDUAL ACCOUNT W/ AUTOMATIC LOGIN
+
+$ SET DEFAULT SYS$SYTEM
+$
+$ RUN AUTHORIZE
+UAF>ADD JONES -      ! Username
+_/PASSWORD= -        ! Null password
+_/UIC=[014,1] -      ! UIC
+_/ACCOUNT=DOC!                 ! Accounting group name
+_/OWNER="ROCKET JONES" -   ! Owner
+_/DEVICE=$DISK1 -    ! Default directory
+_/DIRECTORY=[JONES] -
+UAF>EXIT
+$
+$ ! Create top-level directory for individual
+$ CREATE/DIRECTORY $DISK1:  [JONES] -
+_$/OWNER_UIC=[DOC,JONES]
+_$/PROTECTION=(S:RWE, O:RWE, G:RE, W:RE)
+$
+$ SET DEFAULT SYS$MANAGER
+$
+$ @ALFMAINT
+
+Enter the name of the terminal thatt you would like to set for
+automatic login, or a blank line or EXIT to exit.
+
+terminal (ddcu)? TTA1           ! Assigned terminal
+Username? JONES
+Terminal (ddcu)? EXIT
+
+CAPTIVE ACCOUNT W/ AUTOMATIC LOGIN
+
+$ SET DEFAULT SYS$SYSTEM
+$
+$ RUN AUTHORIZE
+UAF>ADD INVENTORY -                ! Username
+_/PASSWORD= -                      ! Null password
+_/UIC=[033,066] -                  ! UIC
+_/ACCOUNT=INV -                    ! Accounting group name
+_/LGICMD=$DISK1:[INVENTORY]LOGIN   ! Login File
+_/ACCESS=(PRIMARY,8-17) -          ! No off hours
+_/FLAGS=CAPTIVE                    ! All flags on
+UAF>EXIT
+$
+$ SET DEFAULT SYS$MANAGER
+$ @ALFMAINT
+
+Enter the name of the terminal that you would like to set for
+automatic login, or a blank line or EXIT to exit.
+
+Terminal (ddcu)? TTA0                   ! All terminals
+Username? INVENTORY                     ! on automatic
+Terminal (ddcu)? TTA1                   ! login except
+Username? INVENTORY                     ! the console terminal
+Terminal (ddcu)? TTA2                   ! (the console terminal
+Username? INVENTORY                     ! for this system is TTA4)
+Terminal (ddcu)? TTA3
+Username? INVENTORY
+Terminal (ddcu)? EXIT
+
+4.4 MODIFYING A USER ACCOUNT
+
+Use the AUTHORIZE command MODIFY to change any of the fields in an existing,
+user account.  For exmple, the following command is used to change user
+WELCH's password:
+
+UAF> MODIFY WELCH/PASSWORD=newpassword
+
+4.5 LISTING USER ACCOUNTS
+
+Use the AUTHORIZE command LIST to create the file SYSUAF.LIS containing a
+summary of all user records in the UAF, as follows:
+
+UAF> LIST
+%UAF-I-LISTMSG1, writing listing file
+%UAF-I-LISTMSG2, listing file SYSUAF.LIS complete
+
+By default, the LIST command produces a brief report conatining the following
+information from the UAF:
+
+:       ACCOUNT OWNER
+:       USER NAME
+:       UIC
+:       ACCOUNT NAMES
+:       PRIVILEGES
+:       PROCESS PRIORITY
+:       DEFAULT DISK AND DIRECTORY
+
+Use the /FULL qualifier to create a full report of all the information
+contained w/in the UAF, as follows:
+
+UAF> LIST/FULL
+%UAF-I-LISTMSG1, writing listing file
+%UAF-I-LISTMSG2, listing file SYSUAF.LIST complete
+
+4.6 DELETEING A USER ACCOUNT
+
+The main problem in deleting an account, especially an interactive account
+is cleaning up the files used by the account.  The following steps are
+suggested:
+
+1.  Copy (or have the outgoing user of the account copy) any files of value
+    to the ownership of another account.  Be sure to change the owner UIC of
+    the files to match the owner UIC of the new owner.  You can also use the
+    Backup Utility ( BACKUP ) to copy the files to a backup tape or disk.
+
+2.  Change the password, and log in to the account that you want to delete.
+    ( By working from a nonprivileged account, you can avoid inadvertently
+    deleting files that may be owned by an account other than the one that
+    you want to delete.)
+
+3.  Delete the account's files and directories from the deepest level up to
+    the to level using the following procedure:
+
+    a.  Locate and examine all subdirectories using the DCL command DRECTORY
+        [default ... ], where default is the name of the account's default
+        directory.
+    b.  Delete the files in each subdirectory and then delete the
+        subdirectory. Note that directory files are protected against owner
+        deleteion, therefore, you must change the protection before deleting
+        directory files.
+    c.  Delete the account's top-level directory.  Example 4-2 Illustrates a
+        command procedure that deletes an account's files from the bottom
+        level up.
+
+        NOTE:  the command procedure in Example 4-2 should not be executed
+               from a privileged account.
+
+4.  Remove the account, using the Authorize Utility.
+
+5.  Remove the user's disk quota entry from the disk quota file, if one
+    existed, w/ the SYSMAN UTILITY.
+
+6.  Remove associated VAXmail information by entering the MAIL command REMOVE
+    username.
+
+EXAMPLE 4-2:  COMMAND PROCEDURE TEMPLATE FOR DELETING AN ACCOUNT'S FILES
+
+$ !          DELTREE.COM -- Deletes a complete directory tree
+$ !          P1 = pathname of root of tree to delete
+$ !          All files and directories in the tree, including
+$ !          the named root, are deleted.
+$ !
+$ IF "'DELTREE'" .EQS. "" THEN DELTREE = "@SYS$LIBRARY:DELTREE"
+$ ON CONTROL_Y THEN GOTO DONE
+$ ON WARNING THEN GOTO DONE
+$ DEFAULT = F$LOGICAL ("SYS$DISK" + F$DIRECTORY ()
+$10:
+$ IF P1 .NES. "" THEN GOTO 20
+$ INQUIRE P1 "ROOT"
+$ GOTO 10
+$20:
+$ IF F$PARSE(P1) .EQS. "" THEN OPEN FILE 'P1'
+$ SET DEFAULT 'P1'
+$LOOP:
+$ FILESPEC = F$SEARCH("*.DIR;1")
+$ IF FILESPEC .EQS. "" THEN GOTO LOOPEND
+$ DELTREE [.'F$PARSE(FILESPEC..."NAME")']
+$ GOTO LOOP
+$LOOPEND:
+$ IF F$SEARCH(+*.*;*") .NES. "" THEN DELETE *.*;*
+$ DIR = (F$DIRECTORY()-"]"-">")-F$PARSE("[-]"...-
+         "DIRECTORY")-"]"-">")-"."-"["-"<"
+$ SET PROTECTION=WORLD:RWED [-]'DIR'.DIR;1
+$ DELETE [-]'DIR'.DIR;1
+$DONE:
+$ SET DEFAULT 'DEFAULT'
+
+If you never assign multiple users the same UIC, you can use the Backup
+Utility to remove the user's files, even if the files are scattered
+throughout the directory structure.  The following is an example of a BACKUP
+command used to remove files.
+
+$ BACKUP/DELETE PUBLIC:[...]/OWNER=[21,103] MTAO:PUBLICUIC.SAV
+
+This BACKUP command copies and deletes only those files owned by the specified
+UIC on disk PUBLIC.  The files are copied into a save set named PUBLICUIC on
+device MTA0.  Note that the BACKUP/DELETE command does not delete the
+directory files (file extension DIR) for the account.
+
+DISABLING A USER ACCOUNT
+
+If you want to disable an account w/out deleting it, set the disable user
+flag (/FLAGS=DISUSER) using AUTHORIZE. If the user is logged in, the account
+is diabled only after the user logs out.
+
+Disabling a powerful yet infrequently used account provides an extra security
+mesasure by eliminating the risk of guessed or stolen passwords.
+
+$EOF
+
+[OTHER WORLD BBS]
+
+
+

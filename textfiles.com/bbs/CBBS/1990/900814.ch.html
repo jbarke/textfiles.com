@@ -1,0 +1,41 @@
+
+"Mine" command checking for msgs TO you, ^K to abo
+>Function:?dir c:log;dir c:killed;dir summary;type-30 log,ward c;or;*;short
+
+1,2,WARD CHRISTENSEN,,
+E#43872,6
+08/12/90,21:59:14,216532,2,PHIL SCHUMAN,,0
+08/12/90,22:36:10,216533,2,WA
+08/13/90,21:36:15,216544,2,WARD CHRISTENSEN,,2
+08/14/90,08:24:55,216545,2,JACK HOMA,,9
+08/14/90,09:51:07,216546,2,DENNIS STAHL,,1
+08/14/90,09:59:08,216547,2,GARY SCHULZE,DENVER/CO,4
+08/14/90,11:01:38,216548,2,DON PIVEN,,0
+08/14/90,11:23:12,216549,2,DENNIS STAHL,,0
+08/14/90,15:17:02,216550,2,JOE SEROCKI,,1
+08/14/90,15:18:44,216551,2,RE DUCO,LAKE VILLA/IL,
+E#43874,2
+08/14/90,16:07:21,216552,2,JIM CHALOUPKA,,8
+08/14/90,16:45:11,216553,2,MIKE DEER,,10
+]n
+MIKE DEER,
+08/14/90,17:56:55,216554,2,CHRIS MCKENNA,AURORA/IL,
+08/14/90,21:22:02,216555,2,JAMES SCHMIDT,,1
+08/14/90,22:10:54,216556,2,WARD CHRISTENSEN,,
+43874 08/14/90 RE DUCO => ALL: "80387 MATH CHIP FOR SALE"
+
+ - End of summary - 
+
+Retrieving flagged msgs: C skips, K aborts.
+
+Msg 43874 is 07 line(s) on 08/14/90 from RE DUCO
+to ALL re: 80387 MATH CHIP FOR SALE
+
+for sale:
+ 80387-20 math chip
+ 40 seagate 251 hard drive
+
+best offer or will trade for photographic/darkroom equip.
+
+dup. chars.
+>Function:?

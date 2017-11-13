@@ -1,0 +1,61 @@
+
+                                MPI HQ -  TOS!
+                                The oTher SIde
+                                (718) 209-2913
+                                Sysop: Gandalf
+
+    HARMoNY SKATeS               Midnight Run             Eight Miles High
+   MPI 718 Dist Site           MPI 212 Dist Site         MPI 516 Dist Site
+    (718) 767-1931              (212) 828-5194             (516) 499-2302
+   Sysop: Sk8Master             Sysop: Gunjin          Sysop: Screaming Eagle
+
+    *---------------------------------------------------------------------*
+    |                          MICROPIRATES, INC                          |
+    *---------------------------------------------------------------------*
+
+ Program:     Calling Card Calculator (C.C.C.) v1.0
+ Written by:  HACKER and MANIAC of MPI
+
+   This program, coined C.C.C., was written to compute the Personal
+Identification Number (PIN) of AT&T calling cards. NOTE: This pattern only
+applies to first-issue cards. In other words, if the card was lost or stolen
+(and subsequently a new card was issued), a new PIN pattern would be
+implemented, rendering this program worthless. However, MPI plans to have
+alternate patterns for reissued cards in future versions of this program. And
+of course, the owner of the phone number that you input must own a calling
+card.
+   Currently, this version of C.C.C. supports trapping to a file or to your
+printer.
+   Number one, a calling card prints out on the owner's bill the number that
+you called from AND the number that you called to. Due to this nasty fact, it
+would be advisable to call from a pay phone or use a divertor. And DON'T call
+your dope dealer, unless of course, he didn't make his last shipment!
+   Anyway, pick up the phone.
+
+   Dial: 1 + Area code + Number that you are calling TO.
+   NOTE: For international calls (natch!), it would be 0 + 1, etc...
+
+   You will then hear 'AT&T' and a tone.
+
+   Dial: Area code + Number of the OWNER of the card + 4-digit PIN number.
+                                                               ^^^^^^^^^^
+                                    (aquired from your handy-dandy C.C.C.)
+
+   If the PIN number is valid, you're in. Otherwise, you will be asked to
+try again.
+
+   We hope you enjoy this product of MPI and we appreciate your support.
+
+ Greetings to:     Screaming Eagle and Gunjin, Sysops of our newest Dist Sites.
+ MPI Members are:  Hacker, Maniac, Mercenary, Black Death, Circuit Breaker,
+                   Blu-Geak, Whiz-Kid!, Solo, Mr Static, The Brain, Mutant-X
+
+   ....And remember to pick up the latest MPI Mag at your favorite BBS.
+If for some STRANGE reason, you can't find it around, call any dist site or
+our headquarters for a copy. It features mouse support, drop-down menus, VGA
+graphics/animation and Computer Underground-related articles to please
+everyone.
+
+This doc written by yours truly, Iceman, Liasion for MPI.
+
+

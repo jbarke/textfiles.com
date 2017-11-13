@@ -1,0 +1,522 @@
+
+
+                       SUPERBBS TIP FILE
+                           Len Morgan
+                            QST BBS
+                         P.O. Box 13965
+                    Sacramento, Ca. 95853-3965
+
+                      Fido Address: 1:203/730
+                     BBS Phone: (916) 920-1288
+
+This file contains most common mistakes when setting up SuperBBS.  I
+have tried to catagorize the problems for an easier time finding your
+solution.  I am constantly updating this file, so you may want to
+periodically check for a new version.
+
+While it my intention is to assist the user with as many hints as
+possiible, there are no guarantees that these fixes are related to the
+problem of all users.  Each computer system may exibit different
+problems associated with hardware and applcations.  This is a list of
+suggested solutions only.
+
+                               INDEX
+
+    Fossil ................................................ 1
+    Batch file ............................................ 2
+    Modem ................................................. 3
+    Multinode ............................................. 4
+    SuperBBS .............................................. 5
+    Door .................................................. 6
+
+
+
+1.  FOSSIL PROBLEMS:
+    ---------------
+
+PROBLEM:  BBS starts to load then gives a message of No fossil present,
+then it ends.
+
+SOLUTION: You must have a program loaded as a TSR (Terminate and Stay
+Ready) that allows the bbs to communicate with your comport.  This is
+called a FOSSIL driver.  Two common fossil drivers are X00 and BNU and
+can be found on most bbs's.
+
+PROBLEM:  I run a HST modem, all my users get garbage when calling in
+at 2400 baud and below.
+
+SOLUTION:  You are using a HST modem and you did not lock your baud
+rate.  This is the rate at which your computer and modem communicate and
+is usually locked at 19,200 or 38,400 baud.  You lock your baud rate
+with a fossil driver.  An example of a locked fossil driver on com 1
+with X00 is:  X00.EXE B,0,19200 E
+
+SOLUTIION:  One of your modem settings control the DTE and DCD rates.
+These are the baud rates that your modem and computer talk and your
+software and callers.  Your passing the modem to computer baud rate
+to the callers.  Check your modem settings.
+
+PROBLEM:  My bbs won't load when a call comes in.  The modem answers the
+phone but the bbs won't load.
+
+SOLUTION:  You may have set up either your fossil or SuperBBS with an
+incorrect port.  When loading SuperBBS for com 2 you need to load it
+with: BBS.EXE -P2 the port in X00 is designated as the second
+parameter (X00.EXE B,1,19200 E).
+
+
+
+2.  BATCH FILE PROBLEMS:
+    -------------------
+
+PROBLEM:  My bbs loads, but when a user logs off it drops to dos.
+
+SOLUTION:  You are not loading your bbs with a batch file or you have an
+incorrect batch and it is not looping back to reload the bbs.  Use this
+simple batch file if you don't have a mailer program loading before
+SuperBBS.  Place it in your SBBS directory and run it:
+
+Echo off
+
+:start
+bbs.exe -P1 -E0
+
+:afterbbs
+if errorlevel 2 goto end
+goto start
+
+:end
+Echo SuperBBS is down.....
+
+PROBLEM:  I run a mailer and it won't pass the baud rate to the bbs
+correctly.
+
+SOLUTION:  While it is difficult to know all your mailer settings, you
+will need to understand how your mailer passes the baud rate to your
+bbs.  SuperBBS can load several different ways including the user of
+indiividual baud rates (-B300, -B1200, Etc.) or passing the baud rate to
+a dobbs.bat file (-B%1), and depends on the method of batching your
+using (SPAWNING or EXITING).  Read the documents in the back of Sbbs
+117 to learn about methods to know how to load baud rates.
+
+PROBLEM:  I run a mailer and SuperBBS loads, but when a user logs off it
+won't reload the mailer.
+
+SOLUTION:  Your batch file isn't looping back to a starting point to
+reload the mailer.  If you use the spawning method, you need to reload
+the mailer batch file.  If your running the EXITING method see that it
+returns to a label to start the batch file and reload the mailer.  An
+example would be:
+
+echo off
+:start-------<----<-----<--------
+          |                      |
+cd\fd <---                       |
+fd.exe -->--------->----------   ^
+                              |  |
+if errorlevel 200 goto 2400 <->  |
+goto end                      |  ^
+                              |  |
+:2400 <-----------------------   |
+bbs.exe -B2400 -P1 -E0           ^
+goto afterbbs --->--             |
+                    |            |
+:afterbbss <----<---             ^
+if errorlevel 3 goto mail        |
+goto start ----->---------->-----
+
+PROBLEM:  I can't receive callers at baud rates above 2400 and I run a
+HST modem with a mailer program.
+
+SOLUTION:  You have the maximum baud rate in SuperBBS Config/Modem set
+too low.  Your maximum baud rate in SuperBBS should be your locked baud
+rate.
+
+SOLUTION:  Your not passing the baud rate from your mailer to SuperBBS
+properly.  See the batch file examples in the back of 1.17 documents.
+Check your mailer setup and make sure your setup properly to pass the
+hiigher baud rates to your batch file.
+
+
+3.  MODEM PROBLEMS:
+    --------------
+
+PROBLEM:  SuperBBS won't init my modem.  It tries many times then fails.
+
+SOLUTION:  You need to find the proper init string for your modem.  File
+request INITS.ARJ from QST and see if your modem is listed.
+
+PROBLEM:  I added a HST modem and now I get errors during high speed
+transfers.
+
+SOLUTION:  You may be using an external modem and your I/O requires a
+16550 Uart chip to buffer the high speed flow of data.  You are loosing
+data due to not having the buffers in your Uart chip.  Check you I/O card
+for either a 8250 or 16450 Uart chip (40 pin I.C.) and if you find it,
+either the card or I.C. (if it unplugs) needs to be replaced with a
+16550A, AN, or AFN Uart chip.
+
+SOLUTIION:  If you don't have a 16550 Uart chip, lower your locked baud
+rate to 19,200 Bps until you can replace it.
+
+SOLUTION:  If loading DSZ in an external door, the command line, when
+loading DSZ, needs to have the locked baud switch.
+
+PROBLEM:  My modem drops carrier after answering the phone.
+
+SOLUTION:  Most modems use the command &C1&D2 to control what the modem
+does after answering.  Check your DCD and DTE settings in your manual.
+
+PROBLEM:  SuperBBS hangs up on 2400 baud users.
+
+SOLUTION: Check your config/modem and see what baud rate you specified
+as your highest baud rate.  You might have set it too low.
+
+PROBLEM:  I set the init string in my modem and use the ATZ in SBBS to
+init the modem, however, it won't save my init string correctly.
+
+SOLUTION:  Use the AT&W command to save your init when done.
+
+
+
+4.  MULTINODE
+
+PROBLEM:  I keep getting the wrong download limits for users on lines.
+
+SOLUTION:  Your set command of SET SBBS=C:\SBBS sets the enviroment for
+SuperBBS and causes it to look in that directory for the needed files.
+You are leaving the FILES.BBS in the main directory and SuperBBS is
+finding them with the set command and loading them without looking in
+your line directory.  Remove FILES.BBS, CONFIG.BBS, Etc. from the system
+directory and have them in each line directory.
+
+PROBLEM:  I get the wrong menus for each line.
+
+SOLUTION:  If your menus differ for each line, you need to have a
+duplicate set and put them in the MENUS1,2, Etc. directory.  Then edit
+them for each line and change the path in the config of SuperBBS.
+
+PROBLEM:  My menu editor changes the menus, but when I logon to a node
+it isn't changed.
+
+SOLUTION:  Put your user editor in each line directory and load it from
+there.  Make sure your config.bbs is removed from the system directory,
+and put in the line directory that the menu editor is loaded from.
+
+PROBLEM:  I keep getting corrupted files or loose my message base when
+two users access it at the same time.
+
+SOLUTION:  Install SHARE.EXE.  You are opening the message base by both
+users and corrupting it.
+
+PROBLEM:  When my users line 2 access a game, they are getting names of
+users on line 1 in the game.
+
+SOLUTION: Load config/Other/On/Off and answer Yes to the question Create
+DORINFO?.DEF.  This will make a dorinfo1,1,2, etc. for each node.
+
+PROBLEM:  I can't get TopEd (Ansi Editor) to work.
+
+SOLUTION:  Configure TopEd for all your nodes.
+
+SOLUTION:  Make sure you have the Make dorinfo?.def set to yes in
+config.bbs of each line directory and you are loading TopEd with the *N
+switch from SuperBBS config.
+
+PROBLEM:  No matter what I do in the config, it loads the settings
+wrong.
+
+SOLUTION:  Remove your config.bbs from the main directory and have the
+config.bbs in each line directory, then load the bbs from the line
+directory.  Remember to remove ALL control files from the root or your
+set command will look in the SBBS directory first and load what it finds
+from there.
+
+SOLUTION:  Load BBS.EXE -N1, -N2, Etc., for each line directory from
+your batch file.  Make sure you create a different batch file for
+each line you run.
+
+SOLUTION:  Make a seperate directory for each line and don't use the
+SuperBBS directory for anymore callers.
+
+PROBLEM:  I can't get my internal file transfers to work.
+
+SOLUTION:  Obtain a copy of DSZ and put it into your SuperBBS directory
+then ad this statment to you autoexec.bat file: SET
+DSZLOG=C:\SBBS\DSZ.LOG, or whatever directory path you want to use for
+it.
+
+SOLUTION:  Make sure you have the EXTPE.EXE in the SBBS directory.
+
+PROBLEM:  It won't run and gives a message of incorrect path to common
+directory.
+
+SOLUTION:  In SuperBBS config/multinode there is a path for a common
+directory, name it and create one.
+
+
+
+5. SUPERBBS PROBLEMS:
+   -----------------
+
+PROBLEM:  I can't get SuperBBS to execute my events on the days I set
+up.
+
+SOLUTION:  Make sure your using X's and Dashes.  X's denote the days you
+want it to execute.
+
+PROBLEM:  When I try to list files in a file area, SuperBBS tells me
+that it can't find the files.bbs, but I have one in the directory.
+
+SOLUTION:  Check your directory path to each file area in Config/Files.
+Make sure you do not put the FILES.BBS after the pathway, it is assumed.
+
+PROBLEM: SuperBBS can't find my message base or user files.
+
+SOLUTION:  In your autoexec.bat file, put SET SBBS=C:\SBBS, or whatever
+drive and path you are using for your system directory.
+
+PROBLEM:  My users upload a .REP packet for QWK offline reader and after
+transfer SuperBBS says ".PKT not found".
+
+SOLUTION:  Your packet is arriving, however, your archive program isn't
+working to extract the .PKT message package inside.  Check your
+archivers and make sure they are in your path statment.
+
+PROBLEM:  Users start a download and then it aborts.
+
+SOLUTION:  You may be running out of memory.  Turn on the swapping
+option in config.  Make sure you have buffers=20 files=20 in config.sys
+or add some more memory.
+
+PROBLEM:  All my users are getting the same time limit and it isn't
+right.
+
+SOLUTION:  Check that you defined the users time limit in LIMITS.BBS by
+user level.
+
+PROBLEM:  Scan.exe isn't working.
+
+SOLUTION:  Sbbs has a problem handling McAfee's Scan.  Remove it from
+the Config and leave it blank.  Put your latest copy of Scan.exe in a
+directory that is in your path or in the SuperBBS directory.  Make sure
+you update the file on each change, because it will hang up with a
+notice that you might be using a old version of Scan and asking if you
+want to continue.
+
+PROBLEM:  I moved my OVRSBBS.OVR to another directory and now I get an
+overlay error -2.
+
+SOLUTION:  Specify the path to the overlay with it's name, in
+autoexec.bat.  SET SBBSOVR=C:\OVERLAY\OVRSBBS.OVR or whatever drive and
+directory you prefer.
+
+PROBLEM:  I only want my users to use the english language but SBBS
+won't find it.
+
+SOLUTION:  Make a file called LANGUAGE.CTL and on the first line put
+ENGLISH.LNG.  Make sure you have both of these files in the SuperBBS
+directory.
+
+SOLUTION: Load Lconfig and define the name of the language file your
+using at the bottom of the first screen.
+
+SOLUTION:  You don't have the DEFAULT.LNG in the system directory for
+that line.
+
+PROBLEM:  My lastread pointers don't work.
+
+SOLUTION:  You may have converted from another bbs program and your
+users all have a lastread count higher than your lastread.bbs file.
+Delete the lastread.bbs and if possible reset all users lastread counter
+to zero.  They will have to begin over, but it will track properly.
+There are programs that allow you to reset fields globally in the SuperBBS
+user file.
+
+SOLUTION:  Your users are setting their lastread counters higher than
+the last message number.
+
+SOLUTION: You may be renumbering the messages with your message base
+utility and not resetting the users.bbs file.
+
+SOLUTION:  Make sure your message base is in the SuperBBS directory.
+                                                          
+PROBLEM:  I have a CD-ROM and SuperBBS takes forever finding flagged
+files.
+
+SOLUTION:  This is a problem with versions prior to v1.18.  Upgrade or
+use ACfiles to handle CD-ROM's.
+
+SOLUTION:  Discontinue the user of download counters.
+
+PROBLEM:  My computer locks up after a download.
+
+SOLUTION:  There is a problem with some computers when using the
+download brackets [] and removing their use will solve the problem.
+
+PROBLEM:  SuperBBS can't find my message base or user files.
+
+SOLUTION:  You didn't put the set command in your autoexec.bat file.  Put
+ths statment in the autoexec.bat file: SET SBBS=C:\SBBS or whatever
+drive and path you prefer.
+
+SOLUTION:  Put your message base files (MSGTEXT.BBS, MSGINFO.BBS,
+MSGHDR.BBS) in the SBBS directory.
+
+PROBLEM:  SuperBBS won't show my usage graph properly.
+
+SOLUTION:  This has been a problem with recent versions of Sbbs and
+should be fixed in v1.18.  Persistancy has payed off however, deleting
+the timelog.bbs file and allowing it to rebuilt will sometimes cause it
+to work properly.
+
+
+
+6. DOORS
+   -----
+
+PROBLEM:  When runnning a Bi-Modem protocol like HSLink, and a user uploads
+at the same time they download, it puts the upload in the wrong directory.
+
+SOLUTION:  This is not a problem, so much, with SuperBBS, but more of a
+problem with the third party software not fitting it to SuperBBS.  A
+work around would be to use DSZ2ICOM to load just before the Bi-Modem
+protocol.  It will direct to upload the the proper directory before
+beginning the transfer.
+
+SOLUTION:  Have one directory for all uploads, then sort and toss them
+manually at a later date.
+
+PROBLEM:  I'm running an external protocol door and a HST modem.  I get
+slow CPS transfer rates and errors when some one uses it.
+
+SOLUTION:  When running a protocol like DSZ, you must use hand shaking
+and speed settings.  Try loading the DSZ protocol like this; DSZ port %P
+speed 19200 ha both est 0 %b sz %F.  The "speed" will depend on if your
+using a 16550 Uart chip or not.  Locking your comport at 38400 may
+require a 16550 Uart.  The variables of %P, %F will depend on the door
+your using to load DSZ and may change with the door program, they load
+the port and file to be transfered.  The "sz" if for send and "rz" for
+receive.  Xmodem and Ymodem DSZ are loaded in a simular fashion.
+
+PROBLEM:  When a user loads a game, I run out of memory.
+
+SOLUTION: Use the *S command after the batch file name to swap SuperBBS
+out to memory.
+
+PROBLEM:  I run a HST modem and my bbs works fine, but when a user loads
+a game all they see is garbage.  It looks fine on my end.
+
+SOLUTION:  The game door your using doesn't check the comport to get the
+users baud rate and it is passing the locked baud rate to the user.
+Complain to the author or install a program to unlock the baud rate
+before loading the game, then lock it back after done.
+
+PROBLEM: I'm running a door for RA and it uses the dorinfo1.def and my
+user base is getting corrupted.
+
+SOLUTION:  Discontinue using the door or convert it over with Door
+Master.  It is a different structure then SuperBBS.
+
+PROBLEM:  I need to run a door from another bbs on SuperBBS and it
+doesn't use the same dorinfo1.def, it uses another type.
+
+SOLUTION:  Use Door Master to convert the Dorinfo1.def to the bbs type
+the program was written for.
+
+PROBLEM:  I need a remote user editor so I can manage my message base
+remotely.
+
+SOLUTION:  Use Doorway.  It allows you to run a program that isn't
+supposed to be sent over the modem.  This way, you can use the SuperBBS
+SBBSUSER.EXE remotely.
+
+PROBLEM:  What do I use to load Bluewave from the Config/door.
+
+SOLUTION: *C /c C:\BLUE\BLUE.BAT BW *N *P *S *MQ *E, change the path and
+name to suit your setup.  Be sure to make the batch file. :-)
+
+PROBLEM:  I can't load a batch file within the config/doors.
+
+SOLUTION:  In order to load a batch file in doors you must use the
+command *C /c then the path and name of your batch file.  You must also
+have the statment in your autoexec.bat file SET COMSPEC=C:\COMMAND.COM.
+
+PROBLEM:  When a door loads, it won't pass parameters like time
+remaining, graphics, etc..
+
+SOLUTION:  You didn't use the paramters of *F *L *B *G *T *S *E after
+the batch file name.  They set the users first, last, baud, graphics,
+time remaining, swap to dos, reset users info from exitinfo.bbs file.
+
+PROBLEM:  SuperBBS loads my program, but it won't show up on the users
+end.
+
+SOLUTION:  The program may not be written to detect the comport and you
+may need to use GATEWAY to direct it.
+
+SOLUTION:  The program is not written to be used on a bbs as a door.
+
+PROBLEM:  When my door loads it is asking for a file I don't have.
+
+SOLUTION:  It is written for another bbs program like PCboard and you
+need a program to convert the dorinfo?.def from the drop file it uses.
+Find a copy of Door Master.
+
+Your assistance is appreciated in adding any problems that are not
+covered.  Please be sure to send me your problem/solution for updating
+this file.
+
+                            CHECK LIST
+
+Many problems with installing or running SuperBBS are operator error
+when installing the software.  Here are some things to check.
+
+AUTOEXEC.BAT:
+
+SET SBBS=C:\SBBS or whatever path and directory name you prefer to
+your system directory.
+
+SET COMSPEC=C:\COMMAND.COM to set dos to handle batch files.
+
+PATH=C:\;C:\DOS;\C:\SBBS to set the pathways for directories you will
+need in Sbbs.
+
+CONFIG.SYS:
+
+DEVICE=C:\DOS\ANSI.SYS to load ansi.
+
+DEVICE=C:\DOS\X00 E to load the fossil driver.  More is needed for HST
+operation.
+
+BUFFERS=20
+
+FILES=20
+
+SUPERBBS:
+
+Keep your user files and message base in the SBBS directory.
+
+Load Config and enter all information correctly.  Avoid any "Multi-line"
+settings and directories unless you go multi-line.
+
+Load Lconfig and check your pathways to the system directory, menus, and
+textfile directories.  Don't forget to specify the language file your
+using and make sure it is in the system directory.
+
+Create a batch file that reloads the bbs after a user logs off.  See
+examples in the back of 1.17 documents.
+
+You will need to experiment with modem settings in Config/Modem to get
+your modem to init.  If you have problems, file request INITS.ARJ from
+QST and see if your modem settings are in there.  If not, contact a
+support site or SuperBBS echo and ask for a working setting for a
+"Standalone" bbs for you modem model and type.
+
+NOTES:
+
+Most users don't give us enough of the problem to solve it.  Be very
+exact on what is happening and when.  What kind of equipment your
+running and when possble your autoexec.bat, config.sys, config.bbs, and
+all batch files you use.
+

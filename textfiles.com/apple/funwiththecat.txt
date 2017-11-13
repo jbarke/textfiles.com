@@ -1,0 +1,113 @@
+[_]--------------------------------[_]
+[_]         Fun with the Cat       [_]
+[_]       Tutorial Number One      [_]
+[_]                                [_]
+[_] Written by Rappin' Jimmy B.    [_]
+[_]           (Knights of Nicht)   [_]
+[_]                                [_]
+[_] Twisted System....612/421-1382 [_]
+[_] Abdul's Oasis.....619/341-2984 [_]
+[_]--------------------------------[_]
+NOTE: The following tutorial is first
+      in a series of tutorials. This
+      file may be distributed anywhere
+      as long as the above stays the 
+      same.
+   Well, how many of you know how to program your cat from basic? Raise your hand... Wow! A whole 2 of ya, well, this tutorial and the ones after it will explain how to write, pretty much, a board that is totally basic.
+   First of all, you have to know how to read and write to a bit, in a certain location. Here is a program that you need to type in that will explain how to do it.
+100 REM Check for ring
+105 POKE -16254+16*2,0
+110 X=PEEK(-16243+16*2)
+115 IF X>127 THEN X=X-128
+120 IF X>63 THEN X=X-64
+125 IF X>31 THEN X=X-32
+130 IF X>15 THEN X=X-16
+135 IF X>7 THEN X=X-8
+140 IF X>3 THEN X=X-4
+145 IF X>1 THEN X=X-2
+150 IF X=1 THEN 160
+155 GOTO 110
+160 REM Ring detected
+   Okay, what that little program does, is it checks bit zero of location -16243+32 ($C08D) and if that bit equals a one, then there is a ring. Anything else, and it will loop back.
+   Now that we can read that bit, lets suppose there is a ring, and we want to answer the modem, initalize it for data mode so we can send and recieve stuff.
+165 POKE -16255+16*2,1
+170 POKE -16254+16*2,2
+175 POKE -16253+16*2,6
+180 POKE -16247+16*2,100
+185 POKE -16246+16*2,7
+190 POKE -16245+16*2,34
+195 POKE -16244+16*2,5
+200 POKE -16243+16*2,0
+   Let me explain that piece by piece. Line 165 will turn off the speaker and microphone so that there isn't any interference, 170 will pick the phone up, 175 will turn the BSR interrupts off, line 180 will put it in 103 ANSwer mode, 185 fixes the parity, 190 sets the baud at 300 (300.68bps), 195 sets the transmitter and reciever to zero, and line number 200 will send a 103 ANSwer carrier.
+   After we have all that done, we should probably check for a carrier. So, we use the same routine as when we checked for the ring, but we don't have to go down to bit zero, so it will be shorter.
+205 REM Check for carrier
+210 FOR W=1 TO 600
+215 X=PEEK(-16256+16*2)
+220 IF X>127 THEN X=X-128
+225 IF X>63 THEN X=X-64
+230 IF X>31 THEN 245
+235 NEXT W
+240 GOTO 100
+245 REM Carrier detected
+   There is our carrier detect routine, I will explain that in better detail, a few good parts about it is if there is now carrier in 15 seconds, then it will jump to the hang up/wait for ring rountine.
+   So far we have covered these parts:
+ o Checking for ring
+ o Initalizing modem for data
+ o Sending an answer carrier
+   and
+ o Waiting for an originate carrier
+   Now, we only have one part left to cover (in this file), that is sending an actual line or character string across the modem, and into the other persons terminal. Type in this routine:
+250 REM Send data
+255 A$="YOU HAVE CONNECTED!"
+260 FOR S=1 TO LEN(A$)
+265 C$=MID$(A$,S,1)
+270 POKE -16242+16*2,ASC(C$)
+275 X=PEEK(-16241+16*2)
+280 IF X>127 THEN X=X-128
+285 IF X>63 THEN X=X-64
+290 IF X>31 THEN X=X-32
+295 IF X<16 THEN 275
+300 POKE -16244+16*2,4
+305 NEXT
+   Well, how much have you learned so far? Not enough, eh? I suppose I had better explain the last routine then.
+   The final part of this program, will send the sentence (stored in A$) over the modem so that the remote user can view it. What it doesn't do, is show you what it is sending. If you want to see that, then type in a few of the modifications at the end of this file.
+   If I explain all the lines, it will take too long, so I will explain the important ones. Line 270 puts one character into the modems buffer (that is the maximum). Lines 275-295 will wait until it gets an ok from the remote modem and from your modem, sort of like a handshake, and line 300 will transmit the character. This program will loop until all of the data is sent, and then exit in basic, with the modem still connected. To hang up to phone, or do other things, then read the appendices at the end.
+   This file was written for education- al uses by Rappin' Jimmy B. Some of the routines were written by Grimalkin. Both are members of the Knights of Nicht.
+Appendix A
+==========
+   Here is a list of the locations, and bits that we used in this file:
+Location   Bit   Function
+--------   ---   --------
+-16254      1    0=Hang up phone
+($C082)          1=Answer the phone
+-16243      0    0=No ring detected
+($C08D)          1=Ring detected
+-16255      0    0=Don't squelch Mic.
+($C081)          1=Squelch Mic.
+-16253      1    0=Output 120KHZ
+($C083)          1=Don't Output 120KHZ
+-16247     5-0   0=103 ANSwer mode on
+($C089)          1=103 ANSwer mode off
+-16246      6    0=Parity disabled
+($C08A)          1=Parity enabled
+-16245     7-0   Recieve data from UART
+($C08B)
+-16244     3-0   Xmit on, enable IRQ
+($C08C)          Receive on, enable IRQ
+-16241     2-1   Transmit IRQ
+($C08F)          Receive IRQ
+-16242     7-0   Transmit data to UART
+($C08E)
+-16256      5    0=Carrier not present
+($C080)          1=Carrier present
+Appendix B
+==========
+   Following this paragraph, there is a list of modifications that you can use with this program, they include explanations.
+152 K=PEEK(-16384):IF K=155 THEN POKE -16368,0:END
+   Line 152 will make it so that when the computer is waiting for a call, you can press ESC and it will end.
+Appendix C
+==========
+   This appendix is a list of some notes that will explain more indepth about some of the routines, and changing this program.
+   To send a line of data, lines numbered 250-305 must be there, when you are changing to 202 mode (which will be explained in the next tutorial) you must send an ESC, 2, Ctrl-B, Ctrl-B, Ctrl-B if you want cat-fur to recognize your changing, to change back, send a one instead of a two.
+Total Characters: 6122
+Date Written: February 15th, 1986

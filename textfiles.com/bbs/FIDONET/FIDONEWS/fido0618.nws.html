@@ -1,0 +1,1233 @@
+     Volume 6, Number 18                                    1 May 1989
+     +---------------------------------------------------------------+
+     |                                                  _            |
+     |                                                 /  \          |
+     |                                                /|oo \         |
+     |        - FidoNews -                           (_|  /_)        |
+     |                                                _`@/_ \    _   |
+     |        International                          |     | \   \\  |
+     |     FidoNet Association                       | (*) |  \   )) |
+     |         Newsletter               ______       |__U__| /  \//  |
+     |                                 / FIDO \       _//|| _\   /   |
+     |                                (________)     (_/(_|(____/    |
+     |                                                     (jm)      |
+     +---------------------------------------------------------------+
+     Editor in Chief:                                  Vince Perriello
+     Editors Emeritii:                                     Dale Lovell
+                                                        Thom Henderson
+     Chief Procrastinator Emeritus:                       Tom Jennings
+     Contributing Editors:                                   Al Arango
+     
+     FidoNews  is  published  weekly  by  the  International   FidoNet
+     Association  as  its  official newsletter.  You are encouraged to
+     submit articles for publication in FidoNews.  Article  submission
+     standards  are contained in the file ARTSPEC.DOC,  available from
+     node 1:1/1.    1:1/1  is  a Continuous Mail system, available for
+     network mail 24 hours a day.
+     
+     Copyright 1989 by  the  International  FidoNet  Association.  All
+     rights  reserved.  Duplication  and/or distribution permitted for
+     noncommercial purposes only.  For  use  in  other  circumstances,
+     please contact IFNA at (314) 576-4067. IFNA may also be contacted
+     at PO Box 41143, St. Louis, MO 63141.
+     
+     Fido  and FidoNet  are registered  trademarks of  Tom Jennings of
+     Fido Software,  164 Shipley Avenue,  San Francisco, CA  94107 and
+     are used with permission.
+     
+     We  don't necessarily agree with the contents  of  every  article
+     published  here.  Most of these materials are  unsolicited.    No
+     article will be rejected which is properly attributed and legally
+     acceptable.    We   will  publish  every  responsible  submission
+     received.
+
+
+                        Table of Contents
+     1. ARTICLES  .................................................  1
+        386 Memory Manager - a Quick Look  ........................  1
+        Counter-Propaganda for Mr. Witherspoon  ...................  4
+        Universal Mayhem Update  ..................................  6
+     2. COLUMNS  .................................................. 15
+        The Veterinarian's Corner: Fleas!  ........................ 15
+        Notes From Bureaucracy South (Part 2)  .................... 17
+        A Public Service Announcement  ............................ 19
+     3. LATEST VERSIONS  .......................................... 20
+        Latest Software Versions  ................................. 20
+     And more!
+     FidoNews 6-18                Page 1                    1 May 1989
+
+
+     =================================================================
+                                 ARTICLES
+     =================================================================
+
+     Bill Bolton
+     3:711/403
+
+                       386MAX Memory Manager
+                A BBS Application Oriented Product Peek
+
+     I was  after  a  way  to get more Transient Program Area on the 386
+     server on the  Software  Tools  BBS LAN that supports 3:711/403 and
+     3:3/113.  There are  maintenance  tasks  that run on the server and
+     some of them are quite memory hungry.  I have been using a plethora
+     of small utilities to shadow ROMs and squeeze the maximum grunt out
+     of the 386 but felt that there  had  to be more that could be done.
+     I'd seen the ads from Qualitas for a  utility  called "386MAX" that
+     promised to do some wonderful things with 386 memory management, so
+     I decided to buy a copy and have a look at it.
+
+     386MAX allows you to fill the empty memory spaces between  the ROMs
+     above 640K with memory that can be used for a variety  of purposes.
+     It  automatically moves any BIOS or EGA ROMS into fast RAM in  this
+     area and then makes the rest available for whatever use you can put
+     it  too.   This area between 640K (A0000 hex) and 1M (10000 hex) is
+     termed "high memory" by 386MAX.
+
+     I found  I  was  able  to load the Lantastic REDIR program into the
+     high memory, along with OPUSCOMM, SHARE and FASTOPEN...  increasing
+     my TPA in low  memory  from 450K to 486K.  It looks as though other
+     TSRs could also be loaded  up  there.  The 386MAX documentation has
+     some advice about what you should  and shouldn't attempt to load in
+     high memory.
+
+     386MAX uses F0000 to 100000 for showing  the BIOS ROMs etc and with
+     my  EGA,  Perstor  and  Lantastic card installed at  their  default
+     locations, the high memory area was split into three chunks of 16K,
+     48K and 64K.  It turned out that this was  less  than  optimum  for
+     loading some of the things I wanted to get into high memory.
+
+     A  quick  look  at  the Lantastic documentation showed that I could
+     readdress  the  Lantastic card memory space, so I moved it from the
+     default  of D8000 to E8000 (so it sits right under the shadowed ROM
+     area)  and  this gave me a 112K contiguous area of high memory that
+     allowed me to load all the things I wanted.
+
+     The batch  files  that  load  to  the network had to be modified to
+     indicate to the  LANBIOS  where the LAN card was addressed but that
+     was a few moments  work with an editor.  386MAX also had to be told
+     that the Lantastic card was  using the space from E8000 to F0000 by
+     using a "RAM=E800-F000" statement on its command line.
+
+     I found that some programs seem  to  need quite a bit of free space
+     in high memory to load, even though  they  don't actually use a lot
+     of space once loaded.  FASTOPEN, for instance,  only occupies about
+     9K when loaded with a generous amount of buffer  space,  but  would
+     FidoNews 6-18                Page 2                    1 May 1989
+
+
+     not load at all into high memory when the largest  contiguous chunk
+     was  only  64K.   When I increased that to 112K I  had  no  problem
+     loading FASTOPEN.
+
+     386MAX  can give a number of useful displays of memory utilisation.
+     Unfortunately most  of  them  cannot  be reproduced in Fidonews.  I
+     have modified several  to  get  a  reasonable  approximation of the
+     information  displayed  on  the    screen,   though  in  each  case
+     information  had  to  be  deleted    in   order  to  meet  Fidonews
+     presentation requirements.
+
+     Figure  1  is part of the overall system memory assignment display,
+     the nice graphic part on the top had to be chopped....
+
+     Extended memory usage...
+       ROM mapping region    =    80 KB, C000-C400, F000-10000
+       Program storage       =    88 KB
+       EMS memory            =     0 KB
+       Remaining ext memory  =   872 KB
+       High DOS memory       =   128 KB, C400-C800, CC00-E800
+       Low  DOS memory       =     0 KB
+     Total extended memory   =  1168 KB, shadow RAM recovered = 144KB
+     Total expanded memory   =     0 KB, in use = 0 KB,
+                                         available = 0 KB
+     ==> Loading programs in LOW memory...
+     ==>  88 KB available in HIGH memory, largest block is  75 KB.
+     The current state is ON.
+
+                            FIGURE 1.
+
+     The Figure 2 shows how the memory area from 0K to 1M is utilised...
+
+      386MAX   -- Version 4.04 -- A Memory Manager for 386 Systems
+         (C) Copyright 1987-8 Qualitas, Inc.  All rights reserved.
+            +---------------------------------------------+
+            |       MEMORY MAP for RESIDENT PROGRAMS      |
+            +--------------+------+------+------+---------+
+            |              | Hex  | Hex  | Hex  | Decimal |
+            | Name         | Start| End  | Owner|  Length |
+            +--------------+------+------+------+---------+
+            | DOS & drvrs  | 09B2 | 149B |      |  44,672 |
+            |              |      |      |      |         |
+            |              |      |      |      |         |
+            | COMMAND.COM  | 149B | 156F | 149C |   3,376 |
+            |              | 156F | 1573 | -Avl-|      48 |
+            | COMMAND.COM  | 1573 | 16EB | 149C |   6,000 |
+            | FASTOPEN.EXE | 16EB | 16F8 | CC01 |     192 |
+            |              | 16F8 | 1717 | -Cur-|     480 |
+            |              | 1717 | 1718 | -Avl-|       0 |
+            | 386MAX.COM   | 1718 | 1777 | 1719 |   1,504 |
+            | SERVER.EXE   | 1777 | 2614 | 1778 |  59,840 |
+            |              | 2614 | 2633 | -Avl-|     480 |
+            |              | 2633 | 2664 | 2634 |     768 |
+            |              | 2664 | A000 | -Cur-| 498,096 |
+            +-High DOS Mem-+------+------+------+---------+
+            | Dev=QMMXXXX0 | C400 | C4D2 | C401 |   3,344 |
+     FidoNews 6-18                Page 3                    1 May 1989
+
+
+            | Dev=386MAX$$ |      |      |      |         |
+            |              | C4D2 | C7FF | -Avl-|  12,992 |
+            +- RAM or ROM -+ C7FF | CC00 | 0AA6 |  16,384 |
+            | FASTOPEN.EXE | CC00 | CE39 | CC01 |   9,088 |
+            | SHARE.EXE    | CE39 | CF72 | CE3A |   4,992 |
+            | REDIR.EXE    | CF72 | D233 | CF73 |  11,264 |
+            | OPUSCOMM.COM | D233 | D544 | D234 |  12,544 |
+            |              | D544 | E800 | -Avl-|  76,720 |
+            +--------------+------+------+------+---------+
+
+                              FIGURE 2.
+
+     Figure 3  shows another handy function which indicates the relative
+     speeds of the various memory components in your system.....
+
+      386MAX   -- Version 4.04 -- A Memory Manager for 386 Systems
+        (C) Copyright 1987-8 Qualitas, Inc.  All rights reserved.
+      +-------------------------------------------------------------+
+      |     Timing memory accesses, please wait a moment...         |
+      +-------------------------------------------------------------+
+      |                  MEMORY ACCESS TIMES                        |
+      +----------+-------------+--------+---------+-----------------+
+      | Starting |   Range     |        | Average | Ratio to Fastest|
+      | Address  | Start   End | Length | Time  s | (1.0 = fastest) |
+      +----------+------+------+--------+---------+-----------------+
+      | 00000000 |    0 |  640 |   640  |    494  |  1.0 *          |
+      | 000A0000 |  640 |  736 |    96  |   5039  | 10.2 **********>|
+      | 000B8000 |  736 |  768 |    32  |   8413  | 17.0 **********>|
+      | 000C0000 |  768 |  800 |    32  |    494  |  1.0 *          |
+      | 000C8000 |  800 |  816 |    16  |   5039  | 10.2 **********>|
+      | 000CC000 |  816 |  928 |   112  |    494  |  1.0 *          |
+      | 000E8000 |  928 |  960 |    32  |   5039  | 10.2 **********>|
+      | 000F0000 |  960 | 1896 |   936  |    494  |  1.0 *          |
+      | 001DA000 | 1896 | 2104 |   208  |         |      Absent     |
+      | 0020E000 | 2104 | 2192 |    88  |    494  |  1.0 *          |
+      +----------+------+------+--------+---------+-----------------+
+
+                               FIGURE 3.
+
+     386MAX can do a lot of  other  tricks with extended memory in a 386
+     PC, including making it look like EMS  memory.  I don't have a need
+     for most of it's other facilities for my  BBS LAN applications so I
+     haven't investigated them thoroughly, though they all seem to  work
+     well in a brief test.
+
+     The  "high  memory" capability alone has made 386MAX a very  useful
+     tool for me and it is certainly worth a look for anyone using a 386
+     PC.
+
+     -----------------------------------------------------------------
+     FidoNews 6-18                Page 4                    1 May 1989
+
+
+     Daniel Tobias
+     1:380/2
+
+        I'm not sure if political propaganda is a particularly
+     appropriate topic for FidoNews (TJ himself got flamed quite
+     a bit for his foray in that area last year), but since
+     Claude F. Witherspoon started it...
+
+        In FidoNews 609, Mr. Witherspoon, of node 1:288/525,
+     reprinted an allegorical tale lifted (I'm not sure with or
+     without copyright permission) from Reader's Digest,
+     paralleling the collapse of Chinese civilization under heavy
+     opium use, to a predicted collapse of American civilization
+     due to the present illegal drug culture.
+
+        Such "moral" stories always oversimplify facts for the
+     purpose of propaganda.  I'm sure the causes of the decline
+     in China were many and varied, and it's possible the
+     widespread drug use was more a symptom of the society's
+     decadence than the direct cause of its fall.  But I'm no
+     history student, so I won't claim to know the answers there.
+
+        But I do object to the attempt by conservatives to claim
+     that the fabric of society will be damaged beyond repair if
+     people are allowed to freely pursue "immoral" lifestyles.
+     Whether the subject be sex, drugs, or rock-and-roll, the
+     forces of social repression are always agitating for
+     restrictions on individual liberty in the name of preserving
+     civilization against decadence.
+
+        My position, however, is that one of the most important
+     parts of American civilization is its general tradition of
+     personal freedom, social tolerance, and individualism.  If
+     these are trampled on in the name of "morality", more will
+     be lost than gained.
+
+        Drugs can cause much harm to their users.  Cocaine,
+     heroin, and nicotine are all addictive and harmful to the
+     health, and people would be best off staying away from them
+     altogether.  Alcohol and marijuana might perhaps be safely
+     used in moderation, but can be abused with harmful effects
+     to the user (and to others if the user drives under the
+     influence), so shouldn't be regarded as "harmless."  I
+     myself don't make regular use of any of these substances.
+
+        Yet, the "war on drugs" causes even more harm than the
+     drugs themselves.  It doesn't stop users from getting their
+     drugs, but it does create a great crime problem surrounding
+     the distribution of drugs and their artificially-high cost
+     which leads users to steal to pay for their next fix.  (When
+     is the last time you saw somebody commit burglary to support
+     his cigarette smoking habit?)
+
+        Various hysterical measures now being practiced or
+     proposed in the name of the "war on drugs" are harmful to
+     the Constitutional principles of this country.  For
+     FidoNews 6-18                Page 5                    1 May 1989
+
+
+     instance, cars, boats, and planes are being seized without
+     due process of law if minute quantities of pot are found.
+     Drug agents ruthlessly ransack houses of anyone suspected of
+     involvement in drugs, and often innocent people get
+     victimized in error.  Increasing invasions of personal
+     privacy are becoming commonplace.
+
+        The correct solution is not repression, but education.
+     Teach people of the true effects of various substances, and
+     most will choose to stay away from the harmful ones.  Those
+     who still use drugs will be making an informed choice to
+     trade off the possibility of health damage for what they
+     regard as a pleasurable activity, which should be their
+     right in a free society.  They should fully bear the costs
+     and risks of their choice, as does somebody who chooses to
+     eat unhealthy foods or engage in risky activities like
+     skiing or skydiving.  You are the self-owner of your own
+     body, and it is your right and responsibility to decide what
+     substances get placed in it.
+
+        The war on drugs is a war against liberty.  We should
+     return to the system that prevailed in the nineteenth
+     century, when all drugs were legal; incidentally, that was a
+     time of unprecedented economic growth in this country,
+     disproving the implication of Witherspoon's story that
+     allowing drug use will inevitably cause the decay of a
+     civilization.  Support free enterprise: re-legalize drugs!
+
+        Questions, comments, and constructive criticism can be
+     sent to me at 1:380/2.  Ad-hominem attacks ("...I hope some
+     druggie runs over you and your mother and all you commies go
+     to hell for your idiotic beliefs...")  can be sent to
+     /dev/nul on UNIX machines, or NUL: on MS-DOS machines.
+
+     -----------------------------------------------------------------
+     FidoNews 6-18                Page 6                    1 May 1989
+
+
+                                 Fredric L. Rice
+                              (103/503.3 Astro-Net)
+                                 (714) 662-2294
+
+     - The abandoned Part 1:
+
+     Hundreds of light years from the nearest planet or star a small,
+     cylindrical craft slices its' way through the void, searching
+     for landfall. Its' only companion for these last seven years has
+     been the hyperspace radio link; a talkative companion who has
+     offered a certain measure of comfort on such a long journey as
+     this; orders which tell it where to turn and which speeds and
+     cross trajectories to perform in its endless search.
+
+     Reporting failures to locate habitable planets has caused the
+     remote robot sensor to wonder if it has been forgotten by those
+     God-like creatures who created it. A quick nanosecond of panic
+     scurries its' way through the remotes' circuitry at this unworthy
+     numerical thought and it faithfully continues its search.
+
+
+     - Battleship SCOR:
+
+     CAPTAIN MALCON OF the battleship SCOR recording, 881128.20.
+
+     "I am uneasy at the recent alliance with SANO and BONP. I know
+     that Central High Command feels such an alliance is in the best
+     interest of the Republic but still, I have heard certain rumors,
+     and attack swarm four, commanded by my brother Divad, hasn't
+     reported in last shift. Attempts to gain radio contact have met
+     with failure and I must assume the swarm destroyed. No mayday
+     was received so perhaps they have met with equipment failure.
+
+     "Meanwhile, SANO and BONP are scheduled to be on patrol along
+     the Optemerder arm of the Galaxy, watching for intrusions into
+     the Republic, allowing SCOR time to refit and rebuild after our
+     encounter with TRIL.
+
+     "Still I am uneasy. SANO's Captain Marker is a clever one and I
+     would be hard pressed to fight well against him. BONP's Captain
+     I don't know but have heard he is ruthless and isn't adverse to
+     buying biological weapons from pirates and using them against
+     his enemies.
+
+     "They are too strong and I don't trust them."
+
+     "Meanwhile, we are still making slow progress to our repair
+     station and expect to make landfall within two months.
+
+     "Captain Malcon etc... etc..."
+
+     ---
+
+     The old and war-scarred battleship SCOR was heavily damaged and
+     leaking air as it made its way to spacedock. Many of the crew
+     had been killed this time out and many were still in critical
+     FidoNews 6-18                Page 7                    1 May 1989
+
+
+     condition down in sick bay. The survivors of the fight were in
+     low spirits and there had been talk of mutiny. The instigators
+     had been ferreted out and vacuumed as a televised event on all
+     ships channels to serve as a reminder to any dissenters of the
+     captains authority.
+     The bridge was a wreck. Fluid state components smashed by the
+     many concussions were leaking and dripping from consoles to
+     the floor. Whole control stations had been ripped from the
+     flooring braces when the deck plates had buckled upwards and the
+     bridge had a slight slant which made the bridge crew
+     uncomfortable.
+
+     The air scrubbers had been damaged early in the fight and a
+     thick blanket of smoke still hung overhead. Many sections of the
+     ship had caught fire when the volatile antimatter intermix
+     chambers coolant containment vessels had ruptured, and the fire
+     control chief was unable to contain the fires. In a desperate
+     measure to stop the fires, three entire decks had been
+     vacuumed, killing the fire, and the majority of the crew.
+
+     Some had to die.
+
+     "Here's the casualty list, sir, and a list of religious
+     affiliations. More than eighteen hundred missing."
+
+     Captain Malcon took the list from the sick bay officer and shook
+     his head, "More than half of the casualties want to be buried
+     in the ships' antimatter compressors. 'Can't do that until we
+     get them back on line, of course. Put them on ice and ask
+     planetary command if we can bury the rest here."
+
+     "Aye, sir". The sick bay officer turned on her heal and left,
+     her feet crunching on carbonized plastics. It's hard to memorize
+     all the names, Malcon thought. So many of them die so hard and
+     so fast, I can't keep up with them.
+
+     Captain Malcon stepped over his dead steward and nearly fell
+     when his foot slipped out from under him. Grabbing onto the bent
+     arm of his command chair, he looked down to see the blood that
+     was still spreading, noting the contrast of the red against the
+     black, and wondering at the perfect red foot print he had made.
+
+     The intercom controls on the chair had been smashed. "Ensign,
+     get someone up here to clear away the bodies. I want this bridge
+     to be cleared as soon as Johnson finishes up with engineering.
+
+     The ensign, who had been called to the bridge to take over for
+     an injured pilot, strode down hill to the workman access hatch
+     and slid down the ladder to the decks below to carry out his
+     orders.
+
+     Malcon sat down in his chair and pressed against the arm, trying
+     to push it out to keep it from pressing against his side. The
+     steward had been thrown into it early in the battle and had bent
+     the arm badly. Finally giving up, Malcon looked around his
+     bridge.
+     FidoNews 6-18                Page 8                    1 May 1989
+
+
+     The air was running out and with the antimatter engines still
+     out, would not be replaceable. All ships systems which were
+     absolutely required were operating in low-power modes which made
+     the ship uncomfortably cold. If many of the crew members had
+     survived, the accumulative body heat would have made the ship
+     very hot. Captain Malcon wondered if his ship would survive
+     another two months to landfall.
+
+     ---
+
+     The Vultures:
+
+     Not far away, two battle ships lay, watching the bent and broken
+     SCOR limp away. SANO and BONP sat outside of SCORs' remaining
+     sensor range and held a discussion:
+
+     BONP: "I tell you, we attack now! While they are at their
+       weakest! In a few more hours they may be able to regain some
+       of their armament capability!"
+
+     SANO: "Steve, wait a minute. Let's see if they are able to make
+        it to landfall first. If they don't, that fool ship TRIL will
+        have done our work for us."
+
+     BONP: "And if they do make landfall? What then? They will
+        rebuild and find the people who hired TRIL! Are you so sure
+        we won't be found out! Of course we will; I say attack now
+        and finish them!"
+
+     Captain Marker of the Republic battleship SANO sat back in his
+     command chair and looked at the image of Captain Steve Baltine.
+     Just for a moment, Marker had considered taking him out
+     permanently. Though he thought he could easily defeat the BONP,
+     it was entirely possible that Baltine had made alliances outside
+     of the Republic. Such things had been known to happen and if it
+     had happened once, it could easily happen again.
+
+     SANO: "We wait. We wait and see if they make it. If they are
+        still alive by the end of the solar month, we will move in
+        but not until then."
+
+     Marker hit the ship-to-ship on his command chair and noted the
+     look on Baltines' face as the screen darkened. It was clear that
+     Baltine had entertained similar thoughts he himself had been
+     considering.
+
+     "Lt. Maklin, bring our shields up to half power."
+
+     "But sir, the SCOR will be able to pick us up if we do so, even
+     with the shape their sensor array is in!"
+
+     "I know that, Lt., but I don't thrust that Baltine. Better
+     to have a crippled enemy know of our whereabouts than have a
+     friend turn unfriendly."
+
+     "Yes, sir. Defense screens at half power."
+     FidoNews 6-18                Page 9                    1 May 1989
+
+
+     The SANOs' bridge lights flickered briefly as the power was
+     channeled from ships systems to the defense screens. Almost as
+     soon as the screen were up, Lt. Maklin reported, "Sir,
+     BONP has raised his shields to full power and is hailing us
+     on ship-to-ship. He demands an explanation and swears he will
+     destroy us. Shall I answer?"
+
+     "No, Lt.", Marker switched visual tie-ins on the chairs'
+     console, bringing up a split-screen of the broken ship, with
+     its glittering trail of frozen air crystals, and the view of the
+     BONP, the corona discharge of full shields menacing. "Let him
+     listen to static for awhile."
+
+     ---
+
+     "Captain! Two reading!" Malcons' eyes snapped open and sat bolt
+     upright in his chair. Engineering had come two hours ago and
+     replaced it for him, vowing that they would do there best with
+     the rest of the ship. "They're directly in our wake, sir, trying
+     to hide in our gamma trail! One's considerable brighter than the
+     other... Must be defense shielding!"
+
+     Private Johnson brought the aft view up on the highest
+     magnification possible. Captain Malcon jumped forward out of his
+     chair and strode left to the navigators console. "Something
+     shielded... I can compute the volume of the objects by the
+     envelope against distance, sir. Strange, they didn't come up
+     on us, just suddenly appeared."
+
+     "They are following us, I can see that much. Anything yet on the
+     identification, Johnson?"
+
+     "Just a moment, sir," Johnson brought up one ship identification
+     profile after another, using the computer to compare the distant
+     readings against those stored in his computer. "It looks like
+     both bogeys might be Republic battleships but I can't be sure
+     with the way you've reprogrammed our arrays." Malcon let the
+     comment pass. "Confirmed, sir, same class as us, no positive
+     identification on the ships transponders."
+
+     "Bring up hyperspace channels for ship-to-ship. Let's see what
+     they're up to. Perhaps they can offer assistance though I
+     wonder why they haven't done so so far. With both of them
+     towing, we could make port within a week."
+
+     Johnson reached under the console and pulled several levers
+     upwards, raising the communications dias from the floor next to
+     his console. Bending over it, he said, "The gigasponder it still
+     missaligned, sir, no communications is possible."
+
+     On the view screen, both objects hung in space, surrounded by a
+     faint and hazy glow. The tactical computers had arbitrarily
+     named the brighter of the objects as "Primary" and the dimmer as
+     "Secondary". To the left side of the view screen, on a much
+     smaller screen, was displayed the configuration of a Republic
+     Battleship, a configuration Captain Malcon knew all too well.
+     FidoNews 6-18                Page 10                   1 May 1989
+
+
+     "How about sending protocol codes over ships running lights?"
+
+     "I'll have to write that in, sir." Malcon watched with some
+     amusement while Johnson quickly brought up the computers line
+     editor and wrote several filters, a sorter, and compression
+     algorithm, all within minutes. "Sending." Most navigators would
+     have talked the program in as a request these days. Some of the
+     academy graduates, though, were luck enough to be taught under
+     the guidance of professor Cadens, who also taught history and
+     stressed a little of the old ways. "No response, sir."
+
+     The Captain was about to issue an order to keep trying when
+     Johnson said, "Activity, sir!" Even as Captain Malcons' eyes
+     went to the view screen, the radar return of the navigational
+     fixes strengthened as the Primary ship moved towards them. The
+     second ship on the viewer brightened as its shields were
+     brought up to full power.
+
+     ---
+
+     "What's that fool doing!" Captain Marker exclaimed as he watched
+     the BONP move towards the crippled SCOR. "Shields up! Full
+     power, Maklin! Position ourselves between SCOR and BONP, keep
+     our primary shields up at all cost! Brings us about at full
+     speed and stay ready on those phasers!"
+
+     As Maklin hammered out the commands on his navigation console,
+     Captain Johnson struck the ship-to-ship on his command chair.
+     Within seconds, Captain Baltine of the battleship BONP came on
+     the view screen, "Why Captain... You finally choose to return
+     my calls! What can I do for you?"
+
+     "I can not allow you to come within identification range of
+     SCOR! You idiot! There communications may be repaired soon and
+     we'll be hunted down like dogs! I'll stop your if I must!"
+
+     Captain Baltine simply smiled, "Captain, captain, captain... You
+     are in no condition to stop a Salinian show cat from biting,
+     much less stop me! Move aside or I shall split you in two!" With
+     a slap to his command chair arm, the channel was closed.
+
+     "Sir, we are directly between SCOR and BONP. BONP's speed and
+     course has not altered! Collision in sixteen seconds." Captain
+     Johnson considered. Should he allow the BONP to destroy SCOR and
+     make a run from this sector, disavowing his involvement in case
+     SCOR should somehow get a message off? His time was running out.
+     He knew a collision with BONP would be equally as disastrous
+     to both ships.
+
+     "Stand here, Maklin, let's see if he's got the guts for it!"
+     Johnson considered counting the seconds but looked around the
+     bridge. Several engineers from the lower decks had stopped
+     their repairs and were watching the swelling ship coming at
+     them at near light speeds. A count down was pointless.
+
+     As BONP came close, it veered off under them, merging the
+     FidoNews 6-18                Page 11                   1 May 1989
+
+
+     defense screens on the less shielded portions of SANO. On
+     BONP, the heavily shielded command sections brushed against
+     the SANO's shields. Aboard both ships death blossomed.
+
+     ---
+
+     "What in Aernaths' name are they doing!" Captain Malcon watched
+     the near fatal collision of the two distant ships. "Get a man
+     top side on those gigasponders! I want to know what's
+     happening!"
+
+     Johnson called down to engineering, "Get me ensign Sanders!" A
+     few moments passed and "Sanders! Know how to align the
+     gigasponders on this ship?"
+
+     "Of course, sir!"
+
+     "Get on it, right away!"
+
+     "Now sir?" The fear was evident in the ensigns voice. He knew
+     that with a battle taking place in this sector, his chances of
+     survival were slim if he took a gamma bath.
+
+     "That's an order, ensign. Now!" And Johnson switched off.
+
+     Ensign Sanders ran to the environmental lockers and drew out a
+     full suit, taking time to check its functioning and still get
+     in as fast as possible. ''I must be nuts'', he thought to
+     himself. ''Climb outside with a battle taking place just meters
+     from our hull! I should hide, that's what I should do, hide in
+     the mess stores until planet fall. Then catch a shuttle to some
+     commerce planet!''
+
+     Sanders grabbed the optical alignment tools he needed for the
+     job, ''From there I could sign on as a food taster at some
+     palace... Safer than this idiot nonsense!''
+
+     Sanders stood in air lock 17 and cycled his air out. The deck
+     turned under him and the outer door opened, allowing him to face
+     the stars. His suit was tugged a little as the remaining air
+     shot into vacuum, At this speed, none could be seen to move.
+     "Awww, fuck it!", he said, and reached overhead and rolled out
+     of the lock until he was standing on the outer hull.
+
+     Looking over the command bubble extending a hundred meters
+     before him, he swore, "What a mess! What an Aernath mess!" The
+     bubble was bent and had melted along the entire length of the
+     command section. Out over the drive clusters, he could see the
+     thrust guides had been bent clear out of alignment. It was
+     clear to Sanders that this ship would never space again.
+     "If it gets us to dock", he said to himself.
+
+     Walking around jagged holes in the hull, he made his way forward
+     to the gigisponder network. Though badly bent, it could still
+     be made operational if he could align it. He checked his
+     intrasuit monitors and noticed the radiation count as he walked
+     FidoNews 6-18                Page 12                   1 May 1989
+
+
+     forward. As he crested the bubble, the count rose to hazard
+     levels and Sanders cursed again. Looking up, he cursed again.
+
+     Screaming towards the SCOR, SANO and BONP's death embrace was
+     clearly visible and growing perceptible larger even as he
+     watched. High energy phasers shot out and cut through the two
+     ships, slicing off huge streamers of high energy particles
+     like curls of shaven wood. Immediately after the phaser strike,
+     the attacking ship would follow with damaging torpedoes which
+     dug deep into the enemy ships hull. Both ships were trailing
+     huge chunks of unidentifiable wreckage.
+
+     SANO turned over the BONP and raked the command sections with
+     a withering score of phasers, pressing in close to affect the
+     maximum damage possible. Quickly following with a barrage of
+     torpedoes, BONP had learned dearly of SANOs' tactics and used
+     its tractors to pivot, bringing its forward shields to meet the
+     torpedoes. As it did so, SANO loosed a torpedo which went
+     unnoticed into the void, directly heading towards SCOR.
+
+     ---
+
+     Captain Johnson was slammed down against the deck, almost black-
+     ing out under the force of the other ships collision. Though it
+     lasted only seconds, Johnson saw it all in slow motion; the
+     liquid state components spraying down under the control
+     consoles; crewmem dropping as if there legs had been chopped
+     out from under them; and above all the noise, the quickly
+     silenced screams from several crushed crewmen who had been
+     unlucky enough to be caught in the path of the view screen.
+
+     As BONP passed underneath, Johnson propped himself up and
+     quickly fell on his face. He sat up and took his right hand
+     in his left and stuffed his crushed arm into his jumpers pocket.
+     "Maklin! Maklin! Drop shields and channel full power to the
+     tractor beam! Lock onto that ship and stop them cold!" Maklin
+     took a few swipes at the blood flowing from his nose and
+     colored his console as he punched up the commands. When the
+     computer had been programmed, Maklin got on an intraship
+     channel, "All hand, stand tight! Ready captain!"
+
+     "Do it!" As the captain held onto the arms of his chair,
+     Maklin slapped in a button and the lights brightened then
+     dimmed within a flicker of an eye lash. Immediately after that,
+     the SANO was again subjected to high gravities in a forward
+     direction. Before them, BONP snapped to a standstill and
+     swung back, almost without loosing speed. SANO snapped
+     forward and again they met.
+
+     ---
+
+     On the outer hull of the SCOR, Sanders was running away from the
+     onrushing torpedo, trying in a vain attempt to get back into the
+     safety of the air lock. He didn't need to turn around to know
+     that he had lost his race as he felt the ship buckle under him
+     a whisper before he knew nothing but blackness.
+     FidoNews 6-18                Page 13                   1 May 1989
+
+
+     Within SCOR, emergency bulkheads slammed down all over the ship,
+     causing it to ring unbearably throughout. In the forward armory,
+     the outer hull pealed away and a half a million tons of torpedoes
+     leaped towards space. They didn't go very far, however, before
+     the whole room exploded. SCOR was in its death throws now and
+     very few survived. On what was left of the bridge, Captain Malcon
+     was slowly waking up. Around him he could see no one but him
+     was alive. Lying on his side, he watched the shattered view
+     screen as one of the battling objects broke away from the
+     other and came towards him. ''It's BONP, by Aernath! BONP come
+     to save us!'' On the view screen, BONP came in, some sections of
+     it glowing red. Behind it, SANO pivoted on its side and came
+     up behind the BONP, again locking tractors with it.
+
+     Puzzlement was Malcons expression as he saw BONP fire the final
+     torpedo that would finish him. Realization slowly dawned as the
+     torpedo swelled in the view screen, quickly blotting out the
+     picture of SANO and BONP locked in death struggle.
+
+     Malcons arm buckled under him and he fell back onto his side.
+     The fires raging behind him and the blood pooling underneath
+     him went unnoticed as his eyes closed then slowly opened.
+
+     His lips opened, cracking through the dried blood and a small
+     river of blood poured down his cheek. "It's Mayhem", he
+     whispered, and the darkness took him.
+
+     - The abandoned Part 2:
+
+     It had long since stopped wondering where its companion had
+     gone. Out here in the wilderness of space, the remote robot
+     sensor could hardly remember the hyperspace radio link which
+     had vanished so long ago; it only knew that it longed for
+     something it had once had.
+
+     ---
+
+     Universal Mayhem Version 1 will be released in a week or so. The
+     problems which have been reported have been fixed and many
+     updates have been made according to what has been suggested by
+     the beta test sites.
+
+     As usual, I will mail the program directly to your system when
+     the time comes. If you are not on my distribution list and would
+     like to receive Universal Mayhem, let me know.
+
+     I have mailed a package to Israel containing Beta Version 1. I
+     have also mailed two packages of 16 floppies to a couple of
+     nodes in Australia. All three of these nodes have sent me the
+     postage for the floppies and I must thank them. I don't know,
+     however, if they received them because I failed to attach any
+     kind of customs form to them. If you guys didn't receive them,
+     let me know and I will take them directly to the post office
+     in Los Angeles and get them properly conditioned for
+     intra-country transport.
+
+     FidoNews 6-18                Page 14                   1 May 1989
+
+
+     Fredric L. Rice
+     674 East Bridwell
+     Glendora, California.
+     91740
+
+     By the way: If you are a ham radio operator and have the
+     capability of getting packet into LADPX, (Los Angeles Duplex),
+     try connecting to N6BGW-9 and leave me some mail! N6APD for
+     now but looking forward to an upgrade soon.
+
+     -----------------------------------------------------------------
+     FidoNews 6-18                Page 15                   1 May 1989
+
+
+     =================================================================
+                                  COLUMNS
+     =================================================================
+
+     The Veterinarian's Corner
+     Excerpts from the ANIMED GroupMail Conference
+
+     by Don Thomson, 1:102/1005
+
+     Fleas!
+
+     > Thought we had gotten rid of the problem, but are finding a few
+     > [fleas.] Wife says they are coming from the yard. Have used a
+     > flea spray from pet store, and diazanon, repeatedly, without
+     > lasting success. Do not find the fleas in the house, seems like
+     > they should be here?
+     > [Orig Msg from Charles Holland on 02 Jan 89 12:21]
+
+     That's one all too common problem, Charles.  This year
+     especially, the flea season seem to have lasted longer than
+     usual, well into December. If you are having a flea infestation
+     problem, then I would recommend a couple of things:
+
+     1) For the back yard alternate between diazanon and malathion at
+     the dilutions stated on the back of the bottle. I generally
+     recommend a repeat application every 3 weeks, usually as early in
+     the morning as possible, while there is little wind and you can
+     keep the animals in away from the spray.  As the problem is
+     controlled, and as the weather cools, you may increase the
+     interval between sprayings.
+
+     Do not let your pets into the yard until well after the spray is
+     dry.  Some pets, especially cats are sensitive to the effects of
+     insecticide spays if absorbed through the skin or coat.  Making
+     sure the ground is dry before letting them out will prevent this
+     type of problem.
+
+     2) If the problem is persistant in the winter months, I would
+     worry that the fleas may have colonized your carpets and those
+     favorite sleeping places of your pets. You will need to also have
+     your indoors sprayed. ' I personally prefer a hand-held pump
+     spray bottle that I can lightly ist 'high risk' areas like
+     carpets, certain chairs, under beds, etc.  Indoor premise sprays
+     specially formulated to be safe in indoor areas such as homes,
+     even resteraunts....
+
+     "Bombs" can be effective too, but because you have to leave the
+     house for several hours, the spray is everywhere and the fact
+     that your can't be sure the spray penetrated all areas, makes me
+     prefer to use a hand held pump spray.
+
+     With the hand spray, you can just do one room at a time, close
+     the door to keep you pets out until dry. And dries completely in
+     20 minutes. Takes about 3 minutes to spritz the room. Just like
+     the yard spray, repeat every 3 weeks until the problem is
+     controlled and then you can increase the interval between
+     FidoNews 6-18                Page 16                   1 May 1989
+
+
+     sprayings.
+
+     3)  For your pet, I use either a powder or a spray meant for
+     pets. I feel that Pyrethrin based sprays are easy, effective, and
+     have a very rapid bio-degradability time period - about 6-8 hours
+     after application on your pet.  Toxic reactions are extremely
+     rare.
+
+     DB Thomson, DVM
+     1:102/1005
+     9:871/16
+
+     -----------------------------------------------------------------
+     FidoNews 6-18                Page 17                   1 May 1989
+
+
+     The following is the second in a series of four columns Fred Grosby
+     (a federal government  employee, and a user on "The Falcon's Rock")
+     has written.  He  deserves  all  the  credit  for  writing them.  I
+     suggested that he upload them  to  my  system,  because  I  enjoyed
+     reading them in our local Mensa  newsletter, Capital M.  I hope you
+     enjoy reading them, too.  The archive  of all four is available for
+     file request from 1:109/501 as BSOUTH.ZIP.
+
+     Notes From Bureaucracy South (Part 2)
+     By Fred Grosby, a user on 1:109/501
+
+     It is the beginning of the month.   Budget  Briefing  time.   Panic
+     time.
+
+     Preparing the monthly Budget Briefing is one of the  most important
+     things we do here at Bureaucracy South.  Actually, I don't know why
+     They  call  it Budget Briefing, because it doesn't have anything to
+     do with the budget.  It is really a program briefing.  What happens
+     is that our  Deputy  Administrator  briefs the Administrator on the
+     status of our Program  Indicators.    Now, you might think that the
+     Administrator, or at least our  Deputy  Administrator, would decide
+     what the Program Indicators are to be, right?  Not quite.  They are
+     politicos, which means that they don't really  know  what we do, so
+     we get to come up with our own  Program  Indicators.    This sounds
+     like a pretty good deal, except that what we  come  up  with  never
+     seems to be quite what They want.  We never  know  exactly  what is
+     wrong  with it, only that They don't like it and we  will  have  to
+     come  up  with  something  else.    It's sort of like being in  the
+     organizational equivalent of  a singles bar:  the other person says
+     "Tell me about yourself,"  and  you  know  that whatever you say is
+     going to be grounds for  rejection.    No  matter  how hard we try,
+     sooner or later we will get  the  dreaded  word:    They  want more
+     charts.
+
+     Ah yes, the charts.  Preparing material  for  the  Budget  Briefing
+     involves taking raw data and portraying it in  chart  form.    They
+     call this Analysis.  No, I am not kidding.   Those charts are taken
+     very seriously around here.  Screw one up and you  will  hear about
+     it.  You have to follow the rules, of which there are several:
+
+     Make  sure  your  charts have lots of colors, the more the  better.
+     They  are impressed by colors.  Remember, the goal is to achieve  a
+     victory of style over substance.
+
+     Some  types  of charts are better than other types.  Pie charts are
+     the best;    exploded  pie  charts, with pieces pulled out from the
+     rest of the pie, are extra good.  Bar charts are good, because They
+     are used to bar  charts.    Line graphs are not good.  I don't know
+     why, but They don't like  line  graphs.    I  suspect that They are
+     confused by all those squiggly lines.  Don't even think about those
+     fancy scatter plots or stuff like that.   One of my coworkers did a
+     regression one time and they recoiled in fear.
+
+     Don't call the regions, even if they have data that you need.  They
+     might think that we are spying on them.   They  might object to our
+     Program  Indicators.    They  might  actually  have  a  good  idea.
+     FidoNews 6-18                Page 18                   1 May 1989
+
+
+     Whatever you do, DON'T CALL THE REGIONS!!!
+
+     Always get  your  data  from  the computer.  It is a basic tenet of
+     life here at  Bureaucracy  South  that computers are perfect.  They
+     never make mistakes.   Therefore,  if you can say that you got your
+     data from the computer, it will never be questioned.
+
+     Before we can do the  Program  Indicator  charts, we have to do The
+     Download, were we transmit our very  raw data from the minicomputer
+     in the computer room to the microcomputer  in  my  office.  Once we
+     have it on the micro, the data is  appended,  replaced, sorted, and
+     otherwise  masticated  into  output  suitable for being turned into
+     charts.  This is where the panic comes in.  Remember, our computers
+     are perfect.  They never make mistakes.  The fact that  the mini is
+     an obsolete clunker with a mind of it's own does not matter.    The
+     fact that  our  phone  connections  go  through the GSA centrex (!)
+     doesn't matter.   The  fact  that nobody has checked to see whether
+     the old update program  will  work  on  our brand-new micro doesn't
+     matter.  Our computers are  perfect.    They  never  make mistakes.
+     That's why we don't have to  worry about doing The Download until a
+     couple of days before the charts are due.
+
+     Well guess what.  Every month The  Download bombs out.  The reasons
+     are several.  Lately, the mini has developed  the  nasty  habit  of
+     refusing  to  download almost exactly half the data.   Anyway,  THe
+     Download fails and the whole place goes into a blind  panic.    The
+     clerks  who  do  The  Download  panic  because  they  fully  expect
+     everything to  go  perfectly  and  have  no  idea  what  to do when
+     something goes wrong.    One  of my co-workers, an otherwise lovely
+     woman who I call  The Ultimate Bureaucrat, gets mad because without
+     that raw data she will  miss her deadline for preparing the charts.
+     The supervisors run around with harried  looks on their faces.  The
+     two  people  who  are supposed to know  everything  about  how  The
+     Download  works  run  for cover, because they actually  don't  know
+     anything.   But for real world-class panic you would  have  to  see
+     Fluffy.    Fluffy  is our Deputy Director, and it is  she  who  has
+     overall responsibility for  the  Program  Indicator charts.  Fluffy
+     does not handle adversity well.  The least little setback sends her
+     into a fit.  When  the  Program Indicator charts are late, which is
+     usually, she absolutely goes into orbit.
+
+     Eventually, we always manage to persuade  the computers to yield up
+     their data and the charts are prepared  and submitted, which leaves
+     just  one final task before the monthly Budget  Briefing  cycle  is
+     complete:  assessment of blame.  By definition, the  failure of The
+     Download  cannot  be  blamed  on  the  computers.    Remember,  the
+     computers are perfect.  They never make mistakes.  The problem must
+     have been caused  by  some  dumb human.  Fingers must be pointed at
+     the person who caused  the  failure of The Download.  Names must be
+     called.  Bucks must be  passed.    Only  then  can  calm  return to
+     Bureaucracy South.  Until next month.
+
+     -----------------------------------------------------------------
+     FidoNews 6-18                Page 19                   1 May 1989
+
+
+                     A Public Service Announcement
+                Proper and Conscientious Use of ARCmail
+
+     Although my system is ARCmail capable, I receive an amazing
+     amount of mail from systems with whom I have never made
+     contact that arrives in ARCmail form.  Sure, my system can
+     handle it.  So why am I complaining?
+
+          1)  ARCmail capability is NOT a requirement to have a
+          node address.
+
+          2)  Many systems in the network are not currently ARCmail
+          capable.  Generally, these are mailers that work on
+          platforms other than the IBM PC and compatibles.
+
+     When sending NetMail to another system in the network with
+     whom you have NOT previously had contact, DO NOT SEND ARCMAIL.
+     If that mail happens to be sent to a system that is not
+     ARCmail capable, the system will not be able to unpack your
+     mail.
+
+     ARCmail should only be used on links with whom you have
+     established ARCmail capability.  In other words, unless you
+     have verified in advance that a particular system is ARCmail
+     capable, then you should NEVER send ARCmail to that system.
+
+
+     In summary, the sending of ARCmail should NEVER be considered
+     the default.  Send ARCmail only to systems that you have
+     verified as ARCmail capable.
+
+     NOTE:  This warning should apply equally to other archived
+     mail forms that are making their way into common use:
+     ZOOmail, ZIPmail, PAKmail, LHARCmail, and whatever other type
+     of archived mail might be released tomorrow.
+
+     A message brought to you by your local FidoNet watchdog.
+
+     -----------------------------------------------------------------
+     FidoNews 6-18                Page 20                   1 May 1989
+
+
+     =================================================================
+                              LATEST VERSIONS
+     =================================================================
+
+                          Latest Software Versions
+
+                           Bulletin Board Software
+     Name        Version    Name        Version    Name       Version
+
+     Fido            12k    Opus          1.03b    TBBS           2.1
+     QuickBBS       2.03    TPBoard         5.0    TComm/TCommNet 3.4
+     Lynx           1.30*   Phoenix         1.3    RBBS         17.1D
+
+
+     Network                Node List              Other
+     Mailers     Version    Utilities   Version    Utilities  Version
+
+     Dutchie       2.90C*   EditNL         4.00    ARC           6.01
+     SEAdog         4.50    MakeNL         2.12    ARCmail        2.0
+     BinkleyTerm    2.20*   Prune          1.40    ConfMail      4.00
+     D'Bridge       1.18*   XlatList       2.90    TPB Editor    1.21
+     FrontDoor       2.0    XlaxNode       2.32    TCOMMail       2.2*
+     PRENM          1.40    XlaxDiff       2.32    TMail         8901
+                            ParseList      1.30    UFGATE        1.03
+                                                   GROUP         2.07*
+                                                   EMM           1.40
+                                                   MSGED         1.99
+                                                   XRS            2.0*
+
+     * Recently changed
+
+     Utility authors:  Please help  keep  this  list  up  to  date  by
+     reporting  new  versions  to 1:1/1.  It is not our intent to list
+     all utilities here, only those which verge on necessity.
+
+     -----------------------------------------------------------------
+     FidoNews 6-18                Page 21                   1 May 1989
+
+
+     =================================================================
+                                  NOTICES
+     =================================================================
+
+                          The Interrupt Stack
+
+
+      8 May 1989
+        Digital Equipment Corporations User Society (DECUS) will be
+        holding its semi-annual symposium in Atlanta, GA. Runs
+        through May 12. As usual sysop's will get together and chat.
+
+     15 May 1989
+        Denmark changes telephone numbers from 7 to 8 digits.
+
+     19 May 1989
+        Start of EuroCon III at Eindhoven, The Netherlands. Contact
+        Hans Ligthelm of 2:500/3 for details.
+
+      5 Jun 1989
+        David Dodell's 32nd Birthday
+
+     24 Aug 1989
+        Voyager 2 passes Neptune.
+
+     24 Aug 1989
+        FidoCon '89 starts at the Holiday Inn in San Jose,
+        California.  Trade show, seminars, etc. Contact 1/89
+        for info.
+
+      5 Oct 1989
+        20th Anniversary of "Monty Python's Flying Circus"
+
+     11 Nov 1989
+        A new area code forms in northern Illinois at 12:01 am.
+        Chicago proper will remain area code 312; suburban areas
+        formerly served with that code will become area code 708.
+
+     If you have something which you would like to see on this
+     calendar, please send a message to FidoNet node 1:1/1.
+
+     -----------------------------------------------------------------
+
+     FidoNews 6-18                Page 22                   1 May 1989
+
+
+            OFFICERS OF THE INTERNATIONAL FIDONET ASSOCIATION
+
+     Mort Sternheim 1:321/109  Chairman of the Board
+     Bob Rudolph    1:261/628  President
+     Matt Whelan    3:3/1      Vice President
+     Bill Bolton    3:711/403  Vice President-Technical Coordinator
+     Linda Grennan  1:147/1    Secretary
+     Kris Veitch    1:147/30   Treasurer
+
+
+            IFNA COMMITTEE AND BOARD CHAIRS
+
+     Administration and Finance     Mark Grennan    1:147/1
+     Board of Directors             Mort Sternheim  1:321/109
+     Bylaws                         Don Daniels     1:107/210
+     Ethics                         Vic Hill        1:147/4
+     Executive Committee            Bob Rudolph     1:261/628
+     International Affairs          Rob Gonsalves   2:500/1
+     Membership Services            David Drexler   1:147/1
+     Nominations & Elections        David Melnick   1:107/233
+     Public Affairs                 David Drexler   1:147/1
+     Publications                   Rick Siegel     1:107/27
+     Security & Individual Rights   Jim Cannell     1:143/21
+     Technical Standards            Rick Moore      1:115/333
+
+
+                      IFNA BOARD OF DIRECTORS
+
+         DIVISION                               AT-LARGE
+
+     10  Courtney Harris   1:102/732    Don Daniels     1:107/210
+     11  Bill Allbritten   1:11/301     Mort Sternheim  1:321/109
+     12  Bill Bolton       3:711/403    Mark Grennan    1:147/1
+     13  Irene Henderson   1:107/9       (vacant)
+     14  Ken Kaplan        1:100/22     Ted Polczyinski 1:154/5
+     15  Scott Miller      1:128/12     Matt Whelan     3:3/1
+     16  Ivan Schaffel     1:141/390    Robert Rudolph  1:261/628
+     17  Neal Curtin       1:343/1      Steve Jordan    1:206/2871
+     18  Andrew Adler      1:135/47     Kris Veitch     1:147/30
+     19  David Drexler     1:147/1       (vacant)
+      2  Henk Wevers       2:500/1      David Melnik    1:107/233
+
+     -----------------------------------------------------------------
+     FidoNews 6-18                Page 23                   1 May 1989
+
+
+                                      __
+                 The World's First   /  \
+                    BBS Network     /|oo \
+                    * FidoNet *    (_|  /_)
+                                    _`@/_ \    _
+                                   |     | \   \\
+                                   | (*) |  \   ))
+                      ______       |__U__| /  \//
+                     / Fido \       _//|| _\   /
+                    (________)     (_/(_|(____/ (tm)
+
+            Membership for the International FidoNet Association
+
+     Membership in IFNA is open to any individual or organization that
+     pays  a  specified  annual   membership  fee.   IFNA  serves  the
+     international  FidoNet-compatible  electronic  mail  community to
+     increase worldwide communications.
+
+     Member Name _______________________________  Date _______________
+     Address _________________________________________________________
+     City ____________________________________________________________
+     State ________________________________  Zip _____________________
+     Country _________________________________________________________
+     Home Phone (Voice) ______________________________________________
+     Work Phone (Voice) ______________________________________________
+
+     Zone:Net/Node Number ____________________________________________
+     BBS Name ________________________________________________________
+     BBS Phone Number ________________________________________________
+     Baud Rates Supported ____________________________________________
+     Board Restrictions ______________________________________________
+
+     Your Special Interests __________________________________________
+     _________________________________________________________________
+     _________________________________________________________________
+     In what areas would you be willing to help in FidoNet? __________
+     _________________________________________________________________
+     _________________________________________________________________
+     Send this membership form and a check or money order for $25 in
+     US Funds to:
+                   International FidoNet Association
+                   PO Box 41143
+                   St Louis, Missouri 63141
+                   USA
+
+     Thank you for your membership!  Your participation will help to
+     insure the future of FidoNet.
+
+     Please NOTE that IFNA is a general not-for-profit organization
+     and Articles of Association and By-Laws were adopted by the
+     membership in January 1987.  The second elected Board of Directors
+     was filled in August 1988.  The IFNA Echomail Conference has been
+     established on FidoNet to assist the Board.  We welcome your
+     input to this Conference.
+
+     -----------------------------------------------------------------
+

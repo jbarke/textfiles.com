@@ -1,0 +1,145 @@
+> > it would be nice if you or tj had spare cycles to cough up how
+> > fightonet routing worked, and fantasize about it being applied
+> > to a store-and-forward network that can do 1500-byte datagrams
+> > at very high speeds... i can think of several venues, infested
+
+Randy, you're remembering the Opus/Binkley router.
+
+It's mainly forgotten now, but starting with version 10 (I think)
+the three-level (zone:net/node) topology was fairly complex.
+It was never really a simple top-down tree, though it was
+forced into that for political concerns and by bad software
+like Opus/Binkley (bad as far as their network topology).
+
+I'm sorry this is so long, but it's necessary to
+know this to understand the router.
+
+1. TOPOLOGY
+
+There were NODES (end-user BBSs). 
+
+NETs were clusters of NODES in a geographical area such that
+they were a "local call" (U.S.)  and hence could take advantage
+of an incoming host to distribute mail in the obvious manner
+(obvious to me in San Francisco in 1985), eg.  mail to N >
+1 nodes in a given NET were delivered in a single phone call.
+
+Each NET had a 0th logical node that was in fact one of the
+normal, numbered nodes. It was explicitly willing to forward
+mail to any node in its net. However, note that ANY node is
+capable of forwarding mail, especialyl within its own net.
+I don't joke when I say the design was explicitly anarchist.
+It was meant to be highly cooperative. There were explicit
+controls for all of this (destination AND source-address
+filtering and routing) and if you think I'm being revisionist,
+go look at the code (URL below).
+
+The 0th person in a NET generally also handled administrative
+tasks like creating the local nodelist fragment (updating phone
+numbers, names, that sort of thing). This wasn't required, but
+it seemed harmless at the time...
+
+Mainly multiple incoming hosts weren't used though because the
+single host worked well and few people were comfortable with
+the scheduler (later on that).
+
+
+At the same syntactical level of heirarchy as NETs were REGIONs.
+As it turns out REGIONs became a huge political disaster but
+I didn't see that until later.
+
+REGIONs are syntactically equivelant to NETs, but do not cause
+the automatic routing to the 0th host to take place. No other
+FidoNet-compatible software ever implemented REGIONs right,
+except possibly SeaDog. It was to satisfy consistency needs for
+the programmer (me!)  and it made the topology trivial-seeming
+to users.
+
+The original idea of REGION was, if you're in Each Overshoe
+Utah, you are not part of a net because you have the only BBS
+for 50 miles.
+
+And it provided an administrative 0th position, similar to
+a NET. The REGION 0 (zero, as I call them) maintained the
+ndoelist fragment for that region, but their system didn't
+generall yforward any mail, though they were free to do so.
+They might re-distribute assembled nodelists back down to nodes,
+something a NET/0 often did.
+
+The size of REGIONs grew in a sawtooth manner; as FidoNet
+spread, in a region like California/Nevada the number of nodes
+in Region 10 grew, until a cluster of them formed, and spawned
+off a new NET.
+
+
+ZONEs were something else entirely. They provided a third level
+to the apparent heirarchy, very much like a NET was, but for
+a large geographical area, eg. a continent (not a political
+boundary, though of course that's what happened later, don't
+blame me, I didn't do it, etc)
+
+ZONE:0/0 was, by default, the OUTGOING funnel for inter-zone
+traffic, since hopping puddles etc was more dificult then.
+
+
+2. THE ROUTER
+
+Fido's router was at it's heart a table of (more or less)
+three columns of N rows where N was nodelist size. Each table
+row contained:
+
+	DEST		ROUTE-TO	STUFF
+	zone:net:node	zone:net:node	stuff
+	...		...		...
+
+
+The source to FidoNet's router core:
+
+http://wps.com/FidoNet/source/Fido-FidoNet/fido-13a/sources/router.c.TXT
+
+Ben Baker's description of FidoNet routing, pre-ZONE, undated,
+but around 1985.
+
+http://wps.com/FidoNet/source/Fido-FidoNet/routing.txt
+
+I will search for my contemporary accounts if you want.
+
+
+FidoNet (the executable) started wit ha default table and applied
+routing commands to modify it
+
+a zone:net:node datum; to determine the destination for a message
+the dest was searched for in the left column and the right column
+
+> > by me and abha, that would love such a thing.
+> 
+> i don't think so.  in fidonet, geographic addressing and routing
+> were in a deadly embrace far deeper then in the internet.  i.e.
+> 1:105/6.42 was absolutely clearly
+>   1:  - north america (zone)
+>   105 - portland orygun (net)
+>   /6  - randy's cloud (node)
+>   .42 - someone specific but not divulged in randy's cloud (point)
+> 
+> routing was up/down the hierarchy. i.e. a message from 1:105/6.42
+> to 5:222/4.666
+>   42 sent to 1:105/6
+>   1:105/6 send to 1:105/0
+>   1:105/0 sent to 1:1/5 (gate from 1: to 5:
+>   1:1/5 sent to 5:5/1
+>   and then down the african tree, net 222, node 4, point 666
+> 
+> but all nodes could get the full 'nodelist' (e.g. hosts.txt) and
+> call the destination directly.
+> 
+> make sense?
+> 
+> <http://www.nsrc.org/lowcost_tools/fidonet/standards/fts-0001.016>
+> jeezus tj!  it seems i was updating it as late as '95.
+> 
+> randy
+> 
+
+-- 
+INFORMATION GLADLY GIVEN BUT SAFETY REQUIRES AVOIDING UNNECESSARY CONVERSATION
+

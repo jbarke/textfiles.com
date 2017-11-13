@@ -1,0 +1,320 @@
+*******************************************************************************
+*
+IR version 2.0
+*
+The all-purpose doohickey installer
+*
+By Matt Deatherage, Developer Technical Support
+*
+Copyright 1991-1992 Apple Computer, Inc.  All rights reserved.
+*
+*
+*******************************************************************************
+
+
+What is IR 2.0?
+
+IR 2.0 is a lot like IR 1.0, but better.  IR originally stood for "Init
+Restarter" and was written to get the GSBug Init installed after booting
+because it didn't work with my terminal program.  It was quickly expanded
+to also load CDAs, NDAs and GS/OS Drivers, and made it onto the Developer
+CD.  There it stood for a long time.
+
+The new features in System Software 6.0, specifically inter-process
+communication (IPC), make it possible to go IR 1.0 one better -- IR 2.0
+installs a Finder Extension so that CDAs, NDAs, inits and GS/OS drivers
+and even Finder Extensions are installed without ever leaving the Finder.
+It has preferences, presented through an "Extras" menu item and does a lot
+more than 1.0.
+
+
+How do I use it?
+
+To install IR 2.0, put it in the System.Setup folder of your boot volume's
+system folder, or double-click on it if IR 1.0 is installed.  It's a
+permanent init.
+
+Once it's installed, you'll see the "IR Preferences..." item in the Finder's
+"Extras" menu.  The preferences available are discussed later in this
+document.  More importantly, you can double-click on any of the document
+types listed above and they will be installed instantly.  Usually you'll
+get extra copies of anything that was already installed when you double-
+clicked on it, but you can ask IR to try to kill old versions first, or
+instruct it not to do anything if an old version is around.  NDAs appear
+in the Apple menu instantly and open their windows.  Finder extensions'
+"Extras" menu items show up instantly.  New GS/OS volumes appear on the
+desktop instantly.  Everything's very whizzy and snappy.
+
+Also included in this seed is a Nifty List 3.4p module called "IR.Module."
+This module will eventually include all kinds of IR things to do, but
+currently only has one command, "\killir".  \killir takes no parameters and
+does what it says -- it kills IR.  It displays error messages or tells you
+what user ID IR had before it was brutally murdered.
+
+
+What is *not* yet included?
+
+The following capabilities are coming someday, but aren't included in the
+2.0 release of IR:
+
+*  Some inits don't want to be launched in the Finder, where all the tools
+   are started.  IR has an option to let applications have first shot at
+   IR documents.  The final package will include a C application that
+   accepts Finder long path messages (message type #11, word-length strings
+   and fully-expanded pathnames) to install these files.  The source won't
+   be too impressive; it will call the IR init to do all the work.  The
+   application will allow you to change IR preferences if you launch it with
+   no message of type $0011.
+   
+IR's Preferences
+
+IR's preferences dialog has three radio buttons, four checkboxes and three
+simple buttons to dismiss it.  You might want to look at the dialog while
+reading these descriptions to make it clearer.
+
+"Open exsting NDAs' windows," if checked, instructs IR to just open the window
+of an NDA that's already installed instead of installing a duplicate copy.
+This allows you to double-click on something like the Control Panel NDA icon
+and get the window open instead of getting a second Control Panel in your
+Apple menu.
+
+"Open new NDAs' windows," if checked, instructs IR to open NDAs after they're
+installed if possible.  This is only possible if the Desk Manager is active.
+
+"Install Finder extensions permanently," if checked, tells IR to install
+Finder extensions (file type $BC, auxiliary type $0001) and forget about them;
+they'll be in the system until you reboot.  If this checkbox is not checked,
+IR keeps track of each Finder extension it installs and shuts them down when
+the Finder quits or when IR is told to go away.
+
+"Let applications try first," if checked, lets the Finder look for an
+application to launch first.  Only if the Finder finds no application for the
+file will IR install it.  In technical terms, checking the box makes IR respond
+to finderSaysOpenFailed instead of finderSaysBeforeOpen.  You can reverse this
+preference on the fly by holding down the Control key as you open a file IR
+would normally install.
+
+"Tell me about problems" tells IR to show alerts (if possible) in certain
+situations where you might want more information and a chance to change
+your mind.  If you leave this box unchecked, IR won't display any such
+alerts.
+
+The three radio buttons determine how IR responds to duplicates -- files the
+System Loader already knows about with the same pathname.  "Install a new
+copy" does what IR 1.0 did -- it blindly and always installs a new copy of the
+file.  This creates duplicate entires in your DA menus and can cause problems
+with some inits.
+
+"Try to remove the old one" sends the srqGoAway code to the existing copy in
+the system, but installs a new one whether or not the old one goes away.  This
+is what I usually use.
+
+"Always remove the old one" takes no action if the existing copy won't accept
+the srqGoAway code.  This is the most conservative but least useful approach.
+If you also check the "Tell me about problems" checkbox, IR will tell you
+when a duplicate can't be removed and give you one more chance to change
+your mind and install a new copy.  If you hold down the option key while
+clicking "Install another copy" (actually, IR doesn't check until immediately
+after the window closes), the old one will be killed without mercy.  You
+should only do this if you know exactly what you're doing.  It's necessary
+for Finder Extensions that accept the Finder's "goodbye" message but won't
+accept an srqGoAway code -- otherwise weird things could happen.  Most Finder
+Extensions won't have this problem, but EasyMount does.
+
+"Cancel" dismisses the dialog with no changes to your preferences.  "Accept"
+dismisses the dialog, saving your changes in memory until you reboot.  If you
+click "Save," IR writes your preferences to disk (in the same folder where
+the IR init file is located).  IR will attempt to load such preferences when
+it's initialized, and the file is less than one block long so you might as well
+use it.  (Actually, the logical length is only two bytes.)
+
+Most of the controls have semi-logical key equivalents, too.
+
+
+Programming with IR 2.0
+
+IR 2.0 is a permanent init because it sits around and accepts requests to
+do things.  In addition to accepting requests the Finder says, IR defines
+several requests you may send to it at the string "Apple~IR~".  The file
+E16.IR, included with this seed, gives the definitions of all the symbolic
+constants outlined here.
+
+The preferences are bits in a one-word field, and the bits of the field are
+defined in the E16.IR file also.  Assemble whichever bits you want and pass
+them to the routines that take "preferences" or "flags."  If you pass flags
+to the askIRToInstall routine, be sure to set the low-order bit (irSpecialPrefs)
+or IR will use the existing preferences instead.  If you want IR to write
+preferences to disk, also set the low-order bit, otherwise the preferences
+will stay in memory only.
+
+Here are brief descriptions of the IR requests.  They are all made to the
+string "Apple~IR~" with the Tool Locator call SendRequest.  See the System
+Software 6.0 Toolbox Delta ERS for details on SendRequest.
+
+askIRStartUp
+
+Starts IR.  You shouldn't have to send this; the Init portion of the IR
+file sends this request as soon as the request procedure is installed.  This
+is where IR calls ShowBootInfo to display the icon or text string.  It
+also reads the IR preferences from disk if it can find them, and uses
+the default preferences if it can't.
+
+dataIn:   Pointer to IR's user ID.
+dataOut:  Reserved
+Results:   None.
+
+askIRAreYouThere
+
+A simple request; IR accepts it if it's present.  An easy way to see if IR
+is around so you can send it other requests.
+
+dataIn:   Reserved
+dataOut:  Pointer to the following structure:
+          +000   Word   recvCount (filled in by Tool Locator)
+		  +002   Word   userID -- IR's user ID for your convenience
+Results:  None.
+
+askIRToInstall
+
+The workhorse.  Here you give IR what it needs to install a file, and it
+does it if it can and if the preferences permit it.
+
+dataIn:   Pointer to the following structure:
+          +000   Word   Flags/Prefernces
+		  +002   Long   Pointer to class one pathname of file to install
+		  +006   Word   File type of file to install
+		  +008   Long   Auxiliary type of file to install
+dataOut:  Pointer to the following structure:
+          +000   Word   recvCount (filled in by Tool Locator)
+		  +002   Word   irError -- a result code about what happened
+		  +004   Word   user ID of file just installed
+Results:  irDuplicateWontDie -- you told IR not to permit duplicates,
+                                and it found one it couldn't kill.
+								
+          irNoFinder -- Finder wasn't active when you installed
+                        a Finder Extension.
+						
+		  irGSOSNotAvail -- GS/OS isn't available so the file can't
+		                    be read from disk and installed.
+							
+		  irNotIRFile -- not a file IR can install
+		  
+		  irBusy -- IR was already busy doing something non-reentrant
+		  
+		  Toolbox or OS errors returned unchanged.
+		  
+	   
+askIRGetPrefs
+
+Returns IR's preferences.  If the low bit of dataIn is set, the
+preferences are (re-)read from disk instead of returned from
+memory.
+
+dataIn:   Low bit set ==> read from disk
+dataOut:  Pointer to following structure:
+          +000   Word   recvCount (filled in by Tool Locator)
+		  +002   Word   irError -- result code
+		  +004   Word   flags (defined in E16.IR)
+Results:  irBusy -- IR was busy at the time
+          Toolbox or OS errors returned unchanged
+          (However, "file not found" makes IR create a new preferences file.)
+		  
+
+askIRSetPrefs
+
+Sets IR's preferences.  The new preferences are in the low word of
+dataIn and are written to disk as well if the low-order bit is set.
+The preferences are always saved to memory even if disk errors
+occur.
+
+dataIn:   Preferences in low word, low bit set ==> write to disk
+dataOut:  Reserved
+Results:  irBusy -- IR was busy at the time
+          Toolbox or OS errors returned unchanged (except file not found)
+
+
+askIRDoPrefs
+
+Asks IR to present the preferences dialog, interact with the user and
+record the user's changes to memory and/or disk.  The preferences
+dialog works in either 320 or 640 mode, and it is initialized with the
+current preferences; if you want to present the dialog with different
+preferences, you need to call askIRSetPrefs before calling askIRDoPrefs.
+
+
+The dialog should only be presented if the Desk Manager (and NDA capability)
+is active, but right now it just assumes these things are there, so it
+will probably blow up big-time if you call it without the desktop tools
+active.
+
+dataIn:   Reserved
+dataOut:  Reserved
+Results:  None.
+
+
+-----------------------------------------------------------------------------
+
+A word about installing things like IR does yourself:
+
+If you have any doubts that installing DAs and inits and stuff on the fly
+and making it do what the user expects is easy, check the voluminous release
+notes at the beginning of each source code file, especially RequestProc.aii.
+The entire process is pretty delicate to begin with, and trying to move it
+to your own application is still risky.
+
+So now you have source code to IR and you know all of its secrets.  Now you
+can go off and do these things in your own programs, right?
+
+Wrong.  Please don't, for several reasons.
+
+First, the code is still kind of delicate.  It has several interdependencies
+and I very seriously considered moving all the delicate stuff into a
+separate source file and not releasing it -- just releasing the object
+code to that part.  I decided against it so you can see what's going on,
+not so you could duplicate it in your own programs.
+
+Second, if you want your desk accessory or application or other code
+to duplicate IR functionality, there's no reason to require the user to
+take the memory to duplicate these functions.  IR can do the same
+work and not require nearly as much space in your code.
+
+It's by far easier and better to provide the same functionality by licensing
+IR and including it with your program, and using SendRequest to call it.  
+Or, you can just use askIRAreYouThere to implement IR-like features if 
+IR is already installed, avoiding any licensing paperwork.
+
+This stuff is tricky and it can change without warning.  I'd feel a lot
+better if you let IR take the risks and you just ask it to do the dirty
+work.  That way, any number of desk accessories, applications or utilities
+of any kind can have useful IR-like features without taking up lots of
+memory and without taking undue risks.
+
+You can either license IR (it will be, in the immediate future, part of
+the GSBug distribution package, which costs less to license than most
+programmers spend on fast food in a week) and ship it with your product,
+or (if, for example, you're a shareware author) you can just use the
+askIRAreYouThere request to see if IR is installed and enable IR-like
+features if it is.  This allows virtually _any_ application to provide
+IR's capabilities when not in the Finder for very little memory.
+
+You can contact Tim Swihart (AppleLink: TIM.SWIHART, address:  20525
+Mariani Ave., MS: 70-PM, Cupertino, CA, 95014) for more information about
+licensing IR as part of the GSBug package.  Once everything's settled,
+Tim will undoubtedly point you to Software Licensing, so if you know things
+are settled you should feel free to contact Software Licensing directly.
+
+-----------------------------------------------------------------------------
+
+Please AppleLink comments/bugs/suggestions to me at DEATHERAGE1, or AIIDTS.
+If you like the sample, you can tell my management that it was a good use of
+my time by writing to DTS.FEEDBACK.
+
+(Oh, by the way, IR 2.0 doesn't work reliably on any system earlier than
+6.0D59, but it only checks for 6.0 generically.)
+
+Package release notes are not included here, but there are voluminous
+change histories at the beginning of each source file.
+
+Matt Deatherage
+Developer Technical Support
+Apple Computer, Inc.

@@ -1,0 +1,1398 @@
+
+-----------------------------------------------------------------
+|  SWITCHABLE CONVERSION BETWEEN ROBOTRON, JOUST, AND STARGATE  |
+-----------------------------------------------------------------
+
+COPYRIGHT 1994
+
+REVISION NUMBER: 1.0 (first public release)
+  REVISION DATE: 24 May 1994
+     CREATED BY: Doug Jefferys
+
+
+STANDARD DISCLAIMER:
+--------------------
+
+The author hereby grants permission to reproduce and distribute this
+document for personal use, subject to the condition that the document
+(along with any copyright and disclaimer notices) is not modified in
+any way.  The opinions expressed within this document are those of the
+author only and not necessarily those of the author's employer.  This
+document is provided for informational purposes only.  Although the
+author has made every effort to provide accurate information, he cannot
+guarantee the accuracy or usefulness of any of the information contained
+herein due to the complexity of the issues involved.  The author takes
+no responsibility for anything arising as a result of anyone using the
+information provided in this document, and the reader hereby absolves
+the author of any and all liability arising from any activities
+resulting from the use of any information contained herein.
+
+
+GENERAL OVERVIEW:
+-----------------
+
+Okay, so there's been a lot of talk among us collectors about what
+can and cannot be done with Williams games.  The theory has been
+discussed; now it's time for some application.
+
+What we want to do is get three Williams games to play within the
+same cabinet.  What we don't want to do is hunt for any new hardware.
+
+We look at the Williams games out there, and note that Robotron and
+Joust use common parts, except for the ROMs.  We note that Stargate's
+ROMs will also work in a Robotron or Joust cabinet.  Sadly, we note
+that we can't run Robotron or Joust off a Stargate setup, but, as they
+say, life is hard.
+
+Swapping control panels isn't too bad, but we're really sick and tired
+of swapping all 12 program ROMs (and the sound ROM) every time we want
+to switch games.  Wouldn't it be nice if all we had to do was use a
+ZIF (Zero-Insertion-Force) socket and a single chip?  It'd be cleaner,
+easier, safer, and infinitely more convenient.  Heck, it'd even be
+quicker than swapping ROM boards.  All in all, a real win.
+
+At the end of this project, you'll have a funny-looking adaptor with
+a ZIF socket that you can plug into your sound board, and a small
+daughterboard (also with a ZIF socket) plugged onto your ROM board.
+You'll have a few pairs of chips which you wan swap in and out of the
+sockets to swap games, and as a bonus, you'll have a pile of spare
+ROMs you can use for hacking.
+
+As with my previous conversions, sections labeled "Tech Note" are
+primarily for people who want to know *WHY* the hack works, and how
+it was designed.  If you're only interested in building the unit,
+you can skim over these sections.
+
+
+INGREDIENTS:
+------------
+
+1 - Working Joust or Robotron machine.
+1 - Set of controls for whichever two (Joust/Robotron/Stargate) games
+    you don't have yet.  How you obtain or create these is up to you.
+3 - 27512 EPROMs at 450ns or faster
+3 - 2732 EPROMs at 450ns or faster
+1 - 7404 hex inverter chip
+1 - 74133 single 13-input NAND chip (no, that's not a typo :-)
+1 - 28-pin ZIF (Zero-Insertion Force) socket
+1 - 24-pin ZIF (Zero-Insertion Force) socket
+1 - 16-pin socket
+1 - 14-pin socket
+1 - 28-pin socket
+3 - 24-pin sockets
+1 - 4-pin .100" male strip header
+5 - 12-pin .100" male strip headers
+1 - 12-pin .100" female MTA plug
+1 - 4-pin .100" female MTA plug
+1 - chunk of blank breadboard, .100" spacing, about 2.5 inches square
+
+You will also need an EPROM programmer (or a friend who has one),
+binary dumps of Robotron, Joust, and Stargate ROMs, a wire-wrapping
+tool and a soldering iron.
+
+
+WHAT THIS HACK IS:
+------------------
+
+It's a way of getting a Joust or Robotron machine to play Joust,
+Robotron, and Stargate.
+
+You'll be able to switch between any of the three games in about
+a minute, by switching two EPROMs and (possibly) an adaptor.
+
+
+WHAT THIS HACK ISN'T:
+---------------------
+
+This hack will *NOT* work on most Stargate machines.  Stargate's CPU
+board requires an upgrade before it will run the newer games, and its
+ROM board is also incompatible.  Sorry, folks, but them's the breaks.
+
+There *are* ways around this, but...
+
+...the cheapest upgrade path from Stargate is to get a Robotron or a
+Joust ROM board and to upgrade the Stargate CPU board, but...
+
+...unfortunately, CPU board upgrades are beyond the scope of this hack.
+I'm working on a supplementary document that will describe some of the
+various Williams boards out there, as well as their upgrade paths.  If
+you've got spare CPU boards lying around, but none of them are from
+Joust or Robotron, try a Sinistar or Bubbles CPU.  These should work.
+
+Last but not least, this hack is not for those of you who want to keep
+your high score information or game settings stored between playing
+sessions.  Due to differences in the software, switching games will
+erase your CMOS RAM settings.  Sorry, but there's no easy way around
+this one.  (I suppose you could wire up a whole bank of CMOS RAM chips
+and manually select a specific chip when you switched games, but such
+an extension would be far beyond the scope of this project...)
+
+
+DETAILED INSTRUCTIONS:
+----------------------
+
+ 0) Read all of these instructions before you begin.
+
+    Steps 1) through 4) can be done at your desk in about half an hour.
+
+    Steps 5) and 6) are the toughest and will take a fair bit of
+    patience and care with the soldering iron; the EPROM socket
+    adaptors can be a real pain to build.  Take your time and don't
+    be afraid to take breaks.
+
+    Steps 7) and 8) are a little less tedious, but should still be done
+    with care, as you'll be soldering directly to the circuit board in
+    step 8).  Again, take your time and take some breaks.
+
+    Steps 9) and 10) are a nice wind-down and can be done in another
+    half-hour or so.  The frustration level here will depend on your
+    luck in getting connectors that co-operate with your wire and tools,
+    but even the most persnickety combination of equipment shouldn't
+    take you more than an hour.
+
+
+ 1) Create the program ROM data files:
+
+
+ 1.1) Read the Robotron, Joust, and Stargate ROMs and store the data
+      on disk.  When reading ROMs, make sure your programmer is set
+      to the correct chip type (2732 or 2532).  As long as you get
+      the data in, the rest doesn't matter.
+
+      Due to the multiplicity of ROM sets out there, I can't guarantee
+      that every ROM set will work with this hack.  I can, however,
+      guarantee that "Solid Blue" ROMs will work for Robotron, and that
+      the "Solid Red" ROMs will work for Joust.  I don't know about
+      which sets of Stargate ROMs will work, as I only had one set
+      (which had been burned by a third party) to work from.
+
+      As an added note, the "Solid Red" Joust ROMs are an older version
+      of the program.  The "Pterodactyl Trick" will work on these ROMs.
+
+
+ 1.2) Create a dummy file of hex $FFs, 4096 bytes long.
+
+      Call this file "blank.fff".
+
+
+ 1.3) Create the program ROMs, using 27512s.  The contents of the three
+      games will be mapped onto each ROM as follows:
+
+      $0000-$0FFF = ROM 1
+      $1000-$1FFF = ROM 2
+      $2000-$1FFF = ROM 3
+      $3000-$1FFF = ROM 4
+      $4000-$1FFF = ROM 5
+      $5000-$1FFF = ROM 6
+      $6000-$1FFF = ROM 7
+      $7000-$1FFF = ROM 8
+      $8000-$1FFF = ROM 9
+      $9000-$CFFF = BLANK
+      $D000-$DFFF = ROM 10
+      $E000-$EFFF = ROM 11
+      $F000-$FFFF = ROM 12
+
+      Executing the following scripts will create the required files:
+
+      cat joust.01 > joust.512
+      cat joust.02 >> joust.512
+      cat joust.03 >> joust.512
+      cat joust.04 >> joust.512
+      cat joust.05 >> joust.512
+      cat joust.06 >> joust.512
+      cat joust.07 >> joust.512
+      cat joust.08 >> joust.512
+      cat joust.09 >> joust.512
+      cat blank.fff >> joust.512
+      cat blank.fff >> joust.512
+      cat blank.fff >> joust.512
+      cat blank.fff >> joust.512
+      cat joust.10 >> joust.512
+      cat joust.11 >> joust.512
+      cat joust.12 >> joust.512
+
+      cat robotron.01 > robotron.512
+      cat robotron.02 >> robotron.512
+      cat robotron.03 >> robotron.512
+      cat robotron.04 >> robotron.512
+      cat robotron.05 >> robotron.512
+      cat robotron.06 >> robotron.512
+      cat robotron.07 >> robotron.512
+      cat robotron.08 >> robotron.512
+      cat robotron.09 >> robotron.512
+      cat blank.fff >> robotron.512
+      cat blank.fff >> robotron.512
+      cat blank.fff >> robotron.512
+      cat blank.fff >> robotron.512
+      cat robotron.10 >> robotron.512
+      cat robotron.11 >> robotron.512
+      cat robotron.12 >> robotron.512
+
+      cat stargate.01 > stargate.512
+      cat stargate.02 >> stargate.512
+      cat stargate.03 >> stargate.512
+      cat stargate.04 >> stargate.512
+      cat stargate.05 >> stargate.512
+      cat stargate.06 >> stargate.512
+      cat stargate.07 >> stargate.512
+      cat stargate.08 >> stargate.512
+      cat stargate.09 >> stargate.512
+      cat blank.fff >> stargate.512
+      cat blank.fff >> stargate.512
+      cat blank.fff >> stargate.512
+      cat blank.fff >> stargate.512
+      cat stargate.10 >> stargate.512
+      cat stargate.11 >> stargate.512
+      cat stargate.12 >> stargate.512
+
+      Tech Note:  The address space between $9000 and $CFFF is used
+                  by the machine for I/O and other goodies, so you
+                  can't use it for your own hacks.  Sorry...
+
+
+ 1.4) If your sound board uses 2532s (as it probably does), and you only
+      have 2732s to program for the missing games, you'll have to wire
+      up an adaptor later.  You should, however, still read in the data.
+      This will give you the ".snd" files needed for the sound ROMs.
+
+      Note that Stargate actually uses 2K for its sound data, not 4K
+      like Robotron and Joust.  Read in its data and save it to disk
+      as "stargate.raw".
+
+      NOTE:  If you have a 4K data file for Stargate, examine it more
+      closely.  You may find that only the first half of the file
+      contains data and that the second half is composed solely of
+      $FFs.  If this is the case, you'll have to split off the first
+      2K of the file to create "stargate.raw".  To create the 4K
+      "stargate.snd" file which will be used in this hack, you'll want
+      to have two copies of this data, one after the other.  Execute
+      the following script to create "stargate.snd":
+
+      cat stargate.raw > stargate.snd
+      cat stargate.raw >> stargate.snd
+
+      You may now discard the "stargate.raw" file.
+
+      Tech Note:  We're saving ourselves a lot of trouble; re-strapping
+                  a sound board is a real pain.  See the discussion on
+                  the various strapping options in step 4) for more
+                  details.
+
+
+ 2) Fry up the ROMs:
+
+
+ 2.1) Burn a 27512 with the contents of "joust.512", another with the
+      contents of "robotron.512", and a third with the contents of
+      "stargate.512".
+
+      Tech Note:  My EPROM programmer won't conveniently handle
+                  anything larger than a 27512.  Thus, I'm going
+                  with the "switchable chip" design, rather than
+                  trying to consolidate all three games on one
+                  larger chip.  If you've read through this file
+                  and grok how this version of the hack works,
+                  then you should be able to figure out how to
+                  extend it appropriately.  Have fun!
+
+
+ 2.2) Burn a 2732 with the contents of "joust.snd", another with
+      the contents of "robotron.snd", and a third with the contents
+      of "stargate.snd".
+
+
+ 3) Okay, you've got your chips.  Now we have to figure out when to
+    read data from the chips, and from what addresses we should do
+    the reading.
+
+    [Editor's Note:  This whole section is basically an extended tech
+                     note, but it's probably worth reading, just to
+                     get a feel for what we're trying to accomplish
+                     with all of this...]
+
+    Or not.  Most of this has already been figured out for us by the
+    gang at Williams.  The 74154 on the ROM board takes the four high
+    bits of a 16-bit address and turns it into sixteen separate signals.
+    Twelve of those signals are the !CS signals for the old ROMs, and
+    the other four can be ignored, as they don't have anything to do
+    with this hack.
+
+    (So, what can we use that's already on the board?)
+
+    Well, for starters, the 2732 (or 2532) sockets on the ROM board
+    are directly connected to the data bus, and are also connected to
+    the lower 12 bits of the address bus.  If we construct our adaptor
+    wisely, that's a *big* pile of signals we won't have to worry about
+    on the 27512.
+
+    (Yeah, but what about...)
+
+    ...the upper 4 bits of the address bus?  According to the game's
+    schematics, these are sitting on the inputs of the aforementioned
+    74154.  All we have to do is connect them to the high 4 bits of
+    the 27512's address pins, and voila -- our 27512 can be used to
+    access the entire ROM address space.
+
+    Okay, so when do we turn it on?  Simple.  We read from the 27512
+    by pulling its !CS pin low whenever we want to read.  We *want*
+    to read whenever any of the *original* twelve !CS pins on the ROM
+    board is pulled low by the 74154.  Confused yet?
+
+    (Yes!)
+
+    Okay, look at it this way.  If all twelve !CS pins on the ROM board
+    are high, then all chips are deselected.  Don't read anything.  The
+    !CS on the 27512 should remain high.
+
+    If any of the twelve !CS pins on the ROM board are low (and by
+    definition, only one of them can be low at any given time), then
+    the game must be trying to read from a ROM chip, so !CS on the
+    27512 should be low.
+
+    If we call the !CS on the 27512 "!CS512", and the !CS signals to
+    the original ROMs "!CS1" through "!CS12", we see that:
+
+       (!CS512) == (!CS1) && (!CS2) && ... && (!CS 11) && (!CS12)
+
+    So, where do we get a 12-input AND gate?  We could make one out
+    of a whole mess of 4-input AND gates, but there's an easier way,
+    namely the 74LS133.  This chip is a 13-input NAND gate.  A truly
+    odd duck in the TTL world, but downright invaluable in this
+    situation.  Get the NAND of all 12 inputs (and a surplus "1"),
+    invert it to get the AND of the inputs, and you're done.  Since
+    all the logic is done on one chip, and since the order isn't
+    important, the wiring will be a cinch!
+
+
+ 4) Verify strapping of boards:
+
+    You could start building right now, except for the fact that you
+    wouldn't necessarily be building on the right platform.  Williams
+    boards have many jumpers and pads which can be cut or inserted in
+    order to change their configuration.
+
+    This is good from a design standpoint, as one can use the same board
+    in a variety of applications.  Indeed, this hack owes its existence
+    to the flexibility designed into the Williams hardware.
+
+    Alas, it makes documenting such hacks a nightmare.  Some of you
+    will have ROM boards strapped for 2532s, others with 2732s.  The
+    same goes for the sound boards.  Other strapping options, used for
+    specific games, may also be present.  Due to the wide variety of
+    strapping variations out there (and the lack of documentation),
+    it is generally difficult to tell anyone how to turn an arbitrary
+    board set into a set which can be used in this hack.
+
+    Having said that, we can still simplify the problem and save
+    ourselves some work in the process:
+
+
+ 4.1) ROM board:
+
+      This hack depends on having a ROM board which is strapped
+      for 2732s.  Before we go any further, we need to make sure
+      that this is the case.
+
+      The easy way to tell is to look at the chips on the board.
+      If they're 2732s, all is well and you can go to the next
+      step.
+
+      If they're 2532s, you'll have to change the strapping to
+      accept 2732s before you can continue.  This is a very simple
+      modification which can be done in less than ten minutes.
+
+      According to the schematics, there are four jumpers on the
+      ROM board, labeled W1 through W4.  Here are their approximate
+      locations:
+
+      W1: to the immediate left of ROM 5
+      W2: to the immediate left of W1
+      W3: to the immediate left of ROM 6
+      W4: to the immediate left of W3
+
+      If your board contained 2732s, W1 and W3 will be connected.
+      If it used 2532s, W2 and W4 will be connected.
+
+      When the boards come from the factory, the pairs of jumper
+      pads will be connected by a (usually red) zero-ohm resistor.
+      (These look just like ordinary resistors, except they've got
+      very simple markings -- a single black line)  To change the
+      strapping of your board, you can either desolder the jumpers
+      and move them to their new homes, or just cut them off and use
+      a piece of insulated wire to connect the pads.
+
+      NOTE: If you decide to cut them off and replace them with
+      wires, make sure the wires are insulated; the jumpers carry
+      real signals; these are *not* ground wires!
+
+      So, if your board contained 2532s, you'd desolder W2 and W4,
+      and place the jumpers across the immediately adjacent pads
+      at W1 and W3.
+
+
+ 4.2) Sound board:
+
+      At this point, your ROM board should be strapped for 2732s.
+      We now concern ourselves with the strapping of the sound board.
+
+      The sound board can be strapped in *dozens* of configurations.
+      For simplicity's sake, we shall assume that you started with one
+      that was strapped for use in Robotron or Joust.  This means that,
+      in all probability, it was strapped for 2532s; rather than fool
+      around with trying to modify the strapping for 2732s, I decided
+      to merely build an adaptor into the project, the construction of
+      which is described later.
+
+      The hacking we did in step 1.4) with the Stargate sound ROM data
+      comes in handy here.  Because the original Stargate sound board
+      was strapped for a 2516 (or 2716), and because some of the other
+      jumpers on the ROM board are strapped differently, we would have
+      had to swap a lot of jumpers every time we wanted to use the game.
+      Rather than go through all this trouble, we embedded the strapping
+      work in the 2732 EPROM itself, saving us untold headaches in the
+      process.
+
+      So, strapping doesn't matter here.  If the board came from Joust
+      or Robotron, it's strapped for either game, and is strapped for
+      2532s.  The adaptor will let us use our 2732s, and the work we
+      did in step 1.4) will let us use Stargate sound ROMs in the same
+      board without any further work.
+
+
+ 5) Build the program board:
+
+
+ 5.1) Start by building the adaptor to allow you to plug the big EPROM
+      into one of the 2732 sockets on the ROM board.  This will allow
+      us to use the address and data lines already present on the board,
+      thereby saving us some wiring work.
+
+      Tech Note:  Here are the pinouts for a 2732 and a 27512.  We want
+                  to build something that will let us plug the 27512
+                  into the game's existing 2732 socket.
+                                         __ __
+                                     A15|  U  |+5V
+                      __ __          A12|     |A14
+                   A7|  U  |+5V       A7|     |A13
+                   A6|     |A8        A6|     |A8
+                   A5|     |A9        A5|     |A9
+                   A4|     |A11       A4|  2  |A11
+                   A3|  2  |!CS       A3|  7  |!CS
+                   A2|  7  |A10       A2|  5  |A10
+                   A1|  3  |!CE       A1|  1  |!CE
+                   A0|  2  |D7        A0|  2  |D7
+                   D0|     |D6        D0|     |D6
+                   D1|     |D5        D1|     |D5
+                   D2|     |D4        D2|     |D4
+                  GND|_____|D3       GND|_____|D3
+
+                  Note the similarities between these pinouts.  We can
+                  ignore the !CS signal on the 2732, as we're creating
+                  our own from the other logic, and we'll have to move
+                  the +5V line.  The rest of the pins can go straight
+                  through to the chip; no wiring required.
+
+                  We'll use strip headers for those "straight through"
+                  connections, cutting off any lines we don't need, and
+                  bending any lines we'd like to reroute away from the
+                  chip, again simplifying the wiring job ahead.
+
+
+ 5.2) Start by putting the 12-pin strip headers into both boards,
+      as shown below.  Note that you want the longer pins of the
+      strip header to stick out of the top side of the boards, and
+      the shorter pins to be on the bottom.
+
+      Viewed from the top, the boards should look like this:
+
+      LEGEND:
+      -------
+      . = empty hole on breadboard
+      * = a pin from a 12-pin male strip header
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+
+      The view from the side should look like this:
+
+              | | | | | | | | | | | |             < pin
+              | | | | | | | | | | | |             < pin
+              | | | | | | | | | | | |             < pin
+              | | | | | | | | | | | |             < pin
+              | | | | | | | | | | | |             < pin
+              | | | | | | | | | | | |             < pin
+      =========================================== < breadboard
+              * * * * * * * * * * * *             < plastic surrounding pins
+              | | | | | | | | | | | |             < pin
+              | | | | | | | | | | | |             < pin
+
+
+ 5.3) Cut off pin 20 (!CS) of the strip header; it won't be used
+      by anything in the circuit.
+
+
+ 5.4) Bend pin 24 at a right angle.  It will eventually supply the
+      circuit with its +5V power.
+
+      When you have completed the preceding two steps, the board
+      should look something like this when viewed from the top...
+
+      LEGEND:
+      -------
+      . = empty hole on breadboard
+      * = a pin from a 12-pin male strip header
+      x = a *cut* pin from the strip header
+      - = a *bent* pin from the strip header
+
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . * . . . . . --- . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . x . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . * . . . . . * . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+      . . . . . . . . . . . . . . . . . . . . . . . . .
+
+      ...and something like this when viewed from the side:
+
+      LEGEND:
+      -------
+      = = breadboard material
+      * = the plastic that surrounds the row of pins in the strip header
+      | = uncut pins
+      x = the stub of the cut pin
+      . = the end of a bent pin, pointing towards the viewer.
+
+              | | | | | | |   | | |
+              | | | | | | |   | | |
+              | | | | | | |   | | |
+              | | | | | | |   | | |
+              | | | | | | |   | | |
+       PIN 15 | | | | | | | x | | | .     PIN 24  < pin (also bent/cut pins)
+      ===========================================
+              * * * * * * * * * * * *
+              | | | | | | | | | | | |
+              | | | | | | | | | | | |
+
+
+ 5.5) Using a soldering iron, tin the leads of the tops of the strip
+      header pins and the pins of a 28-pin socket.  This will make
+      step 5.6) infinitely easier to perform, and make the final
+      product considerably more reliable.
+
+
+ 5.6) Place the 28-pin socket on *top* of the strip header pins and
+      solder all connecting pins in place.  Probably the best way
+      to start is to solder the four pins on the corners of the chip
+      first. This will hold things in place solidly enough to do the
+      rest of the soldering job.  When you're done, finish up by
+      reflowing the solder on the four corner pins you started with.
+
+      When you are done, you should have something that looks like this:
+
+      LEGEND:
+      -------
+      # = body of 28-pin socket
+      ! = pins from 28-pin socket
+      = = breadboard material
+      * = the plastic that surrounds the row of pins in the strip header
+      | = uncut pins from the strip header
+      x = the stub of the cut pin
+      . = the end of a bent pin, pointing towards the viewer.
+
+              ###########################         < 28-pin socket body
+              ###########################         < 28-pin socket body
+              ! ! ! ! ! ! ! ! ! ! ! ! ! ! PIN 28  < pins from 28-pin socket
+              | | | | | | |   | | |
+              | | | | | | |   | | |
+              | | | | | | |   | | |
+              | | | | | | |   | | |
+              | | | | | | |   | | |
+       PIN 15 | | | | | | | x | | | .     PIN 24
+      ===========================================
+              * * * * * * * * * * * *
+              | | | | | | | | | | | |
+              | | | | | | | | | | | |
+
+
+ 5.7) You're almost done.  Now you want to wire up the last few pins to
+      complete the adaptor, specifically +5V line.
+
+      Going back to our side view, connect a thin wire to pin 28 of the
+      adaptor.  Run it down to the bent pin 24 to supply +5V to the chip.
+
+              ###########################
+              ###########################
+              ! ! ! ! ! ! ! ! ! ! ! ! ! !
+              | | | | | | |   | | |     ' PIN 28  < +5V to the 27512
+              | | | | | | |   | | |    /
+              | | | | | | |   | | |   /
+              | | | | | | |   | | |  /
+              | | | | | | |   | | | ,
+       PIN 15 | | | | | | | x | | | .     PIN 24  < +5V from the 2732
+      ===========================================
+              * * * * * * * * * * * *
+              | | | | | | | | | | | |
+              | | | | | | | | | | | |
+
+
+ 5.8) Complete the adaptors by plugging them into the two 24-pin sockets
+      you obtained earlier, as shown in the diagram below.  (Due to the
+      limitations of ASCII drawings, we have not shown the wiring you
+      performed during step 5.7) above...)
+
+      LEGEND:
+      -------
+      # = body of 28- or 24-pin socket
+      ! = pins from 28- or 24-pin socket
+      = = breadboard material
+      * = the plastic that surrounds the row of pins in the strip header
+      | = uncut pins from the strip header
+      x = the stub of the cut pin
+      . = the end of a bent pin, pointing towards the viewer.
+
+              ###########################
+              ###########################
+              ! ! ! ! ! ! ! ! ! ! ! ! ! !
+              | | | | | | |   | | |     '
+              | | | | | | |   | | |    /
+              | | | | | | |   | | |   /
+              | | | | | | |   | | |  /
+              | | | | | | |   | | | ,
+       PIN 15 | | | | | | | x | | | .
+      ===========================================
+              * * * * * * * * * * * *
+              | | | | | | | | | | | |
+              #######################             < 24-pin socket body
+              #######################             < 24-pin socket body
+              ! ! ! ! ! ! ! ! ! ! ! !             < pins from 24-pin socket
+
+
+ 5.9) Cram the 24-pin ZIF socket into the top socket of the daughterboard.
+
+      You could have done this whole hack using the ZIF socket *as*
+      the top socket of the daughterboard, but ZIF sockets are expensive,
+      and there's no point in wasting a ZIF socket if you make a mistake.
+
+      Also, the pins on some models of ZIF sockets move fractionally
+      when chips are inserted and extracted.  As the solder joints on
+      the adaptor are already of fairly marginal quality, we want to
+      reduce the risk of cracking over the long term.
+
+      At any rate, test-fit the completed board by plugging it into
+      one of the 24-pin sockets on the main board.  It should insert
+      smoothly and seat firmly.  Lay the partially-constructed board
+      aside and proceed to the next step:
+
+
+ 6) Create the adaptor for the sound board:
+
+    Tech Note:  Here are the pinouts for a 2532 and 2732.  We want to
+                build something that will let us plug the 2732 into the
+                sound board's existing 2532 socket.
+                      __ __              __ __
+                   A7|  U  |+5V       A7|  U  |+5V
+                   A6|     |A8        A6|     |A8
+                   A5|     |A9        A5|     |A9
+                   A4|     |A11       A4|     |+5V
+                   A3|  2  |!CS       A3|  2  |!CS
+                   A2|  7  |A10       A2|  5  |A10
+                   A1|  3  |!CE       A1|  3  |A11
+                   A0|  2  |D7        A0|  2  |D7
+                   D0|     |D6        D0|     |D6
+                   D1|     |D5        D1|     |D5
+                   D2|     |D4        D2|     |D4
+                  GND|_____|D3       GND|_____|D3
+
+                Note the similarities between these pinouts.  All
+                we have to do is move A11 over to the proper pin,
+                and bring a GND signal to the 2732's !CE pin (as
+                the chip should always be enabled).
+
+                Just as before, we'll use strip headers for the
+                "straight through" connections, cutting off any
+                lines we don't need, and bending any lines we'd
+                like to reroute away from the chip before rerouting
+                them.
+
+
+ 6.1) Start by putting a couple of 12-pin strip headers into one
+      of the 24-pin sockets.  Cut pin 18 about halfway up, and cut
+      pin 21 near its base.  After you're done your cutting, you
+      should have something like this:
+
+      LEGEND:
+      -------
+      # = body of 24-pin socket
+      ! = pins from 24-pin socket
+      = = breadboard material
+      * = the plastic that surrounds the row of pins in the strip header
+      | = uncut pins from the strip header
+      x = the stub of the cut pin
+
+              | | | | |   | |   | | |
+              | | | | |   | |   | | |
+              | | | | |   | |   | | |
+              | | | | | x | |   | | |
+              | | | | | | | |   | | |
+       PIN 13 | | | | | | | | x | | |    < top of strip header
+              * * * * * * * * * * * *    < plastic surrounding pins
+              | | | | | | | | | | | |    < bottom of strip header
+              #######################    < 24-pin socket body
+              #######################    < 24-pin socket body
+              ! ! ! ! ! ! ! ! ! ! ! !    < pins from 24-pin socket
+
+
+ 6.2) As in step 5.5), use your soldering iron to tin the leads of
+      the tops of the strip header pins and the pins of a 24-pin
+      socket.  This will make step 6.3) infinitely easier to perform,
+      and make the final product considerably more reliable.
+
+
+ 6.3) Again, just as in step 5.6), place the 24-pin socket on *top*
+      of the strip header pins and solder all connecting pins in place.
+
+      When you are done, you should have something that looks like this:
+
+      LEGEND:
+      -------
+      # = body of 24-pin socket
+      ! = pins from 24-pin socket
+      = = breadboard material
+      * = the plastic that surrounds the row of pins in the strip header
+      | = uncut pins from the strip header
+      x = the stub of the cut pin
+
+              #######################    < 24-pin socket body
+              #######################    < 24-pin socket body
+              ! ! ! ! ! ! ! ! ! ! ! !    < pins from 24-pin socket
+              | | | | |   | |   | | |
+              | | | | |   | |   | | |
+              | | | | |   | |   | | |
+              | | | | | x | |   | | |
+              | | | | | | | |   | | |
+       PIN 13 | | | | | | | | x | | |    < top of strip header
+              * * * * * * * * * * * *    < plastic surrounding pins
+              | | | | | | | | | | | |    < bottom of strip header
+              #######################    < 24-pin socket body
+              #######################    < 24-pin socket body
+              ! ! ! ! ! ! ! ! ! ! ! !    < pins from 24-pin socket
+
+
+ 6.4) This is the tricky bit.  You want to connect pin 18 of the
+      *bottom* socket to pin 21 of the *top* socket.  You also
+      want to connect pin 14 of the adaptor to pin 18 of the top
+      socket.
+
+      This step involves some very tricky and delicate placement of
+      wires, fingers, and a soldering iron.  It can be by one person
+      without burned fingers, but a third set of hands will probably
+      make things go a little easier.  Just be careful and it'll all
+      work out.  (And come to think of it, it was harder to come up
+      with these ASCII pictures than it was to do the wiring :-)
+
+      What you will end up is something like this, when viewed from
+      the side:
+
+              #######################    < 24-pin socket body
+              #######################    < 24-pin socket body
+             ~! ! ! ! ! ! ! ! ! ! ! !    < pins from 24-pin socket
+              |~|-|-|-|-' | | | | | |
+              | | | | |   ----' | | |
+              | | | | |  /| |   | | |
+              | | | | | x | |   | | |
+              | | | | | | | |   | | |
+       PIN 13 | | | | | | | | x | | |    < top of strip header
+              * * * * * * * * * * * *    < plastic surrounding pins
+              | | | | | | | | | | | |    < bottom of strip header
+              #######################    < 24-pin socket body
+              #######################    < 24-pin socket body
+              ! ! ! ! ! ! ! ! ! ! ! !    < pins from 24-pin socket
+
+      Finally, just to exhaust the limitations of ASCII art, here's
+      an oblique X-ray view, with the body of the top socket cut away
+      and the body of the bottom socket eliminated.
+
+      Connect "A" (on pin 14 == GND) to "A" (pin 18 on the top socket),
+      and connect "B" (pin 18 on the bottom socket) to "B" (pin 21 on
+      the top socket).
+
+             # # # # # # # # # # # #     < pin 1 on top socket
+          A /|||||||||||||||||||||||
+           / ||| / / / / / / / / |||     < |||
+          / /|||/ / / / / / / / /|||     < ||| = top socket material
+         / / ||| / / / / / / / / |||     < |||
+        / / /|||/ / / / / / / /  |||
+       * * * ||| * * * * * * *   |||     < pin 1 on bottom socket
+      / / / /|||/ / / / / / /    |||
+             |||                 |||
+             |||||||||||||||||||||||
+             # # # # # # # # # # # #     < pin 24 on top socket
+            / / / / / / / / / / / /
+           / / / / / A / / B / / /
+          / / / / /   / /   / / /
+         / / / / / B / /   / / /
+        / / / / / / / / / / / /
+       * * * * * * * * * * * *           < pin 24 on bottom socket
+      / / / / / / / / / / / /
+
+      You now have an adaptor which you can plug into any 2532 socket
+      and use a 2732 chip.  If you're feeling masochistic, you can whip
+      up a few more of these; you never know when one will come in handy.
+
+      Tech Note:  No, you can't use these to program 2532s in a burner
+                  configured for 2732s, but you can use it to read 'em,
+                  which is good enough for most purposes.
+
+
+ 6.5) Cram the 24-pin ZIF socket into the top socket of your adaptor.
+
+      Once you've got the ZIF socket in the adaptor, and have verified
+      that you can indeed insert/extract chips with zero force, the
+      assembly is complete.  Plug the completed assembly into the
+      empty 24-pin socket on the sound board which used to hold the
+      sound ROM.
+
+      We will now turn our attention back to our half-constructed
+      daughterboard...
+
+
+ 7) Wrap the daughterboard:
+
+    Lay out rest of parts as shown in the diagrams below, and wrap.
+
+    The EPROM sockets will already be present from the adaptor work
+    you performed in step 5) above.  You still have to add the 14-pin
+    socket for the 7404 hex inverter, the 16-pin socket for the 74133
+    13-input NAND gate, the 12- and 4-pin connectors which will be
+    used to connect the hack to the ROM board.
+
+    Now it's time to start wrapping!
+
+    The wrap lists will be in the form "Xn - Ym", where "X" and "Y"
+    denote components as depicted in step 5) above, and "n" and "m"
+    denote pin numbers.  Explanatory notes and/or signal names are
+    shown off to the right of the list.
+
+    For example:
+
+      E28 - X14  |  +5V
+
+    means to connect pin 28 of the EPROM to pin 14 of the 7404 and
+    that the connection carries +5VDC.
+
+    Remember that the wrap lists are from the point of view of the
+    pin numbers on the ICs -- i.e. that the diagrams in this document
+    depict the boards as seen from the *PARTS* side, not the *WIRING*
+    side.  You will have to mentally flip things around if you want to
+    use the diagrams to do the wrapping.
+
+    This bears repeating, especially for inexperienced wire-wrappers.
+    Make absolutely sure that if you're connecting something to "the
+    second pin from the leftmost" on some chip on the diagrams above,
+    that you actually connect it to the second pin from the RIGHT on
+    the chip when you're looking at it from below.  It's an easy
+    mistake to make, and it can be very frustrating.
+
+    If you've got small labels to stick on the bottom of your board
+    to prevent this kind of mistake, by all means use 'em.
+
+    Okay, you're ready to wrap.  Grab your tools and wire, get comfy,
+    and go to work!
+
+    LEGEND:
+    -------
+    . = empty hole on breadboard
+    P = 27512 EPROM
+    X = 74133 13-input NAND chip
+    Y = 7404 hex inverter chip
+    C = 12-pin connector
+    D = 4-pin connector
+
+    . . . . . . . . . . . . . . . . . . . . . . . . .
+    . . .     . .     .     . . . . . . . . . .     .
+    . . .  1  . .  4  .  1  . . . . . . . . . .  12 .
+    . . .   C C C C   .   D D D D D D D D D D D D   .
+    .     . . . . .     . .     . . . . . . . . . . .
+    .  1  . . . . .  28 . . 16  . . . . . . . . . . .
+    .   P . . . . . P   . .   X X X X X X X X . . . .
+    . . P . . . . . P . . . . . . . . . . . . . . . .
+    . . P . . . . . P . . . . . . . . . . . . . . . .
+    . . P . . . . . P . . .   X X X X X X X X . . . .
+    . . P . . . . . P . . .  1  . . . . . . . . . . .
+    . . P . . . . . P . . .     . . . . . . . . . . .
+    . . P . . . . . P . . . 14  . . . . . . . . . . .
+    . . P . . . . . P . . .   Y Y Y Y Y Y Y . . . . .
+    . . P . . . . . P . . . . . . . . . . . . . . . .
+    . . P . . . . . P . . . . . . . . . . . . . . . .
+    . . P . . . . . P . . .   Y Y Y Y Y Y Y . . . . .
+    . . P . . . . . P . . .  1  . . . . . . . . . . .
+    . . P . . . . . P . . .     . . . . . . . . . . .
+    . . P . . . . . P . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . . . . . . . . . . .
+    . . . . . . . . . . . . . . . . . . . . . . . . .
+
+    .---------------------.
+    | POWER / MISCELLANY: |
+    |-------------------------------------------------------------------.
+    | P28 - X16  |  +5V (better yet, use the P24 bent pin from before)  |
+    | X16 - Y14  |  +5V                                                 |
+    | P14 - Y7   |  GND                                                 |
+    | Y7  - X7   |  GND                                                 |
+    `-------------------------------------------------------------------'
+
+    .--------------------------.
+    | ADDRESS INPUTS (4-PIN): |
+    |-------------------------------------------------------------------.
+    | C1  - P2   |  A12                                                 |
+    | C2  - P26  |  A13                                                 |
+    | C3  - P27  |  A14                                                 |
+    | C4  - P1   |  A15                                                 |
+    `-------------------------------------------------------------------'
+
+    .------------------------------.
+    | CHIP SELECT INPUTS (12-PIN): |
+    |-------------------------------------------------------------------.
+    | D1  - X2   |  !ROM1                                               |
+    | D2  - X3   |  !ROM2                                               |
+    | D3  - X4   |  !ROM3  (The order doesn't really matter here;       |
+    | D4  - X15  |  !ROM4   all that matters is that all the Dxx        |
+    | D5  - X14  |  !ROM5   pins find an input pin on the 74LS133.      |
+    | D6  - X13  |  !ROM6   The suggested arrangement here, however,    |
+    | D7  - X12  |  !ROM7   is probably the easiest in terms of         |
+    | D8  - X11  |  !ROM8   physically laying out and wrapping the      |
+    | D9  - X10  |  !ROM9   wires.  Draw it out on a piece of graph     |
+    | D10 - X5   |  !ROM10  paper to get get the idea)                  |
+    | D11 - X6   |  !ROM11                                              |
+    | D12 - X7   |  !ROM12                                              |
+    | X16 - X1   |  The 13th input to the NAND remains high             |
+    `-------------------------------------------------------------------'
+
+    .---------------------.
+    | CHIP SELECT OUTPUT: |
+    |-------------------------------------------------------------------.
+    | X9  - Y9   |  CS goes to the 7404                                 |
+    | Y8  - P22  |  !CS goes to the 27512                               |
+    `-------------------------------------------------------------------'
+
+
+ 8) Wire the connectors:
+
+    Your daughterboard is now complete; you may now plug it into any
+    one of the 12 empty 24-pin sockets on the ROM board.  Although any
+    of the sockets will work, it's probably best to choose one near the
+    center of the board; you'll definitely want to be able to plug the
+    power connector into the ROM board (I've found that boards just
+    don't work too well without power :-), and you'll also want an
+    unobstructed view of the seven-segment diagnostic LED, just in
+    case you goofed in the wiring.  (Trust me, you *WILL* want a good
+    view of that LED.  'Nuff said :-)
+
+    Having said all of that, pick a socket and plug in the daughterboard.
+
+    All sixteen pins from the daughterboard's two connectors will be
+    used by the hack.  When you place the wires into the female plugs
+    for these connectors, keep in mind that they'll all be going to
+    various locations underneath the ROM board, so be sure they're all
+    long enough to reach any of the ROM sockets from their starting
+    point on the daughterboard.
+
+    Be careful when soldering the wires to the chips and sockets.
+    Although the only chip you're likely to damage is the 74154,
+    anything can (and occasionally will) go wrong.
+
+    For this reason, you might want to (carefully) remove the two
+    40-pin ICs before you begin -- these are pieces of custom hardware
+    that *CANNOT* be replaced if damaged by stray charge from your
+    soldering iron.  If you're good at removing large chips without
+    bending the legs, why not spend another minute to make things a
+    bit safer?  (While we're at it, take careful note of the way the
+    chips are facing before you remove them -- you don't want to put
+    them in backwards after you're done!)
+
+    If you have access to an ESD-safe workstation, this would be an
+    extremely good time to use it.  At the very least, make sure that
+    both you and the PCB are safely grounded while you're hacking on
+    the board.
+
+
+ 8.1) 4-pin connector:
+
+      The .100" female MTA 4-pin connector carries the upper four bits
+      of the address bus to the 27512.  Wires from this connector will
+      reach underneath the ROM board to the 74154 near the 40-pin ribbon
+      cable that connects the ROM board to the CPU board.
+
+      Label the connector and connect the wires as follows:
+
+       1 - A12 -> 23-of-74154
+       2 - A13 -> 22-of-74154
+       3 - A14 -> 21-of-74154
+       4 - A15 -> 20-of-74154
+
+      Plug the 4-pin connector into the ROM daughterboard.
+
+
+ 8.2) 12-pin connector:
+
+      The .100" female MTA 12-pin connector carries the !CS signals from
+      all twelve ROM sockets to the 74LS133.  Wires from this connector
+      will reach underneath the ROM board to each of the board's ROM
+      sockets.  As an alternative, they can also connect to the 74154.
+
+      For ease of wiring, I'd advise sticking them to the individual
+      ROM sockets; this makes them easy to manipulate and lowers the
+      risk of shorting pins.  If you take them to the 74154, you'll
+      have 16 wires leading to a single chip, and things can get a
+      little hairy when soldering that 16th wire :-)
+
+      Because everything is being NANDed together, it doesn't matter
+      which wires go where.  The guide below is just that -- a guide.
+      You're free to hook 'em up in whatever way seems most convenient
+      to you.  Happy hacking!
+
+       1 - !CS1  ->  1-of-74154 == 20-of-ROM1
+       2 - !CS2  ->  2-of-74154 == 20-of-ROM2
+       3 - !CS3  ->  3-of-74154 == 20-of-ROM3
+       4 - !CS4  ->  4-of-74154 == 20-of-ROM4
+       5 - !CS5  ->  5-of-74154 == 20-of-ROM5
+       6 - !CS6  ->  6-of-74154 == 20-of-ROM6
+       7 - !CS7  ->  7-of-74154 == 20-of-ROM7
+       8 - !CS8  ->  8-of-74154 == 20-of-ROM8
+       9 - !CS9  ->  9-of-74154 == 20-of-ROM9
+      10 - !CS10 -> 15-of-74154 == 20-of-ROM10
+      11 - !CS11 -> 16-of-74154 == 20-of-ROM11
+      12 - !CS12 -> 17-of-74154 == 20-of-ROM12
+
+      Plug the 12-pin connector into the ROM daughterboard.  If you
+      removed the 40-pin custom ICs before doing the soldering, put
+      them back in now.  Make absolutely sure that the chips are
+      plugged in correctly.  You do *NOT* want to plug the custom
+      in backwards.  When they're back in, check again, just to be
+      certain.
+
+
+ 9) Control panels - pinouts
+
+    Okay, so you can run the three programs on your console, but how
+    the heck do you actually play the game?  It's gonna be mighty
+    awkward playing Joust without buttons, or Stargate with two 4-way
+    joysticks, isn't it?
+
+    Well, yes and no.  You'll have to switch the control panels when
+    you switch games, and you'll also probably have to construct an
+    adaptor to go between the game's wiring harness and the small
+    interface board in order to make the control panel sensible.
+
+    You do have a couple of adavantages, though:
+
+    Many Williams cabinets were identical; the control panel from one
+    could be swapped directly into the other.  Stargate and Robotron,
+    for example, share identically-constructed cocktail cabinets; the
+    control panels can be swapped in about a minute, and that's
+    including the time to insert the adaptor.
+
+    Also, certain control panels can be fashioned directly out of the
+    originals.  Making a Joust panel out of a Robotron panel, for
+    instance, is easy and practical.
+
+    The "switch test" portion of the self-test procedure proved to be
+    invaluable in generating the following pinouts and testing the
+    adaptor and control panel I wound up building to support my new
+    games.
+
+
+ 9.1) Robotron interface board pinout
+
+          1 - P1 fire left
+          2 - P2 move up
+          3 - P2 move down
+          4 - P2 move left
+          5 - P2 move right
+          6 - P2 fire right
+          7 - P2 fire up
+          8 - P2 fire down
+          9 - P2 fire left
+         10 - GND
+         11 - P1 move up
+         12 - P1 move down
+         13 - P1 move left
+         14 - P1 move right
+         15 - 1-player start
+         16 - 2-player start
+         17 - P1 fire up
+         18 - P1 fire down
+         19 - P1 fire right
+         20 - GND
+
+
+ 9.2) Stargate interface board pinout
+
+          1 - P1 move up
+          2 - P2 fire
+          3 - P2 thrust
+          4 - P2 smart bomb
+          5 - P2 hyperspace
+          6 - P2 inviso
+          7 - P2 reverse
+          8 - P2 move down
+          9 - P2 move up
+         10 - GND
+         11 - P1 fire
+         12 - P1 thrust
+         13 - P1 smart bomb
+         14 - P1 hyperspace
+         15 - 2-player start
+         16 - 1-player start
+         17 - P1 reverse
+         18 - P1 move down
+         19 - P1 inviso
+         20 - GND
+
+
+ 9.3) Joust interface board pinout
+
+          1 -
+          2 - P2 move left
+          3 - P2 move right
+          4 - P2 flap
+          5 -
+          6 -
+          7 -
+          8 -
+          9 -
+         10 - GND
+         11 - P1 move left
+         12 - P1 move right
+         13 - P1 flap
+         14 -
+         15 - 2-player start
+         16 - 1-player start
+         17 -
+         18 -
+         19 -
+         20 - GND
+
+
+10) Control panels - an example
+
+    Due to the large number of possible starting configurations
+    (upright, cocktail, Robotron, Joust, Stargate), I will not attempt
+    to describe every possible adaptor and control panel mod under the
+    sun; I'll just describe my own situation (starting from a Robotron
+    cocktail unit and the pinouts described above) and let you take
+    things from there.
+
+
+10.1) Since I already had a Robotron cocktail machine, the Robotron
+      control panel was the trivial case.  It was already there, so
+      no work was required.  Gee, life is tough!
+
+
+10.2) Stargate was done by creating a completely separate control
+      panel with lines running directly down to the interface board.
+
+      Yes, this was a bit of a cheat; rather than build an adaptor, I
+      merely bypassed the game's wiring harness and plugged directly
+      into the interface board.  Still, it made the wiring easy, and
+      I was in a bit of a hurry at the time.
+
+      Someday I'll get an original Stargate control panel from a
+      cocktail machine and build the proper adaptor, but this will
+      suffice for now.
+
+
+10.3) Joust was the interesting case; I had two joysticks and plenty
+      of space on the Robotron panel, so I modified it to support Joust
+      directly by adding two buttons and fiddling with the internal
+      wiring.  No swapping of panels required, just the insertion and
+      removal of an adaptor.
+
+      Yes, I cringed as the drill bit worked its way through the
+      original panel, but once the new buttons were installed, they
+      blended in nicely with the original panel.  If I didn't know
+      better, I'd say they'd been installed at the factory myself.
+
+      I then added a piece of wire connecting the right stick's "UP"
+      switch to the right button, and another piece of wire connecting
+      the left stick's "UP" switch to the left button.  Two more pieces
+      of wire to ground the buttons completed the circuit.
+
+      When playing Robotron, there would thus be two ways to move or
+      fire upwards; either by pressing up on the joystick or by pressing
+      the newly-installed "FLAP" button.  Since buttons are not normally
+      used in Robotron, this mod is completely unobtrusive to the player
+      when in Robotron mode.
+
+      When in Joust mode, there would be two ways to flap; either by
+      pressing the "FLAP" button or by moving up on the joystick.  It's
+      possible, while moving side to side, to activate this switch by
+      accident, but I've found it to be a relatively minor problem.  If
+      you find it to be a pain, try arranging the wiring so that pulling
+      "DOWN" on the stick activates "FLAP" instead -- you might find it
+      more to your liking.
+
+      I then constructed an adaptor to connect the Player 1 control panel
+      harness to the game's interface board as follows, using the pinouts
+      described above in section 9).
+
+
+10.4) Assuming you did the same thing that I did (namely adding a couple
+      of buttons to the Robotron control panel as duplicates of the "UP"
+      joystick directions), your adaptor should look like this:
+
+         Robotron Harness        Connect to Interface Board
+         (Pin # and meaning)     (Pin # and meaning for Joust)
+
+          1 (P1 fire left) ---->  2 (P2 move left)
+          2 (P2 move up)
+          3 (P2 move down)
+          4 (P2 move left)
+          5 (P2 move right)
+          6 (P2 fire right)
+          7 (P2 fire up)
+          8 (P2 fire down)
+          9 (P2 fire left)
+         10 (GND) -------------> 10 (GND)
+         11 (P1 move up) ------> 13 (P1 flap)
+         12 (P1 move down)
+         13 (P1 move left) ----> 11 (P1 move left)
+         14 (P1 move right) ---> 12 (P1 move right)
+         15 (1-player start) --> 16 (2-player start)
+         16 (2-player start) --> 15 (1-player start)
+         17 (P1 fire up) ------>  4 (P2 flap)
+         18 (P1 fire down)
+         19 (P1 fire right) --->  3 (P2 move right)
+         20 (GND) -------------> 20 (GND)
+
+
+11) Usage instructions:
+
+    Congratulations!  If you've made it this far, you should now be
+    able to switch between Robotron, Joust, and Stargate, simply by
+    swapping two EPROMs and any associated control panel adaptors.
+
+    Assuming you started with a Robotron cabinet, plug the Robotron
+    27512 into the ROM daughterboard, and the Robotron 2732 into the
+    adaptor on the sound board.
+
+    Check everything over, power the game up, and pray :-)
+
+    Run through the self-test.  Everything should work perfectly; the
+    game shouldn't know it's been hacked with.
+
+    Power down, count ten seconds, and try with the other two sets of
+    ROMs and control panels.  Although the high scores, audit information
+    and difficulty settings will be reset between games, everything else
+    should work normally.
+
+
+TROUBLESHOOTING:
+----------------
+
+Safety Check:
+
+- Check *EVERYTHING* for shorts, etc... before plugging it in.  Go over
+  it and look for little bits of solder that went to the wrong place,
+  strands of wire, *anything* that could cause trouble.  If you've got
+  a multimeter with a continuity checker, use it.  The five minutes you
+  spend now may save you hours of debugging later.
+
+- Solder is brittle and can crack easily, and you've made some fairly
+  precarious joints when constructing the EPROM adaptors.  Be careful
+  when operating the ZIF sockets and swapping chips, and try not to
+  wiggle things around too much.
+
+  Another error-prone part of the hack lies in the wiring under the ROM
+  board where you soldered some wires to the !CS pins of the empty ROM
+  sockets.  Poor solder joints or broken-off wires should show up as
+  individual ROM failures during the game's self-test procedure and be
+  highlighted on the ROM board's LED display.
+
+- When switching between games, wait at least 10-20 seconds before
+  switching chips.  The power supply can still supply enough power
+  to damage your chips if you yank 'em out too early.  Yes, you could
+  always burn yourself another set, but why take the chance?
+
+  Changing the control panel adaptor before changing chips is a good
+  way to make this habit automatic -- by the time you've changed the
+  panel adaptor, it'll be safe to swap the EPROMs.
+
+
+Reality Check:
+
+- Are you running off a Joust or Robotron CPU board?  A Sinistar
+  or Bubbles CPU board will also work, but a Stargate CPU board
+  will *NOT* work unless it's been upgraded to at least the Joust
+  or Robotron level.  ("WHAT THIS HACK ISN'T")
+
+- Is your ROM board strapped for 2732s?  (Step 4.1)
+
+- Is your sound board strapped for 2532s?  (Step 4.2)
+
+
+Sound Check:
+
+- If you get no sound when playing Stargate, verify that both halves
+  of the 2732 contain the same data; you should have two exact copies
+  of Stargate's 2K sound ROM in this chip.
+
+
+Control Panel Check:
+
+- Use the self-test mode's "switch test" to make sure your control
+  panel configurations play the way you want.  Once you get used to
+  it, you'll be able to develop and your adaptors "on the fly"; this
+  can be an excellent timesaver.
+
+
+Game Check:
+
+- When you're all done, test all three games.  If some games work, but
+  you get inexplicable RAM errors or weird graphics with other games,
+  check the wiring of the program ROM hack, paying particular detail to
+  the 74LS133 and its associated inputs.  The '133 decides whether or
+  not to read from the 27512 EPROM; some of the games use the address
+  and data busses for "other stuff" when the ROM is expected to be
+  inactive.  If the '133 is activating the 27512 at these times, you'll
+  get bus contention and see all sorts of strange behavior.
+
+  Due to differences in the programs and original architectures, all
+  three games can function differently under these circumstances.
+  Robotron, for instance, will run perfectly, even if the 27512 is
+  permanently activated.  Joust will run, but the sprites will leave
+  cute little trails of green pixels, and Stargate will fail, believing
+  it has a bad RAM.

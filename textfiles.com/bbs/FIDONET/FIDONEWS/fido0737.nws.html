@@ -1,0 +1,907 @@
+     Volume 7, Number 37                             10 September 1990
+     +---------------------------------------------------------------+
+     |                                                  _            |
+     |                                                 /  \          |
+     |                                                /|oo \         |
+     |        - FidoNews -                           (_|  /_)        |
+     |                                                _`@/_ \    _   |
+     |         FidoNet (r)                           |     | \   \\  |
+     |  International BBS Network                    | (*) |  \   )) |
+     |         Newsletter               ______       |__U__| /  \//  |
+     |                                 / FIDO \       _//|| _\   /   |
+     |                                (________)     (_/(_|(____/    |
+     |                                                     (jm)      |
+     +---------------------------------------------------------------+
+     Editor in Chief:                                  Vince Perriello
+     Editors Emeritii:                    Thom Henderson,  Dale Lovell
+     Chief Procrastinator Emeritus:                       Tom Jennings
+     
+     Copyright 1990, Fido Software.  All rights reserved.  Duplication
+     and/or distribution permitted  for  noncommercial  purposes only.
+     For use in other circumstances, please  contact  Fido Software.
+     
+     FidoNews  is  published  weekly  by  the  System Operators of the
+     FidoNet  (r)  International  BBS Network.  It is a compilation of
+     individual articles  contributed  by  their authors or authorized
+     agents of the  authors.    The  contribution  of articles to this
+     compilation does not diminish the rights of the authors. 
+     
+     You  are  encouraged   to  submit  articles  for  publication  in
+     FidoNews.  Article submission standards are contained in the file
+     ARTSPEC.DOC, available from node 1:1/1.    1:1/1  is a Continuous
+     Mail system, available for network mail 24 hours a day.
+     
+     Fido and  FidoNet  are  registered  trademarks of Tom Jennings of
+     Fido Software, Box  77731,  San  Francisco  CA 94107, USA and are
+     used with permission.
+     
+     Opinions expressed in  FidoNews articles are those of the authors
+     and are not necessarily  those of the Editor or of Fido Software.
+     Most articles are unsolicited.   Our  policy  is to publish every
+     responsible submission received.
+
+
+                        Table of Contents
+     1. ARTICLES  .................................................  1
+        FidoNet Routing  ..........................................  1
+     2. LATEST VERSIONS  .......................................... 13
+        Latest Software Versions  ................................. 13
+     3. NOTICES  .................................................. 16
+        The Interrupt Stack  ...................................... 16
+     FidoNews 7-37                Page 1                   10 Sep 1990
+
+
+     =================================================================
+                                 ARTICLES
+     =================================================================
+
+
+     [This series of articles, which I am printing in its entirety
+     in this week's FidoNews, was written by Ben Baker to describe
+     the routing capability of Fido. To this day, much of what Ben
+     described here works the same way on nearly all FidoNet s/w.
+
+     So this isn't just history you're reading here. You'll be
+     learning how to operate your system better. -- The Editor.]
+
+
+                    FidoNet Route Files Explained
+                 Part 1 -- The Many Faces of FidoNet
+
+                      by Ben Baker, Fido 100/76
+
+          There  is  no  aspect  of FidoNet more universally mis-
+     understood than routing.  It is the  intent  of  this  foru-
+     part series to clear some of the fog.
+
+          The   justification  for  nets  and  routing  has  been
+     discussed many times and will NOT be  discussed again  here.
+     Given  that  routing  is  good,  how is it done?  What's the
+     meaning of the various statements that go into route  files?
+     Indeed, what's the meaning of route files?
+
+          Let's first take a look at "the network." But how do we
+     do that?  In reality, there is no "the network." FidoNet  is
+     a  different  thing when viewed by each different Fido!  The
+     only formal definition of FidoNet is the node list,  and  it
+     serves  as  an  adaquate  view  of  "the  network"  for most
+     independent Fidos but only the members of some nets.
+
+          Consider  the  hypothetical  node,  Fido 21/7.  He's an
+     independent member of a "Region." To him, "the network" is a
+     couple  of  hundred other independent nodes to whom he sends
+     messages directly and another couple of hundred to which  he
+     has  access  through  36  defined  "Hosts." If he receives a
+     message not addressed to his node, his  Fido  "orphans"  it.
+     He has no intention of forwarding someone else's mail.  They
+     can pay their own phone bills!  When he sends a  message  to
+     18/3,  Fido  knows  (from  the  node  list)  that is another
+     independent and sends the message direct.  When he  sends  a
+     message to 100/76, Fido knows (from the node list) that is a
+     member of net 100 and sends it to 100/0.  Fido 21/7 executes
+     only  schedule A during the national mail window.  He has no
+     use for ANY route files.
+
+     FidoNews 7-37                Page 2                   10 Sep 1990
+
+
+          Another hypothetical node, Fido 201/4 is a member of an
+     "inbound  only"  net.   Since  the  sysop  has  used the '4'
+     command properly, Fido knows he is a member of net  201  and
+     will  treat  other  members  of that net as though they were
+     independent nodes.  When he sends a message to  201/5,  Fido
+     will  send it direct and not to 201/0.  Messages headed out-
+     side net 201 will be handled for 201/4 just as they were for
+     21/7.   Fido  201/4  executes  two  schedules,  A during the
+     national window followed immediatly by B when he  just  sits
+     quietly  and  waits  for  201/0  to  send  him  any  mail he
+     received.  He has no use for ANY route files.
+
+          Everyone   else  has  a  view  of  "the  network"  more
+     complicated than Fido can discover from just the node  list.
+     If  you're a Southern California Hub, or a local node in the
+     New York Megalopolis, or maybe the host of a modest  network
+     in  Memphis  "the  network"  looks  different to you than to
+     other sysops.  It is the function of route files  to  modify
+     Fido's view of "the network" to conform to yours.
+
+          If your Fido is executing any mail event and any  other
+     Fido calls it up and offers it a mail packet, your Fido will
+     graciously receive that packet and at the end  of  the  mail
+     event,  he will unpack it into messages.  These actions have
+     nothing whatever to do with route files!
+
+          Reread  that last paragraph two or three times until it
+     sinks in.  It is a very important, very misunderstood point.
+     Route  files  do  not and cannot control the way you receive
+     mail.  ROUTE FILES CONTROL ONLY THE  WAY  YOU  SEND  MAIL!!!
+     After all, that's when you're paying the phone bill.
+
+          Furthermore,  what  you  say  in ROUTE.B has absolutely
+     nothing to do with how Fido behaves in schedule C.   I  will
+     come back to this point later.
+
+          Ever since we first began routing FidoNet  messages  to
+     places  other than their final destination, route files have
+     used three basic commands to mold Fido's view of FidoNet  to
+     correspond  with  your  view.   In  part  2  we will look at
+     SCHEDULE, ROUTE-TO and ACCEPT-FROM and  see  just  how  they
+     influence Fido.
+
+          Part  3  will  examine  a  bevy of new routing commands
+     available with Fido V11 and see how they have made automatic
+     distribution at last possible.
+
+          LISTGEN  V2  is capable of generating route files auto-
+     matically.  Part 4 will discuss how ROUTE.CTL statements map
+     to route file commands.
+
+     FidoNews 7-37                Page 3                   10 Sep 1990
+
+
+          Stay  with  me  for the next few weeks and maybe we can
+     burn off the fog and find a bright sky, a calm sea and clear
+     sailing.   (And  don't  throw  away your newsletters, you'll
+     want to refer back from time to time.)
+
+     ------------------------------------------------------------
+
+
+
+                    FidoNet Route Files Explained
+                     Part  2 -- In the Beginning
+
+                      by Ben Baker, Fido 100/76
+
+          From the time he first began "routing"  messages,  Fido
+     has  used  "route  files"  to tell him what messages to send
+     where when.   Three  basic  route  file  commands  do  this;
+     SCHEDULE  aka SEND-TO, ROUTE-TO and ACCEPT-FROM.  This week,
+     we'll look at these commands in depth.
+
+          Before  going  farther,  I  need  to define a couple of
+     terms.  A "target" is a node to which your Fido will connect
+     and directly send a message.  An "addressee" is the ultimate
+     destination node  for  a  message.   This  is  an  important
+     distinction.   Because  of  routing,  the  addressee and the
+     target for a particular message are often different nodes.
+
+          A "packet" is a collection of messages all to  be  sent
+     to  a single target (though perhaps several addressees).  At
+     the beginning of each schedule Fido builds all  the  packets
+     he will be permitted to send during that schedule.
+
+          Now, let's take a look at the three basic commands that
+     may  appear  in  a  route file, and see how each of them can
+     modify Fido's behavior.
+
+     SCHEDULE <tag> <target list>         or
+     SEND-TO <target list>
+
+          These commands are equivalent.  They tell Fido  "During
+     this  schedule,  you  may  build  packets  for any target in
+     <target list>.  Include all messages to different addressees
+     which  may  be routed to these targets.  Do not consider any
+     outgoing messages which cannot  be  sent  to  one  of  these
+     targets."  Unless  there  is  an  ACCEPT-FROM statement (see
+     below) only messages originating on your Fido qualify to  go
+     into  packets.   If  <target list> is empty (and this is NOT
+     schedule A), Fido will not build any packets.  If he doesn't
+     build  any  packets he will not send any mail, even if he is
+     POLLed (see next week).
+
+     FidoNews 7-37                Page 4                   10 Sep 1990
+
+
+     ROUTE-TO <target> <addressee list>
+
+          This  command  will  override  any  node  list  implied
+     routing  affecting  these nodes.  It tells Fido "If <target>
+     is in <target list> and there are outgoing messages for  any
+     nodes  in  <addressee list>, put them in <target>'s packet."
+     If <target> is not in  <target  list>  you  blew  it.   It's
+     almost,  but  not quite a "no operation." No packets will be
+     built for nodes in <addressee list>, even  if  they  are  in
+     <target  list>!   Don't  route messages to a <target> that's
+     not in the <target list> for this schedule.
+
+          By  the  way,  a bug in an earlier version of Fido pre-
+     vented messages to <target> from being sent  unless  he  was
+     also  in  <addressee  list>.   I don't know if that has been
+     corrected, but it's  still  good  general  practice  to  put
+     <target> in <addressee list>.
+
+     ACCEPT-FROM <originating list>
+
+          Normally, Fido only  sends  mail  originating  on  your
+     board.   If  you  receive  a  message  originating  on A and
+     addressed to B, without this statement, your Fido  will  not
+     attempt  to  send  it  along to B.  Instead, he will mark it
+     "orphan" to give you an indication that  he  had  a  problem
+     with  it and otherwise ignore it.  This statement in a route
+     file tells Fido "When you build packets,  if  you  find  any
+     messages from any nodes in <originating list>, treat them as
+     if  they  originated  here.   In  other  words  FORWARD  any
+     messages  from  the nodes in <originating list> that you can
+     get into packets FOR THIS SCHEDULE's <target list>."
+
+          I actually suggested this verb for this action and have
+     regretted  it  ever  since!  It's a misnomer.  A better verb
+     might be "FORWARD-FOR" but hindsight is  always  20-20.   It
+     really  means  "Accept,  for  forwarding, only messages from
+     these guys."  It's  designed  to  prevent  you  from  paying
+     someone else's phone costs without prior arrangement.
+
+          So  where  do  you  put  this  statement?  Remember two
+     important points I've  mentioned  before.   1)  Route  files
+     affect  how  you  SEND  mail,  not how you receive it.  2) A
+     particular route file affects only  the  schedule  with  the
+     matching  <tag>.   Consider  Fido  202/0, a hypothetical bi-
+     directional host.  He executes three schedules  each  night.
+     During  schedule  B, before the national window, he collects
+     outgoing mail from his locals.  During schedule C  he  sends
+     mail  from  himself  and  his  locals  to  "the network" and
+     receives mail for himself and his locals from it.   Then  in
+     schedule  D,  after  the national window, he distributes the
+     mail he received for his locals.
+
+     FidoNews 7-37                Page 5                   10 Sep 1990
+
+
+          ROUTE.B  needs  neither  a <target list> nor an ACCEPT-
+     FROM statement.  Indeed, he doesn't really need any  ROUTE.B
+     file  at  all  because  HE  ISN'T  SENDING  ANY  MAIL DURING
+     SCHEDULE B.
+
+          ROUTE.C  has  the national net excluding 202/0's locals
+     in its <target list>.  It also has  "ACCEPT-FROM  1,  2,  3,
+     (all  locals)."  Now let's say that 202/3 received a message
+     from 125/1 last night, but it wasn't delivered because 202/3
+     was   down.   The  message  is  still  here.   Won't  it  be
+     "orphaned" because 125/1 isn't in the ACCEPT-FROM list?  NO!
+     Because  202/3 isn't in the <target list>, the message won't
+     even be considered DURING THIS SCHEDULE.
+
+          ROUTE.D has all the nodes in net  202  in  the  <target
+     list>,  and  an  "ACCEPT-FROM ALL" statement.  Now the fore-
+     going message will be processed correctly and  forwarded  to
+     202/3.
+
+          Now let's say that 100/76 tries to forward a message to
+     Jakarta through 202/0.  202/0 cannot refuse delivery of  the
+     offending  message,  so  there  it  sits  in  his mail area.
+     During schedule B, he ignores all outgoing mail  because  he
+     doesn't  have a <target list>.  During schedule C Jakarta is
+     in his <target list>, but 100/76 is not in his  <originating
+     list>, so the message is orphaned.  During schedule D 100/76
+     IS in the <originating list>, but  Jakarta  is  not  in  the
+     <target list> so the message is again ignored.
+
+          Make  no  mistake,  if  Jakarta had been in the <target
+     list> in schedule D, the message would have been sent,  even
+     though  it  had  been  marked  an  orphan  during schedule C
+     (provided, of course that a connection  could  be  made  and
+     Jakarta  happened  to  be  in a mail schedule at that time).
+     This means that if messages are orphaned because  of  errors
+     in  your  routing  files, the routing files can be corrected
+     and the messages can still be sent.  The orphan flag is  NOT
+     a dead end!
+
+          A  similar kind of bug existed (and may still;  I don't
+     know) with ACCEPT-FROM as with ROUTE-TO (above).  If a route
+     file  contains  an ACCEPT-FROM statement, make sure your own
+     node is in the <originating list>.  (The first time  I  used
+     this   statement,   I  forwarded  a  lot  of  messages,  but
+     "orphaned" my own messages!)
+
+          Well, that's how routing is  achieved.   Remember,  all
+     these  statements  control  out-going mail.  You can receive
+     mail even if you don't have any route files!
+
+          A final point on routing.  If a message says it  has  a
+     file  attached (even if the file doesn't exist) all bets are
+     off.  Routing is suspended and  the  message  will  be  sent
+     direct  from  the  originator  to  the  addressee.  Fido has
+     several built-in safeguards to prevent you  from  forwarding
+     someone  else's  files,  or  forwarding  your  files through
+     FidoNews 7-37                Page 6                   10 Sep 1990
+
+
+     someone else for that matter.
+
+          Next week we'll take a close look at the goodies TJ has
+     provided in version 11 and see how they are making automatic
+     node list distribution at long last a reality.
+
+     ------------------------------------------------------------
+
+
+
+                    FidoNet Route Files Explained
+               Part 3 -- Keep the Old, Ring In the New
+
+                      by Ben Baker, Fido 100/76
+
+          Last  week  we  looked  at the basic routing statements
+     that have been with us since version  7  or  so.  Now  let's
+     look at what's been added in version 11.
+
+          Please refer back to last weeks  definitions.   I  con-
+     tinue to use them as defined.
+
+     RECV-ONLY
+
+          This tells Fido "Go ahead and  build  packets  for  any
+     targets  in  the SCHEDULE command's <target list>, but DON'T
+     ATTEMPT TO CALL ANYBODY.  If any targets happen to  call  in
+     for  any  reason, try to give them their packets before they
+     get away."
+
+          There  MUST  be  a  <target list> for this statement to
+     mean anything.  It is not  intended  for  normally  "receive
+     only"  schedules  like 202/0's collection schedule (see last
+     week).  Instead, it  prevents  you  from  originating  calls
+     during  schedules  when you are trying to SEND mail.  (Route
+     files control how you send mail, not how  you  receive  it.)
+     You  are  really  trying  to  send  mail  on the other guy's
+     nickel, but as you will see, he has  to  cooperate  in  that
+     venture.
+
+          This  statement  might be used by the locals during the
+     collection schedule in a large, busy  net.   Collisions  are
+     avoided  because  there's  only one node, the outbound host,
+     placing calls.  He POLLs (see below) the  locals  for  their
+     outgoing traffic.
+
+     HOLD <hold target list>
+
+          "OK, Fido, build packets for  targets  in  the  <target
+     list>,  but  don't  attempt  to actually call any targets in
+     <hold target list>." This is a limited "RECV-ONLY"  command.
+     Any  packets  for  targets not in <hold target list> will be
+     sent normally (if they haven't been picked up), but  packets
+     for <hold target list> have to be "picked up."
+
+     FidoNews 7-37                Page 7                   10 Sep 1990
+
+
+          There's  a  hidden  gimmick  here  that  bears  further
+     exploration.   Ken  Kaplan  (Fido  100/22  AKA  1/0)  is the
+     original  source  in  the  national  nodelist   distribution
+     system.   Regional  coordinators  call his Fido each week to
+     pick up copies of the latest nodelist.  The route  file  for
+     his  national  window contains the statement "HOLD <regional
+     coordinator list>."  Fido  will  not  attempt  to  send  any
+     packets  targetted  for  a  regional coordinator.  Does this
+     mean  that  he  can't  send   "normal"   messages   to   the
+     coordinators?   Not  at  all.  Because he is a member of net
+     100, all his "normal" messages, including those addressed to
+     the  coordinators, wind up in a packet targetted for 100/10,
+     the outbound host.  Since 100/10 is not in the <hold  target
+     list>,  that  packet  is sent and the messages go out.  HOLD
+     APPLIES TO THE TARGETS OF PACKETS, NOT TO THE ADDRESSEES  OF
+     MESSAGES!   It  is  only  when  Ken  sends  messages  to the
+     coordinators with the nodelist (or other files) attached  to
+     them  that Fido builds packets targetted for them instead of
+     100/10.
+
+          Does that mean that Ken  can't  send  the  coordinators
+     other files without waiting for them to pick them up?  Well,
+     yes and no.  Because of the HOLD  statement,  he  can't  say
+     send  FIDO_IBM.EXE to 14/61 (see PICK-UP below for why 14/61
+     and not  14/0).   But  he  can  use  another  gimmick.   The
+     coordinators have dual identities (set by the '4' command of
+     Fido) and he can certainly send a file  to  14/0.   Fido  is
+     smart,  but so smart he'll notice that 14/0 and 14/61 happen
+     to have the same phone number.  He'll send  the  packet  for
+     14/0 and hold the one for 14/61.  By the same token, if both
+     packets are still present when 14/61 calls  in,  he'll  only
+     pick up the the nodelist targetted for 14/61 and not the new
+     Fido targetted for 14/0.  (You can't have your cake and  eat
+     it too.)
+
+     PICKUP <pickup target list>
+
+          Whenever any other Fido calls your Fido for any reason,
+     your Fido looks to see if there is a  packet  targetted  for
+     him.  If there is, your Fido will try to deliver it then and
+     there and avoid making the phone call which you have to  pay
+     for.   Without this statement (or the next one) in his route
+     file, the other Fido will simply hang up on you, leaving you
+     with  a  phone call to make in order to deliver your packet.
+     This statement says to Fido  "If  you  happen  to  call  any
+     target in <pickup target list>, hang around to see if he has
+     mail for me."
+
+          This  is  a  two-edged  sword.   It  can  speed up mail
+     exchange, but the Fido that places the call pays for it.  It
+     works  best  within a local net where the calls are all toll
+     free anyway.  In fact, it won't work at all  between  larger
+     nets  supported  by  distinct  inbound  and  outbound hosts.
+     Specifying "PICKUP 100/0" in your national  window  schedule
+     would  only get you messages originating on 100/0 (or 100/51
+     actually) with files attached.  Any other mail for you might
+     FidoNews 7-37                Page 8                   10 Sep 1990
+
+
+     be in a packet addressed to you, but on 100/10, the outbound
+     host, and that's not who you called.
+
+          Even worse, let's say Tom Jennings is sending a file to
+     100/10 and wants to pick up any mail from St.  Louis for San
+     Francisco while he's at it.  He's the host of net  125,  and
+     that's  perfectly  legitimate,  right?   Wrong!  His primary
+     identity (the '4' command again) is  125/1  and  100/10  may
+     have  a  packet  for  125/0,  but he won't have a packet for
+     125/1.  This command deals at the packet/target  level  just
+     as  the  HOLD command does.  Furthermore, it deals with real
+     identities, not alternate identities.
+
+          As I said, this is most useful within a local net,  and
+     that's where it probably should be applied.
+
+     POLL <poll target list>
+
+          This  tells Fido "Even if I don't have any mail for the
+     targets  in  <poll  target  list>  generate  empty   packets
+     addressed  to them so you have an excuse to call them.  Then
+     when you do call them, pick anything they have for me."
+
+          "POLL <poll target list>" implies "PICKUP <poll  target
+     list>"  which  need not be specified.  This is the statement
+     an outbound host might use to poll his locals  or  hubs  for
+     outgoing traffic prior to national mail time.  Together with
+     the next statement, this method can be very efficient.
+
+          The regional coordinators run a special  schedule  each
+     Saturday morning  during  the  national  mail  window.  It's
+     route  file  is  identical to their normal national schedule
+     route file except that it contains the statement "POLL 1/0."
+     That's how they  get  the  nodelist  for  subsequent  redis-
+     tribution.
+
+          As I see it, POLL has a lot more uses than PICKUP.
+
+     SEND-ONLY
+
+          This  one  is  mainly for outbound hosts.  It says "I'm
+     not expecting any mail during this schedule, so  don't  wait
+     the  normal  one  or  two  minutes for incomming calls after
+     making an outgoing call.  As soon as you  finish  one,  dial
+     another until all packets have been sent."
+
+          As  I  said  above,  this  can  be  very efficient, but
+     there's a problem you need to be aware of.  Fido will make a
+     maximum of 30 attempts without connect to send a packet to a
+     particular target.  If you have only one packet addressed to
+     a busy target, Fido would normally take about an hour to use
+     up 30 attempts, but in SEND-ONLY  mode  he  can  attempt  30
+     calls  in  about  20 minutes!  If you have a Courier and are
+     running it  in  "X4"  response  code  mode,  he'll  make  30
+     attempts  in 10 to 15 minutes.  (The Courier doesn't waste a
+     lot of time in "fast-dial, busy-detect" mode.)
+     FidoNews 7-37                Page 9                   10 Sep 1990
+
+
+          If you're an outbound host and want  to  try  SEND-ONLY
+     during  the  national  window,  you  risk using up your call
+     attempts while  your  target  is  busiest,  then  when  he's
+     quieted  down and you could get through, you've given up!  I
+     suggest you break your national time into two schedules, and
+     only  use  SEND-ONLY during the last 20 minutes or so of the
+     national window.
+
+          On  the  other  hand,  polling your locals or hubs is a
+     different matter.  They should be in RECV-ONLY mode and  you
+     can  expect  every  call to connect the first try.  The call
+     attempt limit doesn't apply to this situation and the  SEND-
+     ONLY  command  should  be used to shorten the time needed to
+     POLL everyone.
+
+     NO-ROUTE <addressee list>
+
+          This command tells Fido "Do not send messages addressed
+     to these nodes anywhere but to the addressed  nodes.   Treat
+     them  as though they have files attached, whether they do or
+     not."
+
+          This lets you say things like Fido 100/76 (in Illinois)
+     might:
+
+     SEND-TO 100/10        ; Outbound Host (in Missouri)
+     ROUTE-TO 100/10 ALL   ; Send everything to accross the river
+     NO-ROUTE 100/482      ; Except other Illinois traffic
+
+          The  only  other  way to achieve this end is to list in
+     the ROUTE-TO command all 500 odd nodes whose messages should
+     be routed to 100/10, and that list changes every week!
+
+          Now  you  should have a good handle on how the commands
+     used in ROUTE.<tag> control  how  Fido  SENDS  files  during
+     schedule  <tag>.   But sometimes these commands require very
+     long lists of node numbers which change from week to week as
+     the  node  list  changes.  LISTGEN 2 will generate the route
+     files automatically and  let  you  specify  the  long  lists
+     symbolically  in terms of nets, area codes, etc..  Next week
+     in  the  last  part  of  this  series,  we'll  see  how  the
+     statements  in  LISTGEN's  ROUTE.CTL  file correspond to the
+     commands in ROUTE.<tag>.
+
+     ------------------------------------------------------------
+
+
+
+                    FidoNet Route Files Explained
+                   Part 4 -- LISTGEN and ROUTE.CTL
+
+     FidoNews 7-37                Page 10                  10 Sep 1990
+
+
+                      by Ben Baker, Fido 100/76
+
+
+          LISTGEN  Version  2  will  automatically generate route
+     files for you if you desire.  The advantage is that  LISTGEN
+     is driven by a control file, ROUTE.CTL, in which you specify
+     the statements necessary with symbolic parameters  that  you
+     define  in  terms  of  nets,  area  codes, etc..  A properly
+     designed ROUTE.CTL need only change when your routing  needs
+     change.  LISTGEN will continue to create correct route files
+     week after week as the nodelist changes.
+
+          Before I begin, I'd like to do a quick  review  of  the
+     route file commands and their effect.
+
+     SCHEDULE <tag> <list> or
+     SEND-TO <list>               Determines which nodes may have
+                                  packets build to SEND mail to.
+     ROUTE-TO <target> <list>     Directs that messages  to  par-
+                                  ticular  addressees  be SENT in
+                                  packets to another node.
+     ACCEPT-FROM <list>           Specifies  which   oritinators'
+                                  messages may be SENT.
+     RECV-ONLY                    States that packets may only be
+                                  SENT by being picked up.
+     HOLD <list>                  States that  packets  to  part-
+                                  icular  nodes  may only be SENT
+                                  by being picked up.
+     PICK-UP <list>               States that it is OK to receive
+                                  mail from particular nodes when
+                                  we originate calls to SEND them
+                                  packets.
+     POLL <list>                  Directs that packets (empty  if
+                                  necessary)   be  generated  and
+                                  SENT  to  particular  nodes  in
+                                  order to pick up mail.
+     SEND-ONLY                    States  that  calls may be made
+                                  rapid-fire  to  SEND  as   many
+                                  packets as possible.
+
+          Note that each definition above includes the verb  SEND
+     or  SENT.   I  did that deliberately to emphasize that these
+     commands all control some aspect of sending mail.
+
+          LISTGEN has been adaquately documented  and  I  do  not
+     intend  to re-document it here, but I would like to show you
+     how ROUTE.CTL  commands  map  to  the  ROUTE.<tag>  commands
+     covered above.
+
+     SCHEDULE <tag> <target list>
+
+     FidoNews 7-37                Page 11                  10 Sep 1990
+
+
+          When  LISTGEN  encounters  this command in ROUTE.CTL it
+     does two things.  First it closes any route file it  may  be
+     working  on  and  creates a new ROUTE.<tag> file for the new
+     <tag>.  Then it generates  a  SCHEDULE  statement  from  the
+     specifications   in   this  one  for  the  new  ROUTE.<tag>,
+     expanding any symbolic parameters to lists of nodes from the
+     nodelist.  In other words, it begins a new route file as you
+     would expect it to by defining the <target list>.
+
+     FROM <accept list>
+
+          This phrase, when encountered, generates an ACCEPT-FROM
+     statement.
+
+     TO <addressee list> [ VIA <target> ]
+
+          If  the VIA clause is present, this statement generates
+     a  "ROUTE-TO  <target>  <addressee  list>."  Successive   TO
+     phrases  without  VIA  clauses  accumulate  to make a larger
+     <addressee list> until a VIA  clause  IS  found.   Then  the
+     entire  list  is  routed to the <target>.  (I'm not entirely
+     happy with this "feature," but that's the way it works.)  If
+     no  VIA  clause  is  ever  found, the TO phrase generates no
+     output at all!  It  does  serve  as  documentation  in  your
+     ROUTE.CTL file, saying "I expect to be sending mail TO these
+     nodes in this schedule."
+
+          All of the other route file  commands  discussed  above
+     map  one-for-one  in  the  same  format  from  ROUTE.CTL  to
+     ROUTE.<tag>.
+
+          The big advantage in using LISTGEN is to be able to use
+     simple  symbols  which  it will translate into long lists of
+     nodes.  To illustrate, net 100 spans two area codes, 314  in
+     Missouri  and  618  in  Illinois.  To minimize the number of
+     toll calls placed accross the Mississippi, I serve as "Metro
+     East"  hub  to concentrate the Illinois traffic.  I have the
+     following statements (among others) in my ROUTE.CTL file:
+
+     define Metro-East as Net-100 except Area-314 ; Area 618
+     define Outbound as 100/10
+     define World as all except Metro-East
+       *  *  *
+     FROM Metro-East TO World VIA Outbound
+
+          Nodes may come and go, both in our net and  across  the
+     country,  and  these  statements  need  not change.  LISTGEN
+     interprets them week after week and builds the  right  route
+     files  every  time.   And in several months, if our outbound
+     host should change making it necessary to change  ROUTE.CTL,
+     I  can  look  at this and not have to say to myself "What on
+     earth was I trying to do here?" It's all pretty obvious.
+
+     FidoNews 7-37                Page 12                  10 Sep 1990
+
+
+          Before I wrap it up, there are two important exceptions
+     to  the things I have said.  First, schedule A is special in
+     that the <target list> always is  the  entire  nodelist,  no
+     matter  what  ROUTE.A  says.  For that reason, if you do any
+     routing not defined by the node list, I recommend  that  you
+     DO  NOT  USE SCHEDULE A.  For all other schedules, Fido does
+     exactly what ROUTE.<tag> tells it to do  and  nothing  more.
+     And  second,  ROUTE.BBS is a special route file that affects
+     all schedules for which there are no ROUTE.<tag> files.  For
+     that  reason,  I recommend that you FORGET YOU EVER HEARD OF
+     ROUTE.BBS.  It'll cause more problems than it'll ever solve!
+
+          So,  routing  can  get  pretty complex (just ask 'em in
+     Southern California), but it doesn't need to be  complicated
+     once  you  know  what the objective of each schedule is from
+     your point of view, and what your Fido needs to do  to  meet
+     those objectives.
+
+          In  fact, it's pretty easy if you just remember the two
+     points I have been hammering at you since we began:
+
+          1) Route files control the way you send  messages,  not
+     the  way you receive them.  Every command we discussed above
+     controls some aspect of sending messages.  And.  .  .
+
+          2) A particular route file only  affects  the  schedule
+     with  the  matching  <tag>.   What you say in ROUTE.B has no
+     bearing whatever on  schedule  C.   Each  schedule  must  be
+     separately spelled out.
+
+     -----------------------------------------------------------------
+     FidoNews 7-37                Page 13                  10 Sep 1990
+
+
+     =================================================================
+                              LATEST VERSIONS
+     =================================================================
+
+                         Latest Software Versions
+
+                              MS-DOS Systems
+                              --------------
+
+                           Bulletin Board Software
+     Name        Version    Name        Version    Name       Version
+
+     DMG            2.93    Phoenix         1.3    TAG           2.5f*
+     Fido            12s+   QuickBBS       2.64    TBBS           2.1
+     Lynx           1.30    RBBS          17.3A    TComm/TCommNet 3.4
+     Kitten         2.16    RBBSmail      17.3A    Telegard       2.5
+     Maximus        1.00    RemoteAccess  0.04a*   TPBoard        6.1
+     Opus           1.13+*  SLBBS          1.77*   Wildcat!      2.15
+     PCBoard        14.5*   Socrates       1.00    XBBS          1.13
+
+     Network                Node List              Other
+     Mailers     Version    Utilities   Version    Utilities  Version
+
+     BinkleyTerm    2.40*   EditNL         4.00    ARC            7.0*
+     D'Bridge       1.30    MakeNL         2.20    ARCAsim       2.30
+     Dutchie       2.90C    ParseList      1.30    ARCmail       2.07
+     FrontDoor     1.99c*   Prune          1.40    ConfMail      4.00
+     PRENM          1.47    SysNL          3.11    Crossnet      v1.5
+     SEAdog        4.51b    XlatList       2.90    EMM           2.02
+     TIMS      1.0(Mod8)*   XlaxDiff       2.35*   Gmail         2.05
+                            XlaxNode       2.35*   GROUP         2.16
+                                                   GUS           1.30
+                                                   InterPCB      1.31*
+                                                   LHARC         1.13
+                                                   MSG            4.1
+                                                   MSGED         2.00*
+                                                   PK[UN]ZIP     1.10
+                                                   QM             1.0
+                                                   QSORT         4.03
+                                                   Sirius        1.0w
+                                                   SLMAIL        1.35
+                                                   StarLink      1.01
+                                                   TagMail       2.20
+                                                   TCOMMail       2.2
+                                                   Telemail      1.27*
+                                                   TMail         1.15
+                                                   TPBNetEd       3.2
+                                                   TosScan       1.00
+                                                   UFGATE        1.03
+                                                   XRS           3.40
+                                                   ZmailQ        1.12*
+     FidoNews 7-37                Page 14                  10 Sep 1990
+
+
+                                 Macintosh
+                                 ---------
+
+     Bulletin Board Software   Network Mailers     Other Utilities
+
+     Name            Version   Name      Version   Name       Version
+
+     Red Ryder Host  v2.1b10   Tabby         2.2   MacArc        0.04
+     Mansion            7.15   Copernicus   1.0d*  ArcMac         1.3
+     WWIV (Mac)          3.0                       StuffIt      1.6b1*
+     FBBS               0.91*                      TImport      1.331
+     Hermes             0.88*                      TExport       1.32
+                                                   Timestamp      1.6
+                                                   Tset           1.3
+                                                   Import         3.2
+                                                   Export        3.21
+                                                   Sundial        3.2
+                                                   PreStamp       3.2
+                                                   OriginatorII   2.0
+                                                   AreaFix        1.6
+                                                   Mantissa       3.21
+                                                   Zenith         1.5
+                                                   UNZIP        1.02b
+
+                                   Amiga
+                                   -----
+
+     Bulletin Board Software   Network Mailers     Other Utilities
+
+     Name            Version   Name      Version   Name       Version
+
+     Paragon            2.06+  BinkleyTerm  1.00   AmigArc       0.23
+                               TrapDoor     1.50*  AReceipt       1.5*
+                               WelMat       0.35   booz          1.01
+                                                   ConfMail      1.10
+                                                   ChameleonEdit 0.10
+                                                   ElectricHerald1.66*
+                                                   Lharc         1.10
+                                                   MessageFilter 1.52*
+                                                   oMMM         1.49b
+                                                   ParseLst      1.30
+                                                   PkAX          1.00
+                                                   PK[UN]ZIP     1.01
+                                                   PolyxAmy      2.02*
+                                                   RMB           1.30
+                                                   TrapList      1.12*
+                                                   UNzip         0.86
+                                                   Yuck!         1.61*
+                                                   Zoo           2.00
+
+                                 Atari ST
+     FidoNews 7-37                Page 15                  10 Sep 1990
+
+
+                                 --------
+
+     Bulletin Board Software   Network Mailer      Other Utilities
+
+     Name            Version   Name      Version   Name       Version
+
+     FIDOdoor/ST        1.5c*  BinkleyTerm 1.03g3  ConfMail      1.00
+     Pandora BBS       2.41c   The BOX     1.20    ParseList     1.30
+     QuickBBS/ST        0.40                       ARC           6.02*
+     GS Point           0.61                       LHARC         0.51
+                                                   LED ST        0.10*
+                                                   BYE           0.25*
+                                                   PKUNZIP       1.10
+                                                   MSGED        1.96S
+                                                   SRENUM         6.2
+                                                   Trenum        0.10
+                                                   OMMM          1.40
+
+
+                                Archimedes
+                                ----------
+
+     BBS Software           Mailers                Utilities
+     Name        Version    Name        Version    Name       Version
+
+     ARCbbs         1.44*   BinkleyTerm    2.03*   Unzip        2.1TH
+                                                   ARC           1.03
+                                                   !Spark       2.00d*
+
+                                                   ParseLst      1.30
+                                                   BatchPacker   1.00*
+
+
+     + Netmail capable (does not require additional mailer software)
+     * Recently changed
+
+     Utility authors:  Please help  keep  this  list  up  to  date  by
+     reporting  new  versions  to 1:1/1.  It is not our intent to list
+     all utilities here, only those which verge on necessity.
+
+     -----------------------------------------------------------------
+     FidoNews 7-37                Page 16                  10 Sep 1990
+
+
+     =================================================================
+                                  NOTICES
+     =================================================================
+
+                          The Interrupt Stack
+
+
+      5 Oct 1990
+        21st Anniversary of "Monty Python's Flying Circus"
+
+      6 Nov 1990
+        First anniversary of Van Diepen Automatiseert, 2:500/28
+
+     14 Nov 1990
+        Marco Maccaferri's 21rd Birthday. Send greetings to him at
+        2:332/16.0
+
+      1 Jan 1991
+        Implementation of 7% Goods and Services Tax in Canada. Contact
+        Joe Lindstrom at 1:134/55 for a more colorful description.
+
+     16 Feb 1991
+        Fifth anniversary of the introduction of Echomail, by Jeff Rush.
+
+      7 Oct 1991
+        Area code  415  fragments.   Alameda and Contra Costa Counties
+        will  begin  using  area  code  510.   This includes  Oakland,
+        Concord, Berkeley  and  Hayward.    San  Francisco, San Mateo,
+        Marin, parts of  Santa Clara County, and the San Francisco Bay
+        Islands will retain area code 415.
+
+      1 Feb 1992
+        Area  code 213 fragments.    Western,  coastal,  southern  and
+        eastern portions of Los Angeles  County  will begin using area
+        code 310.  This includes Los  Angeles  International  Airport,
+        West  Los  Angeles,  San  Pedro and Whittier.    Downtown  Los
+        Angeles  and  surrounding  communities  (such as Hollywood and
+        Montebello) will retain area code 213.
+
+      1 Dec 1993
+        Tenth anniversary of Fido Version 1 release.
+
+      5 Jun 1997
+        David Dodell's 40th Birthday
+
+
+     If you have something which you would like to see on this
+     calendar, please send a message to FidoNet node 1:1/1.
+
+     -----------------------------------------------------------------
+
+

@@ -1,0 +1,73 @@
+
+\section{FidoNet addressing and the IFNA kludge}
+\lline{Tom Jennings}
+\lline{25 Jan 88}
+
+I believe Fido/FidoNet starting with 12f's addressing is spiritç
+\& letter of the ``law''. It works as follows:
+ 
+I am node 1:125/111. I enter a message to 2:500/1. Fido doesç
+this:\par
+ 
+{\obeylines\parskip=0pt
+1) Create the .MSG file as we all know it.
+
+2) Since the destination is outside our own zone:
+
+2a) Put the ifna kludge algorithmic address into the .MSG fileç
+header: ``myzone/destzone''. This case, the message is markedç
+``1/2'', ie. implied full address is ``1:1/2'', if the IFNAç
+Kludge ``zone gate''.
+
+2b) Put the ``full'' address into the INTL line:
+    ``Control-A)INTL 2:500/1 1:125/111''. 
+}
+
+Programs that don't understand the INTL line just route accordingç
+to ancient tradition to 1/2, with no side effects. Programs thatç
+understand INTL lines do whatever it is they decide to do.
+ 
+The only thing that Fido does that is different here is that itç
+hides the ugliness. Fido has a pure three level addressingç
+scheme, and knows enough to how to treat what I call ``fullyç
+addressed'' (INTL lines) messages properly.
+ 
+By default, Fido treats the network as a true three levelç
+addressing scheme; a message addressed to ``2:500/1'' will go toç
+mathematically correct ``2:0/0'', the host for that zone. (Zoneç
+Host not Zone Gate.) I realize this isn't what is desired, IFNAç
+kludge or not, and am not trying to foist anything on anyone. Theç
+intent was a ``pure'' FidoNet three level mailer, and that's whatç
+I got.
+ 
+The problem is solved by the router. There is a route file,ç
+supplied with the FIDO.EXE program, called ROUTE.DEF. It only hasç
+to exist, and it is applied to *all* possible FidoNet routingç
+unless overridden. By default, Fido will do the Zone Hostç
+routing; all you do is specify a new host:
+ 
+{\tty
+Zone 2; ZoneGate 1:1/2
+\dots
+Zone N; ZoneGate 1:1/N
+\dots
+}
+
+A ROUTE.DEF file is supplied with Fido. Instead of all mail forç
+zone 2 going to ``2:0/0'', the ``pure'' ZoneHost, it goes to (inç
+this example) ``1:1/2''. It could all go to ``1:125/31'' andç
+drive Bob Kovach crazy. It could even go to ``3:1/1'' and wasteç
+everybodys time. For a Fido operated in Europe, in Zone 2, itç
+would have a ROUTE.DEF that contained:
+ 
+\lline{\tt Zone 1; ZoneGate 2:2/1}
+
+My intent was to build a mailer devoid of all kludges, plus solveç
+the stupid IFNA Kludge thing. Plus not force someone to use ``myç
+way''.
+
+Zones are here to stay, and I do not like coding things twice.ç
+Network addressing issues are very serious, and we have to liveç
+with them for years, and I want to do things ``right''. This isç
+my solution; if anyone is interested in implementation detailsç
+just ask!

@@ -1,0 +1,268 @@
+
+THE CIA, LSD AND THE 60S REBELLION  by Beatrice Devereaux  The Fessenden 
+Review  
+  
+----------  A review of the book "Acid Dreams" by Martin A. Lee and Bruce   
+Shlain, publisher, Grove Press.  ----------  
+  
+         "I fear I owe you an apology, I have been reading a     
+         succession of pieces about the CIA involvement in   
+         the dope trade in Southeast Asia and I remember   
+         when you first suggested I look into this I thought   
+         you were full of beans.  Indeed you were right."    
+         -- C.L. Sulzberger, editor The New York Times, in a   
+         letter to Allen Ginsberg.  
+  
+It is more or less common knowledge that the Central   Intelligence Agency and 
+the Army experimented with lysergic acid diethylamide starting in the late 
+40s, and continued to toy with it for more than two decades.  However no one 
+has documented those experiments to the extent that Martin Lee and Bruce 
+Shlain have in their book "Acid Dreams."  
+  
+One of the characters in the book is Dr. Paul Hoch. Hoch, who later become New 
+York State Commissioner for Mental Hygiene ... gave LSD to psychiatric 
+patients and then lobotomized them in order to compare the effects of acid 
+before and after psychosurgery.   
+  
+"It is possible that certain amount of brain damage is of therapeutic value," 
+Hoch once commented. In one experiment a hallucinogen was administered along 
+with a local anesthetic and the subject was told to describe his visual 
+experiences as surgeons removed chunks of his cerebral cortex.  
+  
+     YEEOOWW! Get me out of here I wanna go back to Dr. Mengele. 
+ 
+To our knowledge, a more thorough history of the dispersal of LSD (and other 
+psychedelic drugs) into our society has not been published.  Much of "Acid 
+Dreams" is based on information acquired from the government through the 
+Freedom of Information Act and so, we assume, is of some truth.  If half of 
+what's in this book is true, it makes one nostalgic for the gentle compassion 
+of Idi Amin and Pol Pot.  
+  
+Despite a few flaws, not the least of which is Lee and Shlain's anti-
+establishment bias, this is a remarkable book -- if for no other reason than 
+the sheer magnitude of research it must have taken to compile it.  The two 
+authors have done their homework and the narrative is well structured and 
+impressively assembled.  Like any cultural history documenting an explosive 
+period there are a wealth of colorful characters. In the later chapters the 
+now familiar, perhaps too familiar, gang of yahoos appear: Allen Ginsberg, Dr. 
+Timothy Leary, Dr. Richard Alpert (aka Ram Dass), Dr. Ralph Metzner, Ken 
+Kesey, Augustus Owsley Stanley III -- the list goes one.  
+  
+But in the early chapters -- Holy Guacamole!  Meet Richard "this stuff is 
+dynamite" Helms (CIA director from 1967 to 1973) and Major General William 
+"war without death" Creasy, chief officer of the US Army's Chemical Corps in 
+the 1950s who, during Congressional testimony, called for the testing of 
+hallucinogenic gases on subways in American cities and Captain Alfred M. 
+Hubbard, the spy who become the Johnny Appleseed of LSD.  "If you don't think 
+this stuff is amazing," said Hubbard, "just go ahead and try it."  And, the 
+man who started it all, the kindly Swiss doctor, Albert Hoffman.  
+  
+A favorite plan, during Helms' administration at the CIA, involved slipping 
+"P-1" (the code name for LSD when used operationally) to socialist or left-
+leaning politicians in foreign countries so that they would babble 
+incoherently and discredit themselves in public.  
+  
+General Creasy, "Acid Dreams" tells us, promoted the psychochemical cause with 
+eccentric and visionary zeal.  The General was opposed to artillery though he 
+knew that dislodging enemy soldiers was a potentiality that had to be 
+anticipated. "Suppose ... you found a way to spike the city's water supply or 
+to release a hallucinogen in aerosol form.  For twelve to twenty -four hours 
+all the people in the vicinity would be hopelessly giddy, vertiginous... 
+Victory would be a foregone conclusion, as smooth and effortless as the French 
+army in 'The King of Hearts' strolling into a town inhabited solely by asylum 
+inmates."  
+  
+In a 1959 interview with "This Week" magazine General Creasy said, "I do not 
+contend that driving people crazy -- even for a few hours -- is a pleasant 
+prospect, but warfare is never pleasant.  And to those who feel that any kind 
+of chemical weapon is more horrible than conventional weapons, I put this 
+question: 
+
+Would you rather be temporarily deranged, blinded, or paralyzed by a chemical 
+agent, or burned alive by a conventional fire bomb?"  
+  
+Let's see now, may we hear the choices once more General? You won't object if 
+we consult our physician, Dr. Hoch, before making a decision?  
+  
+Compared to these last two, Captain Hubbard is a breath of fresh air.  A spy 
+by profession, he lived a life of intrigue and adventure befitting his chosen 
+career.  Born dirt poor in Kentucky, he served with the OSS (precursor to the 
+CIA) during the Second World War and went on to make a fortune as a uranium 
+entrepreneur.  
+  
+The blustery rum-drinking Hubbard is widely credited with being the first 
+person to emphasize LSD's potential as a visionary or transcendental drug. 
+"Most people are walking in their sleep," he said. "Turn them around, start 
+them in the opposite direction and they wouldn't even know the difference."  
+  
+As a high-level OSS officer, the Captain directed an extremely sensitive 
+covert operation that involved smuggling weapons and war material to Great 
+Britain prior to the attack on Pearl Harbor.  In pitch darkness he sailed 
+ships without lights up the coast to Vancouver, where they were refitted and 
+used as destroyers by the British Navy.  All of this, of course, was highly 
+illegal, and President Truman later issued a special pardon with kudos to the 
+Captain and his men.  
+  
+During his first acid trip in 1951, he claimed to have witnessed his own 
+conception.  "It was the deepest mystical thing I've ever seen," the Captain 
+recounted.  "I saw myself as a tiny mite in a big swamp with a spark of 
+intelligence.  I saw my mother and father having intercourse. It was all 
+clear."  
+  
+The coarse, uneducated Captain lacked elegance and restraint -- "I'm just a 
+poor son of a bitch!" he'd bellow.  Nonetheless he teamed up with a tall, 
+slender novelist who epitomized the genteel qualities of the British 
+intellectuals by the name of Aldous Huxley.  In 1955 Huxley wrote to a mutual 
+friend "Your nice Captain tried a new experiment -- group mescalinization." 
+Captain Hubbard had provided Huxley with mescaline, a semi-synthetic extract 
+of the peyote cactus.  
+  
+Though Huxley waxes poetic about his experiences with mescaline, his poetry 
+ is tempered by the authors' introduction of the subject in "Acid Dreams." The 
+drug, they tell us, was used "in mind control experiments carried out by Nazi 
+doctors at the Dachau concentration camp during World War II... the Nazis 
+concluded that it was 'impossible to impose one's will on another person as in 
+hypnosis even when the strongest does of mescaline had been given...  
+  
+"The mescaline experiments at Dachau were described in a lengthy report by the 
+U.S. Naval Technical Mission, which swept across Europe in search of every 
+scrap of industrial material and scientific data that could be garnered from 
+the fallen Reich.  
+  
+"It was without question the most extraordinary and significant experience 
+this side of the Beatific Vision.  ...it opens up a host of philosophical 
+problems, throws intense light and raises all manner of questions in the field 
+of aesthetics, religion, theory of knowledge," Huxley said of his mescaline 
+experience in a letter to a friend.  Going on to praise Hubbard he wrote "What 
+Babes in the Woods we literary gents and professional men are! The great World 
+occasionally requires your services, is mildly amused by mine; but its full 
+attention and deference are paid to Uranium and Big Business.  So what 
+extraordinary luck that this representative of both these High Powers should 
+(a) have become so passionately interested in mescaline and (b) be such a nice 
+man."  
+  
+Said Hubbard of his proselytizing escapades, "Cost me a couple of hundred 
+thousand dollars.  ...I had six thousand bottles to begin with."  
+  
+Hubbard promoted his cause with indefatigable zeal, crisscrossing North 
+America and Europe, giving LSD to anyone who would stand still. "People heard 
+about it, and they wanted to try it," he explained.  During the 1950s and 
+early 1960s he turned on thousands of people from all walks of life -- 
+policemen, statesmen, captains of industry, church figures, scientists. "They 
+all thought it was the most marvelous thing" he stated 
+ "And I never saw a psychosis in any one of these cases."  
+  
+Hubbard had such remarkable credentials that he received special permission 
+from Rome to administer LSD within the context of the Catholic faith.  "He had 
+kind of an incredible way getting that sort of thing," said a close associate 
+who claimed to have seen papers from the Vatican.  
+  
+Even though Hubbard took a lot of acid and was a maverick among his peers, he 
+remained a staunch law-and-order man throughout his life.  The crew-cut 
+Captain was the quintessdential turned on patriot, a seasoned spy veteran who 
+admired the likes of J. Edgar Hoover.  Above all Hubbard didn't like weirdos -
+- especially longhaired radical weirdos who abused his beloved LSD.  Thus he 
+was eager to apply his espionage talents to a secret study of the student 
+movement and acid subculture... And so on though a psychedelic topological 
+maze alternating cloak- and-dagger with enlightenment.  
+  
+The self-effacing, bicycle-riding Dr. Hoffman who, by virtue of inventing the 
+stuff, is to blame for much of this nonsense, firs synthesized LSD in 1938 
+while investigating the chemical and pharmacological properties of ergot, a 
+rye fungus rich in medicinal alkaloids, for Sandoz Laboratories in Basel, 
+Switzerland.  The good doctor was searching for an analeptic compound (a 
+circulatory stimulant) by concocting various ergot derivatives and apparently 
+took a wrong turn. However, preliminary studies on laboratory animals did not 
+prove significant  
+  
+For the next five years the vial of LSD gathered dust on the shelf, until the 
+afternoon of April 16, 1943.  "I had a strange feeling that it would be 
+worthwhile to carry out more profound studies with this compound," Hoffman 
+later recalled.  In the course of preparing a fresh batch of LSD he 
+accidentally absorbed a small dose through his fingertips, and soon he was 
+overcome by 
+
+"a remarkable but not unpleasant state of intoxication...   characterized by 
+an intense stimulation of the imagination and an altered state of awareness of 
+the world.  As I lay in a dazed condition with eyes closed there surged up 
+from mea succession of fantastic, rapidly changing imagery of a striking 
+reality and depth, alternating with a vivid, kaleidoscopic play of   
+colors..."  
+  
+Dr. Hoffman's experience as typical judging from the accounts of those who 
+became familiar with his compound two decades later.  
+  
+"Acid Dreams" is an odd history, to say the least, and one must conclude an 
+unfortunate one.  The societal whirl of the 1960s spurred the government into 
+a clamp-down on psychedelic drugs that has made it all but impossible to use 
+those substances in legitimate medical research.  What research has been done 
+has shown that drugs such a lysergic acid diethylamide and mescaline to be of 
+value alleviating and treating the psychic burdens (as well as some of the 
+physical pain in terminal cancer patients, those suffering severe neurosis and 
+psychosis, and even habitual criminals.  
+  
+The "sixties rebellion," as it is referred to in "Acid   Dreams," with its 
+embrace and massive consumption of psychedelic drugs, sensationalized the 
+substances to the degree that their mere mention invites controversy.  What 
+advantages the drugs offer to those suffering from mental and physical ills 
+may never be determined.  Whether or not the drugs put one in touch with some 
+higher order, provide a religious experience will, likewise be left to 
+conjecture. 
+
+The authors of "Acid Dreams" have done a reasonable job cataloging a 
+tempestuous and turbulent period and yet, at the same time, have cashed in on 
+its sensational associations.  
+  
+From "Acid Dreams" we learn that psychedelic drugs have been used and misused 
+by groups and individuals of every stripe. And that the Central Intelligence 
+Agency fooled around with psychochemicals without really knowing what they 
+were doing -- just like a good portion of the general population during the 
+1960s; give some of the other hijinx the CIA had indulged in -- the Bay of 
+Pigs, the overthrow of the Allende government -- dabbling in mind control and 
+metaphysics almost seem like small potatoes.  
+  
+Lee and Shlain finally conclude, after nearly 300 pages of implying otherwise, 
+that "The CIA is not an omniscient, monolithic organization, and there's no 
+hard evidence that it engineered a great LSD conspiracy. (As in most 
+conspiracy theories, such a scenario vastly overestimates the sophistication 
+of the alleged perpetrator.)"  
+  
+What we can deduce from "Acid Dreams" is that everyone seems to agree, no 
+matter who they may line up behind, that psychedelic drugs pack a considerable 
+wallop and, for dramatic splendor, cannot be matched.  
+  
+Here, for example, is an account that came across our desk recently of young 
+man's experience during the 1960s with a semi- synthetic version of the so-
+called "magic mushroom."  
+  
+"On a beach one night, under a nearly full moon on a double dose of psilocybin 
+I walked across the pebbles near the water's edge and as I looked at them, 
+they turned into smooth round rubies and emeralds and the water was molten 
+gold.  I looked back to where my friends were and my footprints were filled 
+with lapis-lazuli blue eyes, blinking at me.  I looked at th sandstone cliff 
+behind me and the entire cliff was made up of a full-maned lions and when they 
+roared -- that was the wind..."  
+  
+Extracting anything like the truth from the storm of controversy surrounding 
+psychochemicals is rather unlikely, but the above account, in its profound, 
+dreamlike beauty, causes one to wonder if these substances may possess more 
+value than the medical and academic community have been willing to credit 
+them. 
+ 
+  
+Governments may come and governments may go, as will public opinion, religious 
+bias, legislation, but it would be naive to think that the lions of the mind 
+will stop roaring.  
+  
+                           ***********  
+  
+The Fessenden Review is published by The Reginald A. Fessenden   Educational 
+Fund, 1259 El Camino Real, Suite 108, Menlo Park, CA. 94025.  Two year 
+subscriptions are $22.00  
+ 
+------ 
+ 
+This article is from NewsBase, an excellent BBS in the Bay Area that includes 
+a great number of up-to-date articles on current events (415) 824-8767. 
+
+

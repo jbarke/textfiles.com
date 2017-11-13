@@ -1,0 +1,606 @@
+America Online
+APPLE II DEVELOPMENT FORUM CONFERENCE LOG
+Tuesday, January 29, 1991  10:00 p.m. Eastern Time
+Topic:  Open Topic
+Forum Leader:  Dave Sugar (AFL Dyfet)
+
+
+AFL Marty  How's Twilight coming?
+AFL Marty  (or shouldn't I ask)
+ShanoJ     Uggh... Got the cde review back from Matt... He ONLY found 35
+           things wrong with
+ShanoJ     it... :( Jim want's me to change ALL of them (some of them aren't
+           mistakes but
+ShanoJ     things he'd like to see added). That should only take me about 5
+           decades... :(
+AFL Marty  So you did pretty good then.
+AFA Gary J Oh, I thought it would be more like 35 minutes :)
+AFL Marty  :)
+AFL Dyfet  What kinds of things?
+ShanoJ     He want's to do things like a Twilight toolset that includes
+           standard functions
+ShanoJ     that all of the blankers can use... Also a Twilight manager that
+           keeps track
+ShanoJ     of the blankers in cool ways.... Only about half of the things
+           were actual
+ShanoJ     bugs, and I want to just fix those and release it. Then we can go
+           back and aff
+ShanoJ     (err, add) the spiffy things in a later version... I don't think
+           Jim agrees,
+ShanoJ     though... :(
+
+AFA Gary J Open topic tonight, eh?  (I have a question when things are slow
+           :)
+Apple Guru Does anyone know of a HD for the //c?  (internal, NOT Applied
+           Injinuity)
+AFL Dyfet  Not off-hand, Guru....
+Apple Guru Good.....maybe mine will sell then!   :-)
+Windrider5 does anyone know what resource type $800C is?
+AFL Dyfet  GA Dave :)
+Dave Lyons It's rCtlDefProc, as revealed by typing 800c\rtype in Nifty
+           List.
+Dave Lyons (Gee, I hope that was in 3.0... :)  BTW, will be uploading 3.2
+           soon.  I know I said that last
+Dave Lyons week, but now I fixed redirecting to slots, which I discovered I
+           had broken horribly.  ga
+JWankerl   Yep, it was in 3.0.  
+AFA Gary J (of course.... :)   (Nifty List 3.2, no doubt :)
+FeinDavid  We want it yesterday!
+Apple Guru Nifty List 3.2      RSN!!!
+AFL Dyfet  Now, what was your question, Gary? :)
+AFA Gary J :)
+FeinDavid  Tanks gary.... 8)
+AFA Gary J Oh, let's see.  Can anyone tell me a good way to detect an
+           entrance into the
+AFA Gary J control panel?  I want to do something AFTER it has occurred.
+Dave Lyons Can't think of one off hand; what do you want to do?
+Apple Guru I thought that was supposed to be "invisible"
+JWankerl   There's a vector for going to the Desk Accessories menu, I
+           believe.
+AFA Gary J Well, I want to determine if the speed has been changed, for one
+           (via normal
+AFA Gary J IIGS speed, or transwarp/zip chip CDA)
+FeinDavid  Patch the vector, and then allow access...
+AFA Gary J Yes, there's a vector, but it doesn't return.
+FeinDavid  There is a byte you can check for the speed...
+Dave Lyons If you want to know when the CP updates the system state to match
+           the battery-RAM, you could
+Dave Lyons  *carefully* chain into the ToBRAMSetup vector, I suppose.
+FeinDavid  If you sense a enterance into the control panel, then you can set
+           a flag that
+FeinDavid  tells you to check the speed...  make it a standard check at that
+           flag.
+AFA Gary J Ah, that's an idea, Dave.  (other ideas I had included checking
+           the border
+AFA Gary J color, and see when it changed, but that requires that I look
+           constantly)
+Apple Guru Do a timing loop based o VBLIRQ
+FeinDavid  Which dave? he he?
+AFA Gary J I'm not concerned about what to do AFTER the detection, it's
+           doing the 
+AFA Gary J detecting and surviving afterward, that I want :)
+AFA Gary J Dave L:  Can you define "*carefully*"?
+Apple Guru Like I said, software timing loop, called on VBLIRQ real easy way
+           to sense spee
+JWankerl   Based on VBL?  That's 60/sec always, eh?  :-)
+AFA Gary J I know how to sence speed changes, I just don't want to do it all
+           the time.
+Dave Lyons Gary, I just mean to be sure you preserve Bank, D, *and* the
+           processor flags when you do that, since
+Dave Lyons the Carry flag is significant going into that routine (see
+           firmware ref--says whether to update
+Dave Lyons the slot settings or not).  Also note that the vector is called in
+           SEP 30 mode (not emulation,
+FeinDavid  No, just making sure that speed does not affect an application.
+Dave Lyons but 8-bit native).
+Apple Guru JWankerl....Yes, VBLIRQ is every 1/60'th sec.
+AFA Gary J Thanks, Dave.
+Coach101   Does a speed change cream your program or just render its output
+           less than attractive?
+Apple Guru I think Gary is doing something with copy protection  YEACH
+AFA Gary J Coach:  Speed changes the performance of my program :)  There are
+           some speed
+AFA Gary J sensatitive delays (it just makes things easier for the user)
+           that I want to
+AFA Gary J update.  (Not copy protection, sorry :)
+JWankerl   Gary:  You should probably use GetTick to time your delays.
+Apple Guru Gary....GOOD....I hate CP 
+Coach101   It just occurred to me that protecting a user against a user's
+           overt action (changing speed)
+Coach101   seemed like a lot of trouble for an infrequent occurance.  ga
+Apple Guru Hmmmm....I ALSO hate programs that watch my speed. It's MY fault
+           if my speed
+Apple Guru setting causes problems if noted in manual
+AFA Gary J Well, I also want to keep the border a certain color... it just
+           looks better 
+AFA Gary J that way :)
+Coach101   If we torture Gary long enough the truth will come out :)  :)
+JWankerl   Continue storing your color value there based on a heartbeat
+           interrupt.  :-)
+AFA Gary J :)
+AFA Gary J Well, if I do that, I can just check the border color in my loop,
+           and if it
+AFA Gary J changes from what I set it to, then someone has probably entered
+           the control
+AFA Gary J panel :)
+Apple Guru I thought thats what I said RE: VBLIRQ
+Coach101   awk
+AFA Gary J (Unless they had it set to the same color I'm putting it at :)
+AFA Gary J But, I'd prefer to not have to use time in my loop for mundane
+           things like that.
+Apple Guru what user would ever see 1/60'th of a second???
+AFA Gary J It's not that kind of timing that I need to check.  It's more
+           like a counter
+AFA Gary J type of thing, much like a flashing cursor rate, or that sort of
+           thing.
+JWankerl   Yeah.  And if they enter the control panel, they deserve to get an
+           ugly border.
+AFA Gary J (But, it effects the performance of the program)
+Apple Guru JW....very true!!
+JWankerl   As I said before, use GetTick to time your loops.  
+Apple Guru Sounds good to me too. Unless there are other routines using it
+AFA Gary J GetTick won't do it in this case.  It's more a matter of how many
+           times through
+AFA Gary J the loop.
+Apple Guru (that only counts in REAL critical code)
+AFA Gary J Right, Guru.
+Apple Guru <==-- tried using GetTick in CP routine.......yeach....:-(
+AFA Gary J Oh well... (enough of my babbling).... on to other questions :)
+Apple Guru IDEA!!!!!!
+AFL Dyfet  Yes Guru?
+Apple Guru Check just PAST your stack pointer, look at OLD return address! 
+Apple Guru That could tell you if Cntrl Panel was up!
+AFA Gary J Yes, but I'd still have to check that constantly.  It would be
+           easier to
+AFA Gary J check the border color :)
+Apple Guru well....I DID try....:-)
+AFA Gary J (or the text color, which nobody will see in an SHR program :)
+Matt DTS   What's this about checking to see if the CP is up?  I've been
+           kicked off and missed some of this.
+Matt DTS   Synopsis, please.
+AFA Gary J Matt:  I was just looking for a way to determine when the user
+           had entered the
+AFA Gary J control panel... so that I could check a few things AFTER the
+           fact.
+Matt DTS   Control Panel NDA or CDA?
+AFA Gary J CDA
+AFA Gary J (Control - Open-Apple - ESC) 
+Matt DTS   What is it you want to check?
+AFA Gary J I want to check the system speed (for one thing) and the border
+           color.
+AFA Gary J (parts of the program look real bad under certain border color
+           settings :)
+Matt DTS   The answer, of course, is to redesign your program properly
+           instead of ignoring the user's choices.
+AFA Gary J :)
+Matt DTS   (like for the border color.  I *HATE* it when some dweeb
+           programmer thinks I didn't mean it when I
+AFA Gary J I'm not ignoring the user's choices :)   I want to check the
+           speed because it
+Matt DTS   chose the border color I chose.)
+AFA Gary J effects the performance of the program.
+AFA Gary J The border color...well, I could grant you that one :)
+Matt DTS   Well, anyone can change the speed at any time, but I believe...
+Matt DTS   ...that the control panels only do so by calling TOBRAMSETUP as
+           described in the Firmware Reference.
+Matt DTS   You could patch that out and see if it tells you what you want to
+           know, even though you are playing
+Matt DTS   with the unguaranteed and the unsupported.
+AFA Gary J Is TWGS and Zip speed settings in BRAM?
+FeinDavid  no.  each has it's own setting.  However, the ROM 3 has a vector
+           that tells 
+FeinDavid  current system speed, 1, 2.6, or >2.6 MHz..  You also have to
+           fight with the
+FeinDavid  Zip GSX that has 15 different speed settings.
+Matt DTS   Yeah, and it would be nice if Zip or TWGS actually *used* that
+           vector, but they don't.  <sigh>
+AFA Gary J I'm not that concerned with super accurate speed detection.  I
+           just need to
+AFA Gary J tweek a few values if the speed changes.
+Matt DTS   If you're after accelerator speed, you don't want to check the
+           Control Panel.  You want to check the
+Matt DTS   CDA menu.  That's a different ballgame.
+AFA Gary J CDA menu then :)
+AFA Gary J (I think of them as the same.... but I know they're not)
+Matt DTS   CDA menu is easy.  Patch the tool call _ChooseCDA.
+AFA Gary J _ChooseCDA?  Hmmm.....
+Matt DTS   Right Dave?
+AFA Gary J Ok... I'll have to give that one a try.  
+AFL Dyfet  Okay, let's give A2 a chance for his question....:)
+AFL Dyfet  GA A2...
+A2GS       Thanx....actually it's not a question...but a small bug I found
+           about
+A2GS       20 minutes ago in 5.04....I've been able to reproduce it several
+           times...so I
+A2GS       just thought I'd mention it....
+Matt DTS   So mention it already!
+A2GS       keep in mind it's NOT serious......It seems that if you open a
+           window which
+A2GS       (just thought I'd get Matt a little revved up :)
+AFL Dyfet  :)
+A2GS       contains icons, and one of the icons on the right side of the
+           window is cut off
+A2GS       to a degree....the filename will remain cutoff when you scroll or
+           open the
+A2GS       window to display the whole icon....to see the whole icon in it's
+           normal form
+A2GS       you have to click on it (at which point things go back to normal
+           for that icon)
+A2GS       from what I've been able to find this problem only turns up when
+           you initially
+A2GS       open the window and the icon is cut off at that point (to begin
+           with)....
+A2GS       otherwise everything seems to be fine....one MAIN point which may
+           be relevant
+A2GS       (probably not) when I discovered this bug I was using some custom
+           system fonts,
+A2GS       but this problem never shows up in any other case when I use
+           5.04...so I don't
+A2GS       think it's the source (but then again who knows?)
+A2GS       GA
+Matt DTS   Oh.  this is a Finder thing.
+Matt DTS   It's relevant - the Finder does not work well if the system font
+           isn't Shaston 8.
+A2GS       BTW (I still love 5.04, even with this bug) :)
+Matt DTS   Someone will probably print this out and show it to Andy, but it's
+           a low-priority thing unless we start
+Matt DTS   shipping different system fonts.  GA.
+A2GS       The font was Shaston 8 (I believe, but wouldn't bet the farm on
+           it)
+Matt DTS   How is Shaston 8 a "different system font"?
+A2GS       excuse me....MY MISTAKE...I meant to say that I was using CUSTOM
+           SYSTEM ICONS
+AFL Dyfet  OIC
+Matt DTS   Oh.  Well, then it sounds like a bug.  I just tried to reproduce
+           it and I can't...
+Matt DTS   ...so send detailed mail on how to reproduce it to "ShrinkIt" and
+           Andy will see it.  GA.
+A2GS       (I tried it for 2 different disks it it showed up in 3 cases (when
+           I opened
+A2GS       enough folders to get the right kind of setting))
+AFL Dyfet  What Matt suggests would be the best way to handle it....Okay,
+           let's get to
+AFL Dyfet  Mark's question.  Go ahead, Mark...
+MarkJnnngs Yes a couple of quickies.  I'm writing my first desktop
+           application after makin
+MarkJnnngs a pretty workable game which I uploaded last year.  I only can
+           write in C.  
+MarkJnnngs I'm using Orca C and Design Master as my "Sample" code.  I can't
+           find anything
+MarkJnnngs there that handles modeless dialogs.  Is there much C code
+           around?
+AFL Dyfet  Go ahead Matt...
+MarkJnnngs And should I still use the Dialog Manager for modeless dialogs?
+           GA
+Matt DTS   Modeless dialogs are (generally) a pain in the patoot.
+Matt DTS   Anything you can do with the Dialog Mgr you can do with extended
+           controls and TaskMaster in a window
+Matt DTS   more easily and more flexibly.
+Matt DTS   DTS has several samples in C (APW C, though), the most
+           complex/robust of which is "Lister".
+Matt DTS   Although it doesn't directly compile under ORCA/C, you can get a
+           lot of good information from it.
+MarkJnnngs OK I'l go about it that way. 
+Matt DTS   There's other samples available as well, many here on AOL.  GA.
+AFA Gary J Yes, check our our source library.
+AFA Gary J (All C files have a   C:   in the file subject heading)
+MarkJnnngs Also, I downloaded 5.04 last night and I get I/O error $27 when I
+           unshrink.
+Matt DTS   Either your source or destination disks is physically bad.  Try
+           unshrinking to different floppies.
+MarkJnnngs I tried 2.  I'll try a third, but on the second one I verified it
+           first 
+MarkJnnngs and it said it had no bad blocks.
+Andy Stein Sounds like a bad download.
+AFA Gary J It may be a bad spot on the disk the ShrinkIt file is on.
+Matt DTS   Try validating your shrunk files in the Finder and see if they can
+           be read.
+Matt DTS   ShrinkIt wouldn't return an I/O error unless it got one reading or
+           writing from the disk.  A bad
+Matt DTS   archive (or download) can't usually create that error.
+Apple Guru 3.5" disk??
+MarkJnnngs Good idea. Andy, the game was called Propagannihilate.
+MarkJnnngs Yes 3.5" disk
+Apple Guru If the problem starts showing up more often, and on other disks,
+           your upper
+Apple Guru head may have broken loose. (guessing due to problem w/verified
+           disk)
+MarkJnnngs I did hear some unusual clanking sounds out of the drive, come to
+           think of it!
+MarkJnnngs I have 2 3.5 drives; I tried switching the source and destination
+           disks and
+MarkJnnngs the same error occurred.
+AFA Gary J Try moving the source file to a different source disk.
+AFL Dyfet  It sounds like it's on the disk with the shrunk files...as Matt
+           suggested, a
+AFL Dyfet  validate from Finder should determine if that is the case...
+Apple Guru error on same drive?
+MarkJnnngs can't answer that for sure, AG.
+AFL Dyfet  Okay, let's give Parik a chance here :)...GA Parik...
+AFA Parik  how are the textfile technotes for nov & jan progressing?  I have
+           the paper
+AFA Parik  versions but electronic is faster to access.
+AFA Parik  ga
+Matt DTS   As far as I know, they're in distribution, whatever that means.
+Matt DTS   I stayed up all night one night to get them done, but I'm not
+           responsible for getting them out the
+Matt DTS   door (thank God).  Sorry.
+AFA Gary J Both November AND January, Matt?
+Matt DTS   Yup.
+AFA Gary J (great...I'll be looking :)
+A2GS       Buy a Quickie with In-Words and Scan them into E-form  :-)
+Apple Guru :)
+AFA Gary J Not the kind of data that's quick to access, unfortunately :)
+AFL Dyfet  Okay, Jonah, what is your little ? :)
+AFL Marty  Jonah's cat does all his typing for him.
+ShanoJ     Well, yesterday I noticed that after going into GSBug and exiting
+           with a G,
+ShanoJ     whenever I had the caps lock key on and was typing, the speaker
+           would click
+ShanoJ     once for each keypress... Any explanations of that? Also, is it a
+           bug in GSBug
+ShanoJ     that it leaves the GR screen switched in instead of the text
+           screen?
+ShanoJ     (I don't use the caps lock key much... :)
+Coach101   Geez, you just found that feature :)
+AFA Gary J That's a feature.
+Coach101   Not a bug....   At one point it (GSBUG) did it all the time (Cap
+           locks or not)!
+Coach101   For me GsBUg has always left the screen that I "entered" from up
+           when I exited...  What ahppaend
+Coach101   in your case?
+ShanoJ     Well, if I'm in a desktop program, go into GSBug with the four
+           finger salute,
+ShanoJ     hit G to return, and then quit to the APW shell, the GR screen is
+           active and
+ShanoJ     NOT the text screen.... (oh, I did a \s before the G)...
+Coach101   One more thing, when you hear those KeyClicks, keydn events will
+           *NOT* go to desk accessories.
+AFA Parik  (why not hit "R" to return?)
+Dave Lyons (R is usually the best way to return)
+Matt DTS   G means "go" and doesn't necessarily restore the mode from when
+           you entered, Jonah.  No duh.  :)
+Coach101   Did you try exiting with an R; thats what I do and it seems to
+           work right.  I just used a G and it did
+Coach101   not work correctly for me.
+ShanoJ     Hmm... Kinda weird that it kept doing that even after I exited
+           (clicking, that 
+ShanoJ     is).
+ShanoJ     Hmm... Okay, I'll start using R then... Think I need to be sent to
+           Remedial
+ShanoJ     Debugging Tools 101? :(
+ShanoJ     Didn't know about Ctl-T in NiftyList, and now this... :(
+Coach101   Did you catch the comment about the KeyClicks meaning that Key
+           down events are not going to 
+Coach101   desk accessories.  That is the reason for the KeyClicks, to let
+           you know things are not normal.
+ShanoJ     Yup, caught that. I knew that happened when GSBug was switched in,
+           but didn't
+ShanoJ     think it should continue after I've G'd. Then again, it might be
+           the G that's
+ShanoJ     doing it... 
+AFA Parik  come to kansasfest and you can learn alllllllllll about debuggin
+ShanoJ     Planning to, Parik! :)
+Matt DTS   Anything else tonight?
+AFA Gary J What's the proper procedure for patching tools?
+AFA Gary J (Having never researched that one :)
+Matt DTS   Do it carefully and don't tail-patch.  :)
+Matt DTS   (Of course, you might have to tail-patch.  Dave?)
+AFA Gary J (Like ChooseCDA, for example :)
+AFA Gary J DA Lyons should know this stuff :)
+Dave Lyons OK, I'm here....
+Dave Lyons Gary, it's not a well-defined area.  What do you want to patch?
+AFA Gary J ChooseCDA, of course :)
+Dave Lyons If you're patching at System.Setup time, life is good.  You need
+           to use GetTSPtr to determine
+Dave Lyons where & how big the function pointer table is for the tool set you
+           want to patch,
+AFA Gary J An application needs to do this, temporarily, Dave.
+Dave Lyons Oh, for an application, temporarily:  Use GetTSPtr to get the
+           current FPT for that tool, allocate
+Dave Lyons a chunk of memory full of zeroes the same size as the old FPT
+           (4*the first longword), fill it with
+Dave Lyons zeroes & copy the first longword, and fill in the entries for the
+           tools you want to patch--and feed
+Dave Lyons that to SetTSPtr.
+Dave Lyons Your patch will go away when you do a TLShutDown.
+AFA Gary J Thanks, Dave.  (good explanation)
+
+AFA JoeyS  Wanna try a Basic.System question?  :-)
+DangardAce Basic.System!  That's prehistoric.  
+AFA JoeyS  :P~~ Pete...
+DangardAce Joe, just put all your gosubs first and use line numbers that are
+           powers of 2.
+AFA JoeyS  :P again, Pete.  My question is a little stranger than THAT...
+AFA Gary J Pete :)
+DangardAce Okay then, just use 1 character variables.
+DangardAce :)
+Matt DTS   Joey:  Cough up $100/year and Software Licensing will give you the
+           source to BASIC.System.  :)
+AFA JoeyS  Don't push me; it's been a bad year...
+AFA JoeyS  LOL Matt... gee, thanks.
+DangardAce Or better yet, don't put spaces in REM statements.
+AFA Gary J (just don't use REM statments)
+Apple Guru <==-- must have missed something, but maybe not....I think I smell
+           BASIC here:(
+AFA JoeyS  (the question, was, in theory, use of m/l subroutines in
+           Applesoft, butttt...)
+DangardAce There used to be this great program called Basic Enhanced Software
+           Tricks..
+DangardAce it let you compress lines to the maximum amount, 256 chars. per
+           line..
+Apple Guru B.E.S.T. was for DOS 3.3.....yeuch
+AFA Gary J :)
+DangardAce Too bad no one ever revamped it for ProDOS.
+Apple Guru Sensible Software sorta folded......
+DangardAce I thought they were still selling Sensible Grammer..
+DangardAce Things haven't been the same since Quadrant 6112..
+Apple Guru SS is still around, but is running out of owners basement now
+DangardAce like most Apple II companies
+AFA JoeyS  Oh, well, okay.  :)
+AFA JoeyS  So anyone want to take a stab at the Basic.System question?? 
+           :-)
+AFA Gary J Go for it, Joey :)
+DangardAce What, meshing ML with AppleSoft?
+AFA JoeyS  LOL.  Okay.  I have an amper routine, &GET, that's supposed to
+           read characters
+AFA JoeyS  (primarily intended for reading from disk) as a string, and return
+           the C/R
+AFA JoeyS  terminated string to a passed var.  That all works just fine. 
+           Then I decided
+AFA JoeyS  I wanted to add some code so that it'd set a flag when it read in
+           a null (end
+AFA JoeyS  of a record in a random access file).  That doesn't work nearly as
+           well; the
+AFA JoeyS  code just "jumps" to the next record.  The m/l code in question
+           looks like...
+AFA JoeyS  jsr $fd0c ; get char / and #$7F / beq got_null
+AFA JoeyS  The routine never ever gets to get_null.  I know the code is fine,
+           since if I
+AFA JoeyS  invoke the routine without a Basic.System READ in effect (i.e.
+           typing chars at
+AFA JoeyS  the keyboard), it will correctly set the flag when I type ^@.  Any
+           ideas?
+Apple Guru Are you passing back a C/R for a null string?
+AFA JoeyS  Actually, I wanted to treat the null as a terminator the same as
+           C/R, and  
+AFA JoeyS  therefore return the chars I'd read to that point, but also set
+           the flag. 
+AFA JoeyS  That's all easy once I can actually convince the routine to give
+           me the nulls
+AFA JoeyS  in the first place.
+Apple Guru AND #$7F.....BEQ NULL, BMI NULL
+AFA JoeyS  If I mask the high bit the BMI should always fail, yes?
+AFA Gary J BMI Null?   It should never be minus.
+Apple Guru Yes.....It shouldn't be, but I bet it is (for some strage
+           reason)
+AFA Gary J (AND #$7F takes care of that)
+AFA Gary J (Unless of course, you've set a 16-bit accumulator :)
+Apple Guru Running on 6502 or 65C02 or 65816?
+AFA JoeyS  Uhh, well, I see no reason why the processor should ignore my AND
+           #$7F... :-)
+AFA JoeyS  This is pure 6502 code -- not C02, not 816.
+Apple Guru 6502 ....SOME manufacturers chips had bug in flag setting on
+           AND's
+AFA JoeyS  LOL... right.  No, the code itself would seem to be functioning
+           correctly,
+AFA JoeyS  since as I said, it works as expected when I give it a null from
+           the keyboard--
+AFA JoeyS  only when READ'ing from a disk file does it not do so.
+AFA JoeyS  (and actually, the code loop jsr $fd0c ; get char / jsr $fdda ;
+           prbyte /
+AFA JoeyS  jmp start ; loop   never displays 00, either, when reading from
+           disk)
+AFA Gary J Have you tried setting a break point there and seeing just what
+           value IS 
+AFA Gary J returned?
+AFA JoeyS  Yeah, well, see my previous line, Gary, for what I did try.  :)
+AFA Gary J It must not be zero, or it just may not be going to your routine
+           at all.
+Apple Guru Just for yuks......test for NEG after your AND. Pdos might be
+           messing you up
+Apple Guru if it works right from the keyboard
+AFA JoeyS  Shrug, I can try it, couldn't hurt.  But I'm honestly not sure
+           what that will
+AFA JoeyS  accomplish after the AND.  But who knows?
+AFA Gary J Just because it works for the keyboard doesn't mean it will work
+           from disk.
+AFA JoeyS  Well, I know that, Gary.  :)  I want to find out WHY it doesn't
+           work from disk,
+AFA JoeyS  and more importantly, how to make it do so.  :)
+AFA Gary J (I know you know, Joey :)
+Apple Guru <-- betting that Hi bit is set
+AFA Gary J Obviously, the disk read is returning something other than a 00,
+           or your
+AFA Gary J code is somehow being missed.
+AFA Gary J (bypassed, branched around, or otherwise avoided)
+AFA JoeyS  Well, like I said, a loop of get-byte, print-byte, loop when
+           reading from the
+AFA JoeyS  disk never returns the 00's used for record padding... even though
+           Block Warden
+AFA JoeyS  definitively shows that they're there, and my datafile isn't
+           messed up or
+AFA JoeyS  anything.
+Matt DTS   Are you using MLI read calls or Basic.System read calls?
+AFA Gary J Are you using MLI in your asm code?
+AFA Gary J You could test for eof, and feed your routine a zero.
+AFA JoeyS  I wouldn't get EOF, since I'm NOT at EOF, I'm at EOrecord.
+AFA Gary J Oh, sorry.  Missed the bit about EOrecord.
+AFA JoeyS  I'm using jsr $fd0c (monitor get char), which is the same call
+           used by 
+AFA JoeyS  Applesoft's GET command.  I want to avoid the overhead of zillions
+           of reads.
+Apple Guru you can't OPEN, READ, etc from AL calls to B.S. MUST use MLI
+Apple Guru per P8 tech manual
+Matt DTS   BI may be using $00 as a newline character so reads terminate. 
+           Normally BASIC programs don't want to
+Matt DTS   get returned zero bytes, so Basic.System undoubtedly filters them
+           somehow.
+AFA JoeyS  Hmmm, that's an interesting thought, Matt.  Should I try disabling
+           newline
+AFA JoeyS  mode totally before entering the routine?? (but that brings up the
+           same 
+AFA JoeyS  problem, namely that of repetitive MLI calls, which I want to
+           avoid for
+AFA JoeyS  performance reasons)
+Matt DTS   It's probably not Newline mode; it's probably done inside
+           Basic.System.
+Apple Guru Matt...thats why P8 tech manual says MLI cals for read/write
+AFA JoeyS  Oh.  Ummm, okay, but when using a GET I$ command (Applesoft GET)
+           in a loop
+AFA JoeyS  purely in Applesoft (s-l-o-w...), I$ =does= equal "" (null) when I
+           read a null,
+AFA JoeyS  and as I said I've traced the Applesoft code and found it to use
+           the same
+AFA JoeyS  jsr $fd0c routine.  IGSC...
+Matt DTS   Did you open the file with the same record length both times?
+AFA JoeyS  Yup.  All parameters of the OPEN, READ, and even CLOSE commands
+           were exactly
+AFA JoeyS  the same.  Just that in one version I used something like
+AFA JoeyS  & DO: & GET I$: ? I$: & STOP IF PEEK(222)=5    (peek(222) = 5 is
+           the condition
+AFA JoeyS  I supposedly set up when I read a null), whereas in the other I
+           use
+AFA JoeyS  & DO: GET I$: ? I$;: & STOP IF I$=""
+AFA JoeyS  The first doesn't work, the second does.  <shrug>
+Dave Lyons I've been browsing thru the BASIC.SYSTEM source, and I have noted
+           that there *is* special handling
+Dave Lyons for the GET statement.
+AFA JoeyS  There is??  WHERE??
+Dave Lyons Inside BASIC.SYSTEM there is...in the routines that handle getting
+           input from disk instead of
+Dave Lyons from the keyboard.  Apparently during the here's-a-statement
+Dave Lyons trap it notes the command and stores a $BE into PROMPT ($33) if
+           it's a GET.  The input stuff
+Dave Lyons checks to see if $33 contains $BE & behaves differently.
+AFA JoeyS  (Matt smiles and reminds me of the $100 Basic.System source code
+           offer)
+AFA Gary J :)
+AFA Gary J Check "Beneath Apple ProDOS" instead.  It's only around $20 :)
+Apple Guru :-)
+Apple Guru Gary....Where can I get a NEW copy of BAP????
+AFA JoeyS  Oh WOW... that very well could be it; there's another similar
+           weird thing that
+AFA JoeyS  happens when trying to output via COUT, and it also involved the
+           Prompt ZP
+AFA JoeyS  loc.  I'll have to try this puppy out... :))
+AFA JoeyS  (Gary: I've got BAP, as well as Little's "Advanced ProDOS for
+           Programmers";
+AFA JoeyS  neither of 'em extensively cover the BI)
+AFA JoeyS  Dave: I'll run now and try this out, and drop you a note with the
+           results
+AFA JoeyS  either way, 'kay?
+Dave Lyons Ok.
+AFA JoeyS  Thanks!   Later, all...
+Dave Lyons Yeah, you may be able to just store a $BE into $33; it shouldn't
+           get overwritten until the next
+Dave Lyons Applesoft statement executes, or until you call GETLN.
+AFA JoeyS  ...right; in another routine where I wanted to output via COUT, I
+           think I had
+AFA JoeyS  to LDA #0, STA $33 to get it to work right; as you said, $33
+           stayed intact
+AFA JoeyS  while I was in my routine.
+AFA JoeyS  I'll get back to ya' in mere minutes... :)
+AFA JoeyS  Byeeeee.
+AFA JoeyS  <--- (woo, excited, my two week old problem may be solved :)
+

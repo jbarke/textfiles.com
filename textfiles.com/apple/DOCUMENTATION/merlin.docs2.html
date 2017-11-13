@@ -1,0 +1,286 @@
+              MISCELLANEOUS PSEUDO OPS
+
+         KBD (define label from KeyBoarD)
+    label KBD           [get value of OUTPUT from kbd]
+    label KBD d-string  [prompt with the d-string for the value of OUTPUT]
+   This allows a label to be equated from the keyboard during assembly.  Any expression may be input, including expressions referencing previously defined labels, a bad input error will occur if the input cannot be evaluated.
+
+         LUP
+    LUP expression (LOOP)
+    --^            (end of LUP)
+   The LUP pseudo opcode is used to repeat portions of source between the LUP and then --^ expression number of times.  An example of this is:
+    LUP 4
+    ASL
+    --^
+    which will assemble as:
+    ASL
+    ASL
+    ASL
+    ASL
+    and will show that way in the assembly listing with repeated line numbers.  Perhaps the major use of this is for table building.  As an example
+    ]A   =    0
+         LUP  $FF
+    ]    =    ]A+1
+         DFB  ]A
+         --^
+    Will assemble the table 1, 2, 3, ....,$FF
+    The maximum LUP value is $8000 and the LUP opcode will simply  be ignored if you try to use more than this.  NOTE: the above use of incrementing variable in order to build a table WILL NOT work if used within a macro.  Program structures such as this must be included as part of the main program source.
+
+         CHK (place CHecKsum in object code)
+    This places a checksum byte into object code as the location of the CHK opcode.  This is usually placed at the end of the program and can be used by your program at runtime to verify the existence of an accurate image of the program in memory.
+
+         ERR (force ERRor)
+    ERR $80-($300)      [ error if $80 not in $300]
+    ERR *-1/$4000       [error if PC>$4100]
+    ERR  \$5000         [ error if REL code address exceeds $%000]
+   ERR expression will force an error if the expression has a non zero value and the message break in line ??? will be printed.
+    NOTE for REL Files: The ERR\expression syntax gives an error on the second pass if the address pointer reaches expression or beyond.  This is equivalent to ERR *-1/expr, but if when used with REL files it instructs the linker to check that the last byte of the current module does not extend to expressions or beyond (expression must be absolute). If the linker finds that the current module does extend beyond expression, linking will abort with a message Constraint error
+
+         SW (SWeet 16 opcodes)
+    This enables sweet 16 opcodes.
+
+         XC (eXtended 65C02 and 65802 opCodes)
+         XC        [enable the 65C02 option]
+         XC        [two in a row enables the 65802 option]
+    This does not enable the extended BIT opcodes used on the Rockwell 65C02 chip.  There is a macro library file included on the Merlin disk that can be USEd to implement these additional code.
+
+         MX (long status Mode of 65802)
+    MX   %00  [ M & x 16 bit modes on]
+    MX   %10  [ M mode on X mode off]
+    MX   %01  [ X mode on M mode off]
+    MX   3    [ M & X 16 bit modes off]
+   This is used to inform Merlin of the intended status of the long status of the 65802 processor. The assembler cannot determine if the processor is in 16 bit memory mode (M status bit=0) or 16 bit index register mode (X status bit =0).  The purpose of the MX opcode is to inform the assembler of the current status of these bits.
+    This opcode must be used when using Merlin's 65802 capabilities to inform the assembler of the proper mode to use in order to insure proper assembly of immediate mode commands.
+
+         USR  (USeR definable op-code)
+    USR expression  [example depend on definition]
+   this does a JSR $B6DA.  This location will contain an RTS on boot.  To set up a routine you should BRUN it from the EXEC command after catalog. The following flags and entry points may be used by your routine:
+    USRADS    =    $B6DA     must have a JMP to your routine
+    PUTBYTE   =    $E5F6     see below
+    EVAL      =    $E5F9     see below
+    PASSNUM   =    $2        contains assembly pass number
+    ERRCNT    =    $1D       error count
+    VALUE     =    $BB       value returned by EVAL
+    OPNDLEN   =    $BB       contain combined length of operand and comment
+    NOTFOUND  =    $FD       see discussion of EVAL
+    WORKSP    =    $280      contains the operand and comment in postive ASCII
+   Your routine will be called by the USR opcode with A=0, Y=0 and carry set.  To direct the assembler to put a byte in the object code, You should JSR PUTBYTE with the byte in A.  Put your routine at $300-$3cf or $8a0-$8ff.  You must not write to $900.
+
+              CONDITONAL PSEUDO OPS
+
+         DO (DO if true)
+    DO 0      [ turn assembly off]
+    DO 1      [ turn asssembly on]
+    DO label  [ if label<>0 then on]
+    DO l1/l2  [ if l1<l2 then off]
+    DO l1-l2  [ if l1=l2 then off]
+   This along with ELSE and FIN are conditional assembly ops. IF the operand evaluates to zero then assembler will stop generating object code (until it sees another conditional).  Except for macro names, it will not recognize any labels in such and area of code.  If operand evaluates to a non zero then assembly will proceed as usual.  
+    This is useful for sources to designed to generate slightly different code for different situations.  For example in a program with text, you may wish to have one version for Apples with lower case adapters and one for those without.  By using conditional assembly modification of such programs becomes much simpler, since you do not have to make the modification in two separate versions of the source code.
+    Every DO should be terminated somewhere later by a FIN and each FIN should be preceded by a DO. AN ELSE should occur only inside such a DO/FIN structure.  DO/FIN structures may be nested up to eight deep (possibly with some ELSE's between).  IF the DO condition is off (value 0) then assembly will not resume until its corresponding FIN is encountered, or an ELSE at this level occurs.  Nested DO/FIN structures are valuable for putting conditionals in Macros.
+
+         ELSE
+    This inverts the assembly condition (on become off and off become on ) for the last DO
+
+         IF (if so then do)
+    IF char,var
+    IF (,]1        [if first char of ]1 is ( then assemble following code
+    IF ",]TEMP     [if first char is ' assemble]
+    IF "=]1        [ alternate use with =]
+   This checks to see if char is the leading character of the replacement string for ]var.  Postion is important the assembler checks the first and third characters of the operand for a match.  If a match if found then the following code will be assembled.  As with DO this must be terminated with a FIN, with optional ELSE's between.  The comma is not examined, so any character may be used there.  For example  IF "=]1  could be used to test if the first character of the variable ]1 is a double quote " or not perhaps needed in a macro which could be given either an ASCII or a hex parameter.
+
+         FIN (FINish conditional)
+    This cancels the last DO or IF and continues assembly with the next highest level of conditional assembly, or ON if the FIN concluded the last (outer ) DO or IF.
+
+              MACRO PSEUDO OPS
+
+         MAC
+    Label MAC
+   This signals the start of a macro definition.
+
+         EOM (<<<)
+    This signals the end of the definition of a macro
+
+         PMC (>>>) (macro-name)
+    PMC macro-name
+   This instructs the assembler to assemble a copy of the named macro at the present location.
+
+         VARIABLES
+    Labels beginning with ] are regarded as VARIABLES.  They can be redefinded as often as you wish.  The designed purpose of variables is for use in MACROS, but they are not confinded to that use.
+    Forward reference to a variable is impossible with correct results, but the assembler will assign some value to it.  It is possible to use variables for backward branching, using the same label at numerous places in the source.  This simplifies label naming for large programs and uses much less space than the equivalent once used labels.
+    FOR example
+    1         LDY #0
+    2 ]JLOOP  LDA TABLE,Y
+    3         BEQ NOGOOD
+    4         JSR DOIT
+    5         INY
+    6         BNE ]JLOOP     ;BRANCH TO LINE 2
+    7NOGOOD   LDX #-1
+    8]JLOOP   INX
+    9         STA DATA,X
+   10         LDA TBL2,X
+   11         BNE ]JLOOP     ;BRANCH TO LINE 8
+
+         LOCAL LABELS
+    A local label is any label beginning with a colon. A local label is attached to the last global label and can be referred to by any line from the global label to the next global label.  Example of local labels.
+    1    Start     LDY  #0
+    2              LDX  #0
+    3    :LOOP     LDA  (JUNK),Y
+    4              STA  (JUNKY),Y
+    5              INY  
+    6              CPY  #100
+    7              BNE  :LOOP
+    9    LOOP2     LDY  #0
+   10              LDA  (STUFF),Y
+   11              INY
+   12              CPY  #100
+   13              BNE  :LOOP
+   14              RTS
+    
+    Local labels cannot be used inside macros.  You cannot label a MAC, ENT or EXT with a local label and you cannot EQUate a local label.  The first label in a program cannot be a local label.
+
+    There are three distinct types of labels used by the assembler.  Each of these are identified and treated differently by MERLIN.
+    Global Labels: labels not starting with ] or :
+    Local Labels:   labels beginning with :
+    Variables:      labels beginning with ]
+   NOTE: local labels do not save space in the symbol table, while variables do.  Local labels CAN be used for forward and backward branching, while variables cannot.  Good programming practice dictates the use of local labels as branch points, variables for passing data.
+
+              MACROS
+    Macros represent a shorthand method of programming that allows multiple lines of code to be generated from a single statement.  Example of the first type in T.MACRO LIBRARY file are simple means to eliminate repetitive entry of frequently used program segments.  Example of more complex macros can be found in the T.FP Macros and the T.RWTS Macros.  Macros can be used to simulate unimplemented opcodes or to simulate the Rockwell 65C02.
+    A macro is a user named sequence of assembly language statements, with general purpose operands.  You define the macro in a general way and when you use it via a macro call, you fill in the blanks left when you defined it.  EXAMPLE:
+    MAC  SWAP     ;define a macro named SWAP
+         LDA  ]1  ;load accum with variable ]1
+         STA  ]2  ;store accum in location ]2
+         <<<      ;this signals the end of the macro
+    Would assemble as follows if ]1=$300 and ]2=$400
+         LDA $300
+         STA $400
+    It is very important to realize that anything used in the parameter list will be substituted for the variables.  Forward reference to a macro definition is not possible and will result in a not macro error message. A macro must be defined before it is called by NAME, PMC or >>>.  The conditionals DO, IF, ELSE and FIN may be used within a macro.  Labels inside macros are updated each time the macro NAME, PMC or >>> NAME is encountered.  Error messages will usually indicate the line number of the macro call rather than the line inside the macro where the error occurred.
+    Macros may be nested up to 15 deep.  Macros names may be put in the opcode column, without using PMC or >>>, But the macro name cannot be the same as any regular opcode or pseudo opcode such as LDA, STA, etc. IT cannot begin with the letters DEND or POPD.  The PMC or >>> is not subject to this.
+    
+         Special Variables
+    Eight variables, name ]1 through ]8 are predefined and are designed for convenience in Macros.  These are used in a PMC (or >>>) statement.  The instruction  >>> NAME.exprl;expr2,expr3....   will assign the value of exprl to the variable ]1 and expr to ]2 and so on. EXAMPLE
+         MACRO DEFINITION              RESULT CODE EXAMPLE
+    TEMP      EQU  $10            SWAP.$6;$7;TEMP  ; MACRO CALL
+              MAC
+              LDA  ]1                  LDA  $06
+              STA  ]3                  STA  TEMP
+              LDA  ]2                  LDA  $07
+              STA  ]1                  STA  $06
+              LDA  ]3                  LDA  TEMP
+              STA  ]2                  STA  $07
+              <<<
+
+              >>>  SWAP.$6;$7;TEMP
+              <<<  SWAP.$1000;$6;TEMP
+    This segment swaps the contents of location $6 with that of $7 using temp as a scratch depository, then swaps the contents of $6 with that of $1000.
+    IF as above some of the special variable are used in the MACRO definition, then values for them must be specified in the PMC (or >>>) statement.  In the  assembly listing, the special variables will be replaced by their corresponding expressions.
+    The number of values must match the number of variables used in the macro definition.  A BAD VARIABLE error will be generated if the number of values is less than the number of variables used.  Macros will accept literal data.  Thus the assembler will accept the following type of macro call:
+    MUV  MAC
+         LDA  ]1
+         STA  ]2
+         <<<
+
+         >>>  MUV.(PNTR),Y;DEST
+         >>>  MUV.#3;FLAG,X
+    with the resultant code from the above two Macro calls being:
+
+         >>>  MUV.(PNTR),Y;DEST   ;macro call
+         LDA  (PNTR),Y            ;substitute first parm
+         STA  DEST                ;substitute second parm
+    and  
+
+         >>> MUV.#3;FLAG,X        ;macro call
+         LDA #3                ;substitute first parm
+         STA FLAG,X               ;substitute second parm
+
+    MACRO LIBRARIES AND THE USES PSEUDO OP
+    
+    There are a number of macro libraries on the Merlin disk.  These libraries are examples of how one could set up a library of often used macros.  The requirements for a file to be considered a macro library are:
+    1) Only Macro definitions and label definitions exist in the file.
+    2) The file is a text file
+    3) If it is a DOS 3.3 library, the file name must be prefixed with T.
+    4) The file must be accessible at assembly time (it must be on an available disk drive or online)
+    
+         The macro libraries included with Merlin include:
+
+DOS 3.3            ProDos              Macro Library Functions
+T.FPMACROS    FPMACROS.S          Allow easy access to Applesoft
+                                  floating point math routines
+T.MACROS      MACROS.S            Often used macros for general use
+T.ROCKWELL    ROCKWELL.S          Implements extended bit related
+                                  opcodes on the Rockwell 65C02
+T.SENDMSG     SENDMSG.S           A macro that allows easy printing
+                                  from machine language
+T.RWTS        <NONE>              Allow easy access to DOS 3.3's RWTS
+                                  disk routines
+
+THE LINKER
+    The linking facilities offer these advantages
+    1) Extremely large programs may be assembled in one operation over 41000 bytes long
+    2) Large programs may be assembled much more quickly with a corresponding decrease in development time.
+    3) Libraries of subroutines may be developed and linked to any Merlin program
+    4) Programs may be quickly re assembled to run at any address
+
+    With a linker you can write portions of code that perform specific tasks, say a general disk I/O handler and perform whatever testing and debugging is required.  When the code is correct, it is assembled as a REL file and placed on a disk.
+    PUT file or Macro USES library don't serve the same purpose. Using a PUT file to add a general purpose subroutine would result in slower assembly.  Any label definitions contained in the PUT file would be global within the entire program.  With a REL file only labels defined as ENTry in the REL file (and EXTernal in the current file) would be shared by both programs.  There is no chance for duplicate label errors when using the linker.
+
+    There are three pseudo opcodes that deal directly with relocatable modules and the linking process. These are:
+    REL -Informs the assembler to generate relocatable files
+    EXT -Defines a label as external to the current file
+    ENT -Defines a label in the current file as accessible to other REL files.
+   There are two other pseudo opcodes that behave differently when used in a REL file, than to a normal file, they are DS and ERR
+   In order to use the Linker, the files to be linked must be specified.  The linker uses a file containing the names of the files to be linked for this purpose.
+
+         Pseudo Opcodes for Use with Relocatable Code Files
+    REL
+   This instructs the assembler to generate a relocatable code file for use with the relocating linker.  This must occur prior to definition of any labels. REl files are incompatible with the SAV op and with the EXEC mode objext code save command.  To get an object file to the disk you Must use the DSK opcode for direct assembly to disk.  An ORG at the start of the code is not allowed> Multiplication, division, or logical operations can be applied to absolute expressions but not to relatives one.
+    Example of absolute expressions are:
+         An EQUate to an explicit address
+         The difference between two relative labels
+         Labels defined in DUMMY code sections
+    Examples of relatives expression not allowed
+         Ordinary labels
+         Expressions that utilize the PC, like LABEL=*
+    The starting address of an REL file, supplied by the assembler is $8000, it will be changed by the linker, for this reason no ORG opcode is allowed.  There are some restrictions involving use of EXTernal labels in operand expressions.  No operand can contain more than one external.  For operands of the following form:  #>expression   or    >expression  where the expression contains an external, the value of the expression must be within 7 bytes of the external labels value.
+    LDA #>EXTERNAL+8    [illegal expression]
+    DFB >EXTERNAL-1     [ legal expression]
+   Object files generated with the REL opcode are given the file type LNK under ProDos.  This is the type that will show if the disk is cataloged by Merlin.  This type is file type $F8
+
+         EXT
+    label EXT
+   This defines the label in the label column as an external label.  Any external label must be defined as an ENTry label in its own REL module, otherwise it will not be reconciled by the linker.  The EXTernal and ENTry label concepts are what allows REL modules to communicate and use each other as subroutines
+
+         ENT
+    label ENT
+   Defines label as an ENTry label.  This label can be referred to as an external label.  This allows other REL modules to use the label as if it were part of the current REL module.  If a label is meant to be made available to other REL modules it must be defined with the ENT opcode. The example of a segment of a REL module will show the use of this opcode:
+    21        STA  POINTER
+    22        INC  POINTER
+    23        BNE  SWAP
+    24        JMP CONTINUE
+    25 SWAP   EXT                 ;MUST BE DEFINED IN THE
+    26        LDA  POINTER        ;CODE PORTION OF THE
+    27        STA  PTR            ;MODULE AND NOT USED
+    28        LDA  POINTER+1      ;AS AN EQU LABEL
+    29        STA  PTR+1
+    30 ETC
+   Note that the label SWAP is associated with the code in line 26 and that the label may be used just like any other label in a program.
+
+         DS
+    DS \            [skip to next REL file, fill mem with 0's to next page break
+    DS \1           [skip to next REL file, fill mem with 1's to next page]
+   When this opcode is found in an REL file it causes the linker to load the next file in the linker name file at the first available page boundry and to fill memory either with zeros or with the value specified by the expression.  This opcode should be placed at the end of your source file.
+
+         ERR
+    ERR\$4200      [error if current code passes address $4200]
+   Instructs linker to check that the last byte of the current file does not extend to $4200 or beyond.  You can see how this works by trying to line the PI file to an address greater than $81C.
+
+         LINK
+    LINK $1000 "NAMES"       [link files in NAMES]
+   This editor command invokes the linking loader. To link the objext files whose names are held in the linker name file called NAMES use above command, this will give it a starting address of $1000.  This is only accepted if there is no current source file in memory, since the linker would destroy it.
+    The linker name file is a text file containing the file names of the REL object modules you want linked. Write it with the merlin editor and save to disk with the W command. The linker will not save the object file it creates, you must do this.
+    ProDos linker name files are a specially formatted file contains the pathnames of the LNK files to be linked.  Each pathname in the source file should be given the form:  STR  "pathname",00. Example
+         STR  "/MYDISK/START/,00
+         STR  "/MYDISK/MID",00
+         STR  "/OTHERDISK/END",00
+         BRK
+    The break tells the linker there are no more pathnames.  The file type used by the object save command is always the file type used in the last assembly.  If the file gets saved under a type you do not want delete the file, go to the monitor and change location $BE52 to correct type, and then resave object code.

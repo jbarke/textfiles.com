@@ -1,0 +1,363 @@
+  ZDDDDDDDDDDDDDDDDDD? IMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM; ZDDDDDDDDDDDDDDDDDD?
+  3   Founded By:    3 :  Network Information Access   : 3   Founded By:    3
+  3 Guardian Of Time 3D:            20JUN90            :D3 Guardian Of Time 3
+  3   Judge Dredd    3 :       Guardian Of Time        : 3   Judge Dredd    3
+  @DDDDDDDDBDDDDDDDDDY :            File 38            : @DDDDDDDDDBDDDDDDDDY
+           3           HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<           3
+           3             IMMMMMMMMMMMMMMMMMMMMMMMMMMM;             3
+           @DDDDDDDDDDDDD6VMS SYSTEM MANAGER'S MANUALGDDDDDDDDDDDDDY
+                         :         CHAPTER 7         :
+                         HMMMMMMMMMMMMMMMMMMMMMMMMMMM<
+
+Setting Up a Local Area VAXcluster Environment
+
+This chapter discusses how to set up a small local area VAXcluster
+configuration.  For the purposes of this manual, a small local area
+VAXcluster configuration consists of one processor called a boot server that
+serves as the hub of the cluster, and one or more MircroVAX or VAXstation
+processors that are connected to the boot node.  If you want to learn how to
+set up this type of VAXcluster configuration, then you should read the rest
+of this chapter.  If you manage a VAXcluster environment other than the type
+described in this chapter, then you should refer to the VMS VAXcluster
+Manual.
+
+7.1  What Is a Cluster?
+
+A cluster is a group of two or more processors that share some or all of
+their resources.  When a group of VAX processors shares resources in a
+VAXcluster environment, the storage and computing resources of all of the
+processors are combined, which can increase the processing capability,
+communications, and availability of your computer system.
+
+7.1.1 VAXcluster Types
+
+Three types of VAXcluster configurations are possible:
+
+Local Area VAXcluster configuration
+CI-only VAXcluster configuration
+Mixed-interconnect VAXcluster configuration
+
+Local Area VAXcluster Configuration
+
+A Local Area VAXcluster configuration is made up of a single VAX processor
+that serves as the management center of the cluster, plus one or more VAX
+processors that are connected to ths hub.  A local area VAXcluster
+configuration always includes the following parts:
+
+: A Boot Server
+
+A boot server is a VAX or MicroVAX processor, and it serves as the
+management center of a local area VAXcluster environment.  The system disk
+of the boot server contains management files for the entire cluster,
+including startup files, the boot server's system disk, user authorization
+information, and the capability of letting other processors join the
+cluster.  The boot server must be available and running for the cluster to
+operate.
+
+Boot servers should be the most powerful machines in the cluster.  They
+should also use the highest bandwidth Ethernet adapters available.  You can
+use any VAX or MicroVAX system except VAX-11/725, VAX-11/730 or MicroVAX I
+as a boot server.
+
+( Note that if your boot server is a MircoVAX II class system with an RD54
+system disk, you can have a maximum of three satellite nodes in your
+VAXcluster configuration.  In either of these cases, DIGITAL rtecommends
+that the satellites use local RD series disks for paging and swapping.
+Refer to the VAXcluster Software Product Description for complete
+information about supported configurations. )
+
+: Satellite Nodes
+
+A satellite node is a MicroVAX processor that is a member of the cluster.  A
+processor becomes a satellite node when the CLUSTER_CONFIG.COM procedure is
+ececuted from the boot server to add the processor to the cluster.
+
+You can use any of the following as satellite nodes:
+
+: MicroVAX II or MicroVAX 2000 systems
+: VAXstation II or VAXstation 2000 systems
+: MicroVAX 3000 series systems
+
+CI-only VAXcluster Configuration
+
+A CI-only VAXcluster configuration is a cluster in qhich only the computer
+interconnect is used for communications between the processors in the
+cluster.  In a CI-only VAXcluster configuration, the star coupler is used as
+the common connection point for all nodes in the cluster, including both VAX
+processors and Hierarchical Storage Controllers ( HSCs ).
+
+Nodes in a CI-only VAXcluster configuration can be either
+
+: VAX processors listed in the VAXcluster SPD, or
+: HSCs
+
+Mixed-Interconnect VAXcluster Configuration
+
+A mixed-interconnect cluster may include both CI-connectdc VAX processors
+and Micro-VAX systems.
+
+This chapter concentrates on setting up a Local Area VAXcluster
+configuration with a single boot server.  Although some of the management
+tasks for other VAXcluster types are similar, you should refer to the
+VAXcluster documentation that is avaiable in the full VMS documentation set
+for information about managing a CI-only or mixed-interconnect cluster.
+
+7.2 Shared Resources
+
+A major benefit of a VAXcluster configuration is the ability to share
+resources.  A shared resource is a resource ( such as a disk or a queue )
+that can be accessed and used by any node in a cluster.  Data files,
+application programs, printers, are just a ffew of the items that can be
+accessed by users on a cluster with shared resources, without regard to the
+particular node on which the files or program or printer might physically
+reside.
+
+When disks are set up as shared resources in a VAX cluster environment,
+users have the same environment ( password, privileges, access to default
+login disks, and so on ) regardless of the node that is used for logging in.
+You can realize a more effcient use of mass storage with shared disks,
+because the information on any device can be used by more than one node--the
+information does not have to be rewritten in many places.
+
+Print and batch queues can also be set up as shared resources.  In a
+VAXcluster configuration with shared print and batch queues, a single jobt
+controller queue file manages the queues for all nodes on the cluster.  The
+job controller file makes the queues available from any node.  For example,
+suppose your VAXcluster configuration has fully shared resources and
+includes nodes ALBANY, BASEL, and CARIO.  A user logged in to node ALBANY
+can send a file that physically resides on node BASEL to a printer that is
+physically connected to node CAIRO, and the user never has to specify ( or
+even know ) the nodes for either the file or the printer.  For more
+information about setting up and using print and batch queus in a VAXcluster
+environment, see Chapter 5.
+
+7.3  Preparing a System for a Local ARea VAXcluster Environment
+
+In a VAXcluster environment with a single system disk, you need to install
+the VMS operating system only once, regardless of the number of nodes in the
+cluser.
+
+To install the operating system, foollow the instructions in your
+processor's installation guide.  Before beginning the installation
+procedure, you must determine the configuation type for your cluster (
+CI-only, local rea, or mixed-interconnect).  During the installation of the
+operating system you will be asked a series of questions.  Table 7-1 lists
+the questions and answers for Local ARea VAXcluster configurations.
+
+NOTE:  While rebooting at the end of the installation procedure, the system
+displays messages warning that you must install required licenses.  Be sure
+to install these licenses, as well as the DECnet-VAX license, as soon as the
+system is available.  Procedures for installing the licenses are described
+in the release notes distributed with the software kit.
+
+ZDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+?
+3TABLE 7-1: INSTALLATION QUESTIONS FOR LOCAL AREA VAXCLUSTER OCNFIGURATIONS
+3
+CDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+4
+3Question                                                Response
+3
+CDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+4
+3Will this node be a cluster member (Y/N)?               Enter Y
+3
+3
+3
+3What is the node's DECnet node name?                    Enter DECnet node name
+3
+3                                                        for example, ALBANY.
+3
+3                                                        The DECnet node name
+3
+3                                                        may be 1-6 alphanumeric
+3
+3                                                        characters in length
+3
+3                                                        and may not include $
+3
+3                                                        or _.
+3
+3
+3
+3What is the Node's DECnet node address?                 Enter DECnet node
+3
+3                                                        address :-> 2.2.
+3
+3
+3
+3Will the Ethernet be used for cluster communica-
+3
+3tions (Y/N)?                                            Enter Y.  The Ethernet
+3
+3                                                        for cluster (SCS
+3
+3                                                        internode) communica-
+3
+3                                                        tions in local area
+3
+3                                                        configurations.
+3
+3
+3
+3Enter this cluster's group number:                      Enter a number in the
+3
+3                                                        range from 1-4095 or
+3
+3                                                        61440-54435.
+3
+3
+3
+3Enter this cluster's password:                          Enter the cluster pw.
+3
+3                                                        1-31 alphanumeric
+3
+3                                                        characters in length
+3
+3                                                        and MAY include $ and _
+3
+3
+3
+3Reenter this cluster's password for verification:       Reenter The password
+3
+3
+3
+3Will ALBANY be a disk server (Y/N)?                     Enter Y.  In local
+3
+3                                                        area configurations,
+3
+3                                                        the system disk is
+3
+3                                                        always served to the
+3
+3                                                        cluster.
+3
+3
+3
+3Will ALBANY serve HSC disks (Y/N)?                      Enter N.
+3
+3
+3
+3Enter a value for ALBANY's ALLOCLASS parameter:         Enter a value of 0 for
+3
+3                                                        Local Area VAXcluster
+3
+3                                                        configurations
+3
+3                                                        convered by this manual
+3
+3
+3
+3Does this cluster contain a quorum disk [N]?            Enter N for Local Area
+3
+3                                                        VAXcluster configur-
+3
+3                                                        ations covered by this
+3
+3                                                        manual
+3
+@DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+Y
+
+7.3.1 Building a VAXcluster Configuration
+
+Once you have installed the VMS operating system, you can start to build
+your cluster.  This section describes how to build a simple Local Area
+VAXcluster configuration using the command procedure
+SYS$MANAGER:CLUSTER_CONFIG.COM.  If you find that your cluster configuration
+is more than the type described in thismanual, be sure to consult the VMS
+VAXcluster Manual.
+
+The command procedure CLUSTER_CONFIG.COM is the primary tool that you use
+for adding a node to your VAXcluster configuration, removing a node from the
+cluster, or changing the characteristics of a node.  This section describes
+how to use CLUSTER_CONFIG.COM to add or remove a satellite node in a Local
+Area VAXcluster configuration.
+
+7.3.1.1 Using CLUSTER_CONFIG.COM
+
+Before using CLUSTER_CONFIG.COM, log in to the SYSTEM account on the system
+that will be your boot server and make sure that DECnet-VAX is up and
+running be sure that your default is set to SYS$MANAGER; then enter the
+following command:
+
+$ @CLUSTER_CONFIG
+
+7.3.1.2  Setting Up the Boot Server
+
+The first step in setting up your Local Area cluster for the first time is
+to establish the boot server.  You must establish the local system as a boot
+server before you can add any satellites to the cluster.
+
+To establish a node as a boot server, run CLUSTER_CONFIG.COM anad select the
+CHANGE option from the menu.  Then, select the option to enable the local
+system as a boot server.
+
+7.3.1.3  Adding Satellite Nodes
+
+To add satellites nodes to your Local Area VAXcluster configuration, you use
+the ADD option from the CLUSTER_CONFIG.COM menu.  When you execute
+CLUSTER_CONFIG.COM to add a satellite node, you will be asked a series of
+questions for which the command procedure will supply most default values.
+For Local Area clusters that are the subject of this manual, the default
+values are sufficient.  (If your cluster has special requirements and you
+want to learn more about values other than the dfaults, you should consult
+the VAXcluster documentation in the extended VMS documentation set. )
+
+There are some values that you must supply.  These include the following:
+
+: DECnet node name and node address for each satellite--The node name has up
+to 6 alphnumeric characters.  The node address should be supplied by your
+network manager.
+
+:  Satellite's Ethernet hardware address--The Ethernet hardware address has
+the form xx-xx-xx-xx-xx-xx.  You must include the hyphens when specifying
+the hardware address.
+
+To obtain the Ethernet hardware address for MicroVAX II and VAXstation II
+satellites, enter the follwoing commands at the satellite's console:
+
+>>> B/100 XQ
+
+Bootfile: READ_ADDR
+
+For MicroVAX 2000 and VAXstation 2000 satellites, enter the following
+commands at successive console-mode prompts:
+
+>>> T 53
+2 ?>>>  3
+>>> B/100 ES
+bootfile:  READ_ADDR
+
+(In this example, if the second prompt appears as 3 ?>>>, press RETURN.)
+
+For 3xxx series satellites, enter the following command at the satellite's
+console:
+
+>>> SHOW ETHERNET
+
+: Workstation windowing system: the windowing system ( for example, UIS ),
+if your satellite is a workstation.
+
+7.4  DECnet-VAX Connections
+
+In any cluster configration, DECnet-VAX connections are required for all
+processor nodes.  Use of DECnet-VAX facilities ensures that cluster managers
+can access each node in the cluster from a single terminal, even if
+terminal-switching facilities are not available.
+
+In local area clusters, DECnet is required both for system management
+functions and interprocessor communication.  For example, DECnet is used for
+remote booting operations ( downline loading of satellite nodes ).
+
+In these configurations, DECnet and System Communication Services coexist on
+the same Ethernet.  They share the same data link and physical link
+protocols, which are implemented by the Ethernet data link drivers, the
+Ethernet adapters, and the Ethernet itself.
+
+$_END OF NIA038
+
+[OTHER WORLD BBS]
+
+
+

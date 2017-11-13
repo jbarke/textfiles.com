@@ -1,0 +1,494 @@
+******************************************************************
+*                                                                *
+*                    CATALOG Command Hanlder                     *
+*                                                                *
+*----------------------------------------------------------------*
+*                                                                *
+*      The CATALOG command displays the volume number and a list *
+* of file information.  For each file on the disk, the following *
+* data are printed:  lock/unlock symbol, file type code, file    *
+* size in sectors and file name.  Drive and slot parameters are  *
+* optional with the CATALOG command.                             *
+*                                                                *
+* Execution pattern:                                             *
+*      The execution pattern is fairly straight forward.  After  *
+* loading the accumulator with the catalog opcode, the common    *
+* file manager handler code (HNDLCMD1, $A2AA) is called to find  *
+* a free DOS buffer and customize the FM parameter list.  The    *
+* file manager is then used to do the catalog function (FNCATLOG,*
+* $AD98).  FNCATLOG first sets up the FM work area.  A volume    *
+* number of #$FF is stored in the work area to enable any volume *
+* to be cataloged.  (When RWTS is eventually entered, this value *
+* is EORed with #$FF to simulate a complemented disk volume      *
+* number of zero (#$FF EOR #$FF = 0).  After RWTS reads the      *
+* address checksum, it checks to see if the correct volume was   *
+* read off the disk.  If the complement of the volume number     *
+* wanted is zero, or if it matches the number read off the disk, *
+* execution proceeds as if the correct volume was found.)        *
+*      After setting the complemented volume number, FNCATLOG    *
+* reads in the VTOC (so it can get the link bytes to the first   *
+* directory sector).  Next, an index is set to allow up to 22    *
+* screen lines to be displayed before the screen is frozen.      *
+* (This index is used in the CRCATLOG routine ($A2EF) to print a *
+* carriage return and check if a pause is required.)  After      *
+* CRCATLOG is called twice to print two carriage returns, the    *
+* words "DISK VOLUME " are displayed.  The bug-ridden PRVOLNMB   *
+* routine ($AE42) is then called to print the volume number as a *
+* 3-digit decimal number (with leading zeroes if applicable).    *
+* Next, the RDDIRECT routine is used to read in a directory      *
+* sector.  If no more directory sectors are available, the carry *
+* is set and the function handler is exited.  A clear carry      *
+* signals that a directory sector was successfully read in.  The *
+* file information in the directory sector is subsequently       *
+* displayed.                                                     *
+*      Each directory sector can contain up to seven different   *
+* file descriptions.  An example of the data contained in a      *
+* selected file description is shown below:                      *
+* FIL1TSTK   DS 1     ;Track # of first T/S list for file 1      *
+* FIL1TSSC   DS 1     ;Sector # of first T/S list for file 1     *
+* FIL1TYPE   DS 1     ;File type code for file 1. ($00=Text,     *
+*                     ;$01=Integer, $02=Applesoft, $04=Binary,   *
+*                     ;$08=S-type, $10=Relocatable, $20=A-type,  *
+*                     ;and $40=B-type.)  If the hi bit is set,   *
+*                     ;the files are considered to be locked.    *
+*                     ;For example, $02 = unlocked Applesoft and *
+*                     ;$82 = locked Applesoft.                   *
+* FIL1NAME  DS 30     ;Name of file 1.  If a file name less than *
+*                     ;30 bytes is used, trailing spaces are     *
+*                     ;are added to the name to fill the buffer. *
+* FIL1SIZE  DS 2      ;Size of file 1 in terms of the number of  *
+*                     ;sectors used.                             *
+* (If a file was deleted, the track # of the first T/S list sec  *
+* was copied to the last char position of the name field.  The   *
+* original track # byte (FIL1TSK) was then overwritten with an   *
+* #$FF.)                                                         *
+*      After reading in a directory sector, the index to the     *
+* file description entries is initialized.  The track number of  *
+* the file's first T/S list is then analyzed.  If this byte is a *
+* zero, no more file descriptions are present in the directory   *
+* sector and the catalog function is exited (BEQ TOFMXTOK).  A   *
+* negative value denotes that the description entry pertains to  *
+* a deleted file.  The "BMI NXDESCRP" instruction is then taken  *
+* to skip the deleted file.  A positive non-zero value means     *
+* that the file information should be processed.                 *
+*      After the type code is checked to determine if the file   *
+* is locked (negative) or unlocked (positive), an asterisk       *
+* (locked) or a space (unlocked) is printed.  The lock bit (bit  *
+* 7) is then dropped from the file type code and the remaining   *
+* six bits are shifted until the carry is set.  The number of    *
+* shifts needed to set the carry is used to index the table of   *
+* file type character symbols (FTYPETBL, $B3A7).  After printing *
+* the type symbol and a trailing space, the file size (in        *
+* sectors) is read from the description entry.  PRVOLNMB ($AE42) *
+* is then used to print the size as a 3-digit decimal number     *
+* (with leading zeroes if applicable).  Because this routine     *
+* does not process the high byte of the file size correctly,     *
+* files greater than 255 sectors are expressed as 256 modular.   *
+* Thus a file that is actually 256 bytes long will be displayed  *
+* in the catalog as being "000" sectors in length.  (Special     *
+* note should be taken of files that appear to be "001" sectors  *
+* long.  Either these files are actually 257 sectors long (or    *
+* some multiple thereof) or else they were written to the disk   *
+* incorrectly.  All valid files must be at least two sectors     *
+* because each file requires at least one T/S list sector and    *
+* one data sector.  A file that is only one sector long was      *
+* opened but never closed properly.  Such files are useless and  *
+* should be deleted from the disk.)                              *
+*      A space and the file name are printed after the file size.*
+* Next the CRCATLOG ($AE2F) is again called to print a carriage  *
+* return and test for a screen pause.  Finally, the index into   *
+* the current directory is kicked up by 35 bytes to point to the *
+* next potential entry in the directory sector.  If the resulting*
+* index is 245 or greater, the carry is set.  A set carry means  *
+* that the index points beyond the end of the current directory. *
+* As a result, the "BCS RDDIRSEC" instruction is taken to read   *
+* in the next directory sector.  If there is enough space left   *
+* on the directory sector for another file entry, the "BCC       *
+* DESCRPTK" is executed to process the next potential file       *
+* description.                                                   *
+*      Because the catalog's command and function handlers are   *
+* easy to relate to, almost everybody and his dog has taken a    *
+* crack at customizing the catalog with certain enhancements or  *
+* protection schemes.  Most major Apple-orientated magazines     *
+* have printed articles which explain how to patch a free-space- *
+* left-on-disk utility to the catalog or how to repair the bugs  *
+* in the PRVOLNMB routine ($AE42).  Many commercial programs put *
+* the real catalog on a different track and supply a phony       *
+* catalog on track #$11 (dec 17).  Other developers zap the      *
+* file name fields of the description entries with names         *
+* containing "illegal" characters.  For instance, you can insert *
+* backspaces into a name in order to hide preceeding characters. *
+* You can even zap the name field with a return, ctrl-D and a    *
+* DOS command to trick the catalog routine into doing some other *
+* function if a person gets past earlier defence techniques.     *
+* Some developers are even silly (or paranoid) enough to zap the *
+* sector size bytes with enlarged values in the hope that you    *
+* will think you're getting more bytes/buck.  Some programs,     *
+* such as the word processor I am presently using, make it a     *
+* policy to always set the file size bytes to 0.                 *
+*      Data files are often protected from user abuse by simply  *
+* zapping the first byte of the file's description entry with an *
+* illegal track number that is negative but less than #$FF.      *
+* (Obviously the driver routines must modify this code before    *
+* and after each access.)  The illegal track # prevents the file *
+* from being displayed on the catalog (via the BMI NXDESCRP"     *
+* instruction at $ADD9).  However because the byte is less than  *
+* $FF, the corresponding file entry space is not considered to   *
+* be available by the write subfunctions.  (When a new file is   *
+* being added to the disk, the first available space in a        *
+* directory is used for the new file description.  Only potential*
+* entry spaces that start with a $00 or a $FF are considered fair*
+* game.)                                                         *
+*      Other "enchancements" that are commonly used include      *
+* changing the "LDA #22" instruction at $ADA3 to set the screen  *
+* line counter to a different value, modifying the lock symbol   *
+* ("LDY "*", $AD2E), changing the file type character codes in   *
+* the FTYPETBL table at $B3A7, changing the contents of the      *
+* DSKVOLUM table at $B3AF to print something other than "DISK    *
+* VOLUME ", NOPing out the "BMI NXDESCRP" instruction at $ADD9   *
+* to list both active and deleted files, or changing "BMI        *
+* NXDESCRP" to "BPL NXDESCRP" to force the catalog to display    *
+* deleted files only.                                            *
+*      Protection techniques that rely on modified file          *
+* descriptions are easy to discover.  If you suspect that the    *
+* file description entries have been tampered with, simply       *
+* catalog the disk and inspect the directory sector buffer.  If  *
+* the disk contains more than 7 files, only the last few entries *
+* will be listed in the buffer.  However, whenever DOS performs  *
+* a specific operation of a file, the description of the file is *
+* left in the directory sector buffer.  Therefore, if the file   *
+* of interest does not appear in the buffer when you do a        *
+* catalog, simply lock, unlock or verify a file listed above or  *
+* below the particular file of interest.  You can then inspect   *
+* the file description entry belonging to the file you are       *
+* interested in.                                                 *
+*                                                                *
+******************************************************************
+
+
+* On entry - CUMLOPTN ($AA65) has been updated
+*            to reflect any parsed option words.
+*          - the validity of the options issued
+*            with the command (and their numeric
+*            values) have been checked.  (Only
+*            drive and slot parameters are optional.)
+*          - the first byte of the primary file name
+*            buffer (PRIMFNBF, $AA75) has been zeroed
+*            out.
+
+
+(A56E)
+CMCATLG  LDA #6       ;Catalog opcode.
+(A570)   JSR HNDLCMD1 ;Call command handler to do the catalog.
+
+                      * Part of common file manager command handler code.
+                      (A2AA)
+                      HNDLCMD1 STA TEMPBYT  ;Store catalog opcode in temporary location.
+                               LDA LENPRSD  ;Get L-parameter from parsed table.
+                               BNE SAVLENFM ;Was a non-zero L-parm issued with cmd?
+                               LDA LENPRSD+1
+                               BNE SAVLENFM
+                               LDA #1       ;Length was 0 so make it 1 instead.
+                               STA LENPRSD
+                      SAVLENFM LDA LENPRSD  ;Put length in FM parameter list.
+                               STA RECLENFM
+                               LDA LENPRSD+1
+                               STA RECLENFM+1
+                      CLSLOCBF JSR CMDCLOSE ;Use close cmd to find a free DOS buffer.
+                      (A2C8)
+
+                                            * NOTE:  ONLY A MINOR PORTION OF THE CLOSE
+                                            * COMMAND IS SHOWN BELOW because only part of
+                                            * it is applicable to the catalog command.
+                                            * When accessed from the catalog command,
+                                            * the close command is actually only used to 
+                                            * find a free DOS buffer.
+                                            (A2EA)
+                                            CMDCLOSE LDA PRIMFNBF ;Get 1rst char from primary name buffer.
+                                                     CMP #" "     ;Don't allow leading <spc> in name.
+                                            (A2EF)   BEQ CLOSEALL ;Leading <spc> = signal to close all files.
+                                                                  ;(A close cmd was issued with no 
+                                                                  ;accompanying file name.)
+                                            (A2F1)   JSR GETBUFF  ;Locate a DOS file buffer.
+
+                                                                  * Attempt to locate highest numbered (lowest
+                                                                  * in memory) free DOS name buffer.
+                                                                  *
+                                                                  * NOTE:  Because a filename field is not
+                                                                  * applicable to the catalog command, earlier
+                                                                  * processing by DOS (at FNOTAPPL, $A0A0) has
+                                                                  * stuck a $00 in the first byte of the primary
+                                                                  * filename field buffer (PRIMFNBF, $AA75).
+                                                                  * This insures that:
+                                                                  *    1) Execution falls thru to the GETBUFF
+                                                                  *       routine.
+                                                                  *    2) The GETBUFF routine never finds a DOS
+                                                                  *       filename buffer with a filename that
+                                                                  *       matches the "name" in the primary
+                                                                  *       filename buffer.  Instead, the GETBUFF
+                                                                  *       routine is exited with A5L/H pointing to
+                                                                  *       the filename field of the highest numbered
+                                                                  *       (lowest in memory) free DOS buffer.  If a
+                                                                  *       free buffer can't be found, A5L+1 is left
+                                                                  *       containing a default value of $00.
+
+                                                                  (A764)
+                                                                  GETBUFF  LDA #0       ;Default hi-byte of pointer to 0
+                                                                           STA A5L+1    ;(ie. assume no free buff available).
+                                                                  (A768)   JSR GETFNBF1 ;Get ptr to 1rst name buffer in chain.
+
+                                                                                        * Point A3L/H at 1rst (ie. lowest numbered,
+                                                                                        * highest in memory) DOS filename buffer.
+                                                                                        * (Addr of this buf is kept in ADOSFNB1
+                                                                                        * which occupies the 1rst two bytes of the
+                                                                                        * table of relocatable address constants.)
+                                                                                        (A792)
+                                                                                        GETFNBF1 LDA ADOSFNB1 ;First link to chain
+                                                                                                 LDX ADOSFNB1+1 ;of DOS buffers.
+                                                                                        (A798)   BNE SETNXPTR ;ALWAYS.
+
+                                                                                        (A7A4)
+                                                                                        SETNXPTR STX A3L+1    ;Put addr of 1rst
+                                                                                                 STA A3L      ;buffer in ptr.
+                                                                                                 TXA          ;(a)= hi-byte of adr.
+                                                                                        GETNXRTN RTS
+                                                                                        (A7A9)
+
+                                                                  (A76B)   JMP FNCHAR1  ;Get first byte of DOS name buffer.
+                                                                           ------------
+
+                                                                  (A76E)
+                                                                  GETFNLNK JSR GETNXBUF
+
+                                                                                        * Get addr of next filename buffer in chain
+                                                                                        * from chain pointers buffer offset 37 & 36
+                                                                                        * bytes from 1rst char of present filename
+                                                                                        * buffer.
+                                                                                        (A79A)
+                                                                                        GETNXBUF LDY #37      ;Point at chain buf
+                                                                                        (A79C)   LDA (A3L),Y  ;Pick up addr of nxt
+                                                                                                              ;filename buffer.
+                                                                                        (A79E)   BEQ GETNXRTN ;If hi byte = 0 then
+                                                                                                              ;link zeroed out.
+                                                                                        (A7A0)   TAX          ;Save hi-byte in (x).
+                                                                                                 DEY          ;Pick up low-byte.
+                                                                                                 LDA (A3L),Y
+                                                                                        SETNXPTR STX A3L+1    ;Put adr of filename
+                                                                                                 STA A3L      ;buf in pointer.
+                                                                                                 TXA          ;Put hi-byte in (a).
+                                                                                        GETNXRTN RTS
+                                                                                        (A7A9)
+ 
+                                                                  (A771)  BEQ NOFNMTCH ;Link zeroed out, end of chain.
+                                                                  FNCHAR1 JSR GETFNBY1 ;Get 1rst char of name from buf in chain.
+                                                                  (A773)
+
+                                                                                        * Get 1rst char of name from current
+                                                                                        * filename buffer in DOS buffer chain.
+                                                                                        * (If first byte is $00, then buffer is
+                                                                                        * free.  Otherwise, it is the 1rst char
+                                                                                        * in the name of the file which owns the
+                                                                                        * DOS buffer.)
+                                                                                        (A7AA)
+                                                                                        GETFNBY1 LDY #0
+                                                                                                 LDA (A3L),Y
+                                                                                        (A7AE)   RTS
+ 
+                                                                  (A776)   BNE NXFNBUF  ;Take branch if buffer wasn't free.
+                                                                           LDA A3L      ;Buffer was free, there4 put ptrs to free
+                                                                           STA A5L      ;buffer in A5L/H.
+                                                                           LDA A3L+1
+                                                                           STA A5L+1
+                                                                  (A780)   BNE GETFNLNK ;ALWAYS.
+
+                                                                  (A782)
+                                                                  NXFNBUF  LDY #29      ;Buffer not free there4 compare name
+                                                                  CMPFNCHR LDA (A3L),Y  ;of owner with name of file in primary
+                                                                           CMP PRIMFNBF,Y ;name buf.  (Start with last char 1rst.)
+                                                                  (A789)   BNE GETFNLNK ;Char doesn't match, there4 look for another
+                                                                                        ;buffer that might have same name.
+                                                                  (A78B)   DEY          ;That char matched, how bout rest of name?
+                                                                           BPL CMPFNCHR ;30 chars in name (ie. 0 to 29).
+                                                                           CLC          ;Clr carry to signal match.
+                                                                  (A78F)   RTS
+                                                                           ============
+
+                                                                  (A790)
+                                                                  NOFNMTCH SEC          ;Link zeroed out.  ALWAYS TAKE THIS
+                                                                  (A791)   RTS          ;ROUTE WITH CATALOG CMD.
+                                                                           ============
+ 
+                                            (A2F4)
+                                            EVENTXIT BCS CLOSERTS ;ALWAYS TAKE WITH CATALOG CMD.
+
+                                            CLOSERTS RTS
+                                            (A330)   ============
+
+                      (A2CB)   LDA A5L+1    ;Hi byte of A5L/H pointer which points at the highest
+                                            ;numbered (lowest in memory) free DOS name buffer (in chain).
+                      (A2CD)   BNE SAVFNPTR ;Branch if found a free buffer.
+                      (A2CF)   JMP NOBUFERR ;Go issue an out-of-buffers message.
+                               ------------ ;(See dis'mbly of errors.)
+                      (A2D2)
+                      SAVFNPTR STA A3L+1    ;Reset A3L/H to point at DOS buffer that we
+                               LDA A5L      ;will use for file name field buffer (chain).
+                               STA A3L
+                      (A2D8)   JSR CPYPFN
+
+                                            * NOTE:  THIS ROUTINE IS ACTUALLY SUPERFULOUS TO
+                                            * THE CATALOG COMMAND because the first byte of
+                                            * the primary name buf (PRIMFNBF, $AA75) was
+                                            * previously zeroed out.
+                                            (A743)
+                                            CPYPFN   LDY #29      ;30 bytes to copy (0 to 29).
+                                            CPYPRIM  LDA PRIMFNBF,Y ;Copy the name of the file wanted from
+                                                     STA (A3L),Y  ;the primary filename buffer into the
+                                                     DEY          ;filename field buffer (in DOS chain).
+                                                     BPL CPYRIM   ;More chars to get.
+                                            (A74D)   RTS
+                                            
+                      (A2DB)   JSR BUFS2PRM
+
+                                            * Get addresses of the various DOS buffers from the
+                                            * chain buffer & put them in the FM parameter list.
+                                            (A74E)
+                                            BUFS2PRM LDY #30      ;Get addr of FM work buf, T/S list
+                                            ADRINPRM LDA (A3L),Y  ;buf, data sector buf & next DOS
+                                                     STA WRKBUFFM-30,Y ;filename buf from chain
+                                                     INY          ;pointer buffer & put them in FM parm list.
+                                                     CPY #38      ;(P.S.  Adr of next DOS file name buf is
+                                                     BNE ADRINPRM ;not used by DOS.)
+                                            (A75A)   RTS
+
+                      (A2DE)   JSR CPY2PARM
+
+                                            * Put volume, drive, & slot values plus the
+                                            * address of the primary filename buffer
+                                            * in the FM parameter list.
+                                            (A71A)
+                                            CPY2PARM LDA VOLPRSD  ;From parsed table.
+                                                     STA VOLFM
+                                                     LDA DRVPRSD  ;From parsed table.
+                                                     STA DRVFM
+                                                     LDA SLOTPRSD ;From parsed table.
+                                                     STA SLOTFM
+                                                     LDA ADRPFNBF ;Get the adr of the primary file
+                                                     STA FNAMBUFM ;name buf from the constants tbl
+                                                     LDA ADRPFNBF+1 ;and put it in the FM parm list.
+                                                     STA FNAMBUFM+1
+                                                     LDA A3L      ;Save adr of current DOS file name
+                                                     STA CURFNADR ;buf in table of DOS variables.
+                                                     LDA A3L+1
+                                                     STA CURFNADR+1
+                                            (A742)   RTS
+
+                      (A2E1)   LDA TEMPBYT  ;Get catalog opcode back from the temporary
+                               STA OPCODEFM ;buffer and put it in the FM parameter list.
+                      (A2E7)   JMP FMDRIVER
+                               -------------
+
+                      * Use the file manager driver
+                      * to do the CATALOG FUNCTION.
+                      (A6A8)
+                      FMDRIVER JSR FILEMGR  ;Call the file manager to do the function.
+
+                                            * File manager proper.
+                                            (AB06)
+                                            FILEMGR  TSX          ;Save stk pointer so can later rtn to caller of FM.
+                                                     STX STKSAV
+                                            (AB0A)   JSR RSTRFMWA
+
+                                                                  * Copy FM work buf (in DOS chain) to
+                                                                  * FM work area (not in DOS chain).
+                                                                  (AE6A)
+                                                                  RSTRFMWA JSR SELWKBUF ;Point A4L/H at FM work buf.
+
+                                                                                        * Get addr of FM work buff from
+                                                                                        * the FM parm list & put it in
+                                                                                        * the A4L/H pointer.
+                                                                                        (AF08)
+                                                                                        SELWKBUF LDX #0       ;Offset to select
+                                                                                                              ;work buffer.
+                                                                                        (AF0A)   BEQ PT2FMBUF ;ALWAYS.
+
+                                                                                        (AF12)
+                                                                                        PT2FMBUF LDA WRKBUFFM,X
+                                                                                                 STA A4L
+                                                                                                 LDA WRKBUFFM+1,X
+                                                                                                 STA A4L+1
+                                                                                        (AF1C)   RTS
+
+                                                                  (AE6D)   LDY #0       ;Zero out return code in FM parm list to
+                                                                           STY RTNCODFM ;signal no errors as default condition.
+                                                                  STORFMWK LDA (A4L),Y  ;Copy FM work buf to FM work area.
+                                                                           STA FMWKAREA,Y
+                                                                           INY
+                                                                           CPY #45      ;45 bytes to copy (0 to 44).
+                                                                           BNE STORFMWK
+                                                                           CLC          ;WHY?????
+                                                                  (AE7D)   RTS
+
+                                            (AB0D)   LDA OPCODEFM ;Check if opcode is legal.
+                                                     CMP #13      ;(Must be less than 13.)
+                                                     BCS TOERROP  ;Opcode too large so got range error.
+                                                     ASL          ;Double val of opcode & put it in (x)
+                                                     TAX          ;so it indexes tables of adrs.
+                                                     LDA FMFUNCTB+1,X ;Stick adr of appropriate function
+                                                     PHA          ;handler on stack (hi byte first).
+                                                     LDA FMFUNCTB,X
+                                                     PHA
+                                            (AB1E)   RTS          ;DO STACK JUMP TO FUNCTION ENTRY POINT.
+
+                                                     .
+                                                     .
+                                            (AD98)
+                                            FNCATLOG .
+                                                     .
+                                            (See dis'mbly of CATALOG function.)
+                                                     .
+                                                     .
+                                            - initializes the FM work area (non chain)
+                                              & then copies volume #, etc from the FM
+                                              parameter list into the FM work area.
+                                              (The vol # is set to 0 so any vol of disk
+                                              can be cataloged.)
+                                            - reads in the VTOC.
+                                            - sets SCRNSRCH ($B39D) to allow 22 screen
+                                              lines before pause & subsequent scrolling.
+                                            - reads in all necessary directory secs
+                                            - for @ non-deleted file description entry
+                                              in @ directory sec, prints the following
+                                              file information:  locked or unlocked, file
+                                              type code, file size in sectors & file name.
+                                                     .
+                                                     .
+                                                     (RTS)
+                                                     ============
+
+                                            TOERROP  JMP RNGERROP ;Go handle range error.
+                                            (AB1F)   ------------ ;(See dis'mbly of errors.)
+
+                      * Return here after doing the CATALOG FUNCTION.
+                      * (Cause after @ function is done, use stack
+                      * to get back to the original caller.)
+                      (A6AB)
+                      AFTRFUNC BCC FMDRVRTN ;(c) = 0 = no errors.
+                               LDA RTNCODFM ;Get error code from FM parameter list.
+                               CMP #$5      ;End-of-data error?
+                      (A6B2)   BEQ TOAPPTCH ;Yes - Encountered a zeroed-out T/S link or
+                                            ;a zeroed-out data pair (trk/sec vals)
+                                            ;listed in the T/S list.  (Not applicable to
+                                            ;the catalog function.)
+                      (A6B4)   JMP OTHRERR  ;No.  See dis'mbly of errors.
+                               ------------
+  
+                      (A6C3)
+                      FMDRVRTN RTS
+
+
+(A573)   LDA VOLFM    ;Get volume # from FM parm list.
+         STA VOLPRSD  ;Put it in the parsed table.
+(A579)   RTS          ;Return to caller of the catalog command.
+         ============ ;(Normally returns to AFTRCMD ($A17D)
+                      ;located in the command parsing and
+                      ;processing routines.)

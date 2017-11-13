@@ -1,0 +1,153 @@
+During my recent visit to super interesting fest of ideas at Unix 1990 in Tennesse I went across some
+discussion on implementing MIDI interface with the NEXT workstations. It occured to me that solutions I
+have applied to my Mac maybe of use wide use. 
+I found an article which bring some light in this matter. In addition I wish to share some of my workshop
+experiences.
+I also edited slightly the attached drawing which has a supplementing of a power supply.
+I hope you shall find it useful.
+
+Doug Yuill
+
+June 1991, Ottawa, Canada
+ 
+For further inquiries about the source code or any other comments please get in touch by e-mail at
+following address: dyuill@ccs.carleton.ca 
+ 
+ The included article describes a MIDI interface for the Apple Macintosh, 
+October 1985, which can be used with any UNIX computer employing the 
+Zilog 8530 SCC (Serial Communications Controller) including the NEXT & 
+SPARC workstations.
+ The circuit described in the article assumes you are interfacing to a 512K Mac 
+(pre-Mac Plus) which provided +5 volts dc on pin 2 of the 9 pin D connector 
+used for the serial port. The Mac Plus dispensed with the 9 pin D connector 
+in favor of an 8 pin mini circular DIN connector which does not provide any 
+power. This is the same connector used on the NEXT workstation I have included 
+an additional circuit diagram which will regulate 8-15 volts dc down to the 
++5 volts required by the MIDI interface. You may have an unused AC power 
+adapter laying around that you can use.
+ It should be able to deliver at least 30 ma at 8 volts to be suitable. When 
+you go shopping for parts, be sure to take your power adapter with you so 
+you can select a suitable connector. Also check the pin-out spec's on the 
+serial port for your work station to see if it provides any dc voltage output. 
+You may not need the power adapter (or regulator circuit) if you can siphon 
+some juice from your serial port!
+ Do use the power regulator if your serial port only provides 12v dc. You'll 
+also need the pin-out spec for mapping between the pin numbers used by the 
+Macintosh and your workstation. 
+ You should probably not undertake this project unless you can read a schematic 
+and have soldered before. I built mine up on perf board using point to point 
+wiring although if I were doing it again I would use vero board. Be sure to 
+buy a small enclosure to put it all in. I purchased everything I needed from 
+Active Components (a division of Future Electronics) for about $10 although 
+I'm sure that Radio Shack would have most of what you need. Don't forget a 
+pair of 5 pin chasis mount DIN connectors for your MIDI in/out! If your on 
+a real tight budget you could dispense with the DIN connectors and just cut 
+a MIDI cable in half and wire it directly in. 
+ I have 68000 assembler source code for a MIDI driver for the Mac that may 
+be of use to anyone writing a driver for UNIX.
+ Doug Yuill
+ June 1991, Ottawa, Canada
+ 
+This article will describe one way to interface a Macintosh with the 
+MIDI standard for communication with music synthesizers and 
+related equipment. By making a few hardware and software changes to 
+the existing Macintosh serial ports, MIDI ports can be created. A 
+Macintosh equipped with MIDI ports can act as a very powerful 
+controller for musical equipment. By sending and receiving MIDI 
+data the Mac can do things like record synthesizer music, edit it, 
+play it back, and do an automated mixdown to stereo. The implications 
+of this capability are great. Many of the functions of a modem recording 
+studio can now be brought into the Macintosh owner's home.
+
+MIDI stands for Musical Instrument Digital Interface and is 
+a standard that was agreed upon by the various major manufacturers 
+of electronic music synthesizers. The MIDI standard is a protocol 
+for transferring data between music synthesizers and computers. It 
+allows equipment made by different manufacturers to communicate with 
+each other. Originally it was designed to let one keyboard instrument 
+control another one. You could play the keyboard on synthesizer A 
+and the sound would be produced by synthesizer B. But the 
+originators of the MIDI concept gave it enough flexibility 
+to allow it to do other things as well. Now it is possible to buy 
+MIDI gear that will control lighting equipment and mixing boards 
+as well as keyboard synthesizers. An important point to remember is 
+that MIDI recorders don't actually record the sound that is 
+produced by the synthesizer but just the control signals that the 
+synthesizer needs to produce a sound. For instance, when a key is 
+depressed on a synthesizer keyboard at least three bytes of information 
+are sent out over the MIDI cable: the code describing a note 
+down event and MIDI channel, the number corresponding to the key (middle 
+C=60), and the velocity that the key was struck with (used for dynamics). 
+A note up event is recorded in a similar fashion. So, altogether it 
+takes six bytes to record a note of any duration. This makes for a 
+very compact data structure compared to actually recording the sound 
+itself.
+
+In order to use the MIDI ports on the Mac you will have to 
+write your own serial drivers. As far as I know the driver routines 
+for configuring the serial ports must be written in assembly language. 
+If you have a high level language compiler it should allow inline 
+assembly code in order to take advantage of the information presented 
+in this article. If your compiler doesn't allow this you may want 
+to read on just to further your understanding (you may also want to 
+consider getting another compiler). This months coverage will be of 
+the hardware interface necessary to convert the Mac's serial ports 
+to MIDI specifications. The software driver routines will be 
+covered in a future article.
+
+The most important consideration in converting to the MIDI way of 
+doing things is the baud rate. MIDI is clocked at 31.25K which is 
+a nonstandard rate. The Macintosh uses a Zilog 8530 chip to handle 
+the serial ports. In order to get the Mac's 8530 chip to handle data 
+at the MIDI clock rate you have to provide an exemal clock signal 
+for it to use as a timing reference. I have used an oscillator circuit 
+and a divider in order to derive a 500K clock signal. This is again 
+divided by 16 in the 8530 to produce the necessary clock rate of 31.25K. 
+Note that you may optionally use other pins on the divider chip to 
+get a frequency of 1 Meg or 2 Meg. Either of these rates will also 
+do the trick if you select the appropriate divisor in the 853O's write 
+register #4 (more on this in the forthcoming software description). 
+Other than the external clock the interface consists of some level 
+shifting and isolation circuity in order to make the Mac's signals 
+conform to the MIDI specification.
+
+The circuit is pretty straightforward. First we need to generate the 
+clock signal which is done with the circuit built around the crystal. 
+The two inverters, two resistors, capacitor and crystal form a 4 Meg 
+oscillator that drives the 74LS93 binary divider chip. One of the 
+outputs of the divider (depending on which frequency you want to use) 
+is routed to a capacitor and then a resistor to ground that is used 
+to offset the pullup resistors internal to the 26LS32 receiver chip 
+in the Mac. The reason this is necessary is that the negative input 
+of the 26LS32 is referenced to ground, so we need to swing at least 
+200 millivolts below ground in order for the 26LS32 chip to recognize 
+it as a legitimate clock signal. This particular idyosyncracy of the 
+Mac is rather annoying, but not unworkable.
+
+The transmitted data signal line is the next consideration. The TXD+ 
+signal from pin 4 of the Mac is fed through a couple of inverter stages 
+to provide the TTL output required by MIDI. The resistor and 
+diode in front of the inverters protects them from the negative voltages 
+produced by the Mac. This is the easiest part  of  the interface.
+
+The MIDI input port uses an optoisolator to avoid a condition 
+known as ground loops. This happens in audio systems when there is 
+a slight voltage potential between the ground lines of two different 
+pieces of equipment. The result being an irritating 60 cycle hum in 
+the audio output The optoisolator keeps the equipment from reacting 
+this way by eliminating the common ground connection. The Sharp 
+PCS900 is a MIDI specified part, although other optoisolators 
+with Schmitt manager outputs can be used. The output of the opto is 
+routed to a couple of inverter stages to provide the RXI+ and RXD- 
+signals that the Mac wants to see.
+
+All that's left is to provide the power and ground connections. According 
+to the hardware information I got from Apple the +5 volt pin on the 
+serial connectors can provide as much as 200 milliamps output current 
+This interface draws about one tenth that amount. 
+
+The clock signal may be wired to a three way switch in order to switch 
+between the three different speeds, or it may be hard wired if you 
+are only going to be using one speed. So far all three speeds have 
+been used by one piece of software or another.
+

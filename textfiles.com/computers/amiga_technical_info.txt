@@ -1,0 +1,439 @@
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=
+                 SAVED  BY
+
+          -<<<<<  THE OWL  >>>>>- 
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=
+
+
+--------------------
+AMIGA'S CUSTOM CHIPS 
+--------------------
+
+Name: Blaine Gardner #21 @8103
+Date: Tue Oct 17 11:24:00 1989
+
+It's impossible to say "that chip does this" and "this chip does that". Agnus, Denise and Paula are three indivisible parts of one functional whole. They are completely useless on their own. The Agnus chip controls the addressing for all the chips, that's why it's the only one that needs changing to increase Chip RAM to 1M for ALL the custom chips. Now it is true that Denise has the video output stuff, and Paula has the audio output stuff, but to get the true picture of how the system works you need to ignore the three IC packages, and look and the one logical unit that they function as.
+
+There's a great set of hires pictures showing exactly how the chips work together on Fish Disk 29. They were done by Jay Miner.
+
+The newer chips that have nothing to do with custom chipset are Gary and Buster. Gary is a Gate ARraY that just makes the machine cheaper to manufacture, it replaces a handful of TTL parts that do the same thing on the A1000. Buster is a BUS arbitraTER chip used on the A2000's expansion bus.
+
+The of course there's the 8520s, they are a semi-custom version of a common interface adapter chip. The only real difference is the format of the timer outputs.
+
+
+
+------
+COLORS
+------
+
+90Jun07 from Blaine Gardner@Gateway (106 Meg BBS, SLC Utah)
+
+	32 colors is the standard in lo-res (320 x n) screens. That's 5 bitplanes, and  2 ^ 5 = 32. The Amiga uses a bitplane setup, not pixel-packed. You can have 2, 4, 8, 16, or 32 colors just by setting up a 1, 2, 3, 4 or 5 bitplane screen. They are 100% individually addressable pixels at the 1 through 5 bitplane screens. The 64 or 4096 color screens are special modes with some limitations. 64 colors is Extra Half-Brite (EHB) mode, where a 6th bitplane is added. This bitplane specifies whether the pixel is normal or half brightness. So the second 32 colors must be the half-bright values of the first 32. The 4096 color mode is even more fun. HAM stands for Hold And Modify. You can specify 16 absolute colors, and get the rest by modifying the red, green or blue component of the previous pixel. The disadvantage is that unless you are using one of the absolute colors (which can be any of the 4096), it takes 3 pixels to change all three components (RG&B) of a color, so you can get fringing, but in practice it's not much of a problem since programs really know how to minimize the effect these days. 
+
+	On bitplanes, the amount of RAM a screen uses relates directly to the resolution and number of bitplanes. 320 x 400 x 6 bitplanes = 768,000 bits, or 96,000 bytes. 1, 2, 3, 4 and 5 bitplane screens use 16K, 32K, 48K, 64K, and 80K respectively. 
+
+
+
+------------
+MULTITASKING
+------------
+
+Name: Piranha #7 @8100
+Date: Tue Dec 05 23:26:19 1989
+
+There is a TRIVIAL amount of hardware support for multitasking in the Amiga. The custom chip set does wonderful stuff for graphics, animation, and I/O, but ti does not do much to help the machine multitask. The core of the Amiga's multitasking ability is Exec, a small, but wonderful bit of software that does all the magic.
+
+If the Amiga REALLY had "hardware support" for multitasking, we'd all have 68020 or 68030 based machines with hardware memory protection. That does seem to be in the distant future since CBM just took over official support of Dave Haynie's SetCPU program. But wouldn't you really prefer that a corrupt program just dumped a "core" file and terminated, instead of taking down all or part of the machine?
+
+
+Don't Panic
+
+Much is made of the Amiga's ability to multitask. But what makes its multitasking different from other computers? If anyone has used Window 3.0 for the IBM, you will note that the response is a little different from the Amiga. I found this from Guy Garnett of tnc.UUCP (The Next Challenge, Fairfax, Va.), which gives a good explanation of the Amiga's multitasking system.   
+
+Multitasking operating systems can be broken down into two broad categories, "preemptive" and "cooperative".  The Amiga, as well as OS/2, Unix, and most mainframes use preemptive multitasking. Multifinder for the Mac, Windows for MS-DOS, and some other computers, use cooperative multitasking.
+
+Preemptive multitasking is particularly well suited for doing several things at once (which is why it is used so often); some have been known to call it "true" multitasking.  Cooperative multitasking is also valid multitasking, but it is less generally useful (anything which can be done on a cooperative multitasking system can also be done with a preemptive system, in theory, but the reverse is not   true).                                                             
+
+Programs on the Amiga have a time limit, or "slice"; when the time expires, Exec (a part of the Amiga operating system) takes control away from the running program, and gives it to the next eligible program.  The time slice is so short that it appears that many programs are running at once.  Programs can also give up control voluntarily; usually this happens when the program is waiting for something, like disk drives, user input, or other "real world" events. The program in effect says "I have nothing to do until someone moves the mouse (or whatever)", and so Exec starts up another program.  This helps make efficient use of the computer.
+
+Unlike many preemptive multitasking operating systems, the Amiga has "real-time response".  This means that external events can be detected and responded to quickly ("quickly" is a relative term; the Amiga can respond much faster than most other multitasking systems, although there are several which are designed to respond even faster still). For example, the system can be set up so that a certain program runs between every frame of video (this is how some programs manage color cycling).
+
+
+
+------------------------------
+READING & WRITING AT SAME TIME
+------------------------------
+
+Name: Piranha #7 @8100
+Date: Tue Dec 05 23:31:48 1989
+
+Sorry, but the Amiga is incapable of reading or writing to more than one drive at one time. All the LED means is that the drive's motor is turned on.
+
+There is only one blitter channel for encoding/decoding the MFM bitstream from the drive, so only one drive at a time can be dealt with. Some copy programs go as far as having the CPU messing with one track while the blitter is decoding the next one, but that's as close as you can get.
+
+
+
+----------------------
+File systems OFS & FFS
+----------------------
+
+Name: Blaine Gardner #21 @8103
+Date: Tue Oct 24 23:38:22 1989
+
+The file systems are largely identical, but to boost speed in the FFS, some of the redunancy of the OFS was removed. The OFS only has 488 bytes of data per block because the other 24 bytes are used for pointers to the previous block. In the OFS you have a double linked list of the blocks used by a file, both forwards and backwards. This gives you a very safe and easy to recover file system, but you lose speed because you have to strip those 24 bytes out of each block. The FFS is fast for this (and other) reasons, but it's also a but less safe because you only have one way to find a loose block, not two.
+
+The FFS still has enough redundancy that the security for speed tradeoff is a good choice. And with DMA controllers the speed is really noticable. With the FFS large chunks can be dropped right into RAM from the drive. With the OFS the system has to strip out the link info from the data before it can dump it to RAM.
+
+If you're not sure what file system a disk is using, just select the disk icon, and use the INFO menu item in Workbench. The "Bytes per block" line will report 488 for OFS and 512 for FFS.
+
+
+
+----------
+AUTOCONFIG
+----------
+
+Date: 29 Jul 90 17:12:28
+From: Blaine Gardner
+
+There are a couple of misunderstandings here. First is the meaning of "Autoconfig". Unless an expansion device has special autoconfig hardware, and is configured by the Autoconfig hardware protocol (this means among other things that RAM is added from $200000-a00000, depending on other Autoconfig cards in the system), it is NOT an Autoconfig device, but is using some other method to be added to the system. These methods include "Addmem", and the "Ranger" $c00000 address range trick. 
+
+Anything, including the A501, the Spirit Tech, and Michigan Software Insider, that use the $c00000 addressing trick, are NOT Autoconfig, even though they are automatically added to the system. 
+
+The second misunderstanding is the difference between hardware design, and address space. It makes no difference at all in the performance of the hardware what address space the RAM responds to. On the other hand, if the physical design of the RAM expansion shares the Chip RAM bus, then no matter what address space the board is jumpered to, it will still be a victim of Chip bus contention and slowdown. 
+
+So based on the fact that your board is "autorecognized" (NOT "Autoconfiged") at $c00000, and the fact that your Chip RAM and Fast RAM timings are nearly identical, I'd have to stand by my conclusion that your RAM board design is sharing the Chip RAM bus. If this is true, there is nothing you can do to speed it up, other than redesign it. 
+
+Oh, one more thing, if you jumper your board at anything other than the $c00000-e00000 range, does the system automatically recognize it, or do you have to run an "Addmem" type of program? 
+
+
+
+---
+RAM
+---
+
+Chip RAM: Accessed by both the custom chips, and the 68000. The ONLY RAM that the Chips can access. All graphics, sound and I/O activity MUST take place in Chip RAM.
+
+Fast RAM: Most expansion RAM. Can't be accessed by the Chipset, and not on the same bus, so not subject to interruption by them. Therefore "Fast" RAM.
+
+Half Fast RAM: (say it quick a couple of times :-) The A501 expanson for the A500, or the extra 512K on the A2000 motherboard. Not available to the Chipset, but on the same bus, so subject to interruption by the chipset. Slower than real Fast RAM.
+
+The Amiga's bus is clocked at 14 MHz, with the 68000 and chipset taking alternate cycles, so they get 7 MHz each. If needed the chipset will steal the bus from the 68000. This does cause slowdowns in program execution, but speeds things up in general because the chipset is more efficient than the 68000 (for graphics, sound, I/O, etc).
+
+That's with only 512K. With Fast RAM, the 68000 runs at full speed all the time because the chipset cannot interrupt it. It doesn't actually run any faster than Chip RAM, but it's not possible to run SLOWER as it is with Chip RAM.
+
+Half Fast was the nickname given to what some people saw as the half-assed design of the extra 512K in the new Amigas. You get the worst of both worlds: No access for the chipset, but subject to interruption by the chipset. This was explained away as a cost cutting measure (cheaper to put it on the Chip RAM bus and save the price of another bus and buffers, etc.) But now we know that it was the prelude to the new 1 megabyte Fat Agnus. Now that the new Agnus has been released, the drawbacks of the Half Fast RAM become the great advantages of an extra 512K of Chip RAM. All you do is swap chips, and change one jumper.
+
+Nothing should change with the extra Chip RAM, except you can have more graphics intensive programs running at once. If you've never run out of Chip RAM while you still had a large chunk of Fast RAM left, you don't need the new chip. I run a 704x470 Workbench screen, and DPaint III can't run in 640x400 16 color mode because it's such a Chip RAM hog.
+
+The speed of the former Half Fast RAM doesn't change, it just becomes available for use by the chipset. If you've got a 1 megabyte 500 or 2000, ALL of your RAM becomes Chip RAM, but there is no speed change.
+
+
+Don't Panic
+
+CHIP RAM - This is the first 512K of memory (1 Meg if you have the fatter Agnus, 2 Megs if you happen to have a 3000). This memory is used by the processor and custom chips (hence the name CHIP) for programs, graphics, and audio data. Since the custom chips can block the processors' access to the RAM, programs run slower here. If the custom chips are very active at a given time, the CPU must wait for the bus to be free for it's use. [Some activities of the custom chips can 'cycle steal' from the CPU, causing it to be forced to wait]. Normally, the 68000 on the Amiga only needs the bus every alternate clock cycle in order to run full speed...thus the other cycles not used are taken up by the custom chips. However, when the blitter is in use, or the coprocessor (COPPER), you see some of this cycle stealing.  
+
+FAST RAM - FAST RAM on the Amiga is any RAM out of the reach of the custom chips. It is known as FAST RAM because code and data may be accessed by the CPU there faster, as it does not have to deal with the bus contention in the CHIP RAM addressing space. With FAST RAM on the system, the CPU can generally run full speed regardless, provided the code/data being accessed is in said FAST RAM, as the custom chips cannot access this memory medium, and are not using it's bus.
+
+Autoconfig RAM - AutoConfig memory is basically a setup of the OS and the memory board which uses it. When a memory board is considered to be AutoConfig, the system will automatically configure it into the free memory pool upon startup. Basically, AutoConfig allows a board to be assigned to a memory address slot based on what is free on the system at configuration time, without your having to configure it manually. On startup, the each board along the line (of physical slots in the machine) appears at a specific memory location, and presents ID information, whereby it is configured to a suitable address space on the system. This done, the next board in line appears, and the same process repeats...on down the line until no further AutoConfig boards remain. Non-AutoConfig memory is not recognized in this manner, and is designed for a specific memory address location only. Using a program such as AddMem, or AddRAM, you are telling the OS where in the addressing space this board can be found, and adding it's memory to free pool list.
+
+32-bit RAM - On a 16 bit bus (16-bit memory), 16 bits of data can be operated on at one time (transferred about, etc...). The 32bit bus can work with 32-bits of data at a time. Thus if you are running two different buses...on 16-bit and one 32-bit, the 32-bit bus can handle more data at a given interval (assuming appropriate processors for each and equivalent bus speeds). This is handled at the interface logic and bus level. Therefore a 32 bit processor such as a 68020 or 68030 with 32 bit memory (a 3000 or 2500) can access information faster than a 16 bit 68000, even though they might be running at the same speed. 
+
+On many accelerators, (ones with a Memory Management Unit (MMU) in place), it is possible to take an "image" of the system ROM, copy it to a faster medium (32-bit bus area...the accelerator's memory area), then use the MMU to translate address requests to where the ROM image originally was to it's new location. This is done to speed up the system ROM calls. The first 3000's (the ones with "magic" ROMS) did this. allowing the user to load either OS 1.3 or 2.0.
+
+FASTMEMFIRST - Memory on the Amiga is prioritized. Now, normally CHIP RAM is given a priority on the system of -10. This is to insure it is not used by programs requesting simply "I want a chunk of memory", and not saying "and it needs to be CHIP". This helps prevent CHIP RAM from being used for things which do not need to be there. Now, FastMemFirst is special. On Amigas with 512K of CHIP RAM, the other 512K which make up the 1 meg std. complement is what is called "SLOW-FAST" RAM. This is because, while the custom chips cannot use it, it is still subject to the bus contention for CHIP RAM. FastMemFirst is useful if you have this "SLOW-FAST" memory, and also have true FAST memory on the system. What it does is place your "SLOW-FAST" memory at the same -10 priority as CHIP RAM. Since most true FAST RAM will default to a priority of 0, it places your true FAST RAM ahead of the CHIP and SLOW-FAST memory on the memory lists. This is so programs which do not need to use CHIP RAM (and a program's actual CODE never does for the most part) will be placed in you FAST RAM, and run somewhat faster. SLOW-FAST and CHIP will only be used when either requested specifically by a program, or when your FAST RAM is filled.
+
+
+
+--------------------------------------
+PROCESSOR SPEEDS / COMPUTER COMPARISON
+--------------------------------------
+
+From: daveh@cbmvax.commodore.com (Dave Haynie)
+Path: ncr-sd!sdd.hp.com!usc!cs.utexas.edu!uunet!cbmvax!daveh
+Organization: Commodore, West Chester, PA
+
+Your friend is on the right track, but obviously confused about the details. Basically, it's meaningless to compare the clock speeds of different chip architectures without knowing both architectures.  The clock speed has little to do with how long the actual chip takes to perform an operation.  For at least older CPUs, one actually meaningful number is the bus speed -- how many clocks does the CPU take to run a single cycle on its memory bus.  A 68000, an 8086, and several other CPUs of the same vintage take 4 processor clock cycles to run one memory cycle.  The Z-80 runs a 3 clock cycle to fetch an instruction, a 4 clock cycle to fetch data.  The 6502 takes a single clock for its minimum memory cycle.  So while you can figure that an 8MHz 68000 and 8MHz 8086 talk to memory at about the same speed, an 8MHz 6502, if such a chip existed, would be talking to memory more like a 32MHz 68000.
+
+Motorola and Intel chips of the same basic generation are going about the same memory speed at the same clock rate.  For example, both the 80386 and the 68030 take two clock cycles to access memory. Motorola is indeed making faster 68030s than Intel makes 80386s, and they really do go faster.  Some RISC chips actually handle one memory cycle per clock cycle, and the burst mode found on 68030s, 68040s, and 80486s lets these chips fetch 4 longwords in as little as 5 clocks, coming close to 1 word per clock.
+
+And memory fetch is only part of the question.  Many CPU operations are internal to the part, and some happen in fewer clocks.  The 68040, for instance, takes only one clock to fetch from internal cache, while the 68030 takes the standard two clocks for internal cache fetches (both can fetch from both caches at the same time).
+
+To sum up, an 8MHz 68000 runs much the same kind of cycle as an 8MHz 8086. An 8MHz 68020 can hit memory 1.5 times as fast, an 8MHz 68030 or 80386 can hit memory 2 times as fast, and a 8MHz 68030 or similar chip can hit burst mode memory nearly 4 times as fast as the 68000 or 8086.  Of course, since the 68030 has a 32 bit bus, this is actually a data transfer rate closer to 8 times faster.  
+
+You can't tell the performance of any _SYSTEM_ simply by looking at the CPU's clock speed.  You need to know the kind of memory the CPU is talking to (including possibly system-level caches), the any overhead work the CPU is doing (eg, is there other hardware helping out the CPU, or is the CPU being used to replace some hardware), and the nature of the operating system that's driving the whole thing.
+
+You also need to know the kind of program that's running.  You can find some things that a garden variety 12MHz AT will do faster than a plain 68000-based Amiga, and other things the Amiga will do faster.  If you know the chip types, you can certainly make a few performance estimates when comparing system to system: you know how many clock cycles a memory fetch would take, what kind of objects the CPU can manipulate, etc.  In general, 80286 system compare with 68000 system, 68020 and 68030 system compare with 80386 systems, and 68040 systems should compare well with 80486 systems.  
+
+But again, it depends on how the thing is built.  HP has a 50MHz 68030 system that beats most 25MHz 80486 systems in most integer benchmarks (though you'll find the same benchmark on the same system will change depending on the OS in charge at the time).  Of course, the HP is designed to be a workstation, and costs like one, whereas most 80486 systems are built much like other PCs.  And there's nothing much HP could do to make that machine equal the 80486 in floating point operations, other than dropping a 68040 into it.
+
+
+Machine/OS--     Amiga	 Mac     Atari/TOS  386/UNIX/X-win  NeXT 
+ Feature:	       II  SE    ST  Mega    Vista  1280x 
+
+	NTSC	X	X         X    X	X 
+
+	Multitasking	X	X   X	X	X	X 
+		Cooperative		X   X 
+		Preemptive			X	X	X 
+		Coop.-Preemp.	X 
+		Lightweight	X	X   X			X 
+		Heavyweight			X	X	X 
+		Real-time 
+		Process Protection			X	X	X 
+		Virtual			X	X	X 
+
+	Windows/screens	X	X   X     X    X	X	X	X 
+		Multitasking	X	X   X	X	X	X 
+		Multiresolution	X	X                      N/A	X 
+			exclusive		X 
+			swapped				X 
+			windowed 
+			sliding	X 
+		Hardware Assist	X	X              X	X	X 
+			exclusive	X 
+			queued	X	X              X	X	X 
+			prioritized 
+
+
+ Table Notes (or Small Print and Definitions): 
+ 
+	All systems are essentially "basic", the Mac II and 386 systems don't come with video cards, so for the table I simply picked the cards which had the features you asked for, namely NTSC and hardware assist (blitter). 
+
+Cooperative/Preemptive/Coop.-Preemp.: C. means a process must go into  wait for another process to get time.  P. means all processes get time relative to priority.  C.-P. means that all processes of high priority must go into wait for lower priority processes to get time (in retrospect this, rather than lightweight, is probably what markD originally meant by 'real-time'). 
+
+Multiresolution:  Multiple modes are really an artifact of less expensive hardware (allowing trade-off between resolution and bits/pixel) or brain-dead "standards" that cause every device from now until eternity to emulate every earlier device.  "Faulting" a 386/UNIX/X/Vista combination -- which can practically "fill" an NTSC signal to the max -- because it can't do alower resolution/bits-per-pixel doesn't make sense, N/A = Not Applicable.  Exclusive means the user switches the mode that all applications use (doesn't qualify for "virtual").  Swapped means the application uses a mode and the OS "swaps" the entire screen when you change apps (this is for those brain-dead designs).  Windowed means that each window/workspace can have a different resolution.  Sliding is a subset of windowed where the mode can only change horizontally or vertically, like a sliding blackboard.  Although the ST has multiple modes, you have to reinitialize (i.e. reboot) GEM between them, so I didn't 'X' that. 
+
+Hardware Assist:  Exclusive means a process can request exclusive use of the video hardware, side-stepping the queueing that is normally done. 
+
+ > Of course the implementation would be different, my only argument is that a VRAM system of the same flexibility as the Amiga would be far more expensive. 
+
+	Yes, I think it would be more expensive to use VRAM, I gave the reasons (mainly VRAM+support vs. DRAM) a while back.  But, no, if I am wrong about the cost (as Jeff is still trying to convince me of), there is no reason it could not have been as versatile. For example, there isn't really a problem with the VRAM shift register reload time, you have to account for that in _any_ system that is more than 256 wide, you account for it by using a FIFO in front of your pallette that can hold enough pixels during the reload.  Ttyhe FIFO/reload puts a limit on how often you can change buffers, but within those limits you can use the copper and have "windowed" virtual screens just like now you have "sliding" virtual screens (Intel's controller can do this).  Sprites, like now, are loaded during horizontal retrace.  Yes, it's very difficult to implement non exponent-of-2 bits/pixel, but with VRAM you'd would have had the bandwidth (the DRAM limiting factor) to go up to 640x480x8 (even with the A1000's 256k+256k, no less!). And if people the likes of Fred Fish and Leo Schwab are to be trusted ( :-) ), 640x480x8 looks quite a bit better than 320x480 HAM. 
+
+> Would you like to write every graphics routine to support 5 or 6 different numbers of bits per pixel like the Mac II? 
+
+	If I could get as many people to buy each of those different bits/pixel systems as Apple has already managed to do, I would be delighted :-). I think it ends up being better tieing the driver-level drawing routines to the hardware, let the hardware match the intended use, and let the OS be ignorant of how the hardware's organized.  If the intended use is bits-per-pixel vs. resolution vs. memory then bit-planes are a great way to generalize.  If the intended use is single-mode 1280x900x8 it turns out that one can implement a faster line draw using 1 8-bit byte pixel than can be done with 8 16-bit-word planes, mostly due to overhead of reloading the bit-plane parameters.
+
+
+
+					ST/Amiga Comparison
+					-------------------
+
+Please send updates, corrections, and questions to ken_macleod@pedro.UUCP, or ken_macleod at Bitsko's Bar & Grill, (801) 277-0272.
+
+	Color 520STfm			   		Amiga 500 w/Color Monitor
+    	-------------------				-----------------
+	$699		    Price(1)			$769
+	8.0 Mhz	  	    Processor Speed		7.2 Mhz
+	1000		    Software(1)			??
+	??        	    Units sold/shipped(1,2)  	600k Video
+	320x200x16					blitter
+	640x200x4					DMA palette changes
+ 	640x400x2 non-interlaced(3)			320x200x2,4,8,16,32,64,HAM
+							320x400x2,4,8,16,32,64,HAM interlaced
+							352x242x2,4,8,16,32,64,HAM overscanned
+							352x484x2,4,8,16,32,64,HAM overscanned 
+							interlaced 640x200x2,4,8,16
+							640x400x2,4,8,16 interlaced 
+							704x242x2,4,8,16 overscanned
+							704x484x2,4,8,16 overscanned interlaced 
+							multiple video modes on-screen
+							16 sprites
+
+Sound
+			3/1 channel			4 channel
+			single waveform			D/A buffer, 28kHz, 8bits
+							stereo
+
+
+Disk Drives
+			one 720k			one 880k
+
+
+Operating System
+			command line interpreter(4)   command line interpreter
+			WIMP(4)				WIMP
+			8 overlapping windows        	time-sliced prioritized multitasking
+							pipes
+							messaging
+							signals
+							semaphores shared-libraries
+							prioritized interrupt handling 
+							overlapping windows (screen-bound) 
+							sliding screens
+							68010/68020 compatible/aware 
+							animation handler
+							speech synthesizer
+
+Miscellaneous
+			512k				512k
+			cartridge port			expansion bus
+			SASI port
+			MIDI port
+
+
+The following are higher end machines similar to the above, unless otherwise noted they have all of the features shown above:
+
+1040ST:						Amiga 1000 (discontinued):
+			1024k				detached keyboard
+														
+Mega ST 2 or 4:					Amiga 2000:
+			2048k or 4096k			Detached keyboard
+			Detached keyboard		Internal slots (IBM, Zorro, video)
+			blitter				Battery-backed clock
+			expansion bus	
+
+-----------------------------------------------------------------------
+
+(1)		These numbers, of course, are dated.		
+		By the time you read this they're
+		wrong.
+(2)		Units sold/shipped include compatible units.
+(3)		640x400x2 requires a different monitor, totaling $752(1).  
+		Machine must be rebooted between monitor switches.
+(4)		CLI and WIMP are exclusive of each other.
+
+
+
+
+---
+DMA
+---
+
+Date: 29 Jun 90 12:36:52
+From: Blaine Gardner
+
+The problem is moving data from the hard drive to RAM. There are two ways to do this, DMA (Direct Memory Access), or copying it with the CPU. 
+
+With DMA the DMA controller requests control of the bus, then directly dumps the data into the desired RAM location. The data traverses the bus only once, from DMA controller to RAM. 
+
+In non-DMA (CPU driven I/O) controllers the CPU fetches the data from the controller, then copies the data from the CPU registers to the final location in RAM. This makes TWO trips across the bus, one from drive to CPU, and a second from CPU to RAM. 
+
+Regardless of anything else, you can see that DMA is twice as efficient in bus usage as CPU driven I/O. 
+
+The other way DMA is better is that while a DMA transfer is taking place, the CPU is free for anything else. In a non-DMA design, the CPU is being used for the grunt work of transferring data, so it cannot do anything else while data transfer is happening. 
+
+Remember that this is all happening very fast, so you will not see a non-DMA controller lock up the system during a data transfer because the usual task-switching is taking place. But you will see the CPU free time hit 0%. A DMA controller will leave about 90-95% of the CPU time free. 
+
+
+Another advantage to the A2091 is that it does not shut off interrupts when doing disk access like the Kronos does. A friend was unable to download to his hard drive with the Kronos controller, until someone told me that the default setup from CLtd disables interrupts during disk access, in order to get better benchmark times. Sure enough, when we enabled interrupts again, my friend stopped getting errors when downloading to the hard drive, and it did drop the drive benchmark speeds noticably. 
+
+Remember that there are three kinds of lies: Lies, Damned Lies, and Benchmarks. 
+
+If you really want a good indication of a drive or controller's performace, get Disk Speed 3.1 (by Michael Sinz, of CBM) from Fish Disk 329, and run it in "High Intensity" mode with both "DMA Contention" and "CPU Contention" on. Then run it again with both contention modes off. 
+
+This will tell you not only how fast your setup performs under ideal conditions (what every controller seller quotes), but the contention modes will tell you what your setup will do under worst-case modes. Expect to see a dramatic fall off in speed for CPU driven controllers. 
+
+Also, run PerfMon at the slowest time to see what impact on CPU time your hard drive setup has. The Hardframe uses about 20% of the CPU time at most. This will be close to 90% for CPU driven controllers. 
+
+Oh, I meant to say, have PerfMon running WHILE you are running DiskSpeed. 
+
+And for the best, and most repeatable results, run the test on a freshly formatted partition. Fragmentation can cut your speed by half. 
+
+
+
+
+From: daveh@cbmvax.commodore.com (Dave Haynie)
+Date: 4 Sep 90 21:11:29 GMT
+Organization: Commodore, West Chester, PA
+
+In article <1990Aug30.195419.25644@sisd.kodak.com> jeh@sisd.kodak.com (Ed Hanway) writes: >In article <02102.123056@thiger.UUCP> skraw@thiger.UUCP (Stephan von Krawczynski) writes: >>DMA (other than bitmap) runs into heavy troubles sometimes during
+>>overscan-graphics (e.g.)
+>[...]
+>>i have seen no dma-controller yet, that didn't have problems.
+>[...]
+>>amigamem troughput brings the thing down to some 100 kBytes (a typical
+
+>Well then I guess that you've never seen a HardFrame. Using the Diskspeed
+>benchmark with DMA contention turned on, my disk transfer speeds slow from 
+>about 800k/sec to about 650k/sec, which seems completely reasonable to me. 
+>I don't know where you get the idea that 100k/sec is a typical bottleneck.
+
+It certainly isn't.  The real question is, more than likely, what's the target of your DMA.  If you have Fast memory in the system, than the Chip bus saturation is really only a DMA lag problem -- how long might the DMA device have to wait before it gets the bus.  Once it has the bus, the transfer into Fast memory occurs at full bus speed.  If the DMA was to Chip memory, then it's the same problem the CPU had -- waiting for retrace times.
+
+>My question to all the DMA opponents is this: given that 4 bitplane hires 
+>overscanned screen DMA does eat up most of the chip memory bandwidth, why 
+>should processor-controlled I/O be any better than DMA at using the remaining 
+>bandwidth?  
+
+It's actually worse, if it relies on any interrupt activity.  To begin the transfer, the either CPU or the potential bus master must wait for a clear cycle.  The bus master gets it in a single cycle, most of the time, while any interrupt will have to wait for an instruction boundary, and then in most cases fetch its vector from Chip memory anyway.  So, DMA or not, you are most likely taking the largest bottleneck waiting on interrupts, not the actual transfer, as long as there's fast memory around.  If you have an A2620 or '030 system, try SetCPU V1.6 (to get supervisor stack out of Chip memory) and one of the MoveVBR things to get interrupt vectors out of Chip memory, and your Chip-bus-saturated disk performance should go up, a little or alot will depend on the 
+
+>although a 68030 tight loop might approach DMA efficiency.
+
+Compared with 16 bit DMA, it does approach DMA efficiency in the limit as 68030 memory access time approaches 0 (not being facetious here; one 32 bit RAM access can be 200ns or less, while two 16 accesses take at least 1120ns). Of course, what you want is to build a DMA controller for the 68030 bus.  See "A3000" for more details :-)
+
+
+In article <02048.002057@thiger.UUCP> skraw@thiger.UUCP (Stephan von Krawczynski) writes: 
+>>>     True DMA (ala the A2090) is VERY important to me. GVP claims
+>>>     this board is. Anybody have one that can comment?
+>1. GVP does not DMA to amiga-memory.
+
+That's true, at least with the original GVP board.  I don't know the details
+of the new one.
+
+>2. why is DMA so important for you? it is generally slower than the
+>processor-method (lets call it this way). 
+
+That's ABSOLUTELY INCORRECT.  But sometimes a misconception amoung the uninformed.  You have to understand the problem you're trying to solve to get a true picture of what's happening.  And that problem is, how can you efficiently transfer data from the SCSI chip into system memory.  
+
+The simplest approach would, of course, be to have the CPU wait on the SCSI chip and copy over every single byte as it's available.  This is basically what the pre-IIfx Macintoshes all do; they pretend the SCSI chip is slow, 8-bit wide memory, and wait for each byte to become available in a tight CPU copy loop.  This is a loosing proposition from the start, however.  The most common form of SCSI transfer, asynchronous SCSI, runs at up to 1.5 MB/s (Megabytes per second).  Your A2000 bus runs at about 3.5 MB/s.  If you run it at only 8 bits/transfer, that's cut down to 1.75 MB/s.  However, using the CPU to do the copying, at best, you need two byte reads and one word write to get a word from SCSI chip into memory.  That's a maximum speed of 1.17 MB/s for the transfer (neglecting any overhead from the transfer loop, which will be non-zero), and during that transfer, the CPU gets to do NOTHING but copy the data from the SCSI chip.  This can't even keep up with SCSI, so we throw it out for anything but the cheapest controllers (the original TrumpCard and the original C Ltd controllers worked this way).
+
+The next approach would be to funnel two SCSI bytes into one word and do the same wait-copy approach.  This would yield a maximum transfer rate of 1.75 MB/s, which will keep up with asynchronous SCSI at its fastest.  However, this wait-copy approach has severe drawbacks.  It gets the data into memory extremely fast, since nothing but the copy can happen until the data is in memory.  But you may actually be WAITING for the data from the SCSI drive, for seeks or other times at which you're not getting it in at full speed.  This kind of scheme may APPEAR to be the fastest transfer, since in using polled I/O instead of interrupts, there's never any lag at the end of the transfer, but you sacrifice your SYSTEM speed for hard disk speed.  Overall, things will be slower, since you actually end up wasting time in wait states, waiting on the hard disk.  Single tasking systems like the Macintosh or PC might take this OK, since they have nothing else to do anyway, but it's no good for an Amiga. C Ltd's Kronos and Supra's WordSync both funnel SCSI into the 16 bit data path, though I don't know if they hog the bus as described or not.
+
+The third approach is to add a buffer to your CPU copy approach.  In this system, you have the SCSI chip itself conduct a DMA-like transfer into some private controller memory (many SCSI chips provide a counter output to make the hardware for this easy).  Once the transfer is complete, the controller interrupts the CPU, which does a fast memory-to-memory copy of the acquired data block, all at once.  The transfer speed here is still the same 1.75 MB/s as in the previous method, however, it always occurs at full speed.  The preceived disk speed may be a bit slower, since the actual transfer doesn't start until the block is fully read, but the overall SYSTEM goes faster, since no time is wasted in wait states.  The GVP controller does this.
+
+The final method is true DMA.  While DMA controllers can use a full block buffering method, most use some kind of FIFO, which tends to be more efficient with DMA.  The DMA controller can transfer data at the full 3.5 MB/s, although asynchronous SCSI can only manage 1.5 MB/s.  The CPU will set up the DMA controller with a destination for any number of SCSI blocks, and then the DMA controller takes over.  When the FIFO is near full, it requests the bus, transfers data at full speed, and then gives the bus back when the FIFO empties until the FIFO is near full again.  The actual data gets into memory not much differently than the buffered CPU copy approach (eg, no wait states), but for the same amount of data transferred, the DMA device uses 1/2 the bus time.  The other 1/2 is available to the CPU, so CPU work actually gets done during the transfer, even if waiting is required.  A2090[a], A2091, A3000, and Microbotics Hardframe work this way (the A3000 DMA controller, by the way, runs at around 20 MB/s on a 25MHz A3000).
+
+>you win nothing because you have a whole lot of DMA going on already inside 
+>the system 
+
+The other DMA in the system is a completely different kind of DMA.  Hard disk controllers run on the Fast/Expansion bus just like the CPU, while "Amiga" DMA is this special slot-allocated bus sharing that only takes place on the Chip bus.  The two are unrelated; in fact, as far as the Fast or Chip bus is concerned, there's no difference between CPU access or access by a DMA driven expansion device such as a hard disk controller.
+
+>and processor's running into heavy troubles sometimes, e.g. 
+>harddisk-performance is very low while using overscan-graphics (just to 
+>mention an example).
+
+The only case in which overscan-graphics cause a problem is in the case of the 2090[a] controllers.  And this has nothing to do with DMA.  The effect of overscan with many bitplanes on is to tie up the chip bus for long periods of time.  If the CPU is trying to access Chip memory at this time, it gets wait stated and can do nothing until a retrace comes along.  DMA or non-DMA, you have the same problem here -- getting the CPU away from waiting on Chip RAM, either by interrupt in the non-DMA case or by bus request in the DMA case.  While the hard disk controller is waiting for CPU/bus access, there is still SCSI activity coming in.  Unless your controller fully buffering, as in my third case, it must tell SCSI to stop sending data.  The problem with the A2090[a] is that it didn't know how to do this.  At least part of that problem was due to it's support of ST-506.  At the time, ST-506 was the primary interface, SCSI was simply added because it was easy.  ST-506 is slower than SCSI, and being a dumb interface, can't be stopped.  So for whatever reasons, the A2090[a] controllers didn't know how to tell SCSI to stop sending when they couldn't get the bus fast enough, so they don't work well with heavy chip bus activity.  This IS NOT a general problem with DMA!  The A2091, A3000, Hardframe, and most likely any other DMA driven controller will work as well with overscan, if not better, than any non-DMA device.  The manufacturers of non-DMA devices often try to mislead you by claiming "DMA problems" and implying they pertain to all DMA driven controllers, not just the A2090[a] (which, by the way, haven't been made for awhile).
+
+>well, how about "transfer rates up to 4MB/SEC synchronous" (gvp). in fact
+>i have never understood this one. what do they mean? 4MBytes/sec?
+
+As I mentioned previously, asynchronous-mode SCSI transfers run at about 1.5 MB/s, tops.  All SCSI devices out there run in asynchronous mode, and many don't handle synchronous mode.  That's one of the reasons that the non-DMA controllers have managed, so far, to appear as fast or, parasitically, faster, than the DMA controllers -- as long as the SCSI transfers aren't faster than your transfer mechanism can handle, the speed of SCSI is the limiting factor.  In synchronous mode, the SCSI bus uses a clock to coordinate the transfer, yielding potential transfers of 2 MB/s to 5 MB/s, depending on the clock.  There's also a fast synchronous mode as part of the SCSI-2 spec which has a top speed of 10 MB/s.  Synchronous won't make much difference in most single drive situations, anyway, since the raw speed of data coming off the disk is still around 1.25-1.5 MB/s, at best.  But if you have multiple devices on the SCSI bus, and when faster devices are available, controllers that don't saturate the Amiga at 1.5 MB/s (eg, DMA controllers) will go noticably faster than non-DMA controllers.
+
+>i have never seen a controller/hd-combination reaching this.
+
+Like I said above, you probably won't.  Just yet.  And the raw SCSI transfer speed is only part of the equation -- your interrupt lag, device driver efficiency, system load, etc. all add to effective disk speed.          
+
+>4MBits/sec = 512kBytes/sec. seems to be more like the truth, but is an 
+>absolutely ridiculous value 
+
+No, it's 4 MegaBYTES per Second.  That's trivial compared to the speed of the A3000's main bus or Zorro III bus, though not bad for the kind of peripheral bus SCSI is supposed to be.  As I mentioned, the drives themselves are still catching up to this, and most A2000-class SCSI controllers are caught up short.  The A3000 can hit around 1.2 MB/s through the filesystem with an asynchronous SCSI device, since it's fast DMA and fast bus arbitration are practically invisible when compared to the speed of SCSI.  And keep in mind, while that DMA is happening, you're only using about 7.5% of the 3000's main bus bandwidth (a full speed synchronous SCSI could take 25% if it could be sustained).
+
+Dave Haynie Commodore-Amiga (Amiga 3000) "The Crew That Never Rests" 
+{uunet|pyramid|rutgers}!cbmvax!daveh	PLINK: hazy	   BIX: hazy
+Get that coffee outta my face, put a Margarita in its place!
+
+
+
+---------------------------
+Hidden Goodies in Workbench
+---------------------------
+
+1.x	=	hold both Shift & Alt keys
+		press & hold each of F keys in turn		(different messages for each key)
+		Insert disk in & out of DF0:			(bad or nice message on eject)
+
+2.x	=	click on Workbench window with Left button,
+		press & hold:  Ctrl, both Alt, both Shift,
+		select any Workbench menu items with mouse,
+		release keys and choose “Last Message” from menu (repeat each menu)
+
+3.x	=	1.  Boot Amiga.  May have to shut down Workbench tools  (AppIcons)
+		2.  Press and hold down Right mouse button.
+		3.  Press and hold down:  Ctrl, left Shift, left Alt, right Shift, right Alt
+		4.  Select “About” from Workbench menu
+		5.  Move About window aside (don’t close it), click on Workbench window 
+		again, repeat from step 2.  Within 15 tries, a different About box should open.  If 
+		not, you may have the Workbench.library open too may times.  If so, reboot 
+		without running startup-sequence, start Workbench with “LoadWB” and try 
+		again.

@@ -1,0 +1,500 @@
+
+  ZDDDDDDDDDDDDDDDDDD? IMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM; ZDDDDDDDDDDDDDDDDDD?
+  3   Founded By:    3 :  Network Information Access   : 3   Founded By:    3
+  3 Guardian Of Time 3D:            05APR90            :D3 Guardian Of Time 3
+  3   Judge Dredd    3 :       Guardian Of Time        : 3   Judge Dredd    3
+  @DDDDDDDDBDDDDDDDDDY :            File 13            : @DDDDDDDDDBDDDDDDDDY
+           3           HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<           3
+           3           IMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM;            3
+           @DDDDDDDDDDD:  VMS System Manager's Manual :DDDDDDDDDDDDY
+                       :         Chapter 03.11        :
+                       HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<
+
+
+
+                         Chapter 3  INSTALLING SOFTWARE
+
+Any software product that you use on your system must be installed.  When you
+install software, the software is made available every time that the system
+starts up.  You must use an installation procedure for software when it is
+first acquired, and you must also use the installation procedure for any
+subsequent upgrades to the software.
+
+On the VMS operating system, you use the command procedure
+SYS$UPDATE:VMSINSTAL.COM to install most software products and any upgrades.
+Use VMSINTAL.COM to install the most recent version of the VMS operating system
+and any subsequent maintenance updates, and to install many optional software
+products.
+
+This Chapter describes the following:
+
+:  How to Prepare your system for running VMSINSTAL
+
+:  How to start VMSINSTAL
+
+:  How to select appropriate VMSINSTAL options
+
+:  What to do if the system fails while running VMSINSTAL
+
+This chapter does not describe VMSINSTAL procedures that are specific to any
+upgrade, update, or product.  The examples used are for illustration only.  For
+details of a particular product, refer to the VMSINSTAL procedure described in
+the installation documentation for the specific product or update.
+
+3.1 PREPARING YOUR SYSTEM FOR VMSINSTAL
+
+Before you use VMSINSTAL, do the following:
+
+1.  Back up your system disk.  Use the backup copy as a working copy for the
+    installation.
+
+    If you back up your system disk to magnetic tape, you must restore the tape
+    to a Files-11 disk to get a working copy.  The working copy has more
+    contiguous space than the original system disk because of the way BACKUP
+    creates the copy.  You might need this additional contiguous space during
+    the installation.
+
+2.  Log in at the console terminal under the SYSTEM account ( If SYSGEN
+    parameters MOUNTMSG or DISMOUMSG are set to 1, OPCOM displays a message
+    each time a disk or tape is mounted or dismounted.  If these messages are
+    not disabled, and you are installing from an operator's terminal, they
+    appear within 30 seconds of each mount or dismount. )
+
+3.  Be sure that all users are logged out and that all batch jobs are
+    completed.
+
+4.  Keep users off the system using the following command:
+    $ SET LOGINS/INTERACTIVE=0
+
+5.  If your system includes it, you should shut down DECnet-VAX if DECnet-VAX
+    would be affected by the software product that you are installing.  To shut
+    down DECnet-VAX, do the following:
+
+    A.  Start the Network Control Program ( NCP ):
+        $ RUN SYS$SYSTEM:NCP
+
+    B.  At the NCP prompt ( NCP> ), enter the following command and press
+        RETURN:
+        NCP> SET EXECUTOR STATE SHUT
+        Decnet-VAX performs an orderly shutdown.  The opcom facility notifies
+        you when DECnet-VAX is shut down.
+
+    C.  At the NCP prompt, enter EXIT and press RETURN.
+
+6.  Make sure the limits in the SYSTEM account authorization record are equal
+    to or greater than the follow:
+    Buffered byte count quota ( BYTLM ) = 20480
+    Enqueue quota ( ENQLM ) = 200
+    Direct I/O limit ( DIOLM ) = 18
+    Open file quota ( FILLM ) = 18
+    AST limit ( ASTLM ) = 24
+
+    a.  To check these limits, run the Authorize Utility ( AUTORIZE ).  To
+        run AUTHORIZE, enter the following commands and press RETURN after
+        each one:
+
+        $ SET DEFAULT SYS$SYSTEM ( RETURN )
+        $ RUN AUTHORIZE ( RETURN )
+
+    b.  At the UAF ( UAF> ), enter the following command and press RETURN:
+
+        UAF> SHOW SYSTEM ( RETURN )
+
+    AUTHROIZE displays the current limits of the SYSTEM account's user
+    authorization file.
+
+7.  If you need to modify the current limits, enter the AUTHORIZE command
+    MODIFY in the following format and press RETURN:
+
+    UAF> MODIFY SYSTEM/limit=new_value
+
+    For example, to increase the DIOLM limit to 18, enter the following
+    command and press RETURN:
+
+    UAF> MODIFY SYSTEM/DIOLM=18
+
+8.  When you have changed the limits, at the UAF prompt ( UAF> ) enter EXIT
+    and press RETURN.  This returns you to the dollar-sign prompt ( $ ).  Your
+    changes will not take effect until you log out and log in again.  ( See the
+    Reference section for a description of the commands in the Authorize
+    Utility. )
+
+9.  Physically mount the first distribution medium that contains the software
+    product.
+
+3.1.1  STARTING VMSINSTAL
+
+This section tells you how to start VMSINSTAL and describes options that you
+can use.
+
+When you start VMSINSTAL, it displays several prompts and messages that direct
+and explain the installation.  These prompts and messages differ, depending on
+the software product that you are installing.  Before you begin, make sure that
+you read and understand the installation procedures for the specific product or
+update.  If you need assistanced  during an installation, entering a question
+mark ( ? ) at a prompt gives you an explanation of acceptable responses.
+
+When you start VMSINSTAL, it asks if you are statisfied with the backup of your
+system disk.  Make sure that the backup copy is fairly recent before you
+continue.
+
+If you have not statisfied all conditions required to start VMSINSTAL, it
+desplays a warning message explaining the problem and a prompt asking if you
+want to continue.  DIGITAL strongly recommends that you correct these
+conditions before you try to start VMSINSTAL again.
+
+NOTE:  If you continue without making the requrired corrections, DIGITAL might
+NOT support the resulting installation.
+
+To start VMSINSTAL, enter a command in the following format and press RETURN:
+
+$ @SYS$UPDATE:VMSINSTAL product-list source:  [OPTIONS option-list] -
+_$ [destination] [qualifiers]
+
+The following sections describe the parameters and the keyword that you must
+supply in this command.
+
+3.1.1.1 SELECTING A PRODUCT-LIST
+
+This parameter lists the products that you want to install.  If you use a
+wildcard character ( * ), all versions and updates of all products from the
+distribution media will be installed in alphabetical order.
+
+If you want to specify more than one item in the product list parameter, you
+must separate the items using commas and no intervening spaces.  Specify the
+product list in the following format:
+
+facvvu
+
+fac     The product name code ( 1 to 36 alphanumeric characters )
+vv      The major version number ( 2 digits )
+u       The update number ( 1 digit )
+
+For example, if you upgrade your operating system to VMS Version 5.2, the
+product name ( fac ) is VMS, the major version ( vv ) is 05, and the update
+number ( u ) is 2.  Therefore the porduct-list parameter is VMS052.
+
+Using this format, you can install a specific version and update of a product
+form distribtuion media containing several versions and updates.  If you do not
+include a version or update number, all versions and updates from the source
+are installed in alphabetical order.
+
+If you omit the product-list parameter, VMSINSTAL asks you for it.
+
+If you are installing from a distribution kit, the list of products on your
+distribution media is included with the bill of materials for the distribution
+kit.  If the list is not available, enter a DIRECTORY command so that the
+distribution media will find the products that are included.  To obtain the
+product list, enter commands int he following format and press RETURN after
+each one:
+
+$ MLUNT/OV=ID ddcu:
+$ DIRECTORY ddcu: [0,0]
+
+Where ddcu is the drive that holds the distribution media.  If you are
+installing from a disk directory, obtain the product list by entering a
+DIRECTORY command, sepcifying the disk directory in the following format and
+pressing RETURN.
+
+$ DIRECOTY node::drive:[directory]
+
+If you are accessing a remote node, you must have READ and EXECUTE (R,E) access
+to the directory.
+
+3.1.1.2 SELECTING THE SOURCE
+
+This parameter identifies the source of the optional software product as one of
+the following:
+
+:  A drive tha holds the distribution media; for example, the RX50 drive
+   disignated CSA2: ona  VAX 8200.
+
+:  A disk directory to which the product save set has been transferred from the
+   distribution media for later installation.
+
+   You specify a disk directory as the source when you select the GET SAVE SET
+   option.  For more information about this option see Section 3.1.3.
+
+:  A disk directory on another node.
+
+You also can use a logical name to specify the source.  If you do not specify
+the source VMSINSTAL asks you for it.
+
+3.1.1.3  SELECTING OPTIONS.
+
+This keyword is optional.  It precedes the list of options to be installed.  If
+you enter an option list without the OPTIONS keyword, VMSINSTAL displays an
+informational error message and the installation ends.
+
+The options-list parameter lists the options requested.  The VMSINSTAL command
+procedure permits the use of five options.  You specify each option by entering
+the appropriate option letter after the keyword OPTIONS in the command that
+starts VMSINSTAL.
+
+If you specify more than one option, do not separate the letters with spaces or
+commas.  For more information on choosing VMSINSTAL options see Section 3.1.3.
+
+3.1.1.4 SELECTING THE DESTINATION
+
+This parameter is optional.  By default, VMSINSTAL assumes that the product is
+to be installed in the system-specific directory root on the system disk.
+
+There are two instances in which you must use this parameter:
+
+:  If you want to install the product in an alternate root.  The product is
+   installed on a system root other than that on which the target system is
+   running.  Specify the alternate system root in the following format:
+
+   ddcu:[SYSn.]
+
+   ddcu    --    The device on which the alternate root resides.
+   SYSn.   --    The top-level directory of the alternate system root.
+
+   You also may specify a previously defined logical name for the alternate
+   root.
+
+:  If you specify the GET SAVE SET option to copy the product kit save sets
+   into a storage directory for later installation.  For more information on
+   the GET SAVE SET optionj, see Section 3.1.3.
+
+   Specify the destination directory in the following format:
+
+   [node::]ddcu:[directory]
+
+   node    --    a node remote from the target system ( DECnet software must be
+                 installed on your system to use this option.)  If you do not
+                 specify a node, VMSINSTAL assumes that the product save sets
+                 are to be stored on the local node.
+   ddcu    --    The destination disk device.
+   directory --  Usually, a directory dedicated to product save sets on the
+                 specified disk.
+
+3.1.1.5  QUALIFYING THE BACKUP COMMAND
+
+You can specify this parameter along with the GET SAVE SET option to qualify the
+BACKUP command further.  The BACKUP command copies the save sets to the
+destination directory.
+
+The following example includes the GET SAVE SET option and BACKUP qualifiers:
+
+$  @SYS$UPDATE:VMSINSTAL  TEST042 DUA0: [KITS] OPTIONS G DUB0: [KITS] -
+_$ "/VERFIFY/LOG/CONFIRM"
+
+3.1.2  WHEN THE INSTALLATION IS COMPLETE
+
+When the installation is complete, VMSINSTAL does one of the following,
+depending on the requirements of the product you have installed:
+
+:  Performs an automatic shutdown of the system and instructs you to reboot
+   manually
+
+:  Returns you to the dollar-sign prompt ( $ )
+
+When the product is installed, back up the updated system disk.
+
+3.1.3  CHOOSING VMSINTAL OPTIONS
+
+The VMSINSTAL command procedure permits the use of five options:
+
+:  Auto-answer option    ( A )
+:  Get save set option   ( G )
+:  File log option       ( L )
+:  Release notes option  ( N )
+:  Alternate root option ( R )
+
+To specify each option, do the following:
+
+:  Enter the appropriate option letter after the keyword OPTIONS in the command
+   line that starts VMSINSTAL.
+
+:  Press RETURN.
+
+If you specify more than one option, do NOT separate the letters with commas or
+spaces.  For example:
+
+$  @VMSINSTAL product source:  OPTIONS AN
+
+3.1.3.1  AUTO-ANSWER ( A )
+
+The AUTO0ANSWER option makes it easier to reinstall a product by providing
+responses to VMSINSTAL questions and prompts during the reinstallation.  You
+use the AUTO0ANSWER option most often to reinstall products after an upgrade.
+
+If you specify the AUTO-ANSWER option when you install a product, an aswer file
+is created in the form product.ANS in the SYS$UPDATE directory, where product
+is the product-list parameter that you provide when you start VMSINSTAL.
+
+The file type of an answer file is .ANS.  The answer file contains a record of
+your responses to questions and prompts from VMSINSTAL.  For example, if you
+install the product, NEWAID, with the AUTO-ANSWER option, VMSINSTAL creates an
+answer file designated NEWAID.ANS.
+
+When you reinstall the product and specify the AUTO-ANSWER option ( typically
+after upgrading your operating system ), VMSINSTAL reads the answer file
+instead of asking you questions.
+
+If you want to create a new answer file when you reinstall a product, you must
+delete the existing answer file first.
+
+3.1.3.2  GET SAVE SET ( G )
+
+Installing products either from a distribution tape or from console media
+directly onto your system disk is time-consuming.  The GET SAVE SET option
+saves you time by allowing you to store product save sets temorarily on a
+magnetic tape or in a disk directory.
+
+You might consider dedicating a user disk on a node that other licensed system
+users can access.  You can store product save sets on this dedicated user disk
+to give other licensed system users fast access to the product save-set
+directory.
+
+To store a product save set on a disk directory using the GET SAVE SET option,
+enter a command in the following format and press RETURN:
+
+$  @SYS$UPDATE: VMSINSTAL product-list soruce: -
+$ _OPTIONS G device:[DIRECTORY]
+
+NOTE:  The directory that you specify must exist, and the device must be
+mounted; VMSINSTAL does NOT perform any CREATE/DIRECTORY or MOUNT operations.
+
+You specify the disk immediately after the OPTIONS G parameter.  For example,
+if you are storing save sets for a product named NEWAID from the console drive
+into disk directory USER1:[PRODUCTS], enter the following command and press
+RETURN:
+
+$ @SYS$UPDATE: VMSINSTALL NEWAID CSA1:  OPTIONS G -
+$_USER1: [PRODUCTS]
+
+VMSINSTAL creates one or more files to store the product save set in the disk
+directory.  The save set file name has the following format:
+
+facvvu.x
+
+fac    --    The product name code ( 1 to 36 alphanumeric characters).
+vv     --    The major version number ( 2 digits ).
+u      --    The update number ( 1 digit ).
+x      --    A literal extension that is used to identify save set files, where
+             A is the first save set, B the second, and so forth.
+
+NOTE:  Valid extensions for save set files include the literal range A through
+Z and the numberic range VMI_0027 throught VMI_9999.
+
+For example, suppose you are storing update 1 to Version 2.0 of the product,
+NEWAID, and this process requires four save sets.  VMSINTAL creates the
+following four files:
+
+         NEWAID021.A
+         NEWAID021.B
+         NEWAID021.C
+         NEWAID021.D
+
+When you want to install the product on your system, enter a command in the
+following format and press RETURN:
+
+$ @SYS$UPDATE:VMSINTAL product-list device:[Directory]
+
+For the product NEWAID, enter this command and press RETURN:
+
+$ @SYS$UPDATE:VMSINSTAL NEWAID USER1:[PRODUCTS]
+
+VMSINSTAL installs the NEWAID product on your system disk.
+
+3.1.3.3 FILE LOG ( L )
+
+The FILE LOG option logs all file activity to the terminal during installation.
+File activity is defined as any action that alters the disposition of a file,
+such as creating a new file, updating a library, or deleting a file.
+
+3.1.4 RELEASE NOTES ( N )
+
+Use the RELEASE NOTES option to display or print the online release notes file
+supplied by the layered product.
+
+NOTE:  Not all layered products provide online release notes.
+
+The person who builds the product kit names the release notes file.  The
+release notes file is given the file name facvvu.release_notes, where facvvu
+represents the product name code, version, and update numbers.
+
+If release notes are available and you specify option N, VMSINSTAL asks you the
+following questions.  ( The default answeres are indicated in brackets ).
+
+Release Notes OPtions:
+
+    1.  Display release notes
+    2.  Print release notes
+    3.  Both 1 and 2
+    4.  Copy release notes to SYS$HELP
+    5.  Do NOT display, print, or copy release notes
+
+*Select option [2]:
+*Queue name [SYS$PRINT]:
+*Do you want to continue the installation [N]:
+
+:  The first prompt ( *SELECT OPTION ) allows you to choose options 1 - 5.
+:  The second prompt ( *QUEUE NAME ) Is displayed only if you select option 2
+   or option 3.  If you enter the name of a print queue, the system displays a
+   message saying that the release notes have been queued successfully to the
+   printer.  if you do not specify a print queue, the release notes are sent to
+   SYS$PRINT by default.
+:  The third prompt ( *DO YOU WANT TO CONTINUE THE INSTALLATION) allows you
+   either to continue or to end the installation.  The default is to end the
+   installation.
+
+If release notes are not supplied with the product, VMSINSTAL displays two error
+messages.  It also asks whether you want to continue or to end the
+installation, as follows:
+
+%VMSINSTAL-W-NOFILE, New File facvvu.RELEASE_NOTES does not exist.
+%VMSINSTAL-W-NORELNOTE, unable to locate release notes.
+
+*Do you want to continue the installation [N]:
+
+To continue the installation ( Whether or not release notes are available ),
+type Y ( for YES ) and press RETURN.
+
+3.1.4.1 ALTERNATE ROOT ( R )
+
+The ALTERNATE ROOT option lets you install the product to a system root other
+than that of the running system.  The VMS operating system in the alternate
+root must be complete and the same version/update level as the running system.
+All files and software products that the product installation refers to must be
+present in the alternate root.
+
+NOTE:  Not all optional software products allow a product to be installed to an
+alternate system root.
+
+Consult the documentation of the specific product to determine whether the
+product can be installed to an alternate system root.
+
+If you specify option R, the product is installed on the alternate root.
+However, you cannot create accounts or request a system reboot.
+
+3.1.5 RECOVERING FROM A SYSTEM FAILURE
+
+If the system fails during installation of an update or optional software
+product, VMSINSTAL attempts to continue the installation upon rebooting.
+Depending on when the system failed, one of three conditions exists:
+
+:  The system disk was not altered before the system failure.  In this case,
+   VMSINSTAL instructs you to restart the installation.
+
+:  The system disk or library used by the installation was corrupted.  In this
+   case, VMSINSTAL instructs you to retore either the system disk or the
+   corrupted library from the backup copy and to restart the installation.
+
+:  VMSINSTAL continues the installation.  In this case, VMSINSTAL performs most
+of the installation.  Also, it may tell you that you must perform some tasks
+manually to complete the installation.  If VMSINSTAL instructs you to do so, do
+the following:
+    A:  Reboot the system
+    B:  Log in as system manager
+    C:  Purge all system files that have been replaced, even if you requested
+        an automatic purge.
+        $  PURGE/LOG SYS$SYSROOT:[*...]*.*
+
+
+                                [ END OF 03.11 ]
+
+[OTHER WORLD BBS]
+

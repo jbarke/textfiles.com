@@ -1,0 +1,79 @@
+Dogpaw:
+
+Dogpaw is a powerful added-ProDOS-command program which provides an easy and convenient method of displaying and/or printing text files from the BASIC environment. It is primarily intended as a means of presenting on-disk program documentation, though I'm sure many will find Dogpaw useful for a variety of other text viewing/printing purposes. Dogpaw is public domain, and all programmers are welcome to "package" it along with their own public domain or commercial programs for the purpose of handling documentation files. Non-programmers will also find Dogpaw a useful thing to have on hand for displaying documentation (or other text) files.
+
+(Some non-programmer people may find parts of the instructions below to be overly technical. Not to worry; whatever you don't understand, you probably don't need to know.)
+
+Dogpaw works with ProDOS TXT (ASCII text) files, AWP (AppleWorks Word Processor) files and "compressed" files. Compressed files will be explained later. Dogpaw will work with files of ANY length, to the maximum allowed by ProDOS. When displaying text on-screen, Dogpaw presents the text in word wrapped form on either the 40 or 80 column screen. Dogpaw allows you to page forward and backward through the text unlike many text-to-screen utilities, which only offer one-way scrolling. Dogpaw also has a "search" option which allows you to scan through a file for occurrences of any word or phrase. If Dogpaw detects that it is running on an Apple II+, the on-screen text will be displayed in upper case, with lower case a selectable option.
+
+When being used to print text, Dogpaw formats the text for the printed page, and has the option of printing a header at the top of each page. This header can be centered if desired, and can include the page number. While Dogpaw is printing, the number of the page being sent to the printer is displayed on-screen, and the user can pause or end the printing at page breaks. This is useful if single sheet paper is being used, and with some systems, by "printing" to a switched-off printer, this feature can be used to start (actual) printing at some given page in the text other than the first. Both the screen-displayed text and the printed text can be set to either single or double spacing.
+
+Compressed files and /Doc.Stuff/:
+Dogpaw is included on a disk of public domain utility programs written by me. This disk is called "/Doc.Stuff/" and is available from public domain software vendors, is in the software libraries of some on-line information systems, or can be ordered from me for $3.00. The other utilities on /Doc.Stuff/ are also related to the task of presenting text, mainly for the purpose of program documentation. One of these utility programs is "Compressor", which takes TXT or AWP files and compresses them by about 30%. This minimizing the disk space taken up by such files. As mentioned, Dogpaw can display and print these compressed files as well as TXT and AWP files.
+
+Using Dogpaw:
+When you BRUN (or "-") Dogpaw, it installs itself as a new ProDOS command, and can then be used much like other ProDOS commands. (More correctly called "BASIC.SYSTEM commands", if ya wanna get technical.) For example, from the Applesoft prompt, you can simply type in "Dogpaw [filename]", with [filename] being the name or pathname of the text file you want to view. The text will be word wrapped for either 40 or 80 column display, depending on which is active when you call Dogpaw. If Dogpaw finds that the active output slot is neither 0 (40 column display) nor 3 (40 or 80 column) when it is called, it assumes that the output is for a printer, and the text is formatted appropriately. As with other ProDOS commands, Dogpaw can also be used from within a BASIC program in the form: PRINT CHR$(4)"DOGPAW [filename]". Thus, to use Dogpaw to print a file with a printer in slot 1, you would use a BASIC line such as:
+
+10 PRINT CHR$(4)"PR#1": PRINT CHR$(4)"DOGPAW [filename]"
+
+When Dogpaw finishes printing the file, it will return to "slot 0"; output to screen in 40 column mode. When printing, Dogpaw will ignore any embedded printer-control characters, AppleWorks margin and page-break settings, etc. One exception to this is AppleWorks line-centering. If you tell AppleWorks to center a line of text, Dogpaw will center it on the screen or printed page.
+
+The page header option:
+To have Dogpaw print a header at the top of each printed page, the following syntax is used:
+
+10 PRINT CHR$(4)"DOGPAW [filename]\[header]"
+
+That is, whatever you want printed at the top of your pages is written in after the pathname of the text file, separated from the pathname with a backslash. The header will be printed at the top left of each page. If you want the header centered on the page, separate it from the pathname with TWO backslashes: 
+DOGPAW [filename]\\[header]
+If you want the page number included in your header, insert the "#" character where you want the page number to appear. The header option has no effect on Dogpaw's text-to-screen display.
+
+The scan/search option:
+When using Dogpaw to display text on-screen, you can have it scan through the text until a certain string of characters is found. The syntax for this is much like that for the page header option:
+
+DOGPAW [filename]$[string]
+or
+10 PRINT CHR$(4)"DOGPAW [filename]$[string]"
+
+With [string] being whatever you want to scan for. If you enter
+DOGPAW DOGPAW.DOCS.C $widget
+then Dogpaw will put the file DOGPAW.DOCS.C on screen, and quickly flip through the pages until a page with the first occurrence of the word "widget" is being displayed. Then you can page forward or backward as usual. If no occurrence of the entered string is found, Dogpaw will scan through to the end of the text, and the "end of text" message will appear at the screen bottom. If, when Dogpaw stops scanning and displays the page of text with your string, you press the S key, Dogpaw will start scanning again for another occurrence of the string. When using the 80 column screen, Dogpaw will flag the line(s) the string appears in by inversing the first character of the line. The string can be up to about 150 characters in length. The search is not case sensitive; entering "cat" will also find "Cat" or "CAT". Including a scan-string in the Dogpaw command line will have no effect if Dogpaw is being used to print the file. The scan/search option can't be used in the same command line with the page header option.
+
+Line spacing:
+Normally, Dogpaw displays and prints its text single spaced. If you want a double spaced display or printout, simply include a "+" AFTER the filename, and BEFORE the header or search-string, if either is being used; like so:
+
+DOGPAW [filename]+\[header]
+or
+DOGPAW [filename]+$[string]
+or just
+DOGPAW [filename]+
+
+In my opinion, text on the 40 column screen is much easier to read if it's double spaced.
+
+"As-is" mode:
+Occasionally, you may want to use Dogpaw to print out a TXT file which has carriage returns inserted at the end of each line, and has the line-length set to 80 columns. This is sometimes called "80 column hard formatting". This kind of formatting is often found in text files that are uploaded to Bulletin Board Systems. Because Dogpaw normally does its own word wrapping at 70 columns when it's printing, an 80 column hard formatted file can give you a messy looking printout, with lots of very short lines mixed in with normal-length lines. If you find this happening, you can turn off Dogpaw's 70 column word wrapping and let the file use its own formatting by including "@" (circled "a", for "as-is") after the pathname when calling Dogpaw. Like this:
+
+10 PRINT CHR$(4)"PR#1":PRINT CHR$(4)"DOGPAW [filename]@\\[header]"
+
+The "@" must come before the "\" header token, if any header is being used. It can be used together with "+". When this feature is used, Dogpaw will print without a left-hand margin. Using "@" won't effect on-screen text; hard formatted files will look fine on an 80 column display, but will have lots of oddly-lengthed lines on a 40 column display.
+
+Case-convert for the II+:
+When Dogpaw detects that it is running on an Apple II+, the text displayed on-screen will be converted to upper case. To accommodate II+'s that have been modified to display lower case, this conversion can be turned off by pressing "C". Pressing "C" again will turn it back on. When running on a II+, Dogpaw will put a prompt at the bottom of the text-display screen which explains this feature. Text sent to a printer on a II+ will not be converted to upper case. Dogpaw's 80 column mode is compatible with Videx Videoterm standard II+ 80 column cards.
+
+NODOGPAW:
+To remove Dogpaw and free up the memory it uses (about 4K), enter "NODOGPAW". After this is done, entering any Dogpaw commands will result in a syntax error. Please note, however, that this command will release all the buffers that any other added ProDOS commands, ampersand (&) routines, etc. have allocated. (Dogpaw supports daisy-chaining of other added ProDOS commands.) This shouldn't cause any problems with other added ProDOS commands or with ampersand routines - they will simply be removed and disconnected along with Dogpaw. Problems could be caused, however, if NODOGPAW is used when certain other buffer-allocating programs are installed. Some such programs don't use either the ampersand or the added-command "hooks". Beagle Bros. "GPLE" and "D.BUG" are a couple of examples. The NODOGPAW command will release the memory set aside for routines like these, but won't "disconnect" them. Therefor, a crash becomes likely. In general, you should avoid using NODOGPAW unless you are sure that nothing that will cause problems is tucked away in the machine's memory.
+
+DOGPAW?:
+Entering "DOGPAW?" will display the title, version number and date of the Dogpaw program, and also the name and address of its glory-hogging author (me). This is handy for checking whether Dogpaw is installed. This same information is printed whenever you BRUN Dogpaw in immediate mode (that is, from the keyboard, not from within a BASIC program).
+
+Techy stuff:
+Dogpaw BLOADs at $4000, and relocates itself above HIMEM, which is lowered accordingly. Before relocating itself, Dogpaw checks to see if it has already been installed. If it has, it simply returns to BASIC, rather than installing a second copy of itself. When loading a text file into memory, Dogpaw will use whatever room is unused by the BASIC program (if any) that's loaded. Dogpaw has its own set of error messages to let you know if things go wrong. Dogpaw supports pathnames only, not S(lot) and D(rive) parameters.
+
+I'd like to thank Garry Delong and Doug Trueman for their help with Dogpaw. Without their assistance, Dogpaw would be a mere bug-eaten shell of its current self.
+
+Why "Dogpaw"? - thought you'd never ask. Very simple, actually: Start with "Documentation; Printer or Screen". Shorten that to "Doc.P.O.S." Now give that a couple of hard shakes & a slap, and VOILA! You get "Dogpaw". Obvious, huh?
+
+Any comments, bug reports, etc. you may have regarding this program are more than welcome.
+
+Karl Bunker
+321 S. Huntington Ave.
+Boston, MA 02130

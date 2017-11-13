@@ -1,0 +1,799 @@
+America Online
+APPLE II DEVELOPMENT FORUM CONFERENCE LOG
+Tuesday, July 17, 1990  10:00 p.m. eastern time
+Topic:   Getting the Most out of SHR Programming
+         (also, features of new Nifty List 3.0 were discussed)
+Forum Leader:  Gary Jacobson (AFA Gary J)
+
+
+AFA Gary J Ok.  I guess we'll get started (officially).
+AFA Gary J Welcome to the Apple II Development Forum.  I'm Gary Jacobson,
+           standing in 
+AFA Gary J for Dave Sugar for a few minutes, until he gets home from work.
+           :)
+AFA Gary J Tonight's topic is "Getting the Most out of SHR".
+AFA Gary J We have a small group, so lets dispense with protocol (unless
+           things get
+AFA Gary J really out of hand).
+AFA Gary J Do we have any questions to start out this evening?
+AFL Marty  I have one.
+AFA Gary J GA, Marty
+AFL Marty  I'm studying Pascal and working on programming the standard
+           desktop...
+AFL Marty  Can you explain in layman's terms what a grafport is?
+AFA Gary J GA, Matt
+Matt DTS   Check out Apple IIgs TN #80.  That, with the Toolbox Reference,
+           discusses the matter thoroughly.
+Matt DTS   GA
+AFA Gary J GA, Coach
+Coach101   In a IIgs you never really draw on the screen.  What
+Coach101   you do is set bits in memory, that if the memory you are playing
+           with was the super hi-res
+Coach101   buffer, would cause some pattern (hopefully the pattern you
+           wanted) on the screen.
+Coach101   A GrafPort is a collection of values that QuickDraw uses to
+           determine what bits to set in what memory.
+Coach101   ga
+AFL Marty  Thanks.  GA
+SPW        Is every GS supposed to have at least ROM 02 by now?
+SPW        The tech notes discuss it but I have ROM 01
+AFA Gary J GA, Matt 
+Matt DTS   The tech notes do *not* discuss "ROM 02", because no such thing
+           ever existed.
+Matt DTS   There was ROM 0, ROM 1 and ROM 3.  We skipped to three for people
+           who couldn't figure out the version
+Matt DTS   was zero-based.  GA.
+AFA Gary J :)
+A2Evanglst (rom 02 is a figment of our imagination
+SPW        hmmm... well they say that you should not have to program around
+           some ROM 01
+SPW        modem firmware bugs because it is resonable for GS users to have
+           upgraded to
+SPW        ROM 02
+SPW        It's on tech note disk 1
+Matt DTS   We occassionally refer to ROM 01 as "ROM 2.0", but those are not
+           the same numbers. GA.
+SPW        hmmm... ok
+AFA Gary J Let's go to Doctor Why's question.
+Doctor Why Executing a rCodeResource, I was wondering if there is a way to
+           retrieve the
+Doctor Why direct page for Quickdraw if you didn't start it up. I need it to
+           change
+Doctor Why graphic modes.
+AFA Gary J GA, Dave
+Dave Lyons Errr...changing graphics modes from an NDA is probably
+Dave Lyons OH!
+Dave Lyons Wait, you didn't say from a NDA, did you?  (My mind is
+           multitasking with leakage... :-)
+AFA Gary J (Dave "DA's are my life" Lyons :)
+Doctor Why :)
+Dave Lyons Okay, let me start that again, then.  Your application
+Dave Lyons wants to know the direct page that it used when it started
+           QuickDraw somewhere else in the code,
+Dave Lyons and you just don't have easy access to that information.
+Doctor Why yes.
+Dave Lyons The best way is to *provide* that information to the code resource
+           when you call it--for
+Dave Lyons example, pass it on the stack.  Can you do that?
+Doctor Why not at the moment.
+Dave Lyons How come?  Does the rest of your app have access to that value, or
+           did you use
+Dave Lyons StartUpTools to start QD?
+Doctor Why Well, let's just say that it isn't being passed and let it go for
+           the moment.
+Doctor Why :)
+Dave Lyons (The GetWAP function will get your the work area page for QD, but
+           I *don't* recommend you use
+Dave Lyons this--note what happened with the Control Manager--it uses its WAP
+           for something OTHER
+Dave Lyons than the value you pass to CtlStartup, and QD could conceivably do
+           the same thing in the future).
+Doctor Why I'm not sure that it is legal, but I thought I would check to see
+           if there was
+Doctor Why a way.
+Dave Lyons (I don't have a good way other than passing the value.)  ga
+Doctor Why okay, that's what I thought.
+AFA Gary J Ok.  Thanks, Dave.  Anything else Doctor?
+Doctor Why I'll take another approach. Thanks
+AFA Gary J GA, Coach
+Coach101   What does the term "linearize memory" mean, what are its
+           advantages? Is it the default?
+AFA Gary J GA, Dave
+Dave Lyons It's not the default; it applies only to the super-hires screen
+           memory ($e12000 through
+Dave Lyons $e19fff).  It's a strange remapping of logical addresses into
+           physical addresses in the RAM chips,
+Avery R C  ?
+Dave Lyons and it is always on while the SHR screen is actually visible.  QD
+           turns on the linearize
+Dave Lyons bit so that it's on even while the screen isn't, while QD is
+           started up.
+Dave Lyons I don't know what the disadvantage is to having it on all the
+           time--but flipping it on or off *does*
+Dave Lyons remap the contents of the addresses in question, *I think* (would
+           have to double check that), so youy
+Dave Lyons don't want to be flipping it on or off while you care about the
+           contents of that memory.
+Dave Lyons Did that answer the question?
+Coach101   Sort of...  Its a kinky manipulation of address bits but Quickdraw
+           is kinky so its all straight :)
+Dave Lyons something like that...
+Coach101   It was just one of those, "why is the ...." questions.  Thanks for
+           the info...
+AFA Gary J I DON'T understand (exactly) non-linearization.  Linearization
+           simply means
+AFA Gary J that all SHR screen memory is addressed sequentially.
+AFA Gary J I assume non-linearization makes screen memory mapped similar to
+           the way it
+AFA Gary J used to be on the Apple II Hi-res screen, but I've never verified
+           that.
+Coach101   Ahh... The hardware is kinky :)  So that the video circuitry is
+           simpler  
+Coach101   done...
+Avery R C  Something like the interleave-or-straight thing in GIF files?
+Dave Lyons Yeah, with linearization OFF things are weird...like Hires, in
+           principle.  The color
+Dave Lyons tables aren't even at $E19E00 with linearize off.  ga
+AFA Gary J Ok, Scott.  You're up next.  GA
+AFL Scott  Is it possible to switch palettes in the middle of a scanline
+           trace?  The ...
+AFL Scott  reason I'm asking is.. Parik posted a message in my message boards
+           the other
+AFL Scott  day about the French, who seem to have done it. And... I was
+           talking to 
+AFL Scott  Bill St. Pierre the other day, and he's under the impression that
+           SCB's are
+AFL Scott  read by the hardware at the start of a trace so switching them in
+           the middle
+AFL Scott  would have no effect.  Who's right?
+AFA Parik  you could change palettes halfway through also.  
+AFA Gary J Try it and see. :)
+Dave Lyons Yeah
+AFL Scott  You could but would the effect be visible?
+AFA Gary J Anyone know?
+AFA Gary J GA, Coach
+AFL Scott  I don't have time to experiment.. I'm in the middle of a
+           project.
+Coach101   It would seem to me that since we are dealing with 1mhz memory,
+           the video circuitry would not be
+Coach101   spending cycles checking for changes with every "data" byte...  
+           Just a thought... ga
+AFA Gary J GA, Dave
+Dave Lyons I'd be surprised if the thing actually read a color table & copied
+           it somewhere, so I bet changes to
+Dave Lyons Hmmm...well, I don't know what I think now.  Somebody's going to
+           have
+Dave Lyons to try it (I'm looking in the Hardware Ref for clues about how the
+           VGC knows what all the color
+Dave Lyons tables and SCBs are).
+Dave Lyons There are at least 2
+Dave Lyons things in question here:  when do changes to color tables take
+           effect, and when do changes to the
+Dave Lyons SCBs take effect (for example, change the line to use a different
+           one of the 16 color tables in
+Dave Lyons your palette).  [Note the correct use of "palette" above. :-) ]
+AFA Gary J Even if those answers were known, Dave, it seems like it would be
+           extremely
+AFA Gary J difficult to manage the effect in a practical application.
+AFA Gary J GA, A2GS
+A2GS       I believe I once tried it and did not get the desired results, so
+           NO I don't
+A2GS       believe changes made to a palette while drawing a SL will not
+           immiediately
+A2GS       effect the scan line.  (But I won't swear that it can't be done 
+           :)
+AFA Gary J Parik, do you have a sample application using this technique, or
+           know where
+AFA Gary J one could be obtained?
+AFL Scott  Thanks... it's an interesting topic... Bill said he was going to
+           try it.
+A2GS       Please ignore the "not" above  :)
+AFA Gary J Ok.  :)
+AFA Parik  the acs demo does a "ham" mode (look in ams/agr, or the hidden
+           libs of agm :)
+AFA JoeyS  LOL
+A2GS       Parik, why don't you look at their code.
+AFA Parik  the demo only does 32 "greyscale", that means its a joke or there
+           is some
+AFA Parik  reason that its very limiting.  I would think it can be done since
+           the vert
+AFA Parik  count does read horz?  ga
+AFA Gary J Thanks, Parik
+A2GS       BTW, saying it's a "ham" mode is probably not accurate if you
+           referring to the
+A2GS       grey scale demo.
+AFL Scott  Yes, but isn't it updated too quickly to be usable?
+AFL Scott  The horizontal, that is...
+A2GS       Yes, but notice how few scan lines are used in the demo.
+A2GS       Probably VERY time consuming.
+A2GS       yup.
+AFA Parik  if you're in France it seems usable.  <grin>
+AFL Scott  I mean the horizontal frequency is way more than the vertical
+           frequency.
+A2GS       Good for use as a Random # generator though :)
+AFA Gary J Must be the French assemblers they use, or something.
+A2GS       Keep in mind they're using PAL not NTSC.
+Coach101   Isnt PAL more demanding than NTSC?
+A2GS       More SL.
+AFA Gary J Ok, anything further on this?
+AFA Gary J GA, Scott
+AFL Scott  So.... how do we get more out of SHR? :)
+AFA Gary J :)
+AFA Gary J (Now I understand the reason for your questions :)
+A2GS       get a TurboRez  :)
+AFL Scott  right.
+A2GS       Any word on it?
+AFA Gary J You want more pixels or more color, right :)
+AFA Parik  put the word Apple IIgs in front of a Cray.
+AFL Scott  I mean, I think I'm doing ok squeezing 16 colors for all they're
+           worth! :)
+AFA Parik  (anyone know whatever happened to GASP?)
+AFA JoeyS  GASP?
+AFA Parik  Geeks Are Super Programmers
+AFL Scott  Plenty of words, A2... It'll be in a log in AGR.
+AFL Scott  LOL!!!:)
+AFA Parik  (better known as Graphics & Sound Program or something.  shown at
+           AppleFest,
+AFA Parik  done on a cray->mac->gs, 3d sorta demo.  real neat!)
+A2GS       Never heard of it?  What kind of 3d?
+A2GS       rather, Never heard of it!
+A2GS       :)
+AFA Parik  ask Matt DTS, he was there the day it was demo'd, I remember. I
+           just saw it
+AFA Parik  for a few mins :(
+A2GS       Well, wait till some 3D solid object programs hit the libs!]
+AFA Gary J I guess everyone else here has already gotten all they could get
+           out of SHR
+AFA Gary J also.  Any other SHR questions (or normal programming
+           questions??)
+AFA Gary J (Or abnormal programming questions :)
+AFL Scott  Any chance of Carosel of Impossible Physics being released?
+Matt DTS   It's "Questionable", not "impossible", but it is unlikely.
+AFA Gary J I'd like to see those too, Scott.  Ok Nuzz, GA with your
+           question.
+Nuzz       I have 2 questions on Resources. 1st. When Loading a res. is there
+           a way to 
+Nuzz       tell if _I_ loaded it, or if it was loaded?
+Nuzz       2nd, can I change the search path of resources
+Dave Lyons Mike, I don't think there is a reasonable way to find out if a
+           resource has already been loaded
+Dave Lyons or not, unfortunately.  You can do it by walking through the
+           resource maps in memory, but this
+Dave Lyons is tricky and *might* (not sure) cause you problems if the format
+           every changes.
+Dave Lyons What do you mean exactly by changing the search path?
+Nuzz       If I set the File Depth to 1, I would still want the system
+           resources available
+Dave Lyons Well, that could be a problem.  Why do you want to do that?
+Nuzz       Well, there could be duplicate Id's in the path..
+Dave Lyons How?
+Nuzz       and I only want to look at the current file
+Dave Lyons Oh, duplicate resource IDs in other files, ok.
+Dave Lyons You only want to look in the current file *and* the system file?
+Nuzz       If you do a tool call with Depth to 1, bad news
+Nuzz       right Dave
+Dave Lyons Right.
+Dave Lyons So, when you do an operation when you actually want a resource
+           from a partiular file, set it to
+Dave Lyons be the current one and set the depth to 1, do the operation, and
+           restore the depth and the current
+Dave Lyons file.  What's the difficulty?
+Nuzz       If you do many calls, especially error checking, the code starts
+           mounting up
+Dave Lyons SUBROUTINES!
+Dave Lyons (Macros are evil, subroutines are good, macros are evil,
+           subroutines are good.... :)
+Nuzz       LOL, you have me there
+Dave Lyons By the way, when you create toolbox things from
+Dave Lyons resources, the resources you created them from have to be
+           available--just having Sys.Resources is not
+Dave Lyons necessarily good enough.  For ex, a control created by resource
+           might want to load its resources
+Dave Lyons when it gets redrawn, so that file has to be in the search path
+           then.
+Nuzz       That was the problem I was having
+Nuzz       Ok. Subroutines for me. GA and thanks
+Dave Lyons I still don't see why you want a particular file + Sys.Resources,
+           excluding other files in your
+Dave Lyons ...chain...search path.  Whatever.
+Nuzz       because there is occasion for duplicate Id's, and if I call upon
+           one, I want 
+Nuzz       the one in the current file. For example, an rIcon
+Nuzz       I could easily draw the wrong Icon
+Dave Lyons Ummm...are you making a NewControl2 call to create an icon button
+           control by resource ID?
+Dave Lyons I think I see your the difficulty....
+Nuzz       Yes
+Dave Lyons Well, okay:  If the control template is in the *current* resource
+           file, then it will get used,
+Dave Lyons no problem.  The defproc will come
+Dave Lyons from Sys.Resources.
+Dave Lyons Or, as Matt suggested to me (and which I was going to suggest next
+           anyway), you could load the
+Nuzz       Right, that's why I wanted the system resources available
+Dave Lyons control template yourself 
+AFA Gary J :)
+Nuzz       Hmm, how
+Dave Lyons and DetachResource on it, and then do a NewControl2 by handle on
+           that.
+Dave Lyons (Sorry, got interrupted.)
+AFA Gary J sei
+AFA JoeyS  :)
+Dave Lyons (Well, it was my manager, and SEIing your manager isn't polite.
+           :-)
+Coach101   no,  php sei .....      plp
+Dave Lyons :)
+Coach101   Who runs the show anyway Dave :)
+AFA Gary J Ok, does that answer your question, Nuzz?
+Nuzz       Ok, I think I understand (a little) Thanks. GA
+AFA Gary J :)
+AFA Gary J Ok, Scott has the next question.  GA, Scott.
+AFL Scott  Are $C1 pictures guaranteed to stay in the same format? If
+           hardware changes
+AFL Scott  won't most applications that save C1 pictures be broken?
+AFA Gary J Good question, Scott.  I would assume that IF another video mode
+           is
+AFA Gary J *created*, and the old mode didn't change, then we'd just have a
+           new type
+AFA Gary J of screen image file to deal with.
+AFA Gary J But somehow I doubt that the actual layout of screen memory
+AFA Gary J would change, but possibly the memory ADDRESS.
+AFL Scott  Is the recomended practice to keep a copy of all screen memory in
+           an 
+AFL Scott  offscreen area?
+Dave Lyons When there's a filetype like $C1;0000, which is
+Dave Lyons guaranteed to be a certain length, that format will not change. 
+           It's better to use the more
+Dave Lyons flexible formats, like Apple Preferred.
+Coach101   Hey, maybe we could have a "hyperbolize memory mode"
+Dave Lyons What would happen if an old program tried to load an old picture
+           in a new video mode?  Good
+Dave Lyons Question!
+A2GS       Well, what happens?  :)
+AFL Scott  I'm just wondering, as trying to plan ahead is an exercise in
+           guessing...
+Nuzz       You get an old crash :)
+AFA Gary J It would be nice if we would have to worry about these things
+           some day.
+A2GS       :)
+Dave Lyons Scott, I don't understand the question...why should you do all
+           your work offscreen?
+AFL Scott  It seems to me that the only way to be safe is to use Toolcalls to
+           offscreen
+AFL Scott  grafports to get the contents rather than assume everything is
+           where it is.
+Dave Lyons If you want to know where the screen is, you can open a new port
+           and look at the LocInfo at the
+Dave Lyons beginning of the port.
+Coach101   Scott, if there were a new video mode, then your program would be
+           aware of it and your program
+Coach101   would be aware of the file type, so your program
+Coach101   could do the conversion, if there was a conversion to do in
+           whatever way it wanted..
+Dave Lyons (In the case of a machine with multiple screens, I believe this
+           will get you the "main" screen.)
+A2GS       Why should any OLD program even end up in a NEW video mode to
+           begin with????
+Dave Lyons A2GS, good point--it probably shouldn't.  (Now, an NDA is more
+           interesting....)
+AFL Scott  Just so happens that part of what I'm doing is an NDA, Dave... and
+           format
+AFL Scott  of memory is important and it's wasteful to depend on a copy of
+           the ENTIRE
+A2GS       Well some if not all of us have seen what happens to a 640 pic
+           when 320 mode
+A2GS       is turned on.
+AFL Scott  contents of screen memory for compatibilities sake.  Just
+           wondering what the
+AFL Scott  line is on things like this... Use tools to get screen memory to
+           offscreen 
+AFL Scott  areas or blast straight from Screen memory when writing?
+Dave Lyons The safest way is, of course, to use tools.  Like PPToPort.
+Dave Lyons For example, if QuickDraw ever supports the 400-line mode that's
+           available with the video
+Dave Lyons overlay card, screen memory would no longer be linear (so that
+           would be a major rev to QD!).
+Dave Lyons That would definitely mean you couldn't do a GS/OS Read or Write
+           directly to/from screen memory any
+Dave Lyons more...in fact, you couldn't even figure out where all the memory
+           is by looking at the LocInfo for
+Dave Lyons a port.  That would be weird.
+AFL Scott  Ok...  What do most commercial apps do?  Do they build a screen in
+           offscreen
+AFL Scott  memory to save from or write from screen ram?
+AFL Scott  (for the $C1 case)
+Dave Lyons What kind of apps, Scott?  If they have a scrolling window for the
+           pixel map they're displaying
+Dave Lyons then they must have a copy offscreen somewhere.
+AFL Scott  Ok... just wondering... I know it must seem stupid, but I'm trying
+           to be as
+AFL Scott  safe as possible here.
+AFL Scott  (For the record, most I've looked at save from an offscreen
+           area).. There's
+AFL Scott  a way to tell with out disassembling the Application if you have
+           AO GS..:)
+AFA JoeyS  LOL
+AFL Scott  For the record, too.. PWG saves straight from screen memory. :)
+A2GS       AO GS?
+AFA JoeyS  AO.SYS16.  It's a fascinating bug.  :D
+Dave Lyons It does?  Wow...they have lots of copies offscreen, right?
+AFA Gary J Hmmm...  How can it do that, when the menu bar and tools are on
+           screen? (PWG)
+Dave Lyons (Good question.)
+AFL Scott  The pixmap is from offscreen, the other parts are straight from
+           SHR memory.
+AFL Scott  (in the C1 case)... I should have been clearer.  Sorry.
+A2GS       You mean the drawing area
+AFL Scott  Drawing area is saved from offscreen, yes.
+Dave Lyons What's the AO bug, Joey?
+AFA JoeyS  <snicker>  Scott was responsible for finding it -- wanna take it
+           away, Scott?:)
+AFL Scott  Naw, you do it, Joe... :)
+AFL Marty  :)
+AFA Gary J I'd like to hear this  :)
+AFA JoeyS  LOL... okay:
+AFA JoeyS  Seems that BOOT.PIC was saved by SHRConvert, which you'll know (if
+           you've ever
+AFA JoeyS  looked at an SHRC $C1 pic) contains "[=- Saved by SHRConvert 2.1
+           -=]" (or
+AFA Gary J yes
+AFA JoeyS  similar) in the SCB area, after byte 200.  Seems that Bill loads
+           that pic in
+AFA JoeyS  its entirety (including SHRC credit line) into screen RAM.  Since
+           the system
+AFA JoeyS  doesn't normally use that part of memory, that text stays
+           foreverrrr (nearly),
+A2GS       Not a very smart thing to do on Jason Harpers part!
+AFA JoeyS  getting transferred also into any other full screen pic you save. 
+           Crazy.  :)
+AFA JoeyS  Nope, it wasn't, A2GS...
+A2GS       But cute.
+AFL Scott  Some $C0's too.. depending on the app.
+AFL Marty  Does it mess up any applications?
+A2GS       shouldn't
+AFA JoeyS  It shouldn't.
+AFL Scott  Not yet, but the potential is there, that's why I'm really
+           concerned about
+AFL Scott  writing $C1's right.
+AFL Scott  Oh, BTW, Nifty List made tracking this down really easy.
+Dave Lyons Hey, Nifty List 3.0 is "done" ("done" because I said "Okay, no
+           more time...gotta give this out
+Dave Lyons at KansasFest!).  I probably won't get a chance
+Dave Lyons to upload it till after the show (gotta finish preparing
+           presentations yet!)
+AFL Dyfet  Okay Dave...What's Nifty in the new Nifty List?? :)
+AFL Scott  Oh... darn!  I won't be at the show. :(
+AFA JoeyS  Me either :(Dave Lyons Major features are: command modules work (you can write your own,
+           with what I hope turns out to
+Dave Lyons be usable documentation on that subject), and you can make toolbox
+           calls from the command line!
+AFA JoeyS  Neato! :)
+AFA Gary J E-mail it to me, and I'll upload it then!!! :)Dave Lyons Gee Gary, would that save me time? :-)
+AFA Gary J :)
+AFL Scott  Upload it on the Mac using Scheduled E-Mail, Dave... Gary can use
+           AFE
+AFL Scott  to move it... That way you can do it while you're asleep... if you
+           do that, 
+AFL Scott  these days. :)
+AFA Gary J Yep, Scott. (I've had to do that before )
+Dave Lyons I wrote a \find command in the "Goodies" module...for example
+           5000\find "Lyons" searches
+Dave Lyons all handles owned by a Desk Accessory ID for my name (probably
+           shows more matches on my machine
+Dave Lyons than most people's....)
+Dave Lyons Oh, how 'bout 0\find [A2 #NewWindow2]  ?
+Nuzz       Now that is NIFTY
+AFL Dyfet  :)
+AFL Dyfet  I want a Nifty Rom :)
+AFL Scott  It really is!!!
+AFA JoeyS  :) me too
+AFA Gary J I like that feature, Dave.  Can you make it search non-claimed
+           memory as
+AFA Gary J well?
+AFL Scott  But does it disassemble to disk?  Had to throw that in! :)
+AFA JoeyS  The only big thing I'd like NiftyList to be able to do would be to
+           keep a table
+AFA JoeyS  of user-defined labels.
+AFL Scott  That'd be nice, too, Joe. :)
+AFA JoeyS  It'd help a ton when disassembling AO.SYS16.  :-)
+AFA Gary J Yes, it would.  As an external file to the current data file.
+AFL Scott  But Orca/Disassembler generates all those real nice L000xx labels!
+           :)
+AFA JoeyS  Ugggh, Scott.
+AFA Gary J Scott, how do you like Orca/Disassembler overall?  (I've only
+           used Merlin's)
+AFA JoeyS  ORCA/Disasm is great!  (even though I'm not Scott)
+AFL Scott  I think it's pretty good, but it's prone to crashing or hanging at
+           times.
+AFL Scott  But then ever since I put a Visionary board in my system, I've
+           been having
+AFL Scott  a lot of weird things happening.
+Dave Lyons Scott, you can search non-claimed memory by specifying a range of
+           addresses (but that
+Dave Lyons way you have to be careful to skip over $00Cxxx, $01Cxxx, $E0Cxxx,
+           and $E1Cxxx.  (I don't
+Dave Lyons search those with 0\find...it skips all handles with
+           ownerID=$0000.
+Dave Lyons Sorry, no disassembly to disk yet--I plan to add that
+           eventually.
+AFA Gary J Sounds like what I've been waiting for, Dave!!
+Dave Lyons No user-defined labels yet either, but I definitely want that
+           too.
+Nuzz       The ability to make tool calls is fantastic
+AFA JoeyS  Agreed, Mike... I'm gonna LIKE that.
+Dave Lyons Yes!  I love it myself, and I'm pretty adept at using \...\U from
+           the monitor.  This is a BIG
+Dave Lyons improvement!  (Although it would help a lot to be able to hit
+           up-arrow and go correct a typing
+AFL Scott  Same here...it opens up a new era of experimentation! ;)
+Dave Lyons error on a long toolbox call.  History will be in 3.1.)
+AFA Gary J Wow.
+AFL Scott  NL is getting pretty big now, eh?
+Dave Lyons (Yeah, you can *do* toolbox calls from the monitor, but NL is less
+           annoying, so you wind up
+Dave Lyons actually *doing* the experimentation, instead of considering the
+           theoretical possibility of doing
+Dave Lyons the experimentation. :-)
+AFA Gary J :)
+Dave Lyons Yes, it's pretty big--on my system right now,
+AFA JoeyS  I assume you can do something like \0 0 grafon\u (as a simple
+           example) in NL3--
+Dave Lyons it's taking up 35K for Nifty List, 58K for the data file,
+Dave Lyons and 2.5K for "Big Brother v0.5" and 10K for Goodies.
+AFA JoeyS  it fills in the tool number, yes?
+AFA JoeyS  Big Brother?
+Dave Lyons Joey, even better:  You do _GrafOn and hit return.
+Dave Lyons You don't even have to capitalize it right.
+AFA JoeyS  Rockin'!
+Nuzz       WoW
+AFA JoeyS  (yeah, NL never =was= case-sensitive, thank God)
+Dave Lyons "_" is an operator in my "expression" syntax, and you can nest
+           them, like
+AFA JoeyS  How do you handle return parameters on the stack?
+Dave Lyons _NewHandle(_multiply(3,5),_mmstartup,0,0)
+AFA Gary J Wow!
+Dave Lyons The returned parameters are the expression result, and at the "top
+           level" (the command line) I
+Dave Lyons just display them.  For ex,
+Dave Lyons _MMStartup
+Dave Lyons Result = $1234
+AFA Gary J Nifty :)
+Nuzz       That was the best 15 bucks I ever spent....
+AFL Scott  Most triumphant!!!
+AFA JoeyS  Ooooh... {S I like it!}
+Dave Lyons Later it will name the parameters for you when there are
+           several,
+AFL Scott  Same here!
+Dave Lyons but now it shows them all.  Like _ReadTimeHex prints
+Dave Lyons Result = $12341234123412341234 or something like that.
+AFA Gary J Hmmm.  I guess I better find a ticket to Kansas real quick...
+           :)
+Nuzz       So, what's Big Brother?
+AFA Gary J The part that trashes your memory (on bank boundries :)
+Dave Lyons Big Brother v0.5 is HALF of what I want for
+Dave Lyons BB 1.0.  This half that I've got so far
+Dave Lyons does the checksumming stuff for you (on demand, not
+           automatically):
+Dave Lyons You type \addfree and it allocates most of your free memory in
+           purgable chunks & remembers their
+Dave Lyons checksums.  Later, after you run an app that may trash memory, you
+           type \check and it tells you
+Dave Lyons if any of the areas changed (they shouldn't, because NL owns
+           them!).  'course, it also tells
+Dave Lyons you that some of them got purged, if the app allocated much
+           memory.
+AFA Gary J I need that feature BAD!!
+Dave Lyons The OTHER half of BB will be "discipline" for toolbox
+           calls--automatic checking of the
+Dave Lyons parameters for most toolbox calls, warning you when something is
+           screwy BEFORE it hoses your system
+Dave Lyons so bad you can't figure out what went wrong.
+AFA JoeyS  <drool>
+AFL Marty  ::handing Joe a tissue::
+AFA JoeyS  Thank you.
+AFL Scott  When I trash memory, I trash it soooooo bad that I seldom can
+           return to a
+AFL Scott  DA.
+Dave Lyons (Also alerting you to potential problems that aren't actually
+           causing you crashes, like
+Dave Lyons NDAs calling TLShutDown, or your code disposing of the handle that
+           contains its stack, etc.).
+Dave Lyons Oh, Gary, I fixed my stupid bug that was trashing memory...did I
+           mention that?  I had left out a
+Dave Lyons carry-the-addition-to-the-high-word thing one place.  It's solid
+           now.
+AFA Gary J Yes, you did mention that it was fixed. 
+AFA JoeyS  May I ask a silly question?
+Dave Lyons yes
+AFA JoeyS  How does Nifty-List (or MacroMate, the only other CDA that I know
+           of that does
+AFA JoeyS  such a thing) load a datafile(s) at install time??  
+Dave Lyons Easy:  The system calls the CDA's "shutdown"
+Dave Lyons routine (the second of the two addresses in the CDA's header)
+           whenever DeskShutDown is called,
+Dave Lyons and the system ("GLoader") calls DeskShutDown after it installs
+           all the CDAs and NDAs at boot time.
+Dave Lyons (BTW, NL has the option of NOT loading the data file at boot,
+           starting with 2.90.)
+AFA JoeyS  ...and you have a flag saying if the file has been loaded.
+AFA Gary J Ahhh, yes.
+AFA JoeyS  Neat!  It's so obvious.  THANKS! :)
+Dave Lyons Yeah, I have a handle to the file, and if it's NIL or if the
+           handle has been purged I try to
+Dave Lyons reload it (the thing is purgable in 2.90 and later, if you
+           configure it that way).
+Nuzz       When Dave Updates, he UPDATES.... Those are some additions..
+AFA Gary J Really.
+Dave Lyons (bow, bow :)
+AFA JoeyS  {S Applause} Dave :)
+AFA Gary J (I can't wait!!)
+AFL Scott  Dave, use scheduled Email... you'll save time!
+Nuzz       you deserve the bows. I can't imagine not having NL installed
+AFA Gary J :) ;)
+Dave Lyons (Well, my plane leaves in 14 hours & I'm not ready, so I probably
+           won't get to upload it tonight :( )
+AFL Scott  And we'll get Nifty List 3.0 earlier! :)
+Dave Lyons (I don't have it packed or anything, Scott....)
+AFL Scott  :(((( Well, I guess we'll have to wait!  Enjoy Kansas, though,
+           Dave!
+Matt DTS   He left out a stack warning and won't put it in, declaring 3.0
+           "final".  :P
+Dave Lyons Yes, I think I will...I just hope people bring lots of good
+           questions for me to answer, given the
+Dave Lyons probably-relatively-sorry-state my presentations are going to be
+           in.
+Dave Lyons Matt wants me to point out that NL can't always
+Dave Lyons get a 2K stack when you enter, so you may have a 1-page stack,
+           which is inadequte for *some*
+Dave Lyons toolbox calls.
+Dave Lyons NL 3.1 is going to print a warning whenever you enter, if it
+           couldn't get the stack.
+Dave Lyons Other stuff... \files shows open files (name and refnum and
+           access), \oomq \runq \notifyq for
+Dave Lyons dumping the out-of-mem q, the run queue, and the OS Nofity_Proc
+           queue.
+Dave Lyons \map for dumping resource maps.
+AFL Scott  And the doc is only 1000 pages, right? :)
+AFA JoeyS  LOL
+AFA Gary J How many of these features already exist to some degree in the
+           current version,
+AFA Gary J and just aren't connected?
+AFA Gary J (You must be really hammering out the code, otherwise :)
+Dave Lyons In 2.92, Gary?  The *services* used by command
+Dave Lyons modules were partly there in 2.92, but I added a lot more while
+           writing BB 0.5 and Goodies 1.0.
+Dave Lyons I don't *think* I had any Expression stuff in 2.92...can't even
+           remember now!
+AFA Gary J It sounds like you've added some really useful features.
+AFL Dyfet  Yes, perhaps a few :)
+AFA Gary J (I'm impressed)
+AFA JoeyS  :)
+Dave Lyons Did I mention the ":" command for storing into memory?
+AFA Gary J Ahhh!  I was just going to ask about storing into memory :)
+AFA JoeyS  YAYYYYY!  Dave, THAT'S yet another thing you desperately needed...
+           terrific!
+Dave Lyons address: expression-list
+Dave Lyons 0/300:1 2 3 4 "hello" 5 6 _MMStartUp 8 9 A  :-)
+AFA JoeyS  <drooling again>
+Dave Lyons Yeah, all I need now is a \fill command (not written yet) and I
+           may not have to drop in the
+AFA JoeyS  Can you also do something like 0/300:JMP 0300    ?
+AFL Marty  You need a splash guard for that keyboard, Joe.
+AFA Gary J (I've had to use * many times in and out to get done what I need
+           to do)
+Dave Lyons monitor much at all any more, except when I crash during boot
+           before NL gets loaded in....
+Dave Lyons Joey--nope, sorry.  I have *definitely* thought of that, though! 
+           Some day maybe an
+Dave Lyons allowable expression form will be 'ldx #NewHandle' or
+           whatever--anything I can "miniassemble"--but
+AFA Gary J Just hook up with the mini-assembler.
+Dave Lyons right now I don't have a miniassembler.
+AFA JoeyS  Right, what Gary said -- can't you pass something to the
+           mini-assembler, or
+Dave Lyons I don't think there's a relaible way to call the ROM
+           miniassembler...anyway, I would want to
+AFA JoeyS  copy the algorithm used in there?
+Dave Lyons suport my expression stuff inside the operand fields (as in 'ldx
+           #NewHandle' --> ldx #$0902).
+Dave Lyons There are also problems with relative branches--how can I evaluate
+           'BRA $1234' if I don't know where
+Dave Lyons it's going to be stored?  I suppose I can require
+Dave Lyons the operands to be relative, but that's boring and somewhat
+           annoying.
+Dave Lyons Are there any other Monitor features I'm missing?
+AFA JoeyS  The better question is, why doesn't Apple REPLACE the monitor with
+           Nifty-List
+AFA JoeyS  on the ROM 04 GS??
+AFA Gary J :)
+Dave Lyons (Hmmm, that sounds like a multi-part question, Joey.... :-)
+AFA JoeyS  LOL... no, I'm not leading the witness, your honor.  :)
+AFL Dyfet  Shh...you weren't supposed to leak that yet, Joey! ;)
+Dave Lyons Anyway, I still *want* the monitor...there are times you couldn't
+           use NL reliably the way it
+Dave Lyons stands now--it allocates memory on entry, for example (for a
+           stack).
+Dave Lyons It also makes quite a few toolbox calls, so it might be hard to
+           debug an Alpha toolbox or ROM
+Dave Lyons using Nifty List.
+Dave Lyons I wouldn't mind having NL in ROM though...may have to look into
+           making myself one (as a ROMDISK
+Dave Lyons ROM, for example.)
+AFA JoeyS  :)
+AFA Gary J :)
+Nuzz       How about a DEC to HEx to Bin converter
+Dave Lyons .) = ).
+AFL Scott  To tell you the truth, I'm surprised Apple hasn't bought it from
+           you, Dave.
+Dave Lyons Hmmm...gee, I guess I don't have a way to display expressions in
+           decimal right now, do I?
+AFA Gary J It SHOULD be shipped with GSBug
+Dave Lyons I know Mike, how 'bout when you get your hands on the Module
+           Writing docs, you write a little
+AFA Gary J Yes, Mike's suggestion could be useful.
+Dave Lyons \dec command that calls nlGetAGlobal or nlEvalExpr and prints the
+           result in decimal?
+Nuzz       I'll give it a try
+Dave Lyons :)  (I'll do it for 3.1, too, or Goodies 1.1, or whatever.)
+AFA Gary J How long ARE the docs?
+AFA Gary J (is 1000 pages that far off? :)
+Dave Lyons Let's see...
+Dave Lyons 2.5 pages release notes from 2.92 to 3.0, and
+Dave Lyons 11 pages in the "manual" (pretty crappy manual, really--almost all
+           the info is straight from
+Dave Lyons the online help), and
+Dave Lyons The docs for writing modules are currently 6 pages, which is not a
+           lot, but you get an example
+Dave Lyons module (4 pages) and an Equates file (1.5 pages), so it should
+           be
+Dave Lyons doable.
+AFA Gary J You can just update the docs with Nifty List Tech Notes as you
+           have time to
+AFA Gary J do so :)
+Dave Lyons (The sample is in MPW IIgs Assembly...so shoot me. :)
+Nuzz       I'll take it even if its in Logo
+AFA Gary J :)
+AFA Gary J Right, Mike.
+Dave Lyons Actually, I *sort of* have a decimal converter...like this:
+Dave Lyons _Int2Dec(xxx,300,10,0)   300;h
+Dave Lyons (Well, it works, but it's harder than dropping into the monitor
+           and typing xxx= and then =xxx to see
+Dave Lyons which one of those is h>d and which is d>h. :-)
+Nuzz       LOL I always get them confused
+AFA Gary J Yeah, me too.
+Dave Lyons (Me too!)
+AFA Gary J I ALWAYS have to do both.
+AFA Gary J :)
+Nuzz       Sometimes I do both Twice to make sure
+Dave Lyons For the record, it's HEX=DECIMAL, so you type 100= and get 256 or
+           =256 and get 100.
+Dave Lyons But I never remember that.
+AFA Gary J (I generally pick the WRONG one I'm looking for first :)
+Dave Lyons Oh, I forgot to mention I *definitely* have a decimal to hex
+           converter.  I guess I never
+Dave Lyons thought of using it that way!
+Dave Lyons In an expression, #xxx is a decimal number (well, if it doesn't
+           start with a digit it's a
+Dave Lyons toolbox call number by name), so you just type
+Dave Lyons `#256 and get
+Dave Lyons Expression = $0002:00 01
+Dave Lyons (Yeah, that's a crappy way to display the expression result...put
+           it in that way to test
+Dave Lyons the parser and never changed it.  "_" for tool calls is a shortcut
+           into an expression and
+Dave Lyons displays results its own way.
+Dave Lyons Hey, that means you can do this:  _LoWord(#256) and get Result =
+           $0100.  Cool, sort of :)
+Dave Lyons (Yes, ` evaluates an expr and displays it.)
+Nuzz       Gary, how about having a NiftyList night on here
+Dave Lyons (Cool by me, but at least a week or so after I get it uploaded
+           here....)
+AFA Gary J Mike, we're doing a debugging session at the end of the month. 
+           I'm
+AFA Gary J certain Nifty List will come up there... but I'd like to see Dave
+           do a night
+AFA Gary J of this stuff too.
+Dave Lyons Well, I gotta finish my Kansas stuff, so it's time to take
+           off....
+Dave Lyons (Ask me *after* KF, Gary!)  Bye!
+Nuzz       I think everyone is going to need some time to recoup from KC

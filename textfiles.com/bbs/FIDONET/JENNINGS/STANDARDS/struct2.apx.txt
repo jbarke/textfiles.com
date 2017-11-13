@@ -1,0 +1,358 @@
+        (s7BFido's Complete Operating Manual         Page APPENDIX-1    (s0B
+        _I_n_t_e_r_n_a_l_ _D_a_t_a_ _S_t_r_u_c_t_u_r_e_s
+
+             These are the data structures used by Fido for various
+        things. Each is described separately. This information is
+        included for informational purposes.
+
+             The structures are fairly stable; if additions are
+        made, they are always made in a backwards compatible
+        fashion, usually with a version flag or some other method to
+        indicate the format change. If you write utilities to work
+        with these structures, you will almost always be able to
+        accomodate future changes.
+
+             All text strings: null terminated, left justified,
+        usually lower case, first letter upper case. Only one space
+        between words.
+
+             Integers are all 16 bit twos complement, except double
+        word (32 bit) integers as noted.
+
+             Flags are implemented as bit masks in a 16 bit unsigned
+        integer. All are positive true.
+
+             Flag type items (tab expansion on/off, "More?" on/off,
+        etc) are all full integer flags; Fido keeps them as 1 == on,
+        0 == off, though any non-zero value means on. Please keep
+        them as 1 == on for consistency.
+
+             The internal file structures, which follow below in
+        roughly alphabetical order, include:
+                o  nnn.MSG
+                o  MAIL.SYS
+                o  Message Packet Header
+                o  NODELIST.SYS
+                o  NODELIST.IDX
+                o  SCHED.BBS
+                o  SYSTEMn.BBS
+                o  TIMELOG.BBS
+                o  USER.BBS
+
+
+        _n_n_n_._M_S_G
+
+        /* Message header structure. The message text is
+        just a long string following the structure. */
+
+        struct _msg {
+             char from[36];      /* who from, */
+             char to[36];        /* who to, */
+             char subj[72];      /* message subject, */
+             char date[20];      /* creation date, */
+             int times;          /* number of times read, */
+             int dest;           /* destination node, */
+             int orig;           /* originating node */
+             int cost;           /* actual cost this msg */
+
+             int orig_net;       /* originating net */
+             int dest_net;       /* destination net */
+             int caca[4];        /* extra space, */
+        (s7BFido's Complete Operating Manual         Page APPENDIX-2    (s0B
+        _I_n_t_e_r_n_a_l_ _D_a_t_a_ _S_t_r_u_c_t_u_r_e_s
+
+             unsigned reply;     /* thread to previous msg */
+             int attr;           /* message type, below */
+             int up;             /* thread to next msg */
+        };
+
+        /* PLEASE DO NOT allocate additional bits and DO NOT change
+        the meaning of any of these bits at random. The method of
+        expansion beyond 16 bits has already been thought out;
+        PLEASE ASK if you need more bits. */
+
+        /* Message bits that are STRIPPED OFF when passing through a
+        FidoNet node. */
+
+        #define MSGSENT 8            /* sent OK (remote) */
+        #define MSGFWD 32            /* being forwarded */
+        #define MSGORPHAN 64         /* unknown dest node */
+        #define MSGLOCAL 256         /* FidoNet vs. local */
+
+        /* Original Fido messages bits. PRESERVED when passing
+        through a FidoNet node. */
+
+        #define MSGPRIVATE 1         /* private message, */
+        #define MSGREAD 4            /* read by addressee */
+        #define MSGFILE 16           /* file attached to msg */
+        #define MSGKILL 128          /* kill after mailing */
+
+        /* Message bits used by SeaDog. (Not used by Fido)
+        (PRESERVED.) */
+
+        #define MSGFOK 2             /* accept for forwarding */
+        #define MSGFRQ 2048          /* file request */
+        #define MSGRRQ 4096          /* receipt requested */
+        #define MSGCPT 8192          /* is a return receipt */
+        #define MSGARQ 16384         /* audit trail requested */
+        #define MSGURQ 32768         /* update request */
+
+
+        /* Future expansion bits PRESERVED by FidoNet */
+
+        #define MSGXX1 512
+
+        /* Future expansion bits STRIPPED by FidoNet */
+
+        #define MSGXX2 1024
+
+
+        _M_A_I_L_._S_Y_S
+
+        /* MAIL.SYS file structure */
+
+        struct _mail {
+                 int node;           /* local node number, */
+                 float fudge;        /* N.A. */
+                 int rate;           /* N.A. */
+                 char mailpath[80];  /* path to find mail in */
+                 char filepath[80];  /* mail file path */
+                 int net;            /* net number */
+        (s7BFido's Complete Operating Manual         Page APPENDIX-3    (s0B
+        _I_n_t_e_r_n_a_l_ _D_a_t_a_ _S_t_r_u_c_t_u_r_e_s
+
+                 int alt_node;       /* alternate node number */
+                 int alt_net;        /* alternate net number */
+        };
+
+
+        _M_e_s_s_a_g_e_ _P_a_c_k_e_t_ _H_e_a_d_e_r
+
+        /* Message packet header. */
+
+        #define PKTVER 2
+
+        struct _pkthdr {
+                 int orig_node;      /* originating Node # */
+                 int dest_node;      /* destination node */
+                 int year,month,day,hour,minute,second;
+                 int rate;           /* baud rate */
+                 int ver;            /* packet version */
+                 int orig_net;       /* originating net number */
+                 int dest_net;       /* destination net number */
+                 char product;       /* product type */
+                 char x1;            /* extra byte */
+                 int extra[16];      /* extra bytes */
+        };
+
+
+        _N_O_D_E_L_I_S_T_._S_Y_S
+
+        /* Node descriptor. This is the structure of the entries in
+        NODELIST.SYS. The index, NODELIST.IDX, follows. 'net' and
+        'node' have special meanings, as defined below.
+
+        NET > 0 and NODE > 0
+
+                 This is a normal FidoNet node, directly from the
+        nodelist.
+
+        NET > 0 and NODE <= 0
+
+                 This defines either a NET (node == 0), a REGION
+        (node == -1), or COUNTRY (node == -2). Fido internally
+        converts the -1 or -2  into 0 whenever necessary to address
+        the host itself, but does routing only if the node number is
+        0.
+
+        NET == -1
+
+                 This record identifies the revision of the
+        NODELIST.SYS file itself; this is how Fido tells when it is
+        necessary to recompile it when the revision changes.
+
+        NET == -2
+
+                 This is the entry for the NODELIST statement. The
+        node number is the day of the year of the nodelist file it
+        was generated from, plus any comments.
+
+
+        (s7BFido's Complete Operating Manual         Page APPENDIX-4    (s0B
+        _I_n_t_e_r_n_a_l_ _D_a_t_a_ _S_t_r_u_c_t_u_r_e_s
+
+        */
+
+        #define NODEREV 4            /* revision of nodelist.sys */
+
+        struct _node {
+        int number;                  /* node number, */
+        int net;                     /* net number */
+        int cost;                    /* cost per minute to call */
+        int rate;                    /* baud rate */
+        char name[20];               /* node name */
+        char phone[40];              /* phone number */
+        char city[40];               /* city and state, */
+        char cmt[30];                /* comment */
+        };
+
+        _N_O_D_E_L_I_S_T_._I_D_X
+
+        /* This is the index to NODELIST.SYS, contained in
+        NODELIST.IDX. It consists only of node and net; the record
+        number containing the right net/node is the record number of
+        the corresponding NODEliST.SYS entry. This file is
+        terminated only by EOF. */
+
+        struct _ndi {
+                 int node;           /* node number */
+                 int net;            /* net number */
+        };
+
+
+        _S_C_H_E_D_._B_B_S
+
+        /* Scheduler Structures and Definitions (SCHED.BBS) */
+
+        /* Scheduled events, tag definitions. */
+
+        #define MIN_EVENT 'A'        /* minimum FidoNet tag */
+        #define MAX_EVENT 'W'        /* maximum */
+        #define EXT_EVENT 'X'        /* return to DOS event */
+        #define YELL_EVENT 'Y'       /* Yell command enable */
+        [#define DTR_EVENT 'Z'       /* return to DOS DTR high */]
+
+        #define SCHEDS (5 * DAYS_WK) /* size of time table */
+
+
+        /* Standard time of day structure. */
+
+        struct _time {
+             int year,month,day,daywk;
+             int hour,mins,sec;
+
+        /* (daywk == 7 == every day. Month, day, year,
+        sec not used by sched) */
+        };
+
+
+
+
+        (s7BFido's Complete Operating Manual         Page APPENDIX-5    (s0B
+        _I_n_t_e_r_n_a_l_ _D_a_t_a_ _S_t_r_u_c_t_u_r_e_s
+
+        /* Scheduler time structure. */
+
+        struct _sched {
+             struct _time time;
+             int len;
+             int enable;             /* 1 == enabled -1 ==
+                                        disabled 0 == deleted */
+             int trigger;            /* not used (yet) */
+             int result;             /* returned value */
+             char tag;               /* schedule tag */
+             int a,b,c,d,e;          /* extra garbage */
+        } sched[SCHEDS];
+
+
+        _S_Y_S_T_E_M_n_._B_B_S
+
+        /* Structure for each virtual bulletin board.
+        (SYSTEM<n>.BBS). ls_caller, ms_caller, quote_pos are
+        used only in SYSTEM.BBS, unused in other SYSTEMx.BBS files.
+        ms_caller is the upper 16 bits of the 32 bit count of
+        users. */
+
+        struct _sys {
+                 unsigned ls_caller; /* LS word of callers */
+                 int priv;           /* min. priv to access */
+                 char msgpath[40];   /* path for message base, */
+                 char bbspath[40];   /* path for .BBS files, */
+                 char hlppath[40];   /* path for HLP files, */
+                 char uppath[40];    /* path for uploads, */
+                 char filepath[40];  /* path for file area, */
+                 int attrib;         /* attributes */
+                 unsigned ms_caller; /* MS word of callers */
+                 long quote_pos;     /* quote file index */
+        };
+        #define SYSMAIL 1            /* is a mail area */
+        #define SYSOVR 2             /* overwriting files OK */
+
+        /* Tables of command names and privelege levels for each. */
+
+        struct _cmd {
+             char name[20];
+             int priv;
+        };
+
+
+        _T_I_M_E_L_O_G_._B_B_S
+
+        /* Structure for the time log: first access,
+        last access, and an integer counter for each hour
+        of each day of the week. */
+
+        struct _tlog {
+             int calls;              /* # calls in log, */
+             char fdate[20];         /* logging started, */
+             char ldate[20];         /* logging ended, */
+             int log[7][24];         /* the counters, */
+        };
+        (s7BFido's Complete Operating Manual         Page APPENDIX-6    (s0B
+        _I_n_t_e_r_n_a_l_ _D_a_t_a_ _S_t_r_u_c_t_u_r_e_s
+
+
+        _U_S_E_R_._B_B_S
+
+             This is the format for each record within the USER.BBS
+        file. There is no explicit start or end of file markers.
+        This is a very stable structure.
+
+        struct  _usr {
+             char name[36];          /* users ASCII name, */
+             char city[36];          /* city and state, */
+
+        /* This structure takes exactly 40 bytes,
+        and replaces the old first date. (Which was int[20]) */
+
+                 struct {
+                           int area; /* message area */
+                           int msg;  /* last msg read */
+                 } lastmsg[MAXLREAD];
+
+             char pwd[16];           /* what else, */
+             int times;              /* # times called, */
+             int help;               /* last help setting, */
+             int tabs;               /* 1 == expand tabs, */
+             int nulls;              /* number of nulls */
+             int msg;                /* last message area, */
+             int more;               /* last MORE setting, */
+             int priv;               /* user privelege level, */
+             char ldate[20];         /* last time called, */
+             int time;               /* time on sys in 1 day */
+             unsigned flag;          /* various bit flags, */
+             unsigned upld;          /* total K byte uploaded, */
+             unsigned dnld;          /* total K bytes downldd, */
+             unsigned dnldl;         /* download limiting, */
+             int files;              /* last file area, */
+             char width;             /* screen width, */
+             char len;               /* screen length, */
+             int credit;             /* credit, in cents, */
+             int debit;              /* debit, in cents, */
+        };
+
+        /* User privelege levels */
+
+        #define TWIT -2              /* total XXXXXXX */
+        #define DISGRACE 0           /* disgraced user, */
+        #define NORMAL 2             /* normal user, */
+        #define PRIVEL 4             /* priveleged user, */
+        #define EXTRA 6              /* extra priveleges, */
+        #define SYSOP 10             /* SYSOP proveleges, */
+
+        /* User help levels */
+
+        #define EXPERT 2             /* expert */
+        #define REGULAR 4            /* experienced */
+        #define NOVICE 6             /* new user */
+

@@ -1,0 +1,52 @@
+====[ QWK file format ]=================================================
+
+All of the messages in a mail packet are contained in a file named
+MESSAGES.DAT.  The file's logical record length is 128 bytes.  The first
+record of MESSAGES.DAT always contains a copyright notice produced by
+whatever mail door.  Messages start in record 2 and use this format:
+
+Offset  Length  Description
+------  ------  ----------------------------------------------------
+  1       1     Message status flag
+                    ' ' = public
+                    '-' = public and read
+                    '+' = private
+                    '*' = private and read
+  2       7     Message number (as characters)
+  9       8     Date (mm-dd-yy)
+ 17       5     Time (hh:mm)
+ 22      25     To
+ 47      25     From
+ 72      25     Subject
+ 97      12     Password (Not used by any PCBoard mail doors I know)
+109       8     Refer to number (as characters)
+117       6     Number of 128 byte blocks in message (counting the
+                header)
+123       1     Killed message? 225 is active, 226 is killed
+124       1     Conference number (0-255)
+                    I have heard that MarkMail 2.0 uses two bytes for
+                    the conference number, so the next byte may be used
+                    too.
+125       4     Not used
+
+The text of message continues in the next record.  You can find out how
+many blocks make up one message by looking at the value of "Number of
+128 byte blocks".  Message text is delimited by a "ASCII 227" symbol
+between lines.
+
+The xxx.NDX files contain record numbers that point into the
+MESSAGES.DAT file for actual messages.  Each conference that contains
+messages has its own "xxx.NDX" file.  The "xxx" is the conference number
+for the index file.
+
+Each NDX file uses a five byte logical record length and is formatted
+to:
+
+Offset  Length  Description
+------  ------  ----------------------------------------------------
+  1       4     Record number to point to corresponding message.
+                This number is in the Microsoft MKS$ BASIC format.
+  5       1     Conference number.
+
+====[ QWK file format ]=================================================
+

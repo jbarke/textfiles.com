@@ -1,0 +1,55 @@
+
+                        Disk Arranger 3.0 Docs
+
+                          by the Bushwhacker
+                              May 2, 1985
+
+
+For all you hard drive fans out there, Disk Arranger 3.0 is a utility that
+allows you to modify your DOS 3.3 catalogs (ie. delete, undelete, arrange, 
+lock, etc.) as well as transfer files between hard drive volumes or between 
+hard drive and floppy disk. It is basically just Disk Arranger 2.0 that has 
+been modified to allow the volume number to be input. The disk map has also
+been fixed to be in a more standard format. If you don't have a hard drive yet,
+if still works correctly with floppy disks (one or more drives).
+
+Any volume number from 0 to 255 can be used. A volume number of 0 will match
+anything, and is usually used for floppy disks. Any other number will access
+the specific volume only. 
+
+There are some limitations, however. It currently will not work with the large 
+DOS volumes, or any DOS volume that has a non-standard number of tracks per 
+volume or sectors per track. This is something that I am still looking at. The 
+Sider large volumes have 50 tracks per volume and 32 sectors per track, while 
+the small volumes are the standard 35 tracks with 16 sectors each.
+
+The DOS that is resident when Disk Arranger 3.0 is run must be patched to 
+access the hard drive. If the program is loaded from the hard drive, then this 
+is obviously not a problem. If you load from a floppy, then you may need to 
+patch DOS. If you have a Sider, the DOS patch is simple:
+
+        BD00- 20 11 C7   JSR $C711  (if the controller is in slot 7)
+        BD03- 00         BRK
+
+
+Since most hard drives don't put a DOS image on tracks 0-2, the Disk Arranger 
+will not find a Hello program there.
+
+If you want to set up your printer for the ^P hardcopy option, there is a nine
+byte string from $80D to $815 that is used to initialize the interface card and
+printer each time ^P is pressed. You can put in any string you want there, but
+follow it with a 00 byte! For example, if the string is:
+
+                Control-I 80N
+
+then the following bytes would be input:
+
+                80D: 89 B8 B0 CE 8D 00
+
+Also, at $80C is the Form Feed character ($0C). If you don't want a Form Feed
+after each page is output, then change it to a Line Feed ($0A). If your printer
+interface is not in slot 1, you will have to change location $80B to $Cx, where
+x is the slot number.
+
+If you wish to make all this permanent, first BLOAD DISK ARRANGER 3, then make
+your mods, then BSAVE DISK ARRANGER 3,A$803,L$2AE1.

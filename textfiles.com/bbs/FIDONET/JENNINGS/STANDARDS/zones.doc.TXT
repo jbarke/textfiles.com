@@ -1,0 +1,67 @@
+ZONES, ZONEGATES, ZONEHOSTS AND IFNA KLUDGES
+
+Tom Jennings
+25 Jan 88
+
+I believe Fido/FidoNet 12f's addressing is spirit & letter of theç
+"law". It works as follows:
+ 
+I am node 1:125/111. I enter a message to 2:500/1. Fido doesç
+this:
+ 
+a)      Create the .MSG file as we all know it.
+
+b)      Since the destination is outside our own zone:
+
+        1) put the ifna kludge algorithmic address into 
+           the .MSG file header: "myzone/destzone". This case, 
+           the message is marked "1/2", ie. implied full address 
+           is "1:1/2", if the IFNA Kludge "zone gate".
+
+        2) Put the "full" address into the INTL line:
+           "^AINTL 2:500/1 1:125/111". 
+ 
+Programs that don't understand the INTL line just route accordingç
+to ancient tradition to 1/2, with no side effects. Programs thatç
+understand INTL lines do whatever it is they decide to do.
+ 
+The only thing that Fido does that is different here is that itç
+hides the ugliness. Fido has a pure three level addressingç
+scheme, and knows enough to how to treat what I call "fullyç
+addressed" (INTL lines) messages properly.
+ 
+By default, Fido treats the network as a true three levelç
+addressing scheme; a message addressed to "2:500/1" will go toç
+"2:0/0", the host for that zone. Zone Host not Zone Gate. Iç
+realize this isn't what is desired, IFNA kludge or not, and amç
+not trying to foist anything on anyone. The intent was a "pure"ç
+FidoNet three level mailer, and thats what I got.
+ 
+The problem is solved by the router. There is a route file,ç
+supplied with the FIDO.EXE program, called ROUTE.DEF. It only hasç
+to exist, and it is applied to *all* possible FidoNet routingç
+unless overridden. By default, Fido will do the Zone Hostç
+routing; all you do is specify a new host:
+ 
+Zone 2; ZoneGate 1:1/2
+...
+Zone N; ZoneGate 1:1/N
+ 
+A ROUTE.DEF file is supplied with Fido v12f. Instead of all mailç
+for zone 2 going to "2:0/0", the "pure" ZoneHost, it goes to (inç
+this example) "1:1/2". It could all go to "1:125/31" and driveç
+Bob Kovach crazy. It could even go to "3:1/1" and wasteç
+everybodys time. For a Fido operated in Europe, in Zone 2, itç
+would have a ROUTE.DEF that contained:
+ 
+Zone 1; ZoneGate 2:2/1
+
+My intent was to build a mailer devoid of all kludges, plus solveç
+the stupid shit IFNA Kludge thing. Plus not force someone to useç
+"my way".
+
+Zones are here to stay, and I do not like coding things twice.ç
+Network addressing issues are very serious, and we have to liveç
+with them for years, and I want to do things "right". This is myç
+solution; if anyone is interested in implementation details justç
+ask!

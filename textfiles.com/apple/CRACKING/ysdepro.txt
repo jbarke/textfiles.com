@@ -1,0 +1,181 @@
+
+Crack for Ancient Land of Y's (GS) - Broderbund/Kyodai
+by Jim Maricondo (The Mouse2 - AppleLink PE) - January 1990.
+
+After playing (cheating) with the game for awhile, the need for a crack became evident, so I set out to find one.  The type of protection used is the now almost 'standard' nibble count on tracks $20/21 of side one.  The actual nibble count code is on the Y's Data disk, but the nibble count is done on the Y's Program disk.  I began by searching for the equivalent hexidecimal code, A2 20 A0 01 on the Y's Data disk.  I found it on block $4A6.  It looks like this:
+
+06: 6B          RTL                     end of routine before disk check
+07: A9 00       LDA #$0000              start of this routine
+0A: 8D CA 65    STA $65CA
+0D: 8D C6 65    STA $65C6
+10: 8D C8 65    STA $65C8
+13: E2 30       SEP #$30                make accumulator/index regs 8-bit
+15: A2 20       LDX #$20                track 20
+17: A0 01       LDY #$01                of side 1
+19: 20 4E 65    JSR $654E               go do disk check
+1C: B0 13       BCS $31
+1E: 8E C6 65    STX $65C6               store half of returned value
+21: 8C C7 65    STY $65C7               store other half of returned value
+24: A2 21       LDX $21                 track 21
+26: A0 01       LDY $1                  of side 1
+28: 20 4E 65    JSR $654E               go do disk check
+2B: 8E C8 65    STX $65C8               store half of returned value
+2E: 8C C9 65    STY $65C9               store other half
+31: C2 30       REP #$30                make accumulator/index regs 16-bit
+33: 90 0C       BCC $41
+35: AD CA 65    LDA $65CA               load A and X regs depending on check
+38: 49 FF FF    EOR #$FFFF
+3B: 1A          INC
+3C: A2 FF FF    LDX #$FFFF
+3F: 80 0C       BRA $47
+41: A9 C6 65    LDA #$65C6
+44: A2 00 00    LDX #$0000
+47: 60          RTS                     return to sender
+
+At first I tried just placing a RTS at $07, but that didn't work so I decided to find the routine that called this one by using the PLA PLX BRK technique.  I found out that the disk check routine was called by the routine right before it!  Here's the routine right before it (of which you see the end at $06 of the above example).  The line numbers here have no relation to the ones in the above example.
+
+bank 01-
+6D77: 6B         RTL		end of routine before this one
+6D78: 8B         PHB
+6D79: 5A         PHY
+6D7A: 4B         PHK
+6D7B: AB         PLB		data bank = program bank
+6D7C: AF E1 1E 05  LDA 051EE1
+6D80: 48         PHA
+6D81: 22 53 6E 01  JSL 016E53 prepare for nibble count (_NewHandle)
+6D85: 68         PLA
+6D86: 20 94 6D   JSR 6D94     do disk check routine listed above
+6D89: 48         PHA          get results from routine
+6D8A: DA         PHX          get results from routine
+6D8B: 22 E4 6E 01  JSL 016EE4 restore things back to normal (_DisposeAll & _UnloadSeg)
+6D8F: FA        PLX
+6D90: 68        PLA
+6D91: 7A        PLY
+6D92: AB        PLB
+6D93: 6B        RTL			return to calling routine
+
+--disk check routine described first comes here--
+
+I traced this routine to blocks $4A5-4A6 on Y's Data.  Once again, I attempted to just place a RTL at the beginning of this routine, but that didn't work either so I did Brian's PLA PLX BRK trick again.  This time I was rewarded with the following code.  (This time, these line numbers are relative to the ones in the previous example.)
+
+bank 01-
+6DED: 60        RTS			end of subroutine before this one
+6DEE: 50 52 4F 47 52 41 4D 00 "PROGRAM" in hex (C-String)
+6DF6-6E13: miscellaneous code part of this routine, but not worthy of listing
+6E14: 22 78 6D 01  JSL 016D78 go do routine transcribed above
+
+--more code--
+
+I traced this routine to block $4A6 on Y's Data.  This time, I attempted to NOP out the JSL at 6E14.  Again, it didn't work, so there must be another important routine calling this one.  So I used the PLA PLX BRK trick again and was rewarded another time!  I found that the above routine was called from 0E/1363.  Once again, these line numbers are relative to the subroutine above.  Because of the length of this segment, I'm leaving out the hex opcodes.  Here is the final code:
+
+bank 0E-
+1363: jsl 016df6		do routine transcribed directly above
+1367: stx d2
+1369: sta d0
+136B: stz e0
+136D: lda e0
+136F: beq 1374			go process results
+1371: brl 1428			ONLY way to get out of this check loop (original disk)
+1374: sec				process results
+1375: lda d0
+1377: sbc #0000
+137A: bne 1383
+137C: lda d2
+137E: sbc #0000
+1381: bra 138a
+1383: lda d2
+1385: sbc #0000
+1388: rep #02
+138A: bvs 138f
+138C: eor #8000
+138F: bmi 13b3
+1391: pea 0001
+1394: pea 0060
+1397: pea 0010
+139A: pea 0002
+139D: pea 33b2
+13A0: jsl 0e10fb
+13A4: ply
+13A5: ply
+13A6: ply
+13A7: ply
+13A8: ply
+13A9: jsl 016df6	not original.  prompt for original and check again
+13AD: stx d2
+13AF: sta d0
+13B1: bra 1374
+13B3: ldx d2		further process results
+13B5: lda d0
+13B7: stx de
+13B9: sta dc
+13BB: ldx de
+13BD: lda dc
+13BF: phx
+13C0: pha
+13C1: clc
+13C2: adc #0002
+13C5: sta dc
+13C7: lda de
+13C9: bcc 13cc
+13CB: inc
+13CC: sta de
+13CE: pla
+13CF: plx
+13D0: sta f6
+13D2: sts f8
+13D4: lda [f6]
+13D6: sta da
+13D8: lda [dc]
+13DA: sta d8
+13DC: lda da
+13DE: sec
+13DF: sbc #206B
+13E2: beq 141b
+13E4: bvs 13e9
+13E6: eor #8000
+13E9: bpl 141b
+13EB: lda da
+13ED: sec
+13EE: sbc #2103
+13F1: bvs 13f6
+13F3: eor #8000
+13F6: bmi 141b
+13F8: lda d8
+13FA: sec
+13FB: sbc #1daf
+13FE: beq 141b
+1400: bvs 1405
+1402: eor #8000
+1405: bpl 141b
+1407: lda d8
+1409: sec
+140A: sbc #1e79
+140D: bvs 1412
+140F: eor #8000
+1412: bmi 141b
+1414: lda #0001
+1417: sta e0
+1419: bra 1425
+141B: ldx #ffff
+141E: lda #ffff
+1421: stx d2
+1423: sta d0
+1425: brl 136d		results processed further pass/fail value stored at $E0
+1428: pea 0002		Original inserted, so continue loading...
+142B: pea 33d7
+142E: jsl 106e1c
+ 
+By careful examination, you can tell that there is only one way to get out of the check loop, and that is to have a non-zero result stored at $E0.  The code checks to see if $E0 is zero or not at $136F, and brances to continue loading or continue disk checking depending on the result.  So with this information, I just NOPed out the BEQ 1374 at $136F making the program always continue to load without doing the copy protection at all.  Next I traced this code to block $3BF on Y's Data.  So, after many hours of work, here is the patch!
+
+Block  Bytes   From    To
+----------
+3BF    70-71   F0 03   EA EA
+
+Or, if using Block Warden, go to relative block 9 of YSGS, relative bytes $1070-$1071.
+
+Or, if that doesn't do it for ya, try scanning for 85 D0 64 E0 A5 E0 F0 03 and changing it to 85 D0 64 E0 A5 E0 EA EA.
+
+You now have a deprotected copy!  Enjoy!  <<Whew!>>  Not bad for a first crack!
+
+
+

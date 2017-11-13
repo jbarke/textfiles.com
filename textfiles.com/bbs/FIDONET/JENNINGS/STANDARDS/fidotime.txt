@@ -1,0 +1,162 @@
+Some comments on Fido and Time  15 Nov 85
+
+
+Recent discussions of the problems (and proposed solutions) caused by time
+zones, daylight savings time, and similar natural disasters have confused me in
+many ways; and I fear that I am not alone.
+
+I do not propose solutions.  This would be unwise without a surer grip on the
+problems.  I do want to explore some of the needs and requirements so that I
+might better understand the problems and evaluate proposed solutions.  Excuse
+some of the formalities in the early steps, but I like a firm base.
+
+0 - Who are the concerned parties?  I guess the following two consumers and
+    two providers.
+    o SYSOPs of the myriad Fidos out there in the world,
+    o Local USERs of all those Fidos,
+    o COORDINATORs of the network, and
+    o AUTHORs of Fido software.
+
+1 - What is their level of expertise?
+    o SYSOPs vary radically, but _each and every one_ must install and use
+      whatever it is that the providers provide.  Therefore, Fido time
+      management for SYSOPs _must_ be addressed to the lowest level of
+      computer understanding.  Low maintenance is the only thing which may
+      be more important than ease of installation.
+    o Local USERs are _amazingly_ naive.  They are the most fragile of beings
+      and must not be jarred in any way lest they shatter.  I relearn this
+      weekly.
+    o COORDINATORs and AUTHORs seem to be professional level computer users
+      if not professional implementors.  They should bear the brunt of any
+      changes, confusion, or tricky design.
+
+2 - What is the presumed Fido SYSOP's machine environment?
+    o MSDOS machine (though one hopes that future ...)
+    o Hardware clock (can one safely run a Net machine without one?)
+    o Auto Answer/Dial modem
+    o Exclusively Fido, part time Fido, or Fido in 'background'.
+
+3 - What are the Fido and FidoNet environmental constraints?
+    o All public nodes are known to all other nodes.  A random node may try to
+      contact any other (unpredictable) node during any published net window.
+    o There is no central knowledge or coordination of the event lists by
+      which an individual Fido schedules, nor the routings set up for each
+      mail schedule.
+    o Fido schedules state a time, but not what zone that time is in.  It is
+      currently wall clock time, but some suggest that it be UST.  Ben Baker
+      suggests that an unused field of the scheduler record be used to indicate
+      which time zone, and either be supported.
+    Also interesting, but seeming irrelevant
+    o There are privete nodes and nets of which the public net is unaware.
+    o Routing is known by the net as opposed to the sender (a la Usenet)
+
+4 - Who cares what time it is or when events occur?
+    o Local USERs expect Fido to think the time is what their watches say.
+      Commercial mail servers tend to speak of messages in terms of the
+      sender's local time, though some speak of it as the readers local
+      time.  None speak of it in some third (abstract) time.
+    o FidoNet software has to to keep things synchronized worldwide.
+    o MSDOS programs running between Fido runs or concurrently with Fido may
+      be time of day dependent.  They often need correct wall clock time.
+    o COORDINATORs want to speak in UST when talking globally, but in local
+      time when speaking of a local net.  This is human and should be
+      indulged if reasonably easy.  SYSOPs have this problem too.
+    o SYSOPs often maintain text files describing their Fido's schedules so
+      their users will be able to read about local system availability.
+
+5 - When and why will the time or the timing of an event change?
+    o Subsets of the FidoNet continually renegotiate topology and timing.
+      Nets and chedules change.  This will probably continue for some time.
+    o The wall clock is occasionally adjusted (usually by one hour).  These
+      adjustments _tend_ to clump in time (Spring and Autumn) and by region.
+    o The algorithms for determining if a particular Fido is to move on any
+      particular day in a particular direction would require continued
+      maintenance _if_ they were even determinable at one point in time.  This
+      precludes total automation, period.
+    o A Fido's hardware clock will be adjusted occasionally to correct for
+      drift.
+    o A Fido switches time zones; either by being moved, or the SYSOP decides
+      to run on UST, or switches sides near an inter-time zone border.
+
+5 - What information is required to adjust a local Fido?
+    o What different times might  be adjusted?
+      - The local time
+      - The difference between local time and UST
+      - A schedule negotiated with other Fidos
+      - The time a local batch process is to be run
+    o When the adjustment is to be done?
+    o In what direction?
+    o By what amount or to what value?
+    o If adjusting to an absolute time, is it UST or local?
+
+
+6 - What are the seeming problems?
+    o Is a Fido thought of as on its local time, local standard time, or UST?
+      For the moment, consider daylight/standard as equivalent to switching
+      time zones.  It also helps, but is not necessary, to consider a Fido to
+      be schizophrenic, and able to think in local and UST simultaneously.
+    o When a SYSOP checks schedules for correctness, some events should be
+      expressed in local time (Yell, local nets, ...) and some in UST (National
+      Mail Hour [Public FidoNet Window?]).  Displaying in both forms and sort
+      options may help here.
+    o When the time is changed due to wall clock adjustment (moving or day/std,
+      one must remember that scheduled events then divide into two sets:
+      - Those which will stay at the same local time are not adjusted with
+        respect to the local time.  They must be adjusted with respect to UST,
+        in the same direction as the clock is adjusted. Yelling and local net
+        schedules are likely to be in this category.
+      - Events which stay at the same UST, must be adjusted with respect to the
+        local time in the same direction as the clock is being adjusted.  The
+        UHT of National Mail Hour does not move when a Fido is moved or when
+        day/std changes are made.
+    o Schedule renegotiations also fall into two classes: those expressed in
+      local time and those expressed in UST.  In either case, it is only one
+      schedule being affected, and it may be considered in relative isolation.
+      Neither the wall clock nor UST are being moved.  One might like to move
+      a group of schedules together.
+    o When the hardware clock is corrected for drift, no schedules change, but
+      Fido must be restarted or otherwise made aware of the change.
+
+
+So, have I gotten it correct so far?  If so, I do not feel that the above
+seriously hampers a solution.  What seems to be missing is
+  o A clear metaphor for speaking locally in terms of the wall clock and
+    globally in UST.
+  o An intuitive classification of event types and adjustment types with respect
+    to time.  To start we must differentiate between
+    - Events which are 'on' (ie expressed in terms of) UST and are 'fixed'
+    - Events which are on local time and move with the wall clock
+    - Changing an event's (or group of events) time(s) do to external renego-
+      tiations
+    - Changing the local time due to Fido motion or day/std changes
+    - Correcting clock drift.
+
+Given clear differentiations here, what may be most useful is(are) a tool(s) for
+  o Easily stating the event schedules and their external attributes (ie fixed
+    [UST?] or local)
+  o Easily moving events in time (either local or UST)
+  o Inserting, deleting, and moving events within the event list (as Fido is
+    sensitive to the order of the list)
+  o Moving the wall clock and having the events stay correct by knowing which
+    are fixed and which are movable
+  o Viewing (and PREviewing) event schedules and changes in a way that exposes
+    incorrect (ie. conflicting) schedules.  Moving local time may place movable
+    events in conflict with UST fixed events
+
+If I have still not drifted too far from reality, Let me propose:
+  o Fido needs do nothing.  It runs on local time and everybody locally thinks
+    in local time.
+  o The only time they talk UST is when they mark an event as being a fixed UST
+    event.  The Sysop must clearly differentiate between fixed and movable (with
+    respect to UST, they are fixed with respect to local) events.
+  o If Fido need not know fixed from movable, the differentiation could be made
+    in an auxilliary file (eg. Ben's SCHED.REM).
+  o A program such as Ben's EVENT.COM needs to
+    - Differentiate the two event types
+    - Provide for moving the system clock
+    - Adjust appropriate events with or against clock motion
+
+Well, by now I must have strayed sufficiently far or affronted enough folk to
+quit for the evening.
+
+randy

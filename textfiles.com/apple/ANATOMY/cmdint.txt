@@ -1,0 +1,212 @@
+******************************************************************
+*                                                                *
+*                       INT Command Handler                      *
+*                                                                *
+*----------------------------------------------------------------*
+*                                                                *
+*     The INT command tries to select the Integer language and   *
+* then coldstart both DOS and BASIC.                             *
+*     Language selection is done by throwing the appropriate     *
+* switches to activate either the language card or motherboard.  *
+* If you are using an old AppleII machine, Integer is found on   *
+* the motherboad.  On newer model Apples however, the Integer    *
+* language can SOMETIMES be found on the language card.  If you  *
+* have a an AppleII+ with a language card or an Apple IIe with a *
+* built in language card, AND IF, AND ONLY IF, you boot with the *
+* System Master Disk, the Integer language will be located.  If  *
+* all of these conditions aren't met, a language-not-found error *
+* message will be generated.  (Booting with the System Master    *
+* Disk is necessary because its greeting program (called "HELLO")*
+* loads a file called "INTBASIC" onto the language card.         *
+* INTBASIC is a binary file which contains an image of the       *
+* Integer basic language.)                                       *
+*     Once the INT command handler discovers the presence of the *
+* Integer language, it zeroes out the run interrupt flag         *
+* (RUNTRUPT, $AAB7) and jumps into DOS's cold start routine      *
+* (DOSCOLD, $9D84).  The cold start routine sets the drive and   *
+* slot values and then loads the active basic flag (ACTBSFLG,    *
+* $AAB6) with a #$00 to signal that the Integer language is      *
+* being used.  Next an image of the Integer basic entry point    *
+* vector table is copied to the ACTIVE basic entry point vector  *
+* table.  The I/O hooks are then set to point to DOS's input and *
+* output handlers (INPTINCP, $9E81 and OPUTINCP, $9EBD) so that  *
+* DOS can intercept all input and output.  Finally, a "NOMON"    *
+* command is simulated, the condition flag (CONDFLG, $AA51) is   *
+* set to indicate a coldstart is being done (#$00) and execution *
+* jumps into BASIC's cold start routine (BASICCLD, $E000).       *
+* BASICCLD wipes out any programs in memory and configures the   *
+* machine for running Integer programs.                          *
+*                                                                *
+******************************************************************
+
+
+* On Entry - No file name or other options
+*            are applicable to the INT command.
+
+
+(A59E)
+CMDINT   LDA #$20     ;Opcode for "JSR".
+(A5A0)   JSR SETROM   ;Test if language wanted is present on the
+                      ;language card or motherboard.
+
+                      * Test card or motherboard to insure that the
+                      * device containing the ROM version we want
+                      * is selected.  BASICCLD ($E000) contains a
+                      * "JMP" or "JSR" instruction if dealing with
+                      * FP or INTEGER ROM respectively.
+                      (A5B2)
+                      SETROM   CMP BASICCLD ;Test card or motherboard
+                                            ;(ie. test whichever device is up).
+                      (A5B5)   BEQ DVICERTN ;Language wanted is on present ROM device.
+
+                      * Language was not on device selected above,
+                      * so specifically test card in slot 0.
+                      * (P.S. Could change address if want to use
+                      * card in different slot.)
+                      (A5B7)   STA $C080    ;Read enable slot 0.
+                               CMP BASICCLD ;Check identifying byte.
+                      (A5BD)   BEQ DVICERTN ;Branch if ROM wanted is on card.
+
+                      * ROM wanted was not on card.
+                      * We may have just tested card twice
+                      * so now specifically test motherboard.
+                      (A5BF)   STA $C081    ;Test motherboard.
+                               CMP BASICCLD ;Check identifying byte.
+                      DVICERTN RTS          ;Exit with switches pointing at last tested
+                      (A5C5)                ;device.  If desired language present,
+                                            ;switches are left with appropriate device
+                                            ;selected.
+
+(A5A3)   BEQ INTPRSNT ;Integer basic is present either
+                      ;on card or motherboard.
+
+* Integer basic not present.
+(A5A5)
+NOLNGINT LDA #1       ;Set error code for "language not available".
+(A5A7)   JMP ERRHNDLR ;Go print error message & exit.
+         ------------ ;(See dis'mbly of errors.)
+
+* Integer basic present on device.
+(A5AA)
+INTPRSNT LDA #0       ;Desired basic is present, so zero out
+(A5AC)   STA RUNTRUPT ;the run interrupt flag cause we won't
+                      ;be doing an interrupt to load a language.
+TODOSCLD JMP DOSCOLD  ;Go into DOS's coldstart routine.
+(A5AF)   ------------
+
+* DOS's coldstart routine.  (P.S. Don't confuse
+* with basic's coldstart routine - BASICCLD).
+* NOTE:  THE FOLLOWING DISASSEMBLY IS INCOMPLETE.
+* Only those portions of the coldstart routine
+* applicable to the INT cmd are shown.
+
+* Set the slot & drive default parameters.
+(9D84)
+DOSCOLD  LDA IBSLOT   ;Slot # * 16 from RWTS's IOB table.
+         LSR          ;Divide by 16.
+         LSR
+         LSR
+         LSR
+         STA SLOTPRSD ;Put slot in parsed table.
+         LDA IBDRVN   ;Drive # from RWTS's IOB.
+(9D91)   STA DRVPRSD  ;Put drive # in parsed table.
+
+* Check which basic is in ROM.
+(9D94)   LDA BASICCLD ;Get identifying byte.
+         EOR #$20     ;BASICCLD = $20 for integer or $40 for A(ROM).
+(9D99)   BNE ISFPROM  ;FALL THRU FOR INTEGER.
+
+* Integer basic is active.
+(9D9B)
+ISINT    STA ACTBSFLG ;Set active basic flag to denote integer ($00).
+
+* Copy INTEGER basic's entry point vector table
+* to the ACTIVE basic entry point vector table.
+(9D9E)   LDX #10
+INT2BSIC LDA IMGINTV-1,X
+         STA CHAINTRY-1,X
+         DEX
+         BNE INT2BSIC ;10 bytes to copy (10 --> 1).
+(9DA9)   JMP BYPASWRM
+         ------------
+
+(9DBC)
+BYPASWRM SEC          ;(c) = 1 = signal for coldstarting.
+(9DBD)   BCS CMWRMCLD ;Force branch to bypass part
+                      ;of the warmstart routine.
+
+(9DD1)
+CMWRMCLD PHP          ;Save (c) denoting warm or cold on stack.
+(9DD2)   JSR INITIOHK ;Initialize the hooks.
+
+                      * Initialize the I/O hooks so that DOS
+                      * intercepts all input and output.  For
+                      * instance, if a routine encounters a 
+                      * "COUT  JMP (CSW)" then execution will
+                      * actually flow to DOS's output handler
+                      * routine (OPUTINCP, $9EBD).  Similarly,
+                      * any routine that refers to "RDKEY  JMP (KSW)"
+                      * will actually jump to DOS's input routine
+                      * (INPTINCP, $9E81).
+                      * The true (ie. normal) hooks are saved, ex:
+                      *    KSW: KEYIN --> KSWTRUE: KEYIN.
+                      *    CSW: COUT1 --> CSWTRUE: COUT1.
+                      * The intercepts are then set as follows:
+                      *    ADINPTCP: INPTINCP --> KSW: INPTINCP.
+                      *    ADOPUTCP: OPUTINCP --> CSW: OPUTINCP.
+                      
+                      * Check if the input hook needs to be reset.
+                      (A851)
+                      INITIOHK LDA KSW+1
+                               CMP ADINPTCP+1
+                      (A856)   BEQ CKOUTHK  ;Input hook already points to DOS's
+                                            ;input handler so go check output hook.
+
+                      * Reset the input hook to point to DOS.
+                      (A858)   STA KSWTRUE+1 ;KSW: KEYIN --> KSWTRUE: KEYIN.
+                               LDA KSW
+                               STA KSWTRUE
+                               LDA ADINPTCP ;ADINPTCP: INPTINCP --> KSW: INPTINCP.
+                               STA KSW
+                               LDA ADINPTCP+1
+                      (A868)   STA KSW+1
+
+                      * Check if the output hook needs to be reset.
+                      (A86A)
+                      CKOUTHK  LDA CSW+1
+                               CMP ADOPUTCP+1
+                      (A86F)   BEQ SETHKRTN ;Output hook already points to DOS's
+                                            ;output handle routine, so exit.
+
+                      * Reset the output hook to point to DOS.
+                      (A871)   STA CSWTRUE+1 ;CSW: COUT1 --> CSWTRUE: COUT1.
+                               LDA CSW
+                               STA CSWTRUE
+                               LDA ADOPUTCP ;ADOPUTCP: OPUTINCP --> CSW: OPUTINCP.
+                               STA CSW
+                               LDA ADOPUTCP+1
+                               STA CSW+1
+                      SETHKRTN RTS
+                      (A883)
+
+(9DD5)   LDA #0
+         STA CIOCUMUL ;Simulate a "NOMON" command
+         STA OPUTCOND ;SET CONDITION 0.
+         PLP          ;Get saved status back off stack & rotate
+         ROR          ;(c) into (a) to set CONDNFLG=$00 for
+         STA CONDNFLG ;warmstart or CONDNFLG=$80 for coldstart.
+(9DE2)   BMI LANGCOLD ;Branch if doing coldstart.
+
+(9DE7)
+LANGCOLD JMP (TOCLDVEC) ;Actually a "JMP (9D5C)" which points to
+         ------------ ;BASIC's coldstart routine (BASICCLD) at $E000.
+     
+********** NOW IN INTEGER BASIC **********
+(E000)
+BASICCLD JSR BSCOLDST ;JSR's to INTEGER basic's cold start.
+         .
+         .
+- wipes out any programs presently in
+  memory and configures RAM for running
+  Integer programs.
+=======================================

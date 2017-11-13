@@ -1,0 +1,1002 @@
+*::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*
+*                                                                *
+*                     OPEN function handler                      *
+*                                                                *
+*----------------------------------------------------------------*
+*                                                                *
+*     The open function handler (FNOPEN, $AB22) simply tries to  *
+* locate the named file and read in its first T/S list.  If the  *
+* file does not already exits and if the calling command can     *
+* legally create a new file, FNOPEN attempts to build a new file *
+* description and T/S list.                                      *
+*                                                                *
+* Execution pattern:                                             *
+*     FNOPEN calls the common open routine (COMNOPEN, $AB28) to  *
+* do all the dirty work.  COMNOPEN first zeroes out the work     *
+* area and customizes it with volume, drive, slot*16, track,     *
+* sector size and record length values.  If necessary, the       *
+* record length is defaulted to value of "$0001".                *
+*     GETFNTRY ($B1C9) is called to read in a fresh VTOC and     *
+* search the directory sectors for the file description entry of *
+* the wanted file.  (The links to the first directory sector are *
+* housed in the VTOC.  Each subsequent directory sector contains *
+* the link to the next directory sector. The link bytes of the   *
+* last directtory sector are zeroed out.)                        *
+*     Each directory contains up to seven different file         *
+* descriptions.  An example of the data contained in a file      *
+* description is shown below:                                    *
+* FIL1TSTK  DS 1     ;Track # of first T/S list for file 1.      *
+* FIL1TSSC  DS 1     ;Sector # of first T/S list for file 1.     *
+* FIL1TYPE  DS 1     ;File type code for file 1.  ($00=Text,     *
+*                    ;$01=Integer, $02=Applesoft, $04=Binary,    *
+*                    ;$08=S-type, $10=Relocatable, $20=A-type    *
+*                    ;and $40=B-type.)  The hi bit is set on     *
+*                    ;locked files.  For example, $02=unlocked   *
+*                    ;Applesoft and $82=locked Applesoft.        *
+* FIL1NAME  DS 30    ;Name of file 1.  If a file name less than  *
+*                    ;30 bytes is used, trailing spaces are      *
+*                    ;added to the name to fill the buffer.      *
+* FIL1SIZE  DS 2     ;Size of file 1 in terms of the number of   *
+*                    ;sectors used.                              *
+* (If a file was deleted, the track # of the first T/S list sec  *
+* was copied to the last byte position of the name field.  The   *
+* original track # byte (FIL1TSTK) was then overwritten with     *
+* an #$FF.)                                                      *
+*     As each directory sector is read in, an attempt is made    *
+* to locate a file description which contains the name of the    *
+* file wanted.  If a (non-deleted) description entry containing  *
+* the name of the wanted file is located, execution branches to  *
+* the FILLINWA routine ($ABA6) which is described several        *
+* paragraphs below.  If the named can't be located after         *
+* searching all the directories, a second search is made to      *
+* locate the first available space in a directory sector where a *
+* new file description can be placed (in case the command can    *
+* create a new file).  SCRNSRCH ($B39D) is used to flag which    *
+* search is being done (1=first search, 0=second search).  If no *
+* free space is located, a disk-full error message is printed.   *
+*     If an available space is located, NEWDESCRP ($B2C1) copies *
+* the name of the wanted file from the primary file name buffer  *
+* (PRIMFNBF, $AA75) into the new entry space.  A check is then   *
+* made to see if the command can legally create a new file.  The *
+* identifying command byte (NDX2CMD, $AA5F) is used to index a   *
+* table of command attribute bytes (CMDATTRB, $A909) associated  *
+* with the command.  If bit 0 of the first attribute byte        *
+* associated with the command is clear, a new file cannot be     *
+* created.  The command is subsequently aborted with a file-not- *
+* found error message.  However if bit 0 is set, execution       *
+* branches to the CREATNEW routine ($AB64) to generate a new     *
+* file description and T/S list sector.                          *
+*     CREATNEW initializes the file size field in the new        *
+* description space with a "$0001".  ASGNTKSC ($B244) is then    *
+* called to assign a free sector for the new T/S list sector.    *
+* If no free sector can be found, a disk-full error message is   *
+* generated.                                                     *
+*     If a track has not already been assigned to the file,      *
+* execution branches to the PRPNWTRK routine ($B26A).  PRPNWTRK  *
+* reads in a fresh VTOC and adds the direction (+1, $01 or -1,   *
+* $FF) to the last used track number.  If the resulting track    *
+* number is too large, the direction is reversed.  A legal track *
+* number causes execution to branch to the CHK4FREE routine      *
+* ($B294) to look for a free sector.  If no free sector is       *
+* found, GETNWTRK ($B272) is used to find another track to       *
+* search.                                                        *
+*     Once a free sector is located, CPYTKMAP ($B2A1) zeroes out *
+* the corresponding track map and writes the modified VTOC to    *
+* the disk.  Unfortunately, this routine is over exuberant.      *
+* Because it zeroes out all the bytes associated with a given    *
+* track map, an entire track is allocated in the VTOC.  (The     *
+* unneeded sectors are later released when the file is closed.)  *
+*     Eventually, the ASGNTKSC routine is exited at $B264 with   *
+* ASIGNTRK ($B5F1) and ASIGNSEC ($B5F0) containing the track and *
+* sector values of the new T/S list sector.  These values are    *
+* placed in the new file description entry along with the file   *
+* type code.  The directory sector containing the new file       *
+* description is then updated on the disk.  Next, the T/S list   *
+* buffer is zeored out and written to the disk as the file's     *
+* first T/S list sector.  Bit 7 of the update flag (UPDATFLG,    *
+* $B5D5) is cleared to signal that the T/S list is up to date.   *
+* Execution finally branches to the FILLINWA routine ($ABA6)     *
+* which is common to opening a new or pre-exisiting file.        *
+*     FILLINWA customizes the work area with information from    *
+* the file description.  (The relative sector number of the last *
+* sector read or written (RELPREV, $B5E0) is set to "$FFFF".  If *
+* the command that called FNOPEN later reads data from, or       *
+* writes data to the disk, this value eventually forces the      *
+* computer to ignore the data sector currently in memory.)       *
+* After filling in the work area, the READTS routine ($AF5E) is  *
+* used to read in a track/sector list sector.  Because this      *
+* routine is entered with the carry clear, the first T/S list is *
+* read.  (If a new file was just created, a zeroed out T/S list  *
+* is used.  If the calling command later writes information to   *
+* the disk, the zero bytes are used to signal that a new data    *
+* sector must be allocated.)  FNOPEN is finally exited through   *
+* the normal file manager exit routine (GOODFMXT, $B37F).        *
+*                                                                *
+*::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*
+
+
+(AB22)
+FNOPEN   JSR COMNOPEN ;Open pre-exisitng file or make a new file
+                      ;if command allows new files to be created.
+
+                      * Common open routine.
+                      (AB28)
+                      COMNOPEN JSR ZWRKAREA ;Initialize the work area.
+
+                                            * Zero out the FM work area so it can be customized
+                                            * in accordance with the calling function.
+                                            * (Although some work bytes may not be subsequently
+                                            * altered, don't be lulled into thinking that they
+                                            * are not important.  Zero values are just as relevant
+                                            * as non-zero values.)
+                                            * (P.S.  Don't confuse FM work area with its image 
+                                            * (FM work buffer) that is housed in the chain of
+                                            * DOS buffers.)
+                                            (ABDC)
+                                            ZWRKAREA LDA #0
+                                                     TAX          ;Initialize the x-index.
+                                            ZEROWRKA STA FMWKAREA,X ;Put a $00 byte in work area.
+                                                     INX
+                                                     CPX #45      ;Work area is 45 bytes long.
+                                            (ABE5)   BNE ZEROWRKA
+
+                                            * Begin customizing work area.
+                                            * Get volume, drive, slot  & catalog track
+                                            * values from the FM parameter list.  Put
+                                            * drive, slot*16, catalog track and
+                                            * complemented volume number in the work area.
+                                            (ABE7)   LDA VOLFM    ;Volume number.
+                                                     EOR #$FF     ;Calculate 1's complement of volume #.
+                                                     STA VOLWA
+                                                     LDA DRVFM    ;Drive #.
+                                                     STA DRVWA
+                                                     LDA SLOTFM   ;Get slot #.
+                                                     ASL          ;Calculate slot * 16.
+                                                     ASL
+                                                     ASL
+                                                     ASL
+                                                     TAX          ;Set (x) = slot * 16.
+                                                     STX SLOT16WA
+                                                     LDA #$11     ;Normal catalog trk = #17.
+                                                     STA TRKWA
+                                            (AC05)   RTS
+
+                      (AB2B)   LDA #1      ;Describe sector length as 256 bytes
+                      (AB2D)   STA SECSIZWA+1 ;(in the FM work area).
+
+                      * Get record length from the FM parameter
+                      * list & put it in the FM work area.
+                      * (Don't allow a zero length.  If zero,
+                      * change it to one.)
+                      (AB30)   LDX RECLENFM+1
+                               LDA RECLENFM
+                               BNE STRECLEN ;Non-zero record length is ok.
+                               CPX #0
+                               BNE STRECLEN
+                               INX          ;Was zero, make it one instead.
+                      STRECLEN STA RECLENWA ;Put length in FM work area.
+                               STX RECLENWA+1
+                      (AB43)   JSR GETFNTRY ;Try to find a directory sector for the file.
+
+                                            * Locate or create a file entry in the
+                                            * directory buffer.
+                                            * Make two searches if necessary:
+                                            *    - Search1 - try to locate entry with same name as file wanted.
+                                            *    - Search2 - couldn't locate entry corresponding to file
+                                            *                wanted so create a new entry in first available
+                                            *                space in the directory sector.
+                                            (B1C9)
+                                            GETFNTRY JSR READVTOC ;Read in the VTOC so we can get the link to
+                                                                  ;TRKMAPS & to the first directory sector.
+
+                                                                  * Read the Volume Table of Contents (VTOC).
+                                                                  (AFF7)
+                                                                  READVTOC LDA #1       ;Read opcode for RWTS.
+                                                                  (AFF9)   BNE RDWRVTOC ;ALWAYS.
+
+                                                                  * Code common to read/write VTOC.
+                                                                  (AFFD)
+                                                                  RDWRVTOC LDY ADRVTOC  ;Get address of VTOC from the
+                                                                           STY IBBUFP   ;FM constants table & designate it
+                                                                           LDY ADRVTOC+1 ;as the I/O buffer in RWTS's IOB.
+                                                                           STY IBBUFP+1
+                                                                           LDX TRKWA    ;Enter RWTS driver with (x)/(y) equal
+                                                                           LDY #0       ;to the trk/sec values of the VTOC.
+                                                                  (B00E)   JMP RWTSDRVR ;Call driver to read/write the VTOC.
+                                                                           ------------
+
+                                                                  * Read/Write Track/Sector driver.
+                                                                  (B052)
+                                                                  RWTSDRVR .
+                                                                           .
+                                                                  (See dism'bly of RWTS driver using READ.)
+                                                                           .
+                                                                           .
+                                                                           (RTS)
+
+                                            * Point A4L/H at the primary file name buffer.
+                                            (B1CC)   LDA FNAMBUFM ;Get address of the name buffer from the
+                                                     STA A4L       ;FM parameter list & put it in the  A4L/H
+                                                     LDA FNAMBUFM+1 ;pointer.
+                                            (B1D4)   STA A4L+1
+
+                                            * Try to find the directory sector with the
+                                            * wanted file name.  Make two searches if necessary.
+                                            * On the first search, try to find a matching name.
+                                            * If that doesn't work, do a second search to store
+                                            * the description in the first available file
+                                            * description field in a directory sector.
+                                            (B1D6)   LDA #1       ;Initialize the search counter (SCRNSRCH)
+                                            SETSRCH  STA SCRNSRCH ;in the FM scratch space for two searches.
+                                            (B1D8)                ;(1 = search1, 0 = search2)
+                                            (B1DB)   LDA #0       ;Initialize offset of file description from
+                                                     STA SECNXD1R ;the very first directory sector.
+                                                     CLC          ;(c)=0=signal to read first directory sec.
+                                            GETDIRSC INC SECNXD1R ;Kick up offset from first directory.
+                                            (B1E1)                ;(On first entry, $00 --> $01.)
+                                            (B1E4)   JSR RDDIRECT ;Go read directory sector into buffer.
+
+                                                                  * Read a directory sector.
+                                                                  (B011)
+                                                                  RDDIRECT PHP          ;Save (c) on stack:
+                                                                                        ;  (c) = 0 = read 1rst directory sector.
+                                                                                        ;  (c) = 1 = read next directory sector.
+                                                                  (B012)   JSR PT2DIRBF
+
+                                                                                        * Designate the directory sector buffer
+                                                                                        * as I/O buffer in RWTS's IOB.
+                                                                                        (B045)
+                                                                                        PT2DIRBF LDA ADRDIRBF ;Get addr of direc
+                                                                                                 STA IBBUFP   ;sec buf from the
+                                                                                                 LDA ADRDIRBF+1 ;FM constants tbl
+                                                                                                 STA IBBUFP+1 ;& designate it as
+                                                                                        (B051)   RTS          ;as the I/O buffer.
+
+                                                                  (B015)   PLP          ;Check if 1rst directory sec or not.
+                                                                  (B016)   BCS RDNXTDIR ;Go read next directory sector.
+
+                                                                  * Read the first directory sector.
+                                                                  * (Carry = 0.)
+                                                                  (B018)
+                                                                  RDFIRDIR LDY FIRDIRSC ;(y)/(x) = trk/sec vals of first directory
+                                                                           LDX FIRDIRTK ;sector (from the VTOC buffer).
+                                                                  (B01E)   BNE DODIRRD  ;ALWAYS - go read in directory sector.
+
+                                                                  * Read the next directory sector.
+                                                                  * (Carry = 1.)
+                                                                  (B020)
+                                                                  RDNXTDIR LDX DIRLNKTK ;Get track of next directory sec from the
+                                                                                        ;link in the current directory sector.
+                                                                  (B023)   BNE GETDIRLK ;Link not zeroed out.
+                                                                           SEC          ;Link zeroed out - exit with (c) = 1 to
+                                                                  (B026)   RTS          ;signal there are no more directory secs.
+                                                                           ============
+
+                                                                  (B027)
+                                                                  GETDIRLK LDY DIRLNKSC ;Get sector of next directory sec from the
+                                                                                        ;link in the current directory sector.
+
+                                                                  * Call to read in the directory sector.
+                                                                  (B02A)
+                                                                  DODIRRD  STX CURDIRTK ;Save trk/sec vals of directory sec that
+                                                                  (B02D)   STY CURDIRSC ;we are about to read so they will be
+                                                                                        ;the current directory sec values for the
+                                                                                        ;next time around.
+                                                                  (B030)   LDA #1       ;Read opcode for RWTS.
+                                                                  (B032)   JSR RWTSDRVR ;Call RWTS driver to do the read.
+
+                                                                                        * Read/Write Track/Sector driver.
+                                                                                        (B052)
+                                                                                        RWTSDRVR .
+                                                                                                 .
+                                                                                        (See dis'mbly of RWTS driver using READ.)
+                                                                                                 .
+                                                                                                 .
+                                                                                                 (RTS)
+
+                                                                  (B035)   CLC          ;Link didn't zero out so signal that there
+                                                                  (B036)   RTS          ;are more directory secs to read & exit.
+                                                                           ============
+
+                                            (B1E7)   BCS CHNGSRCH ;Link zeroed out, no more directory secs,
+                                                                  ;so go switch searches.
+                                            (B1E9)   LDX #0
+                                            CKDIRTRK STX CURDIRNX ;Offset of file description into the current
+                                            (B1EB)                ;directory sector.
+                                            (B1EF)   LDA FIL1TSTK,X ;Get track number of first T/S list
+                                                                  ;for a particular file from the file
+                                                                  ;description entry in the directory sector.
+                                            (B1F1)   BEQ CHRSRCHA ;If trk=0, no more files in this direc sec.
+                                            (B1F3)   BMI CHRSRCHB ;Skip deleted file.  (When a file is
+                                                                  ;deleted, #$FF is put in byte where trk #
+                                                                  ;of first T/S list is usually kept.
+
+                                            * Compare the name found in the file
+                                            * description entry portion of the
+                                            * directory sector with the file name
+                                            * wanted.  (On entry, A4L/H points at
+                                            * the primary file name buffer.)
+                                            (B1F5)   LDY #0       ;Initialize index to file name buffer.
+                                                     INX          ;Point (x) at the first char position
+                                                     INX          ;in the name field of description entry.
+                                            CMPNAMES INX
+                                                     LDA (A4L),Y  ;Get char of name from primary.
+                                                     CMP FIL1TSTRK,X ;Compare to char in name of description.
+                                                     BNE DONTMTCH ;Chars (and therefore names) don't match.
+                                                     INY
+                                                     CPY #30      ;Done all chars yet (0 to 29)?
+                                                     BNE CMPNAMES ;Chars matched, branch if more to check.
+                                                     LDX CURDIRNX ;All chars matched, so names matched.
+                                                     CLC          ;Return with (x) = index to file
+                                            (B20A)   RTS          ;description in current directory sector
+                                                     ============ ;and with (c) = 0 to signal that the
+                                                                  ;correct file description was found.
+
+                                            * Advance index to point at the next
+                                            * potential file description entry.
+                                            (B20B)
+                                            DONTMTCH JSR NXPLUS35 ;Names didn't match, so adjust index
+                                                                  ;to point at the next entry.
+
+                                                                  * Add 35 to the offset to point the index
+                                                                  * at the next file description entry.
+                                                                  * (Check to make sure that we don't index
+                                                                  * right off the end of the directory sec.)
+                                                                  (B230)
+                                                                  NXPLUS35 CLC
+                                                                           LDA CURDIRNX
+                                                                  (B234)   ADC #35      ;Add 35 to index. (Each file description
+                                                                                        ;entry is 35 bytes long.)
+                                                                  (B236)   TAX          ;Check if there is more space for entries
+                                                                           CPX #245     ;in the current directory sector.
+                                                                  (B239)   RTS          ;Exit with (c) conditioned:
+                                                                                        ; (c) = 0 = more space in directory.
+                                                                                        ; (c) = 1 = ran off end of directory.
+
+                                            (B20E)   BCC CKDIRTRK ;More potential file descriptions to check
+                                                                  ;in this directory sector.
+                                            (B210)   BCS GETDIRSC ;Go get next directory sector.
+                                                     ------------
+
+                                            * If we just completed the first search,
+                                            * go back to do the second search.
+                                            (B212)
+                                            CHRSRCHA LDY SCRNSRCH ;(1 = search1, 0 = search2)
+                                            (B215)   BNE SETSRCH  ;Go switch to second search.
+
+                                            * If first search, skip deleted files.
+                                            * If second search, fall through to store
+                                            * the description in the first unused
+                                            * space in the directory.
+                                            (B217)
+                                            CHRSRCHB LDY SCRNSRCH ;(1 = search1, 0 = search2)
+                                            (B21A)   BNE DONTMTCH
+
+                                            * Couldn't locate the named file in the
+                                            * directory description entries, so begin
+                                            * creating a new description in the first available
+                                            * space in a directory (in case command can
+                                            * legally create a new file).
+                                            (B21C)
+                                            NWDESCRP LDY #0       ;Initialize index to primary file name buffer.
+                                                     INX          ;Set index to first char position in the
+                                                     INX          ;name field of the file description entry
+                                            SETNWNAM INX          ;space in the directory sector.
+                                                     LDA (A4L),Y  ;Copy char from primary file name buffer
+                                                     STA FIL1TSTK,X ;to the directory description space.
+                                                     INY
+                                                     CPY #30      ;30 chars in name (0 to 29).
+                                                     BNE SETNWNAM ;Branch if more chars to copy.
+                                                     LDX CURDIRNX ;Return with (x) = index to file
+                                                     SEC          ;description space in current directory
+                                            (B22F)   RTS          ;sector & with (c)=1 to signal new entry
+                                                     ============ ;was just created.
+
+                                            * If first search, switch to second search.
+                                            * If second search, link zeroed out because
+                                            * there isn't enough room left on the
+                                            * disk for a new entry.  Therefore,
+                                            * exit with a disk-full error message.
+                                            (B23A)
+                                            CHNGSRCH LDA #0       ;Used to reset SCRNSRCH if branch
+                                                                  ;back to do a second search.
+                                            (B23C)   LDY SCRNSRCH ;(1 = search1, 0 = search2)
+                                                     BNE SETSRCH  ;Just did search1 so go start seach2.
+                                            (B241)   JMP DISKFULL ;Even second search was unsuccesful
+                                                     ------------ ;so go handle a disk-full error.
+
+                      (AB46)   BCC FILLINWA ;Branch if found a directory sector with
+                                            ;name wanted in the file description entry.
+
+                      * Named file wasn't found in directory,
+                      * so prepare a new file entry in case
+                      * command can legally create a new file.
+                      (AB48)   STX CURDIRNX ;Offset to new description entry in
+                                            ;case want to create a new file.
+
+                      * Check to  see if command can
+                      * legally create a new file.
+                      (AB4B)   LDX NDX2CMD  ;(x) = index representing command.
+                      (AB4E)   LDA CMDATTRB,X ;Get first byte containing description
+                                            ;of the given command's attributes.
+                      (AB51)   LDX CURDIRNX ;(x) = index for new file description
+                                            ;entry into the directory sector.
+                      (AB54)   LSR          ;(c) = bit 0 of 1rst attribute byte.
+                      (AB55)   BCS CREATNEW ;If (c) = 1, command can create a new file.
+
+                      * Command can't create a new file.
+                      * See which language we are using and
+                      * exit with the appropriate error msg.
+                      (AB57)
+                      NEWILLGL LDA CONDNFLG ;$00=warmstart, $01=reading, $40=A(RAM),
+                                            ;$80=coldstart & $C0=integer.
+                      (AB5A)   CMP #$C0     ;Integer in ROM?
+                               BNE TOFILNOT ;No.
+                      (AB5E)   JMP LNGNOTAV ;Yes - handle language-not-available error.
+                               ------------
+                      TOFILNOT JMP FILENOT  ;Handle file-not-found error.
+                      (AB61)   ------------
+
+                      * Create a new file.
+                      * - Initialize file size =  1 sector long.
+                      * - Assign sectors for data sectors & update file size.
+                      * - Write updated VTOC to the disk.
+                      * - Put link & update file size in appropriate
+                      *   file description area contained in the directory sector.
+                      * - Write the updated VTOC to the disk.
+                      * - Write a new T/S list to the disk.
+                      (AB64)
+                      CREATNEW LDA #0       ;Initialize the file size = 1 sector long
+                               STA FIL1SIZE+1,X ;(cause at first, only starting with a
+                               LDA #1       ;a T/S list sector).
+                               STA FIL1SIZE,X
+                      (AB6E)   STX CURDIRNX ;Save byte offset of file description
+                                             ;into the directory sector.
+                      (AB71)   JSR ASGNTKSC ;Find trk/sec values for new file.
+
+                                            * Asign trk(s)/sec(s) for the new file.
+                                            *
+                                            * Note: This routine usually assigns more
+                                            * sectors than are  needed.  Each time
+                                            * a trk with one or more free sectors is
+                                            * located, the entire track (or at least
+                                            * all of the free sectors left on that
+                                            * track) are assigned.  The unneeded sectors
+                                            * are later released by the CLOSE command.
+                                            *
+                                            * Note:  DOS does not support the allocation
+                                            * of track 0 for a file.  Instead, track 0 is
+                                            * reserved for storing part of the DOS image.
+                                            * However, as shown below, track 0 has special
+                                            * significance for the following flags:
+                                            *        ASIGNTRK = trk # being assigned or,
+                                            *                   if it equals 0, then it is a
+                                            *                   signal to get the next track
+                                            *                   to assign from the VTOC.
+                                            *        TRK0YET = 0 = haven't encountered trk 0 yet.
+                                            *                = 1 = trk 0 has been encountered.
+                                            * (Track 0 is used as a reference point.  The first
+                                            * time track 0 is encountered, TRK0YET is set to 1.
+                                            * The next time track 0 is encountered, the entire
+                                            * disk has been searched.)
+
+                                            * Has a track already been assigned for this file?
+                                            (B244)
+                                            ASGNTKSC LDA ASIGNTRK
+                                            (B247)   BEQ PRPNWTRK ;Branch if no trk assigned yet.
+                                                                  ;(Always take branch the 1rst time we
+                                                                  ;"JSR" to here from CREATNEW.  However,
+                                                                  ;when we later JSR to here, ASIGNTRK = trk
+                                                                  ;number for T/S list.)
+
+                                            * A track was already assigned, so now
+                                            * see if there are any free sectors which
+                                            * we can use on this track.
+                                            (B249)
+                                            ANYAVAIL DEC ASIGNSEC ;Next sector to be assigned.
+                                            (B24C)   BMI ASGNWTRK ;If decrement from $00 --> $FF, then there
+                                                                  ;aren't any more secs free on this track.
+
+                                            * Check if any secs are free.
+                                            (B24E)   CLC          ;Roll bits in the 4-bytes of ASIGNMAP as a
+                                            (B24F)   LDX #4       ;unit.  Roll them back to their standard
+                                            (B251)                ;position.
+                                            ADJSTMAP ROL ASIGNMAP-1,X ;If (c) = 1, sector assoc with rolled
+                                                     DEX          ;bit position is free to be assigned to 
+                                                     BNE ADJSTMAP ;a new file.
+                                            (B257)   BCC ANYAVAIL
+
+                                            * Found a free sector.
+                                            (B259)   INC FILENSEC ;Sector was free, so kick file size up by
+                                                     BNE XWITHFRE ;one & return with free sector number in
+                                                     INC FILENSEC+1 ;(a) so it can later be used for the T/S
+                                            XWITHFRE LDA ASIGNSEC ;list sector.
+                                            (B264)   RTS          ;(Actually only good exit available.)
+                                                     =============
+
+                                            * Prepare to assign a new track (cause all
+                                            * sectors were assigned on the last track).
+                                            (B265)
+                                            ASGNWTRK LDA #0       ;Set signal to assign a new trk.
+                                            (B267)   STA ASIGNTRK
+
+                                            * Continue preparations to assign a new
+                                            * track or begin preparations to assign
+                                            * the first track.
+                                            (B26A)
+                                            PRPNWTRK LDA #0
+                                                     STA TRK0YET  ;Signal that not all trks checked yet.
+                                            (B26F)   JSR READVTOC ;Read in the VTOC to find the next trk to use.
+
+                                                                  * Read the Volume Table of Contents (VTOC).
+                                                                  (AFF7)
+                                                                  READVTOC LDA #1       ;Read opcode for RWTS.
+                                                                  (AFF9)   BNE RDWRVTOC ;ALWAYS.
+
+                                                                  * Code common to read/write VTOC.
+                                                                  (AFFD)
+                                                                  RDWRVTOC LDY ADRVTOC  ;Get address of VTOC from the
+                                                                           STY IBBUFP   ;FM constants table & designate it
+                                                                           LDY ADRVTOC+1 ;as the I/O buffer in RWTS's IOB.
+                                                                           STY IBBUFP+1
+                                                                           LDX TRKWA    ;Enter RWTS driver with (x)/(y) equal
+                                                                           LDY #0       ;to the trk/sec values of the VTOC.
+                                                                  (B00E)   JMP RWTSDRVR ;Call driver to read/write the VTOC.
+                                                                           ------------
+
+                                                                  * Read/Write Track/Sector driver.
+                                                                  (B052)
+                                                                  RWTSDRVR .
+                                                                           .
+                                                                  (See dism'bly of RWTS driver using READ.)
+                                                                           .
+                                                                           .
+                                                                           (RTS)
+
+                                            * Find & re-assign free sectors for the
+                                            * next track.  Calculate the next trk to
+                                            * assign.
+                                            (B272)
+                                            GETNWTRK CLC
+                                                     LDA NXTRKUSE ;Get next track to assign.
+                                                     ADC DRECTION ;Direction (+1/-1) of assignment.
+                                            (B279)   BEQ CKIFFULL ;If 0, go see if checked all tracks.
+
+                                            * Is track number legal?
+                                            (B27B)   CMP TKPERDSK ;Number of tracks on disk (from VTOC).
+                                            (B27E)   BCC CHK4FREE ;Branch if trk number is valid.
+
+                                            * Track number is too large,
+                                            * so reverse direction.
+                                            (B280)   LDA #$FF     ;(a) = -1.
+                                            (B282)   BNE SRCH4TRK ;ALWAYS.
+
+                                            * At track 0, see if checked all tracks.
+                                            * If at track 0 for the first time, set
+                                            * the flag.  If this is the second  time
+                                            * at track 0, go issue a disk-full error
+                                            * message (because we just searched all
+                                            * tracks and didn't find any free sectors.
+                                            (B284)
+                                            CKIFFULL LDA TRK0YET
+                                            (B287)   BNE TODSKFUL  ;Second time - disk full.
+
+                                            * Start the second search.
+                                            (B289)   LDA #1       ;Set flag to indicate that the pending
+                                            (B28B)   STA TRK0YET  ;search will the second one.
+
+                                            * Start search at catalog track
+                                            * plus or minus one.
+                                            (B28E)
+                                            SRCH4TRK STA DRECTION ;Set the search direction.
+                                                     CLC          ;Begin search one trk away from cat trk.
+                                            (B292)   ADC  #$11
+
+                                            * Check trk's TRKMAP for free sectors.
+                                            (B294)
+                                            CHK4FREE STA NXTRKUSE
+                                                     STA ASIGNTRK
+                                                     TAY          ;Irrevlevant.
+                                                     ASL          ;Trk*4 cause 4 bytes/trk in TRKMAP.
+                                                     ASL
+                                                     TAY          ;Index from the last byte of TRKMAP0.
+                                                     LDX #4       ;Index to ASIGNMAP.
+                                                     CLC          ;(c)=0, assume no free sectors available.
+                                            CPYTKMAP LDA TRKMAP0+3,Y ;Copy byte from TRKMAP to the assignment map.
+                                                     STA ASIGNMAP-1,X
+                                            (B2A7)   BEQ NXMAPBYT ;0 = sector used.
+
+                                            * Found a  free sector.
+                                            (B2A9)   SEC          ;(c) = 1 = free sector foundl
+                                                     LDA #0       ;Put 0 in TRKMAP to reassign all eight
+                                            (B2AC)   STA TRKMAP0+3,Y ;sectors represented by this byte.
+                                                                  ;(Remember, only 2 bytes of TRKMAP actually
+                                            (B2AF)                ;represent secs.  The other 2 bytes are duds.)
+                                            NXMAPBYT DEY          ;Reduce indices to maps.
+                                                     DEX
+                                            (B2B1)   BNE CPYTKMAP ;Branch if not done transferring all bytes
+                                                                  ;from TRKMAP to ASIGNMAP yet.
+
+                                            * Check if found a free sector.
+                                            (B2B3)   BCC GETNWTRK ;If (c) = 0, then no free sectors found yet
+                                                                  ;so go back to get a new track.
+                                            (B2B5)   JSR WRITVTOC ;Update the VTOC on the disk.
+
+                                                                  * Write the Volume Table of Contents (VTOC).
+                                                                  (AFFB)
+                                                                  READVTOC LDA #2       ;Write opcode for RWTS.
+
+                                                                  * Code common to read/write  VTOC.
+                                                                  (AFFD)
+                                                                  RDWRVTOC LDY ADRVTOC  ;Get address of VTOC from the
+                                                                           STY IBBUFP   ;FM constants table & designate it
+                                                                           LDY ADRVTOC+1 ;as the I/O buffer in RWTS's IOB.
+                                                                           STY IBBUFP+1
+                                                                           LDX TRKWA    ;Enter RWTS driver with (x)/(y) equal
+                                                                           LDY #0       ;to the trk/sec values of the VTOC.
+                                                                  (B00E)   JMP RWTSDRVR ;Call driver to read/write the VTOC.
+                                                                           ------------
+
+                                                                  * Read/Write Track/Sector driver.
+                                                                  (B052)
+                                                                  RWTSDRVR .
+                                                                           .
+                                                                  (See dism'bly of RWTS driver using WRITE.)
+                                                                           .
+                                                                           .
+                                                                           (RTS)
+
+                                            (B2B8)   LDA SECPERTK ;Reset ASIGNSEC with # of secs/trk
+                                                     STA ASIGNSEC ;(ie. one greater than highest sector #).
+                                            (B2BE)   BNE ANYAVAIL ;ALWAYS.
+                                                     -----------
+
+                                            * Go issue a disk-full error message.
+                                            TODSKFUL JMP DISKFULL ;Go handle error.
+                                            (B2C0)   ------------
+                                                     
+
+                      * Finish setting up parameters
+                      * in the file manager's work area.
+                      * (Don't confuse with work buffer
+                      * located in the chain of DOS buffers.)
+                      (AB74)   LDX CURDIRNX ;Offset into directory sec for new description entry.
+                               STA FIL1TSSC,X ;Put sec val in directory sector.
+                               STA FIRTSSEC ;Put sec val of 1rst T/S list sec in FM work area.
+                               STA CURTSSEC ;Put current sector val in FM work area.
+                               LDA ASIGNTRK ;Do the same for the track value.
+                               STA FIL1TSTRK,X
+                               STA FIRSTSTK
+                               STA CURTSTRK
+                               LDA FILTYPFM  ;(From FM parm list.)
+                      (AB8F)   STA FIL1TYPE,X ;Put file type in file description entry.
+
+                      * Write directory sector buffer.
+                      (AB92)   JSR WRDIRECT ;Write directory sec buf in cat.
+
+                                            * Write the directory buffer.
+                                            (B037)
+                                            WRDIRECT JSR PT2DIRBF ;Select directory sector buffer.
+
+                                                                  * Designate the directory sector buffer
+                                                                  * as I/O buffer in RWTS's IOB.
+                                                                  (B045)
+                                                                  PT2DIRBF LDA ADRDIRBF ;Get addr of the directory sector buffer
+                                                                           STA IBBUFP   ;from the FM constants table and designate
+                                                                           LDA ADRDIRBF+1 ;it as the I/O buffer.
+                                                                           STA IBBUFP+1
+                                                                  (B051)   RTS
+
+                                            (B03A)   LDX CURDIRTK ;Enter RWTS driver with (x)/(y) = trk/sec
+                                                     LDY CURDIRSC ;values of the directory sector.
+                                                     LDA #2       ;Write opcode for RWTS.
+                                            (B042)   JMP RWTSDRVR ;Call RWTS driver to write the directory buffer.
+                                                     -------------
+
+                                            * Read/Write Track/Sector driver. 
+                                            (B052)
+                                            RWTSDRVR .
+                                                     .
+                                            (See dis'mbly of RWTS
+                                            driver using WRITE.)
+                                                     .
+                                                     .
+                                                     (RTS)
+
+                      * Write T/S list sector buffer.
+                      (AB95)   JSR SELTSBUF ;Get adr of T/S list sec buf from
+                                             ;the FM parameter list.
+
+                                            * Point A4L/H at the T/S list sector buffer.
+                                            (AF0C)
+                                            SELTSBUF LDX #2       ;Index for T/S list buf.
+                                            (AF0E)   BNE PT2FMBUF ;ALWAYS.
+
+                                            (AF12)
+                                            PT2FMBUF LDA WRKBUFFM,X ;Get address of the desired buffer from
+                                                     STA A4L      ;the FM parameter list & put it in the
+                                                     LDA WRKBUFFM+1,X ;A4L/H pointer.
+                                                     STA A4L+1
+                                            (AF1C)   RTS
+
+                      (AB98)   JSR CURBUF   ;Zero out the T/S list sector buffer.
+          
+                                            * Zero out the current 256-byte buffer.
+                                            (B7D6)
+                                            ZCURBUF  LDA #0
+                                                     TAY
+                                            ZCURBUF1 STA (A4L),Y
+                                                     INY
+                                                     BNE ZCURBUF1
+                                            (B7DE)   RTS
+
+                      (AB9B)   JSR WRITETS  ;Write zeroed out T/S list sector buffer.
+                                            ;NOTE:  If the write subfunction is later
+                                            ;entered to write new data to the disk, the
+                                            ;zero bytes are detected & used as signals
+                                            ;that a new data pair should be put in the
+                                            ;T/S list sector buffer.)
+      
+                                            * Write the T/S list buffer.
+                                            (AF3A)
+                                            WRITETS  JSR SETTSIOB ;Prepare RWTS's IOB for WRITING the
+                                                                  ;the T/S list buffer.
+
+                                                                  * Prepare RWTS's IOB for reading
+                                                                  * or writing the T/S list sector.
+                                                                  (AF4B)
+                                                                  SETTSIOB LDA TSBUFFM  ;Get adr of the T/S list buf from the FM
+                                                                           STA IBBUFP   ;parameter list & designate T/S list buf
+                                                                           LDA TSBUFFM+1 ;as the I/O buffer in RWTS's IOB.
+                                                                           STA IBBUFP+1
+                                                                           LDX CURTSTRK ;Set (x)/(y) = trk/sec of current T/S list.
+                                                                           LDY CURTSSEC
+                                                                  (AF5D)   RTS
+
+                                            (AF3D)   LDA #2       ;Write opcode for RWTS.
+                                            (AF3F)   JSR RWTSDRVR ;Call RWTS driver to write the T/S list.
+
+                                                                  * Read/Write Track/Sector driver.
+                                                                  (B052)
+                                                                  RWTSDRVR .
+                                                                           .
+                                                                  (See dis'mbly of RWTS driver using WRITE.)
+                                                                           .
+                                                                           .
+                                                                           (RTS)
+
+                                            (AF42)   LDA #$7F     ;Clear bit 7 of the update flag to signal
+                                                     AND UPDATFLG ;that the T/S list sector is up to date.
+                                                     STA UPDATFLG
+                                            (AF4A)   RTS
+
+                      (AB9E)   LDX CURDIRNX ;Offset to new file descrip in directory sec.
+                               LDA #6       ;Default return code value to that for
+                      (ABA3)   STA RTNCODFM ;a file-not-found error.
+
+                      * Fill in the FM work area buffer.
+                      * (Routine common to opening a new
+                      * or pre-existing file.)
+                      (ABA6)
+                      FILLINWA LDA FIL1TSTK,X ;T/S list trk val (from directory sec).
+                               STA FIRSTSTK
+                               LDA FIL1TSSC,X ;T/S list sec val (from directory sec).
+                               STA FIRTSSEC
+                               LDA FIL1TYPE,X ;File type (from directory sec).
+                               STA FILTYPFM
+                               STA FILTYPWA
+                               LDA FIL1SIZE,X ;File size (from directory sec).
+                               STA FILENSEC
+                               LDA FIL1SIZE+1,X
+                               STA FILENSEC+1
+                               STX BYTNXDIR ;Index into directory sec to description.
+                               LDA #$FF     ;Pretend that the last data sector used had a
+                               STA RELPREV  ;relative sector number (in relation to
+                      (ABCF)   STA RELPREV+1 ;the entire file) of #$FFFF.  NOTE:  This
+                                            ;value is later used to trick the read and
+                                            ;write subfunctions into ignoring the data
+                                            ;sector currently in memory.
+                      (ABD2)   LDA MXIN1TSL ;Dictate that a T/S list can only describe $7A
+                      (ABD5)   STA MXSCURTS ;(#122) data sectors.  Note:  This value is later
+                                            ;used by the read and write subfunctions to decide
+                                            ;whether or not the T/S list currently in memory 
+                                            ;should be used.
+
+                      * Read first T/S list sector
+                      * to the T/S list buffer.
+                      (ABD8)   CLC          ;(c) = 0 = signal 1rst T/S list sector.
+                      (ABD9)   JMP READTS   ;Go read in the T/S list sector.
+                               ------------
+     
+                      * Read T/S list sector.
+                      (AF5E)
+                      READTS   PHP          ;Save (c) denoting if 1rst T/S list or not.
+                                            ;(c) = 0 = read 1rst T/S list sec.
+                                            ;(c) = 1 = read next T/S list sec.
+                      (AF5F)   JSR CKTSUPDT ;Write T/S list sec buf if updating is
+                                            ;required.  (If T/S list buf has changed
+                                            ;since last read or write, then write it
+                                            ;back to the disk so don't overwrite buf
+                                            ;and lose information when read the new
+                                            ;T/S list sector.)
+
+                                            * Check if T/S list requires updating.
+                                            * (ie. Has T/S list buf changed since
+                                            * the last read or write?)
+                                            (AF34)
+                                            CKTSUPDT LDA UPDATFLG
+                                                     BMI WRITETS  ;If bit 7 set, updating is required.
+                                            (AF39)   RTS
+                                                     ===========
+
+                                            * Write the T/S list buffer.
+                                            (AF3A)
+                                            WRITETS  JSR SETTSIOB ;Prepare RWTS's IOB for WRITING the
+                                                                  ;the T/S list buffer.
+
+                                                                  * Prepare RWTS's IOB for reading
+                                                                  * or writing the T/S list sector.
+                                                                  (AF4B)
+                                                                  SETTSIOB LDA TSBUFFM  ;Get adr of the T/S list buf from the FM
+                                                                           STA IBBUFP   ;parameter list & designate T/S list buf
+                                                                           LDA TSBUFFM+1 ;as the I/O buffer in RWTS's IOB.
+                                                                           STA IBBUFP+1
+                                                                           LDX CURTSTRK ;Set (x)/(y) = trk/sec of current T/S list.
+                                                                           LDY CURTSSEC
+                                                                  (AF5D)   RTS
+
+                                            (AF3D)   LDA #2       ;Write opcode for RWTS.
+                                            (AF3F)   JSR RWTSDRVR ;Call RWTS driver to write the T/S list.
+
+                                                                  * Read/Write Track/Sector driver.
+                                                                  (B052)
+                                                                  RWTSDRVR .
+                                                                           .
+                                                                  (See dis'mbly of RWTS driver using WRITE.)
+                                                                           .
+                                                                           .
+                                                                           (RTS)
+
+                                            (AF42)   LDA #$7F     ;Clear bit 7 of the update flag to signal
+                                                     AND UPDATFLG ;that the T/S list sector is up to date.
+                                                     STA UPDATFLG
+                                            (AF4A)   RTS
+                                                     ============
+
+                      (AF62)   JSR SETTSIOB ;Prepare RWTS's IOB for READING a T/S list.
+
+                                            * Prepare RWTS's IOB for reading
+                                            * or writing the T/S list sector.
+                                            (AF4B)
+                                            SETTSIOB LDA TSBUFFM  ;Get adr of the T/S list buf from the FM
+                                                     STA IBBUFP   ;parameter list & designate T/S list buf
+                                                     LDA TSBUFFM+1 ;as the I/O buffer in RWTS's IOB.
+                                                     STA IBBUFP+1
+                                                     LDX CURTSTRK ;Set (x)/(y) = trk/sec of current T/S list.
+                                                     LDY CURTSSEC
+                                            (AF5D)   RTS
+
+                      (AF65)   JSR SELTSBUF ;Select the T/S list buffer.
+
+                                            * Point A4L/H at the T/S list sector buffer.
+                                            (AF0C)
+                                            SELTSBUF LDX #2       ;Index for T/S list buf.
+                                            (AF0E)   BNE PT2FMBUF ;ALWAYS.
+
+                                            (AF12)
+                                            PT2FMBUF LDA WRKBUFFM,X ;Get address of the desired buffer from
+                                                     STA A4L      ;the FM parameter list & put it in the
+                                                     LDA WRKBUFFM+1,X ;A4L/H pointer.
+                                                     STA A4L+1
+                                            (AF1C)   RTS
+
+                      (AF68)   PLP          ;Get saved (c) back from stack.
+                      (AF69)   BCS RDNXTTS  ;If (c) = 1, already read FIRST T/S list
+                                            ;sec, so go read next one.
+
+                      * Read first T/S list sector.
+                      * (Carry was clear.)
+                      (AF6B)
+                      RDFIRSTS LDX FIRSTSTK ;Set (x)/(y)=trk/sec of first T/S list sec.
+                               LDY FIRTSSEC
+                      (AF71)   JMP RDTSLST  ;Go read T/S list sector into buffer.
+                               ------------
+
+                      * Subroutine to read T/S list sector.
+                      (AFB5)
+                      RDTSLST  LDA #1       ;Read opcode for RWTS.
+
+                      * Code common to read/write T/S list.
+                      (AFB7)
+                      RDWRTS   STX CURTSTRK ;New T/S list sector trk/sec values (x)/(y)
+                               STY CURTSSEC ;become current T/S list trk/sec values.
+                      (AFBD)   JSR RWTSDRVR ;Call RWTS driver to read/write current T/S
+                                            ;list.
+
+                                            * Read or write the current T/S list.
+                                            (B052)
+                                            RWTSDRVR .
+                                                     .
+                                            (See dis'mbly of RWTS driver using READ.)
+                                                     .
+                                                     .
+                                                     (RTS)
+
+                      * Update the FM work area
+                      * (not in DOS buffer chain).
+                      (AFC0)   LDY  #5      ;Offset into current T/S list buffer.
+                               LDA (A4L),Y  ;Get & save the relative sector number of the
+                      (AFC4)   STA RELFIRST ;FIRST data sector that can be described in this
+                                            ;T/S list.  (Always equals $00 when called from FNOPEN.)
+                      (AFC7)   CLC          ;Add the maximum # of data secs that can described
+                               ADC MXSCURTS ;in this T/S list.
+                               STA RELASTP1 ;Store maximum relative sector number (plus 1) of
+                               INY          ;the last data sector that can be described in list.
+                               LDA (A4L),Y
+                               STA RELFIRST+1
+                               ADC MXSCURTS+1
+                               STA RELASTP1+1 ;(RELASTP1/+1 is always set to $007A by FNOPEN.)
+                               CLC          ;Return with "no error" signal.
+                      (AFDB)   RTS
+                               ============
+
+(AB25)   JMP GOODFMXT ;Exit cleanly.
+         ------------
+
+
+* Exit the file manager with or without errors.
+(B35F)
+LNGNOTAV LDA #1
+(B361)   BNE BADFMXIT ;ALWAYS.
+
+(B373)
+FILENOT  LDA #6
+(B375)   BNE BADFMXIT ;ALWAYS.
+
+(B377)
+DISKFULL JMP FULLPTCH ;(See dis'mbly of errors.)
+
+(B37F)
+GOODFMXT LDA RTNCODFM
+         CLC          ;(c) =  0 to signal good operation.
+         BCC FMEXIT
+BADFMXIT SEC          ;(c) = 1 to signal unsuccessful.
+FMEXIT   PHP          ;Save status on stack.
+         STA RTNCODFM ;Store return code in FM parameter list.
+         LDA #0
+         STA STATUS
+(B38E)   JSR CPYFMWA  ;Copy the work area to the work buffer.
+
+                      * Copy the FM work area (non-chain) to
+                      * the FM work buffer (in DOS chain).
+                      (AE7E)
+                      CPYFMWA  JSR SELWKBUF ;Select the FM work buffer (in DOS chain).
+
+                                            *  Point the A4L/H pointer at the FM work buffer.
+                                            (AF08)
+                                            SELWKBUF LDX #0       ;Set index to select work buffer.
+                                            (AF0A)   BEQ PT2FMBUF ;ALWAYS.
+
+                                            (AF12)
+                                            PT2FMBUF LDA WRKBUFFM,X ;Get address of selected buffer from the
+                                                     STA A4L      ;FM parameter list & put it in the pointer.
+                                                     LDA WRKBUFFM+1,X
+                                                     STA A4L+1
+                                            (AF1C)   RTS
+
+                      (AE81)   LDY #0       ;Initialize index.
+                      STORWRK  LDA FMWKAREA,Y ;Get byte from the FM work area.
+                               STA  (A4L),Y ;Put it in the work buffer.
+                               INY
+                               CPY #45      ;45 bytes to copy (0 to 44).
+                               BNE STORWRK
+                      (AE8D)   RTS
+
+(B391)   PLP          ;Retrieve status of success of operation
+                      ;from the stack.
+(B392)   LDX STKSAV   ;Adjust stack pointer to force exit to the
+         TXS          ;caller of the function (even if we are
+(B396)   RTS          ;presently several subroutines deeper than
+         ============ ;the original entry point).  (Returns to
+                      ;AFTRFUNC ($A6AB) in the FMDRIVER routine
+                      ;($A6A8).)

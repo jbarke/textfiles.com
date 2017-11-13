@@ -1,0 +1,172 @@
+  Extending XMODEM/MODEM File Transfer Protocol to support DOS
+
+                    T. Jennings  20 Sept. 83
+
+
+
+
+          This  is a proposed addition to the (de facto) standard 
+     file  transfer  protocol  used  by  the  XMODEM  and   MODEM 
+     programs.  This  addition  adds PCDOS and MSDOS support  for 
+     exact filesize and original creation time and date.
+
+          This   addition  is  backwards  compatible   with   all 
+     XMODEM/MODEM programs and it's lookalikes. It is has been in 
+     use  for over a year for internal company file transfers and 
+     to the "outside" with MODEM7 and XMODEM.  Some manufacturers 
+     of  PC compatibles are now looking into an OEM  purchase  of 
+     our program;  now is the time to provide the support for the 
+     (soon to be) millions of PC's and compatibles.
+
+          This   description   assumes   you   have   a   working 
+     understanding of the MODEM/XMODEM protocol. The extention of 
+     course requires adding code to existing or new  programs.  I 
+     have  used  this  sucessfully for over a year  now  with  no 
+     problems.
+
+          The  problem  is simple:  XMODEM/MODEM passes  no  file 
+     information  whatsoever.  MODEM provides only the  filename. 
+     Since the filesize is unknown at receive time, the receiving 
+     program  will "round up" the file size to the  next  highest 
+     128 byte interval.  For .COM files, etc this isn't much of a 
+     problem,  but  for spreadsheet data files,  some text files, 
+     and other special data files,  the exact length is required. 
+     Also,  file  creation date information is  lost,  making  it 
+     difficult to keep track of versions, etc.
+
+          The  solution  is  obviously to pass  this  information 
+     somehow. The necessary data happens to be much less than 128 
+     bytes;  the  size  of an XMODEM data  block.  Basically  the 
+     solution  is  to  assemble  a  data  block  containing   the 
+     necessary  information,  and  transmit  it as if it  were  a 
+     normal data block,  but with a special header  character.  A 
+     limited number of retries is done,  so that if the receiving 
+     program can't handle it, it won't get the ten errors causing 
+     it to abort.
+
+          To  the  user,  there  is  no  extra  effort  required. 
+     However,  if the sender is using this extended protocol, and 
+     the  receiver  cannot,  the receiver will  see  six  "header 
+     errors", then normal transmission will resume.
+
+
+                           SENDING PROTOCOL
+
+          At  the  time that the file is  open,  the  appropriate 
+     informaton on the file is assembled: creation time and date, 
+     file  size.  This is assembled into a zero-filled data block 
+     (see Table 1).
+
+          Before  the  first data block is sent,  this  block  is 
+     sent,  with  an ASCII 'SYN' character instead of  the  'SOH' 
+     indicating  a data block.  If the receiver accepts the block 
+     ('ACK'  received) then data block transmission  proceeds  as 
+     usual. If an error ('NAK') is received, the sender does only 
+     3    retries;  this  prevents  the receiver  from  aborting, 
+     leaving seven  more attempts to get the  first  data  block. 
+     (This  works  out  better than it  seems;  the  first  block 
+     usually  gets a couple of timeouts anyways,  due to  program 
+     sync-up, receiver file creation, etc.)
+
+          The sender can still transmit data until end-of-file as 
+     it  usually does.  Only the receiver (if it has received the 
+     special block) need worry about the exact filesize.
+
+
+                          RECEIVER PROTOCOL
+
+          The receiver operates almost identically to the  normal 
+     XMODE/MODEM protocol. However, one special check is made. If 
+     the current block number is zero (awaiting first data block) 
+     and  the received header character is 'SYN' then  a  special 
+     block  has  been received.  The receiver then pulls out  the 
+     creation time and date and the filesize,  and sets a flag to 
+     indicate this.
+
+          If  the special block was received,  the receiver  must 
+     maintain the byte count (filesize) properly; for example, if 
+     the filesize is 513 bytes,  it writes out 128 bytes for  the 
+     first  four blocks received,  then only one byte on the last 
+     block.
+
+          The  creation date and time must be set after the  last 
+     write  to the file,  but before the close.  NOTE:  Only  DOS 
+     version  2.00  and higher has the  set-filetime  capability. 
+     Therefore, the time and date field in the data block will be 
+     zeroes if it is not supported.  If it is all zeros,  then do 
+     not set the filetimes.
+
+
+                                HINTS
+
+          There  are some ways to make the implementation easier. 
+     For  example,  initially  filling the special block  to  all 
+     zeroes sets all the unused fields,  the version number,  and 
+     the  time and date if not supported.  The byte order of  all 
+     the  elements  (see Table 1) are in the same order that  DOS 
+     returns,  since  the program really need not look  at  them. 
+     (The filesize is an exception,  but it is a LONG in  Lattice 
+     'C', and in the right byte order, too.)
+
+          The header is identical to a normal data block,  except 
+     for  the 'SYN' instead of 'SOH',  including the checksum and 
+     sector  number.  Existing  code could be used  to  send  and 
+     receive this block.
+
+          In  addition,  since both ends of the transfer now have 
+     the  filesize,  you can (fairly) easily display the time  to 
+     complete  the  transmission  on  the  display  continuously, 
+     helping  eliminate one of the most frustrating things  about 
+     modem  transfers:  "How long will this thing take?" Once the 
+     transfer has started, a glance at the display will tell you.
+
+
+                               Table 1
+
+          This is the data block sent from sender to receiver  to 
+     pass  the  additional file information.  This block is  sent 
+     just before the first data block.
+
+
+     Header           Data                 Checksum
+     SYN 00 FF   .......................    ..
+
+     SYN       Distinguishes this block as a system info block.
+     00        XMODEM/MODEM data blocks start at 01. 00 therefore
+               indicates a special block.
+     FFh       The ones complement of the sector number.
+
+     The  following  comprises the 128 byte  data  block.  Unused 
+     fields  are initialized to zeros for future  expansion.  The 
+     number at the left (+0) is the offset from the start of  the 
+     block.
+
+     +0        DOS filesize, 32 bits, in Intel format. I.e. for a 
+          filesize  of  19,088,743 bytes (01234567 hex) the  byte 
+          order would be: 67, 45, 23, 01.
+
+     +4        Creation  time and date,  4 bytes,  in DOS  packed 
+          format.  This  field should be all zeros if not  valid, 
+          i.e.  if  sent from a system that does not support  it. 
+          The  receiver  should  check this  before  setting  the 
+          creation time. 
+
+     +8        The filename, 16 bytes, in ASCIZ format, i.e. non-
+          FCB  format.  "FOO.COM"  not "FOO      COM".  Not  used 
+          currently.  This  field  should be left  justified  and 
+          blank filled.
+
+     +24       Version  number,  1 byte.  The current version  is 
+          zero.  This  will  somehow be synchronized  with  other 
+          programs if the contents of this block change.
+
+     +25       The  file transfer program's name,  16  bytes.  My 
+          program  is  called  "TELINK".   This  should  be  left 
+          justified and blank filled.
+
+     +26       Unused.  The  rest  of the block  should  be  zero 
+          filled.
+
+
+     XX         The checksum of the entire data block,  generated 
+     and checked identically to a normal data block.

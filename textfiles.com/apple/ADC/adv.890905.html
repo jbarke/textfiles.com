@@ -1,0 +1,482 @@
+AppleLink
+APPLE II DEVELOPMENT FORUM CONFERENCE LOG
+September 5, 1989  10:00 pm Eastern Time
+Topic:  Programming on the Apple IIGS
+Forum Leader:  Dave Sugar  (AFL Dyfet)
+
+
+AFL Dyfet  Okay, I guess we are ready to get started then...Good evening and
+           welcome to
+AFL Dyfet  the Apple II Development forum.  Tonight's topic relates to
+           Toolbox programming
+AFL Dyfet  on the IIgs.  We will be using PROTOCOL starting NOW.  This means
+           that if you
+AFL Dyfet  wish to ask a question, you should enter a '?' on a line by
+           itself, and if you
+Zith       how does one go about setting up a heartbeat task header from c
+AFL Dyfet  wish to respond to what's currently being discussed, you should
+           enter a '!' on 
+AFL Dyfet  a line by itself.  You will all be called in turn, I guess
+           starting with
+AFL Dyfet  Zith :).  GA Zith, you have the floor :)
+Dave Lyons !
+Dave Lyons I'll take that one...I've done it before.  You need to declare a
+           structure that
+Zith       ok now I understand how to set up a task header from assembly but
+           how 
+Dave Lyons has the heartbeat task header fields in it, followed by a few
+           bytes of
+Zith       is one created from within C. Des orca c have a #pragma 
+           command?
+Dave Lyons code for "REP $30, JMP >yourfunction".
+Dave Lyons As far as I know there's no #pragma for it, but doing it with a
+           structure
+Dave Lyons is straightforward.  I think we should put the answer in a folder
+           in the C
+Dave Lyons folder of Let's Discuss for everyone's future reference (I
+           will).
+Dave Lyons (ga)
+AFL Dyfet  That sounds like a good idea, Dave...Okay, our next question is
+           from AFA Parik,
+AFL Dyfet  GA...
+AFA Parik  Ok, how does QD II draw the pointer?  Scan line, or vbl?  
+AFA Parik  (when does it draw it)
+AFA Parik  ga
+Dave Lyons !
+AFL Dyfet  GA Dave...
+Dave Lyons It does it using scanline interrupts by default, but you can tell
+           it not to
+Dave Lyons by using SetInts (I think that's the right name for the toolbox
+           call).  In
+Dave Lyons that case I'm not sure when it redraws--whenever is most
+           convenient for it.  ga
+AFL Dyfet  Hmmm...we seem a little short on questions tonight :)
+Dave Lyons (No, it's SetIntUse...yeah, that's the ticket.)
+AFL Dyfet  GA Coach, you have the floor now...
+Coach101   Has anyone seen any "public" 5.0 tool box docs yet?  Its almost
+           fall now!
+Coach101   ga
+Dave Lyons !
+AFL Dyfet  GA Dave...
+Dave Lyons I wish I could give you a date...the wait is largely over, and
+           when you
+Dave Lyons finally see the stuff I hope the quality makes it seem worth the
+           wait.  I
+Dave Lyons know I and others did a lot of reviewing to get things right. 
+           ga
+AFL Dyfet  I know I can hardly wait myself :)...Well, I believe Windrider is
+           next, GA...
+Coach101   Guess I will need to take the checkbook to AppleFest then....  
+           thanks
+Coach101   for tackling a *tough* and *touchy* question.....  
+Coach101   done
+Windrider5 Does anyone know if you can write a custom SortList routine (List
+           Manager) in C
+Dave Lyons !
+AFL Dyfet  GA Dave...(I swear I'm gonna make this a macro :)
+AFA Gary J :)
+Dave Lyons Very good question.  The tricky bit is at the end, where you need
+           to return
+Dave Lyons the result:  A<B or B>A.  The result needs to be in the Carry
+           flag, and I'm
+Dave Lyons not sure whether APW C and/or ORCA/C generate "prolog" code at the
+           end of
+Dave Lyons your function that happens to preserve the carry, or if it's lost.
+            If it's
+Dave Lyons preserved, you could do inline { clc } in APW C, and whatever the
+           ORCA/C
+Dave Lyons equivalent is.
+Dave Lyons If not, you can write a small assembly-language "wrapper" around a
+           C function.
+Dave Lyons ga
+Windrider5 what's an inline {clc}
+Dave Lyons "inline { clc }" and "inline { sec }" are how you can
+AFL Dyfet  Hmm...interesting...and a little tricky :).  The inline function
+           allows you
+Dave Lyons generate "clear the carry flag" and "set the carry flag"
+           instructions from
+Dave Lyons APW C.
+AFL Dyfet  to imbedd machine code instructions into your program, as Dave is
+           explaining
+AFL Dyfet  within my explanation :)...GA Coach...
+Coach101   The APW-C manual (in the section on calling/receiving) sequences
+Coach101   has some interesting examples of how one could creatively use
+           the
+Coach101   inline function.   ga.
+AFL Dyfet  Side Note:  Orca/C, from what I recall, uses the same calling
+           conventions as
+AFL Dyfet  Orca/Pascal.
+AFL Dyfet  That is, I believe the function does NOT clear out the stack frame
+           before
+Coach101   That is correct Dave...
+AFL Dyfet  returning, so it may be possible to save the status flag on
+           exiting.
+Coach101   Oops.....  Apw-C has the caller clear the stack frame...
+Coach101   Orca-C has the receiver clear the stack frame...
+AFL Dyfet  Did I get that backwards??
+Coach101   At least thats the way I rememver it...
+Dave Lyons !
+AFL Dyfet  GA Dave :)
+Dave Lyons What do you guys mean by "clear out" the stack frame?  Removing
+           the input
+Dave Lyons parameters when the function returns?
+Coach101   Yes
+AFL Dyfet  Yes, exactly, Dave...:)
+Dave Lyons APW C: caller normally removes the input parameters, but you can
+Dave Lyons declare it as "pascal", and APW C will have the function remove
+           them itself.
+Dave Lyons (It can call both C and Pascal-style routines, as long as it knows
+           what
+Dave Lyons it's calling.)
+AFL Dyfet  It's more common for the caller to clear the frame in C, since
+           variable
+AFL Dyfet  argument functions are supported, and, in theory, the called
+           routine may not
+AFL Dyfet  know what was passed to it.  Most Pascal implimentations have the
+           called
+AFL Dyfet  routine clear the frame, since the number of arguments are fixed
+           and known at
+AFL Dyfet  compile time.
+Dave Lyons Dang--before, when I said "inline", I meant "asm".  (Duh.)
+Coach101   Less crashes (without prototyping) if the caller clears the
+           frame...
+Coach101   I knew that looked strange Dave....
+Dave Lyons (Well, I *feel* strange, so it's okay.)  BTW, I'd *rather* crash
+           when I'm
+Dave Lyons passing the wrong # of parameters, & find out right away that way.
+            ga
+AFL Dyfet  Hmm...I guess that makes Orca/C a little non-traditional
+           :)...Well, I think we
+AFL Dyfet  have gone far beyond the bounds of the original question :).
+AFL Dyfet  Okay, I see that the next question is from Brin.  GA Brin...
+Brin Londo Can load font and print w/ QDII. Having trouble w/ 3rd party progs
+           (PWG)...
+Brin Londo shoving font into FONTS.LIST file (is there a format for this
+           file. ga
+Dave Lyons !
+AFL Dyfet  GA Dave...:)
+Dave Lyons I don't understand the circumstances--are you adding a file to the
+           *:System:
+Dave Lyons Fonts directory, or not?  The only entity in the universe that has
+           the
+Dave Lyons right to fiddle around with the Font.Lists file is the Font
+           Manager, and it's
+Brin Londo Yes but 3rd party won't recognize and load.
+Dave Lyons supposed to contain information about the fonts in that
+           directory.
+Dave Lyons Did you create the Font file yourself, or did you get it from
+           somewhere?  (In
+Brin Londo Back to manual.  Must have missed its reference in Font Manager
+           section
+Dave Lyons other words, are you certain it's in the correct format.  As
+           described in
+Brin Londo used Beagle bros. font editor
+Dave Lyons File Type Note $C8 (Font Files), there is a Pascal-string font
+           name tacked
+Dave Lyons onto the beginning of the file.
+Dave Lyons Oh, okay--if it's a Beagle-created font file, it ought to be
+           fine.
+Dave Lyons Font.Lists is not mentioned in 
+Brin Londo I'll just have to re-read Font Manager section I guess. (shrug)
+Dave Lyons the Addison-Wesley toolbox reference, since it wasn't around at
+           that time
+Brin Londo Update?
+Dave Lyons (it's mentioned in recent system software release notes).
+Dave Lyons So, your 3rd-party software
+Brin Londo Oh.  where exactly (futile search) today
+Dave Lyons doesn't see the font at all, not even in Choose Font dialogs?
+Brin Londo no only fonts in Font.Lists file 
+Dave Lyons When you start up the Font Manager, it checks the
+Dave Lyons Font.Lists file against all the font files actually present, and
+           if there
+Dave Lyons are discrepencies, it *rebuilds* the Font.Lists file
+           automatically.  You
+Brin Londo 4.0 or 5.0?
+Dave Lyons have to try pretty hard to trick it into not rebuilding the list
+           (copy over
+Dave Lyons a file of the same name, without changing the modification or
+           create date/time,
+Dave Lyons for example).
+Dave Lyons System Software 4.0 release notes should talk about Font.Lists,
+           but there's
+Dave Lyons nothing to know that I didn't just tell you.
+Brin Londo No. I meant will 4.0 rebuild list?
+Dave Lyons Yes--any version of the system software that contains a Font
+           Manager that
+Dave Lyons cares about Font.Lists is smart enough to rebuild it.  Older
+           versions of
+Dave Lyons the Font Manager ignore Font.Lists completely, and no 3rd-party
+           application
+Dave Lyons should know anything about Font.Lists at all.
+Dave Lyons How are you copying the font into your Fonts directory?
+Brin Londo Thanks (off to go strangle Activison programmer).
+Brin Londo Finder 5.0
+Dave Lyons A final note--
+Dave Lyons if you still have probs, you can *try* throwing out the existing
+           Font.Lists
+Dave Lyons file.  That should *not* be necessary, but if you can't find any
+           other
+Dave Lyons solution I'd be interested to hear what happens when you get rid
+           of it.  ga
+Brin Londo Interesting (If all you have is a hammer the world is a nail.) 
+Brin Londo If that works I'll get back to you.  Nite all.  ga.
+AFL Dyfet  Hmm, well, it's time to get that question Queue filled back up
+           again :)...
+Coach101   Why is there air?
+Dave Lyons Because there isn't no air.
+AFL Dyfet  Space that needs filling :)...
+AFA Gary J Air is there to breath.
+AFL Dyfet  Well, don't breath up all the questions :)
+AFL Dyfet  GA JD, you have the floor now...
+AFA Gary J (yeah! a question...I was almost out of breath..)
+JDavies1   thanks, I need to know if there is any way to watch data going to
+           the disk, 
+JDavies1   I am having trouble saving data then restoring it. I wanted to see
+           what was or
+JDavies1   wasn't going out.
+Dave Lyons !
+JDavies1   i'm done ....ga
+Dave Lyons Would looking at the file produced be good enough?  You could go
+           into
+Dave Lyons BASIC.SYSTEm and BLOAD the thing (details on request), or DUMP the
+           thing with
+Dave Lyons my favorite command shell (Davex), or with some other people's
+           favorite
+Dave Lyons command shells.
+JDavies1   Yes but it is MIDI data and I'm not sure what it exactly suppose
+           to be.. sounds
+JDavies1   like I don't really know what I'm doing...well I'm real lazy!
+Dave Lyons If you don't know what the data is supposed to be, how are you
+           going to know
+Dave Lyons if it's right even if you can watch it on its way to the disk? :) 
+           You're
+Dave Lyons gonna have to figure out what it is that you're supposed to end up
+           with, before
+JDavies1   Even to see what was saved was loaded.
+Dave Lyons you can determine whether you're Writing it wrong or Reading it
+           wrong.  ga
+JDavies1   I just wanted to compare if what was going out was comming in
+           first..I guess I 
+JDavies1   could use a dummy window and compare the two after a save then
+           load..Does
+Dave Lyons Okay, so have your program write some of the data to the screen
+           before you
+Dave Lyons save it, and again after you read it back.  No problem.
+JDavies1   anyone know of a disk editor that works under GSOS?
+Dave Lyons I use Block Warden.  Doesn't work *under* GS/OS, but it doesn't
+           take very
+Dave Lyons long these days to switch between GS/OS and ProDOS 8.  Not long at
+           all.
+AFL Dyfet  That's a touchy subject :), since you cannot perform block
+           read/write calls to
+Dave Lyons WHILE you're under GS/OS, you generally can't write any blocks
+           directly to
+Dave Lyons your boot disk, since Sys.Resources is open.
+Coach101   GS/OS Exerciser will work....  Not really a disk editor but it can
+           save
+Coach101   the day
+Dave Lyons (Dave, you can BLOCK_READ with no problem, all the time, to a
+           ProDOS disk.)
+AFL Dyfet  a volume device that has an open file...or as Dave said...:)
+JDavies1   Well I need support for more than two hard disk paartitions
+JDavies1   with like copy II+ bit editor
+Dave Lyons I don't know of a GS/OS disk editor right now, but ECP16 should be
+           able
+Dave Lyons to DUMP your file in hex with no problem.
+AE PhilM   Vulcan will allow up to 4 Prodos partitions :)
+Coach101   DUMPOBJ under Apw will also do nice hex dumps...
+Dave Lyons Yeah, what Coach said.  I always forget that.
+AFA Gary J Hmmm, I think there is something that someone uploaded in our
+           library that
+AFA Gary J will do that too..  All it does is display the file in
+           hex...using a desk top
+AFA Gary J window.
+AFA Gary J (I don't recall the name, off hand)
+JDavies1   I'll look for that program or use dumpobj, Thanks.
+AE PhilM   Dave, how about adding a bload to nifty list ??
+Dave Lyons Very good idea.  Nifty List will be getting modules Any Year Now,
+           so things
+Dave Lyons like that will be easy to do, without penalizing people who want
+           to keep NL
+AFA Gary J Yeah! :)
+Dave Lyons small--they can ignore the modules they don't want.
+Coach101   Great....    Interrupt queues module would nice....
+Dave Lyons Eh?  Interrupt queue?
+AFA Gary J :)
+Coach101   List the people who have registered for receipt of particular
+           interrupts
+Dave Lyons Hmmm...interesting.  Not sure if it can be done from an
+           outside-the-OS point
+Dave Lyons of view, but I'll look into it.
+Coach101   Ah, but your on the inside *NOW*
+AFL Dyfet  Okay, I believe our next question is from Doctor Why.  You have
+           the floor now.
+Doctor Why I was writing a desktop program in Orca/Pascal and was trying to
+           add some Print
+Doctor Why Manager routines (for my first time). I was just inserting code to
+           display the
+Doctor Why various dialogs. The PrChoosePrinter worked fine but 
+Doctor Why the PrStlDialog and PrJobDialog caused the system to crash.
+Dave Lyons !
+Doctor Why Any ideas?
+AFL Dyfet  GA Dave...
+Dave Lyons Gee, it doesn't look like you're using 5.0 yet.  (Under 5.0,
+           PrChoosePrinter
+Dave Lyons puts up a dialog that says "Use the control panel instead,"
+           basically.)
+Dave Lyons I don't know what's causing your crash, though.  At what address
+           did it
+Dave Lyons crash?  Did it return from the toolbox call at all, or did it
+           crash while
+Dave Lyons in there?
+Doctor Why No, this was from a few weeks ago, and I don't have any specifics
+           here.
+Dave Lyons Well...gee...ask a specific question, get a specific answer. :-)
+Doctor Why I selected the Print option from menu and crashed.
+AE PhilM   !
+Dave Lyons ga
+AFL Dyfet  GA Phil...
+AE PhilM   How did you get a print record?  You need to pass those as input
+           to both 
+AE PhilM   PrJob and PrStl
+AE PhilM   ga
+Doctor Why I used PrDefault? was that right?
+AE PhilM   Sounds correct....humm...don't know.
+Dave Lyons (flip, flip, flip....)
+Dave Lyons No, PrDefault just
+AE PhilM   Did you pass a handle or a pointer to PrDefault?
+Dave Lyons initializes a handle to be a nice default print record.  You have
+           to allocate
+Dave Lyons it yourself with NewHandle, apparently.
+Doctor Why handle.
+Dave Lyons Where did you get the handle, Doctor Why?
+Dave Lyons (BTW, "A print record is 140 bytes long."  TB Ref 1, page
+           15-19.)
+Doctor Why I believe that I defined it myself.
+Dave Lyons DW, when you say you "defined it yourself," do you mean you
+           declared it as
+Dave Lyons a handle (as in Pascal:   var xyz: Handle;), or that you actually
+           assigned
+Dave Lyons it a value that came back from NewHandle?
+Doctor Why handle := ^pointer
+AE PhilM   Did you get 140 bytes of space from the memory manager?
+Dave Lyons Yes, a "handle" as a data type is a pointer to a pointer.  The
+           particular
+Dave Lyons handle you pass to PrDefault has to actually be a Memory Manager
+           handle,
+Dave Lyons and it has to refer to a 140-byte block of memory.
+Doctor Why You're testing my memory...I think so, but I'm not sure.
+AE PhilM   If you did not allocate enough room for your record...that could
+           certainly be
+AE PhilM   the cause of the crash...on the otherhand if PrDefault is actually
+           checking 
+AE PhilM   the input to see if it is a memory manager handle...it  would
+           probably return
+Doctor Why That may be my problem. I don't remember if I used NewHandle
+AE PhilM   with some sort of error, but do no harm.
+Dave Lyons PrDefault *probably* isn't checking to see that it's a valid
+           handle; in
+Dave Lyons general, the toolbox assumes the application programmer is a
+           responsible
+Dave Lyons entity and doesn't bother double-checking everything.  It would
+           rather
+Dave Lyons crash.  (This is more efficient, except when your program isn't
+           working
+Dave Lyons right--it increases debugging time in exchange for better
+           performance at
+Dave Lyons run-time.)
+Dave Lyons ga
+AE PhilM   :)  Ahh....debugger toolbox in ROM's is what we need.   Remember
+           the IIe 
+AFL Dyfet  Do we have any more questions or comments for tonight?
+AE PhilM   debugger ROMS.  done
+A2GS       ?
+Dave Lyons Ack!  No, we *don't* need additional versions of the toolbox
+           floating around--
+AFL Dyfet  Okay, Go ahead, A2GS...
+Coach101   ? (though not toolbox)
+Dave Lyons my life is complicated enough with ROM 1 and ROM 3.  (Sorry!)
+Doctor Why Thanks Dave (and Phil)
+A2GS       I want to use the Floating Point Algorithms or at least look at
+           them to adapt
+A2GS       them to 16-bit code (the ones currently used by Applesoft), Where
+           do I look?
+Dave Lyons !
+AFL Dyfet  GA Dave...
+A2GS       Specifically I'm looking for DIV. and MULT. routines.
+Dave Lyons Look in the Apple Numerics Manual, Second Edition, and at its
+           37-item
+Dave Lyons bibliography.  (Is that the sort of answer you're looking for? 
+           Probably
+Dave Lyons not, but I can't say "I'll send you SANE source," and I can't say
+           "Just
+Dave Lyons disassemble the ROM," so I say "Find some good reference
+           material.")  ga
+AFL Dyfet  :)...A number of magazines used to list entry points to the
+           Applesoft FP
+AFL Dyfet  routines :)...
+AFL Dyfet  GA Gary...
+AFA Gary J Or...you can look right here on-line..
+A2GS       You wouldn't happen to know whether it's bank 00 or 01 (probably
+           00)
+AFA Gary J in the reference library.
+A2GS       Where, where, where, where.....?
+Dave Lyons (Whoops!  I overlooked the reference to Applesoft in the question.
+            Sorry.)
+AFA Gary J Just enter the words "AppleSoft and Internals" in the
+Dave Lyons !
+AFA Gary J search field, and there are a number of articles avaialble.
+AFL Dyfet  GA Dave...
+AFA Gary J (or available, even  :)
+Dave Lyons From a running P8 program, Applesoft is in bank 0, but
+Dave Lyons from the Monitor, when you're looking, it's bank $FF, since the
+           monitor
+Dave Lyons always shows you language card space in bank 0.  ga
+AFA Gary J (Use keyword REFERENCE to get to the reference library)
+A2GS       SO an address pointing to let's say Exxx is actually calling
+           ff/Exxxx (right?)
+A2GS       FF/Exxx
+AFL Dyfet  Not exactly...bank $FF is really mapped into bank 0, and for all
+           intents and
+Dave Lyons From *your* point of view, as a Monitor user, yes.  From
+Dave Lyons the 65816's point of view, no.
+AFL Dyfet  purposes looks like the IIe memory map, when the roms are enabled
+           :)
+A2GS       Thought so :), don't want to go nuts looking everywhere
+           else....Thanx :)
+A2GS       GA
+Coach101   I wish to write some additional protocol stacks for use with
+           AppleTalk,
+Coach101   How do I do this under 5.0.   Is, or will, the necessary docs be
+Coach101   available?  ga
+Dave Lyons Gee...doesn't anybody else want to take that questoin? :-)   
+Dave Lyons Or "...ion."  I think the documentation is *mostly* already out
+           there, but
+Dave Lyons there are almost certainly some gaps.
+Dave Lyons I suggest dealing with Apple II DTS officially (Channel AppleLink,
+           MCI Mail,
+Dave Lyons or U.S. Mail), with questions as specific as possible.
+Dave Lyons (ga)
+AFL Dyfet  I'd love to see TCP/IP myself :)...then I could FTP to HDS unix or
+           other odd
+AFL Dyfet  things like that :)
+Coach101   Drat, someday I will take the time to write up the Partner
+           app....
+Coach101   Are the entry points that were documented for ProDos-16 still
+           valid?
+Dave Lyons Coach, write in anyway.  It can't hurt, and you'll probably
+           actually get
+Dave Lyons an answer.
+Coach101   TCP/Ip is what I have in mind Dyfet :)
+Dave Lyons Yes, the P16 stuff is still valid.
+AFL Dyfet  With Telnet/rlogin support?   What are you trying to hook up to,
+           Coach?
+Coach101   24 II-GS, dozen or so Macs, several mainframes,....   All across
+           the
+Coach101   continental US
+Coach101   Oops, forgot the VAXs & IBM-PCs
+AFL Dyfet  Sounds like last winter, when we played 'the game' (cross country
+           Empire :)
+Coach101   Project for NASA.....
+AFA Gary J Sounds interesting...
+AFL Dyfet  Hmm...now that sounds like a fun project :)...

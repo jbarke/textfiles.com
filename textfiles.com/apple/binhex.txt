@@ -1,0 +1,58 @@
+        Dave Johnson
+        Brown University Computer Science
+        ddj%brown@csnet-relay.ARPA
+        {ihnp4,decvax,allegra,ulysses,linus}!brunix!ddj
+
+===================
+Here's an informal description of the HQX format as I understand it:
+-----
+The first and last characters are each a ':'.  After the first ':',
+the rest of the file is just string of 6 bit encoded characters.
+All newlines and carriage returns are to be ignored.
+
+The tricky part is that there are holes in the translation string
+so you have to look up each file character to get its binary 6 bit
+value.  I found the string by looking at a hex dump of BinHex:
+
+        !"#$%&'()*+,-012345689@ABCDEFGHIJKLMNPQRSTUVXYZ[`abcdefhijklmpqr
+
+I can't see how this aids or abets any kind of error recovery, but
+if you ran into a char not in the list, you would know something's
+wrong and give up.
+
+There is some run length encoding, where the character to be repeated
+is followed by a 0x90 byte then the repeat count.  For example, ff9004
+means repeat 0xff 4 times.  The special case of a repeat count of zero
+means it's not a run, but a literal 0x90.  2b9000 => 2b90.
+
+*** Note: the 9000 can be followed by a run, which means to repeat the
+0x90 (not the character previous to that).  That is, 2090009003 means
+a 0x20 followed by 3 0x90's.
+
+Once you've turned the 6 bit chars into 8, you can parse the header.
+The header format consists of a one byte name length, then the mac
+file name, then a null.  The rest of the header is 20 bytes long,
+and contains the usual file type, creator/author, file flags, data
+and resource lengths, and the two byte crc value for the header.
+
+The data fork and resource fork contents follow in that order.
+There is a two byte file crc at the end of each fork.  If a fork
+is empty, there will be no bytes of contents and the checksum
+will be two bytes of zero.
+
+So the decoded data between the first and last ':' looks like:
+
+         1       n       4    4    2    4    4   2      (length)
+        +-+---------+-+----+----+----+----+----+--+
+        |n| name... |0|TYPE|AUTH|FLAG|DLEN|RLEN|HC|     (contents)
+        +-+---------+-+----+----+----+----+----+--+
+
+                        DLEN                     2      (length)
+        +--------------------------------------+--+
+        |       DATA FORK                      |DC|     (contents)
+        +--------------------------------------+--+
+
+                        RLEN                     2      (length)
+        +--------------------------------------+--+
+        |       RESOURCE FORK                  |RC|     (contents)
+        +--------------------------------------+--+

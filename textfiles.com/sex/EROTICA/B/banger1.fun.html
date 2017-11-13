@@ -1,0 +1,610 @@
+......T................................T........................R...............
+
+
+ÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂ
+³ÂÄÂÄÂÄÂÄÂÄÂÄÂÄÂÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÂÄÂÄÂÄÂÄÂÄÂÄÂÄÂ³
+³³ ³ ³ ³ ³ ³ ³ ³ ³                             ³ ³ ³ ³ ³ ³ ³ ³ ³³
+³³ ³ ³ ³ ³ ³ ³ ³ ³ BANGER FIRST BLOOD PART ONE ³ ³ ³ ³ ³ ³ ³ ³ ³³
+³³ ³ ³ ³ ³ ³ ³ ³ ³ ³                         ³ ³ ³ ³ ³ ³ ³ ³ ³ ³³
+³³ ³ ³ ³ ³ ³ ³ ³ ³ ³ ³         BY          ³ ³ ³ ³ ³ ³ ³ ³ ³ ³ ³³
+³³ ³ ³ ³ ³ ³ ³ ³ ³ ³ ³                     ³ ³ ³ ³ ³ ³ ³ ³ ³ ³ ³³
+³³ ³ ³ ³ ³ ³ ³ ³ ³ ³ ³ ³REGINALD BAR, III³ ³ ³ ³ ³ ³ ³ ³ ³ ³ ³ ³³
+³ÁÄÁÄÁÄÁÄÁÄÁÄÁÄÁÄÁÄÁÄÁÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÁÄÁÄÁÄÁÄÁÄÁÄÁÄÁÄÁÄÁÄÁ³
+ÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ  ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁ
+                             HAVE FUN
+
+IF YOU ARE A MINOR (UNDER 21) DO NOT PROCEED FURTHER AND DELETE
+THIS FILE.  THE WRITER ACCEPTS NO LIABILITY FOR MINORS ACCESSING
+THIS FILE AND READING IT.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+YES BABY long slow strokes.  Keep nibbling on my huge rock hard
+cock. Oh baby dont slow down I am about ready to cum all in your
+young virginal mouth.
+
+      I hear a pounding on the door it is my mother telling me to
+get out of bed and get to school.  I start to get up but realize
+that I have a wet sticky mess in my underwear.  I also have a
+hardon that realy hurts.
+
+      I rush into the bathroom to relieve myself with a quick
+masturbation job.  When I get in the bathroom a proceed to lock
+the door and pull off my underwear I grab a bottle of baby oil
+and proceed to lube the tool with the oil at go at it hot and
+heavy.  I dream and fantasize about my stepsister Marsha. She is
+the most incredible 16 year old girl in my high school. Everyone
+wants her and I have to live under the same roof as her.  The
+situation is rough on the pecker getting rubbed like this every
+morning.  Just when I thought I was going to lose it I hear
+someone step out of the shower.  It was my stepsister Marsha.  My
+pecker went limp in my hand.  I just stood there with my pecker
+in my hand and with my mouth hanging open.  She looked at me
+without saying a word.
+
+      She was completly naked except for a towel rapped in her
+hair.  I staired at a perfect set of tits that were slightly
+upturned with small erect nipples on the end.  My gaze lowered
+to her small waste and then to her pussy that had a small snatch
+of curly brown hair.  I said something stupid like I knew you
+were not a real blonde.  All the while I had my hand holding my
+cock that began to come to life again at the sight of a young
+tight body.
+
+      She walked over to me and got down on her knees and took
+my cock from my hands and said she would show me how to do it
+right.  I asked her how she knew and she told me I was not the
+only one who read dirty books.  I shut up then I didn't want her
+to stop.  I looked down at her to watch the whole thing.  She
+started out by wiping the oil off my cock with the towel she had
+in her hair.   Her hair was very short and blonde and the wet
+hair felt good against my boiling body.  She then kissed and
+nipped the head of my cock.  She flicked her tongue against my
+cock running her mouth all around my cock without putting the
+thing in her mouth completely.  I was starting to shake and felt
+as if I was going to explode.  It took all the concentration I
+had to hold off.   Finaly she started mouth fucking my cock.
+Slowly at first then she increased her speed faster and faster
+until I started shaking I tried to hold back but that only made
+it worse I felt my stomach quivering and my balls were boiling
+finaly I could not hold it any longer.  I grabbed her by the
+hair and held her head with my cock stuffed in her mouth and
+proceeded to pump her mouth and shot my load in her mouth.  The
+cum rolled out the side of her mouth and down her chin.  I let
+go of her head and she continued to suck me dry.
+
+      She held my cock in her mouth and tried to look up at me I
+could see were my cum had spilled from the corners of her mouth.
+She let my cock drop from her mouth then she licked the cum from
+her face.  She stood up very slowly keeping the gaze with my
+eyes.  She gave me a deep french kiss I could taste my own cum
+in her mouth she shoved her tongue deep into my mouth and I
+tried to do the same. She thrust her naked body against mine the
+feeling of her breastsCrushed against my chest and the feeling of
+my now growing pecker nestled against her virgin pussy drove me
+wild.  I was about ready to throw her on the floor and fuck her
+till my cock was raw.  But about this time their was a knock on
+the door. My mother asked me what was going on in there.  I went
+limp right therewith my cock nestled so close to virgin pussy I
+could smell it.  I yelled to my mom that I would be out in five
+minutes.  She asked were my stepsister was.  I said she was in
+here with me. Mom told me to stop being a smart ass and get ready
+for school.
+
+      Marsha pushed herself away from me and proceeded to wash
+her face in the sink.  What a sight a 16 year old girl bent over
+a sink with her ass stiking in the air.  I wanted to ram my cock
+in her back door.  I moved in behind her and and rubbed my cock
+against her crack she squirmed a little but didn't move.  I
+reached for the oil and I heard more yelling.  I pulled away and
+made a fast exit for my room.
+
+      The next few weeks I always went to the bathroom hoping
+for another fantastic blow job but no such luck.  Marsha never
+even gave me the time of day I was wondering if it was not just
+another one of my dreams.
+
+      My stepfather had business out of town and Marsha talked
+him into taking my mother along with him on the three day sales
+trip to L.A.  Mother asked me if it was ok to leave me and my
+stepsister home alone.  I said no problem we would get along ok.
+
+      Our parents took off on a early friday morning before I
+even got out of bed.  I made my usual trek to the bathroom with
+my morning hardon.  This time I left the door open hoping Marsha
+would drop by for a bite.  No such luck I jacked off fast and
+furiously.  Then I shit,  showered, shaved and dressed.  I went
+down for breakfast and Marsha was sitting there eating cereal.
+I asked her if she minded if I had a party tonight.  She got
+realy mad and said mom and dad had left specific instructions
+that there was to be no parties.  I said they would never know
+but Marsha said they would because she would tell them.  I was
+madder then mad and just left for school.
+
+      After  school I messed around at the local arcade then
+went home to get something free to eat.  On the way home I seen
+a bum who would buy beer for minors for a few bucks.  I pulled
+over and had him get a couple of bottles of cheep wine.    I
+love cheep wine it taste like Koolaide and packs a good kick
+after a few glasses.  After all if I could not party with my
+friends then I would do it alone  I continued on my way home
+sipping on a bottle of Mogan David wine and listen to some hard
+core heavy metal.  I pulled into the drive at home removed my
+goodies from the car and went around to the pool and sat at the
+edge and continued to sip the wine.
+
+      About ten minutes later Marsha came out the back door and
+yelled at me.  She wanted to know if I wanted any dinner.  I
+looked at her and she was wearing the tightes tanktop and
+smallest pair of short I had  ever seen.  I told sure I'd take
+some dinner if she would join me.  I wanted to stare at those
+wonderful set of tits.  The nipples strained against the cloth.
+I bet they felt like my raging hard on that snuck up and grabbed
+me.
+
+      I followed her to the dinning room with my two bottles of
+wine.  I looked at the table it was set with all the best dishes
+and had 2 large candles burning at the center.  There were two
+places set at one end with a large covered dish of what I did
+not care.  She proceeded to her place and I rushed over to hold
+the chair for her.  She thought that was so great and galant.  I
+was wondering what was up but I kept my mouth shut and went with
+the flow of things.  Marsha reached over to get the covered dish
+I helped her with it.  She took the top off the dish and it it
+was a two large slabs of barbaqued ribs just dripping in sause.
+I asked Marsha if I could serve she said it was ok.  I took her
+plate and gave her a slab of ribs and ladled some sause over
+them.  I served myself and started talking to Marsha.  I asked
+if she would like some wine and then filled her glass.  I filled
+my also but had decided not to drink anymore because I wanted my
+head clear for the rest of the night.  Marsha slammed the wine I
+gave her some more and she slowed down a little on that glass
+but before she even took a bite her food she drank three large
+glasses of wine.
+
+      I dug into my food like I had not eaten for days I was
+slighlty drunk and made a mess of myself.  Marsha was not doing
+any better.  She had sause all over her shirt the sause bled
+threw the shirt and stuck to her skin.  Their was a big spot
+right over her nipple I wanted to reach over and lick it off.
+Marsha rocked back in her chair and closed her eyes I knew that
+this was my chance to lick the sause off her nipple.  It drove
+me crazy staring at her shirt with that one nipple begging me to
+lick the shirt clean.
+
+      I was feeling bold from all the wine I had drank earlier
+or I told myself that was the reason.  I started to lean over
+the table.  I was a foot away from licking her nipple when she
+opened her eyes.  She didn't move I continued  toward my goal
+expecting a slap all the while.  I opened my mouth an took the
+nipple in my mouth along with the shirt and sucked the nipple
+clean. I finished cleaning her shirt with my tongue and sat back
+down. I looked down at my own shirt and it was covered with sause
+so I took it off. Marsha got the same idea and removed hers.  So
+there we were sitting there eating sloppy spare ribs with no
+shirts on.  Marshas breast looked heavenly the way the pointed
+upslightly with hard nipples blazing.  I continued to eat
+watching her the whole time and she in turn watched me.  We were
+a complete mess by the time we finished.  I moved over to were
+marsha was sitting and got on my knees in front of her and
+proceeded to lick the sause from her soft white skin.  I licked
+her tits like I wanted to remove the first layer of skin this
+drove her wild.  I knew I had her in the palm of my hands.  I
+stopped and looked in her eyes I could see she wanted more but I
+wanted my tool relived.  I got up and went to the upstairs
+restroom were our first encounter took place.
+
+      I left the door open and removed my clothes and stepped
+into a very cold shower.  I made sure the cold water hit my cock
+and saw my erection shrivle.  I wanted Marsha to work hard at
+making me loose my wad.  I was in the shower for about ten
+minutes before I saw Marsha step into the shower with me.  I
+held her back for a minute so I could just look at her.  Since
+our last encouter she had shaved her pussy clean.  It looked
+like I was standing in the shower with a sixth grader but the
+tits were large for a sixteen year old.  I reached for her pussy
+and rubbed my hand against her bald twat.  She moaned and said
+she was a virgin and that she wanted to stay that way.  She
+said she would do any thing else I wanted but I could not fuck
+her virginal pussy.  I agreed but knew I would try everything to
+get at her virgin pussy.
+
+      I continued to rub her pussy letting the cool water hold
+my erection in check.  Marsha then took control she got on her
+knees and stuffed my whole cock into her mouth.  It was soft and
+shrivled up from the cold water.  She had the whole dick upto my
+balls in her mouth.  I felt the blood rush to my cock and my
+dick grew in her mouth.  Marsha was gently chewing on my soft
+member as it grew in her mouth.  I was rock hard in less than
+thirty seconds.  Marsha started to mouth fuck my cock I pulled
+out and stood her up.  I started sucking her tits working them
+both over giving them each equal time.  I rolled her nipple in
+my mouth gently biting down with my mouth.  This realy drove
+Marsha crazy.  She was moaning Yes yes suck harder bite harder.
+I did but didnt want to do it to hard and hurt her then things
+would stop.  I started to kiss her from the nipples slowly
+working my way down to her stomach I frenched her belly button.
+Then I caught the scent of her pussy.  The musky odor almost made
+me cum on the spot.  I lowered myself to my knees and used first
+one finger to probe Marsha very tight pussy.  This caused a very
+fast orgasim the rocked Marsha's body she fell against the wall.
+I held her in place and inserted another finger and moved them
+in and out of her pussy all the while watching them go in and
+out of her cunt.  I finaly could no longer resist and I buried
+my face in her cunt.  The shaved cunt was great no hair to get
+stuck in your teeth and no problem finding the bud to Marshas
+orgasims.  I started to chew on Marsha's clit she   started to
+shuder and shake as multiple orgasims rocked her body.  I felt
+the rush of fluid poor from her pussy I kept licking and sucking
+until Marsha dropped in a heap.  I had a hardon caused by Marshas
+orgasims.
+
+      I propted Marsha up on her knees and had her leen against
+the wall.  Her nice tight ass was begging to have my rigid cock
+slammed into it.  I had her lean over farther so I could do it
+doggie style.  I inserted two fingers into her well juiced up
+cunt.  I stroke her pussy bringing her to the brink of another
+orgasim.  I removed my fingers and inserted one into her tight
+ass.  She winced in pain but relaxed when I used my other hand to
+rub her pussy.  I continued to work both holes I added another
+finger to the job of reaming her anus.  She bit off a scream but
+I didn't stop.  I removed my finger from her anus and she relaxed
+a little and enjoyed the finger fuck she was getting. With my
+free hand I grabbed the battle of baby oil and poured it all over
+my penis.  I then poured some directly to Marshas tight puckered
+asshole.  I removed my hand from her pussy and bent over and
+licked her back door gently forcing my tongue slightly into her
+anus.  She shuddered with pleasure I knew it was now or never.  I
+held her cheeks apart with my left hand and took my cock in my
+right hand and guided it to her puckerd purplish brown back hole.
+I gently nudged the head of my cock against the virginal tight
+dark portal.  I forced the head into the tight spot Marsha gasped
+but didn't try to stop me.  I continued to ease my way in slowly.
+Finaly my bals slapped against her cheecks.  I reached around
+with my hands and started to play with her nipples while I just
+left my dick stuck up her ass.  Marsha stared to moan with the
+attention I gave her tits and that is what I had waited for.  I
+guided her hand down to finger herself and as she was doing this
+I picked up the rythm of her own fingers rubbing her clit and
+started stroking her anus with my 8 inch cock.  I started slowly
+and only increased my speed when she increased hers.  After a
+while she was bucking wildly against my cock and this got me even
+more excited I felt the tingling start in my balls and as it
+worked its way to my stomach then before I could pull out I shot
+my load deep in Marshas ass and at the same time she brought
+herself to climax with her fingers. I pulled out of Marsha and
+she turned around and proceeded to suck my cock clean.  We
+finished in the shower by giving eachother a vigoris scrub
+washing with a brush. Our Skin burned and tingled it was so
+clean.  Marsha stepped out of the shower and said she would be
+right back but ten minutes went buy and no Marsha.  I left the
+shower and looked for her.  I could not find her in the house.  I
+looked outside and her car was gone I was mad but a well fucked
+and sucked mad.
+
+      I went to the dining room and retrieved the last half
+bottle of wine.  I went to my room and laid on my bed thinking
+about what had transpired.  I was getting horny as hell thinking
+about Marsha.  I took all my clothes off and fell into bed
+slamming the rest of the wine.  I was asleep in minutes.
+
+      I woke with a warm sensation around my pecker. I kept my
+eyes closed and enjoyed the sensation that rose from my loins. I
+tried to stay as still as possible and let the tingle that came
+from my balls drive me wild.  I felt my dick grow and grow
+reaching for another climax.  When it did finaly blow it felt
+like it turned my balls inside out.  The rush of cum felt as if
+it would split my pecker.  The lips around my cock never let up
+their sucking.  I swear those lips could suck a bowling bowl
+threw a straw.  I knew that the blow job could not be by Marsha
+so I opened my eyes to see my stepsisters best friend.  I almost
+lost my dinner.  This girl is nothing to take home to mother.
+Why is it that gorgeous girls always have a fat dumpy best
+friend?  I looked at this girl with my cum dripping from her fat
+face and rushed into the bathroom a washed my pecker off.
+
+      When I went back into the room she had removed her clothes
+and was lying on the bed.  She didnt look half bad when she
+removed her clothes.  I still did not want anything to do with
+her.  She looked at me and told me Marsha had told her
+everything we did and that if I didn't satisfy her she would
+tell my parents everything I did to Marsha.  I said I didn't
+know how well I would preform after the blowjob she gave me.
+She said I better try.  I told her Marsha and I agreed never to
+have sex again.  I told Tammy that if she wanted me to have sex
+with her that this was the first and last time and no one was to
+know about it.  I moved close to her and began rubbing  her fat
+puffy suprisingly luxurious pusssy.  I pulled my had away when I
+heard her moan.  I made her promise to meet my demands she
+begged me to continue but I wouldn't proceed without a promise.
+She finaly agreed.  After I heard that I slammend my hand into
+her pussy.  I pushed my hand up to the knuckels in her wide
+pussy.  I could feel that she was a virgin but she must have
+serviced herself to get such a wide pussy.  I continued to reem
+her out with my hand until I got the whole thing in up to my
+wrist.  The whole time Tammy moaned and flailed around the bed.
+She shook with several orgasims and begged me to fuck her and
+take her virginity. I didn't want to be the one with that honor
+so I removed my hand from her pussy pushed her over on her
+stomach and started to ream her ass first with two fingers that
+were lubed from her pussy all the while I stroked myself trying
+to get an erection.  I finaly got my cock to stiffin by thinking
+of the ass fuck I gave to Marsha.
+
+      I stuffed a third finger in her ass and continued to reem
+her out.  I removed my fingers and made Tammy lick them clean
+she sucked each finger and licked my whole hand.  I grabbed her
+by the hair and had her suck my cock to bring me to the brink of
+another cum shot. I held her head still and moved my hips to
+pull my dick in and out of her mouth at the moment I felt I
+could nolonger hold it I threw her head back down against the
+bed and ordered her to get on her knees and bend over.  I used
+my shirt that was lying on the floor and dried my cock off.  I
+wanted fuck her ass with a dry cock.  I knew this would burn her
+bowels and remember this ass fuck for weeks.  I pulled her fat
+ass cheeks apart and put my cock right against her puckerd
+asshole I nudged it slightly in about a one half inch then I
+leaned over and grabbed her sholders and slammed the rest of my
+eight inch cock in her back door.  She screamend out in pain I
+grabbed her tits and started mashing them together pulling and
+pinching them as I rammed my cock in and out of her semi moist
+asshole.  This seamed to drive her nuts because  she stopped
+yelling in pain and started yelling harder harder.  I obliged
+and started to increase my thrusting and mashing on her tits
+this brought her to a bed shaking orgasim.  A moan started deep
+in her throat and slowly increased to a scream.  I held my hand
+over her mouth and continued to fuck her ass.
+
+      I finaly removed my still rock hard cock from her now
+bleeding rectum and ordered Tammy to lick the mess off my cock.
+She got up from the bed and I set at the edge and made her get
+on her knees and lick me clean.  She finished cleaning her blood
+from my cock and looked up at me to see what I wanted her to do
+next.  I told her to give me a slow blow job and not to let me
+cum in her mouth.  I lied back on the bed and let her proceed
+with the slow and wonderful blowjob.  About ten minutes later I
+felt myself reaching the peak.  I grab her head and pulled it
+away from my cock and she had the look on her face like I took
+away her best friend.  I pushed her back on the floor and stood
+over her and proceeded to jack off with her lying on the floor
+beneath me.  I shot my wad into the air and it landed allover
+Tammy face and chest she hungerly licked at what she could.  I
+told her to go take a shower and clean her self up and not to
+come back unless I asked her to.
+
+      I finaly got back in my bed and hoped Marsha would join me
+even though  I probably could not have satisfied her with my
+very drained balls and sore cock.  Dry fucking Tammy's ass realy
+rubbed my pecker raw.  I looked at the clock radio beside my bed
+and it was only 8:30pm.  I said fuck it and went to sleep.
+
+      I woke up around five in the morning with one hell of a
+headache.  The wine realy fucks with your head the next morning.
+Especially that cheap wine with all that sugar.  I stumbled down
+the hall to the bathroom and ate five Tylenol and got in the
+shower.  I turned the water on very cool and let the water wake
+me up and wash away the hurt in my head.  It was then that I
+realized that I didn't have my usual morning hardon.  Even a
+seventeen almost eighteen year old cock needs a rest.  Not much
+of one but at least not a every morning jackoff.
+
+      I got out of the shower and dried myself off and then
+rapped the towel around my waste and went down to the kitchen
+and ate anything edible I could find.  I finished eating and
+decided to check on Marsha.  I sneaked up to her room and peaked
+in the door.  I saw Tammy and Marsha lying naked on Marsha's bed
+all tangled up with one another and their was no way I was going
+to disturb Tammy.  Noway was I going to fuck that fat blob maybe
+let her give me a blowjob but nothing else.  I went back to my
+room a tried to get back to sleep.
+
+      About two hours later Marsha came in my room and shook me
+awake.  She was totaly nude with her beutiful shaved cunt at my
+eye level.  My cock jumped to attention.  Marsha asked me if I
+wanted to fuck her.  I said I would do anything for that
+privilege.  Thats when she told me what I would have to do.  I
+had to fuck Tammy first.  I almost said no deal but just then
+Marsha set her leg up on my bed so that I could see her
+glissening neatley shaved pussy.  I wanted that so bad I would
+have fucked a dog to get a chance at Marsha's virgin pussy.
+Marsha told me to ask Tammy if I could have the pleasure of
+being the first man(boy) to fuck her.  I agreed, I was beyond
+denying Marsha anything.  She went and got Tammy and came back
+to my room they were both wearing robes now and the sight of
+them next to each other drove me nuts.  I got up off the bed and
+walked over to Tammy And took her by the hand and led her to the
+bed.
+
+      I sat her down on the bed and gently asked her if she
+would do me the honor of sharing my bed.  I told her I realy
+wanted to have mad passionate sex with her and the only reason I
+didn't take her virginity yesterday was because I was not sure
+that was what she wanted.  The pig bought all my bullshit and
+started to beg me to take whatever I wanted.  I looked over to
+Marsha and said I was going to do it the way I know Tammy wants.
+Fast, Hard and Rough.  Marsha sat in a chair in the corner of
+the room so she had a good view.
+      
+      I removed the towel from my waste and sat next to Tammy on
+the bed.  My cock was soft and limp I grabbed Tammy rough by the
+hair and pushed her head down to my cock and ordered her to get
+it rock hard or I was not going to fuck her.  Marsha yelled at
+me not to be rough.  I asked Tammy if she wanted me to be gentle
+and she told Marsha she loved to be ordered around and forced to
+suck my cock. I said to Tammy to get back to work or else.  As
+she sucked my cock I reached in her rob and stroked her large
+breasts they felt like water filled ballons all mushy.  I found
+her left nipple and squeezed and pulled on it untill it was rock
+hard.  This brought moans from Tammy wich gurgled out of her
+mouth that was full of my growing cock. Tammy started working
+harder as my cock grew in her mouth when it was as hard as Tammy
+could get it I pulled her head away and told her to remove her
+robe and lay on the bed.  She did as she was told.  I proceeded
+to mount her in the 69 position I stuffed my cock in her mouth
+and told her just keep it hard and not to make me cum.  She
+sucked on it very gently giving it a little bite every now and
+then.  I looked over to Marsha and she was fingering her shaved
+cunt all the time watching Tammy suck my cock.  I looked down at
+Tammy's cunt and had to pull her legs apart to get at her pussy.
+I looked at a great big busshy brown snatch their was no way I
+was going to stick my tongue in that jungle.  I almost lost my
+erection but Tammy increased her action on her end.  I used my
+right hand and guided two fingers in her pussy it was sopping
+wet.  I stuffed the fingers in her pussy and found her clit and
+proceeded to pinch and roll it around my fingers.  She had an
+imediate orgasm and almost bit my dick in half.  I continued to
+work her pussy with my hand getting her hotter and hotter.  I
+stuck my hand in as far as it could go and felt the her hymen so
+she was a virgin.  This made me feel some what satisfied to
+think I was going to get something from her that she could never
+give away again.  I removed my hand and cock from her pussy and
+mouth and quickly mounted her pushing my cock in about three
+fourths of the way in before I hit her virgin barrier.  She
+winced when I hit this spot and bit into my sholder.  I said
+that if she yelled out that I would stop and not finish.
+
+      She begged me not to stop I look over at Marsha and new
+their was no way I would jeopardize a chance at her pussy.  I
+pulled out of Tammy's pussy until the tip of my head was about
+to plop out.  I paused a few moments while Tammy begged me to
+put it back in and do it now.  I slammed my cock in with one
+quick thrust I felt the hymen hit the tip of my cock but the
+momentum of my thrust pushed until her virginity broke with a
+rush of blood.  The sensation of the hymen braking and the
+resulting pain made Tammy shudder with an orgasim.  I continued
+to pump picking up my pace Tammy bucked right along with me.
+Tammy's head rocked back and forth she bit her lip to keep from
+crying out I looked over to Marsha and the sight of her finger
+rubbing herself to climax brought me to the brink.  Tammy rocked
+with another orgasim.  I was right at the edge of shooting my
+load.  I pulled out and crawled up so I could tit fuck Tammy I
+had her hold her tits together and started to pump my cock
+between her tits and with each forward stroke she licked the end
+of my cock.  I had never tried this before and it was great my
+balls started to rumble in their sack and I knew I could not
+hold it back any longer.  I thrust one last time and held my
+cock just a fraction of an inch from Tammys face and let my
+whole load splash into her face.  She tried to catch the stream
+in her mouth but some squirted all over her face.  I got up off
+Tammy and stood at the side of the bed and had her suck me dry
+until my dick went limp in her mouth.  Marsha came over to Tammy
+and licked my cum off Tammy face.
+
+      Marsha looked at all the blood in the bed and asked whose
+blood that was.  I told her Tammy was realy a virgin and that is
+what happens the first time if you still have you cherry.  You
+can loose it without getting fucked I told her but Tammy has
+such good padding nothing caused her to loose it.  She had Tammy
+lay on the bed so she could look at her pussy and see if it was
+still bleeding.  It was not it was well satisfied.  I went over
+to the bed and told Marsha to go sit down because I was not
+through with Tammy.  I walked over to the chair were Marsha sat
+and stood before her completly naked.  Marsha could not take her
+eyes off of my cock.  I ordered Tammy to kneel in front of me.
+She did as she was told.  I then took her head in my hand and
+told her to take my cock into her mouth and see how fast she
+could get me to cum.  Tammy jumped at the chance to proceeded to
+use her mouth as a tight pussy and fuck my cock.  She had a
+talent for sucking cock I was ready to cum after only five
+minutes of her powerful mouth.  I removed my pecker and ordered
+Tammy to suck on my balls as she did this I rubbed my cock and
+felt the rumbling of a crushing orgasim and increased my handjob
+speed.   I shot my load all over Marsha who was fingering her
+own pussy.  Tammy continued to suck on my balls as the last
+drops of cum dribbled out onto her head.  I pulled my balls from
+her lips and she suck my dong clean of cum.   I told Marsha to
+have Tammy go so we could have a chance to go a round or two.
+Before I let Tammy go I had her suck my pecker to another
+erection when she did that I sent her on her way out of my life
+for good I hoped. I wanted a real hard cock to slam into a young
+tight sixteen year old pussy.  After cumming several times it
+was going to last. . . . . . .
+
+
+
+
+
+
+
+
+
+
+
+                       STAY TUNED FOR BANGER TWO
+
+
+
+
+
+
+
+
+
+
+
+       I made my way to Marsha to stuff my cock in her virgin
+pussy and. . . . . . . . . . . .
+
+
+
+
+
+
+
+
+
+
+
+
+
+A>_
+     STAY TUNED FOR BANGER TWO
+
+
+
+
+
+
+
+
+
+
+
+       I made my way to Marsha to stuff my cock in her virgin
+pussy and. . . . . . . . . . . .
+
+
+
+
+
+
+
+
+
+
+
+
+
+A>_
+

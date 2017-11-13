@@ -1,0 +1,553 @@
+           DSFX - SFX 65816 disassembler v1.20 - (c) 1992 The Voice Over
+
+     The SFX 65816 disassembler is a tool I threw together for the purpose of
+making it easier for me to find cheats, secret keys, etc. for SNES games.  It
+is a symbolic disassembler that will use any SNES binary image file (such as
+those created by a Game Doctor/Super Magicom/Super Twin/etc.) for its input, and
+it will produce either source code that can be reassembled into object code
+(assuming you have a 65816 assembler and set up you OBJs and ORGs correctly) or
+a listing file, such as might be created by an assembler creating a .LST file
+to disk.  Keep in mind when using it that I haven't spent a WHOLE lot of time
+on this ware; it may still have a bug or two, and it could certainly use one or
+two features.  Okay...enough of this...on to the ware.
+
+     The command line for DSFX may contain the name of a file you wish to
+disassemble.  If no file is specified, DSFX will simply come up in command mode,
+and most of the commands won't work until you use the LOAD command to specify
+a file for disassembly.  For example, to start DSFX and specify that you want
+to work on a file called MARIOWRL.BIN, you'd use the following command line:
+
+C:\DSFX>DSFX MARIOWRL.BIN
+
+     If the file you want to disassemble is not in the same subdirectory as
+DSFX, just provide the full pathname of the file.  If a symbol table called
+"MARIOWRL.DST" exists in the same subdirectory as MARIOWRL.BIN, MARIOWRL.DST
+will be loaded as the default symbol table.
+     When run, DSFX will attempt to load a symbol table called SFXDEF.DST if it
+has not loaded a symbol table associated with the file specified on the command
+line.  If SFXDEF.DST is present in the current subdirectory, DSFX will load it
+as the default symbol table.  I've included a generic header symbol table that
+specifies the reset and interrupt vectors for the 65816 as well as the short
+data area where the name of the SNES game is stored as data areas.  This data
+area starts at $FFC0, and should be the logical starting point for disassembling
+any SNES game.  Oh, also, you may notice that addresses are not entirely
+contiguous.  IE., The address that follows $FFFF is $18000.  This is because the
+Super Nintendo hardware maps the first 16 megabits of cartridge ROM into 32K
+segments, each of which starts at location $8000, in banks $00-$3F.  DSFX
+converts the absolute addresses into the binary image file to the segmented
+addresses used by the SNES.
+
+     Once DSFX is run, the screen will clear, and you should see the following:
+
+DSFX - SFX 65816 disassembler v1.20 - (c) 1992 The Voice Over
+*_
+
+     The *_ is the DSFX prompt (Yes, it's a throwback to the days of the Apple
+][ monitor).  At this point, DSFX is ready for you to begin entering commands. 
+
+     If you have any questions, comments, bug reports, or suggestions for future
+versions of DSFX, I can be contacted on:
+
+                              The Software Mine II
+                                 (303) 659-6748
+                                 NUP: MINER69ER
+                                    1.2 gigs
+                        IBM and Console support sections
+                                 LSDNet/SharkNet
+
+                The Evil Palace                   Toxic Insult
+                 408-741-5584                     203-327-0124
+
+
+
+HELP or ?: Displays the DSFX help screen, as follows:
+
+*?
+DSFX - SFX 65816 disassembler v1.20 - (c) 1992 The Voice Over
+
+QUIT                  - Exit D816
+LOAD name             - Specify file to disassemble
+LSYM name             - Load symbol table
+SSYM name             - Save symbol table
+DASM name [start end] - Create source file
+FOUT name [start end] - Create list file
+HEDR val              - Specify length of file header
+
+[addr/label]L         - Disassemble 22 lines
+LAB addr [label]      - Assign label/Display label
+DELL addr/label       - Delete label
+DC typ addr len label - Define constant- valid expressions for typ are:
+   A - Address                   C - Characters/ASCII text   W - Long word
+   B - Banked (3-byte) address   H - Hex data
+REG ax addr           - Specify A & index register width (8[1] or 16[0] bits)
+DUMP [addr [len]]     - Hex/ASCII dump
+XDUMP [addr [len]] val- Hex/ASCII dump exclusive-ored with val
+SFX addr              - Print SFX equivalent of absolute address
+ABS addr              - Print absolute equivalent of SFX address
+FIND xx [..16]        - Find sequence of up to 16 bytes
+GRAB name start [end] - Write region from start-end into file
+
+-------------------------------------------------------------------------------
+
+QUIT: Exits the DSFX disassembler.  Note that if you have made changes to the
+symbol table that you have not yet saved, they will be lost if you quit.
+
+-------------------------------------------------------------------------------
+
+LOAD pathname: Specifies the name of the file that DSFX is to disassemble.  A
+full pathname may be specified, including extension.  Examples:
+
+*load mariowrl.bin
+*load \util\nintendo\sfxgames\addams.bin
+
+-------------------------------------------------------------------------------
+
+LSYM filename: Specifies the name of a symbol table to be loaded as DSFX's
+current symbol table.  Note that if a symbol table is already loaded, the new
+symbol table will replace the old, rather than having both present at once.  No
+extension may be specified, as DSFX appends the extension ".DST" to the end of
+the filename you specify.  Also, full pathnames are not allowed for the LSYM
+command.  Example:
+
+*lsym addams
+
+-------------------------------------------------------------------------------
+
+SSYM filename: Saves the current symbol table.  When specifying a filename,
+extensions and paths are not allowed, just as with LSYM.  Example:
+
+*ssym addams
+
+
+
+DASM pathname [start [end]]: Disassembles the current file into source code. 
+Default start address is $8000, and default end address is the end of the binary
+file.  Note that end address may not be specified unless start address is
+specified also.  Examples:
+
+*dasm mariowrl.asm 8000 ffff       Disassembles the first 32K of the current
+                                    file into a file called MARIOWRL.ASM
+
+*dasm mariowrl.asm 1f0000          Disassembles the current file into a file
+                                    called MARIOWRL.ASM, starting at address
+                                    $1F0000
+
+*dasm mariowrl.asm                 Disassembles the entire contents of the
+                                    current file into a file called MARIOWRL.ASM
+
+     Note that disassembly files do not include addresses or opcode/operand
+data.  They contain ONLY labels, mnemonics, and an operand field if appropriate. 
+IE.:
+
+           ORG $8000
+RESET      SEI 
+           STZ $4200
+           STZ $420C
+           STZ $420B
+           STZ $2140
+           STZ $2141
+           STZ $2142
+           STZ $2143
+           LDA #$80
+           STA $2100
+           CLC 
+           XCE 
+           REP #$38
+           LDA #$0000
+           TCD 
+           LDA #$01FF
+           TCS 
+           LDA #$F0A9
+           STA RAMSTART
+           LDX #$017D
+           LDY #$03FD
+           LDA #$008D
+            :     :
+
+     This file can then be assembled by a 65816 disassembler (it may or may not
+be necessary to change the assembler directives that DSFX outputs for things
+like hex data, etc.  I used the assembler directives that I'm most familiar
+with, which are those of ORCA/M, for the Apple...I don't know how well they'll
+translate to the cross-assemblers that're available for the PC.  As soon as I've
+got an idea of what cross-assemblers people are using (if they're using any at
+all), I may change DSFX's output format.
+
+
+
+FOUT pathname [start [end]]: Similar to DASM, but produces "list file" style
+output rather than "source file" style output.  Examples:
+
+*fout mariowrl.asm 8000 ffff       Lists the first 32K of the current file into
+                                    a file called MARIOWRL.ASM
+
+*fout mariowrl.asm 1f0000          Lists the current file into a file called
+                                    MARIOWRL.ASM, starting at address $1F0000
+
+*fout mariowrl.asm                 Lists the entire contents of the current file
+                                    into a file called MARIOWRL.ASM
+
+     A list file will probably be the most useful, since it will include
+addresses that you will be able to search for using your favorite editor.  An
+example of the output you might get using the FOUT command:
+
+008000 78          RESET      SEI 
+008001 9C 00 42               STZ $4200
+008004 9C 0C 42               STZ $420C
+008007 9C 0B 42               STZ $420B
+00800A 9C 40 21               STZ $2140
+00800D 9C 41 21               STZ $2141
+008010 9C 42 21               STZ $2142
+008013 9C 43 21               STZ $2143
+008016 A9 80                  LDA #$80
+008018 8D 00 21               STA $2100
+00801B 18                     CLC 
+00801C FB                     XCE 
+00801D C2 38                  REP #$38
+00801F A9 00 00               LDA #$0000
+008022 5B                     TCD 
+008023 A9 FF 01               LDA #$01FF
+008026 1B                     TCS 
+008027 A9 A9 F0               LDA #$F0A9
+00802A 8F 00 80 7F            STA RAMSTART
+00802E A2 7D 01               LDX #$017D
+008031 A0 FD 03               LDY #$03FD
+008034 A9 8D 00               LDA #$008D
+   :    :  :  :                :     : 
+
+
+     Note that output produced with FOUT is the same as that of the L command.
+
+-------------------------------------------------------------------------------
+
+HEDR val: Specify length of file header.  This command allows you to specify a
+region at the start of the file being disassembled that is a header used by a
+game doctor and should be ignored by DSFX.  Specifically, this option was added
+to make Super Magicom files disassembleable in their native format.  Example:
+
+*hedr 200           Specify a $200 (512) byte header at the start of the file.
+
+
+
+[addr/label]L: Disassemble the next 22 lines of code to the screen.  Specifying
+an address or a label before the "L" will cause disassembly to begin at the
+specified address.  Examples:
+
+*8000l
+008000 78          RESET      SEI 
+008001 9C 00 42               STZ $4200
+008004 9C 0C 42               STZ $420C
+008007 9C 0B 42               STZ $420B
+00800A 9C 40 21               STZ $2140
+00800D 9C 41 21               STZ $2141
+008010 9C 42 21               STZ $2142
+008013 9C 43 21               STZ $2143
+008016 A9 80                  LDA #$80
+008018 8D 00 21               STA $2100
+00801B 18                     CLC 
+00801C FB                     XCE 
+00801D C2 38                  REP #$38
+00801F A9 00 00               LDA #$0000
+008022 5B                     TCD 
+008023 A9 FF 01               LDA #$01FF
+008026 1B                     TCS 
+008027 A9 A9 F0               LDA #$F0A9
+00802A 8F 00 80 7F            STA RAMSTART
+00802E A2 7D 01               LDX #$017D
+008031 A0 FD 03               LDY #$03FD
+008034 A9 8D 00               LDA #$008D
+*titlel
+00FFC0             TITLE      DC  C,'SUPER MARIOWORLD      '
+00FFD6             MISCINFO   DC  H,'02 09 01 00 01 00 7F 73'
+00FFDE                        DC  H,'80 8C'
+00FFE0             FILLER1    DC  H,'FF FF FF FF'
+00FFE4             COPVEC16   DC  A,'82B4'
+00FFE6             BRKVEC16   DC  A,'50B2'
+00FFE8             ABORTVEC16 DC  A,'82B4'
+00FFEA             NMIVEC16   DC  A,'815B'
+00FFEC             RESRVVEC2  DC  A,'8000'
+00FFEE             IRQVEC16   DC  A,'8365'
+00FFF0             FILLER2    DC  H,'FF FF FF FF'
+00FFF4             COPVEC     DC  A,'82B4'
+00FFF6             RESRVVEC1  DC  A,'82B4'
+00FFF8             ABORTVEC   DC  A,'82B4'
+00FFFA             NMIVEC     DC  A,'82B4'
+00FFFC             RESETVEC   DC  A,'8000'
+00FFFE             IRQVEC     DC  A,'82B4'
+018000 80 40                  BRA $018042
+018002 20 10 08               JSR $0810
+018005 04 02                  TSB $02
+018007 01 BD                  ORA ($BD,X)
+018009 88                     DEY
+
+
+
+LAB addr [label]: Defines a label at a given address, or displays the properties
+of a label that already exists for a given address, if no label is specified. 
+If either the label or address specified in the LAB command already exists, you
+will be prompted to confirm replacement of the existing label/address. 
+Examples:
+
+*lab 7f8000 ramstart          Defines a label called RAMSTART at address $7F8000
+*lab 7f8000 ramtop            Replace label at $7F8000 with label "RAMTOP".
+This address is already associated with label RAMSTART.
+Press 'R' to replace, any other key to cancel: r
+*lab 8000                     Displays information about label for address $8000
+ Location: $8000
+     Name: RESET
+*lab ffc0                     Displays information about label for address $FFC0
+ Location: $FFC0
+     Name: TITLE
+Data type: ASCII text
+ Elements: $16
+
+-------------------------------------------------------------------------------
+
+DC type addr len label: Define a data area.  This command allows you to specify
+parts of the object file that should be disassembled as data rather than as
+executable code.  When specifying a data area, the following parameters MUST be
+included:
+
+type: The type of data stored in this data area (see below).
+addr: The starting address of this data area.
+len: The hexadecimalnumber of ELEMENTS of data stored in this data area.
+label: The label for this data area.
+
+There are five types of data recognized by DSFX, as shown in this table:
+
+Type # Description
+---- - ------------------------------------------------------------------------
+  A  2 Address - A two byte address, stored low-high.
+  B  3 Banked address - A three byte address, stored low-high-bank.
+  C  1 Characters - ASCII text.
+  H  1 Hex - Hexadecimal data.
+  W  4 Word - A four-byte word of data, stored lowest-low-high-highest.
+
+     The figure in the # column indicates how many bytes of memory are occupied
+by each element of data of this type.  Thus, specifying a data area for data of
+type W (long word) with four elements of data causes sixteen bytes of code to
+be interpreted as data rather than as code, starting at the specified address. 
+As with LAB, if the address or label specified already exists, you will be
+prompted to confirm replacement.  Examples:
+
+*dc a fffe 1 irqvec           Specifies that a single two-byte address called
+                               "irqvec" is stored at location $FFFE.  Two bytes
+                               of data will be reserved.
+*dc h ffd6 a miscinfo         Specifies that a table of $A hex bytes called
+                               "miscinfo" is stored at location $FFD6.  Ten
+                               bytes of data will be reserved.
+*dc w 290a1 4 longtable       Specifies that a table called "longtable",
+                               consisting of four long words is stored at
+                               location $290A1. 16 bytes of data will be
+                               reserved.
+
+
+
+REG ax addr: Specify register width, starting at address addr.  This command
+allows you to specify the width of the accumulator and index registers,
+beginning at a specific address, and continuing on until one of the following
+conditions occurs:
+
+1) A higher address with a different register width specification is reached.
+
+2) An SEP or REP instruction is disassembled, which, if run, would affect the
+   M or X flags of the 65816.  (DSFX will automatically change the disassembly
+   mode to reflect the change in register width that the SEP or REP instruction
+   would cause).
+
+     Note that although DSFX will automatically adjust the register width for
+its output to reflect changes to the M and X flags caused by SEP and REP
+instructions, the REG command will cause DSFX to preselect the correct register
+width when you use the "L", "DASM", or "FOUT" commands.  I recommend that you
+use the REG command to set a register width on any SEP and REP commands that
+affect the M or X flags, as well as the start of any subroutines you
+disassemble.  Note that in this version of DSFX, the maximum number of register
+width changes that may be defined is 128, so if you're planning to do a full-
+tilt disassembly of a program, use them wisely.
+
+     The format of the command (REG ax addr) may seem a bit confusing, but is
+actually fairly easy to understand.  The address at which the specified register
+widths are to become used is defined in addr.  The widths of the accumulator and
+index registers are specified by supstituting a 1 or a 0 for a and x
+respectively.  If a 1 is defined, the specified register's width will be 8 bits. 
+If a 0 is defined, the specified register's width will be 16 bits.  Examples:
+
+*reg 11 8000             Specifies accumulator and index registers are 8 bits
+                          starting at address $8000.
+*reg 00 801d             Specifies accumulator and index registers are 16 bits
+                          starting at address $801D.
+*reg 10 1E300            Specifies 8-bit accumulator and 16-bit index registers
+                          starting at address $1E300.
+*reg 01 39FFE            Specifies 16-bit accumulator and 8-bit index registers
+                          starting at address $39FFE.
+
+
+
+DUMP [addr [length]]: Perform a hex/ASCII dump of [length] bytes, starting at
+location [addr].  If a length is specified, a start address must be specified
+also.  If no length is specified, 256 bytes will be dumped.  If no starting
+address is specified, the current PC is used as the starting address.  Examples:
+
+*dump fff0
+   $00FFF0: FF FF FF FF B4 82 B4 82 B4 82 B4 82 00 80 B4 82  -- ....¥Ç¥Ç¥Ç¥Ç.Ä¥Ç
+   $018000: 80 40 20 10 08 04 02 01 BD 88 15 29 03 60 BD 88  -- Ä@ .....Ωà.).`Ωà
+   $018010: 15 29 04 60 BD 88 15 29 08 60 8B 4B AB 20 DB AB  -- .).`Ωà.).`ãK´ €´
+   $018020: AB 6B 8B 4B AB 20 CF AB AB 6B 8B 4B AB 20 32 90  -- ´kãK´ œ´´kãK´ 2ê
+   $018030: AB 6B 8B 4B AB 20 0D A4 AB 6B 8B 4B AB 20 C1 8F  -- ´kãK´ .§´kãK´ ¡è
+   $018040: AB 6B 8B 4B AB 20 F3 9C AB 6B 49 FF 1A 60 BD 88  -- ´kãK´ Ûú´kI.<`Ωà
+   $018050: 15 F0 1F A5 13 29 03 05 86 D0 17 A9 04 85 00 A9  -- ..•.)..Ü–.©.Ö.©
+   $018060: 0A 85 01 20 CB 80 D0 0A A0 03 B9 C0 17 F0 04 88  -- .Ö. ÀÄ–.†.π¿..à
+   $018070: 10 F8 60 A9 03 99 C0 17 B5 E4 65 00 99 C8 17 B5  -- .¯`©.ô¿.µ‰e.ô».µ
+   $018080: D8 65 01 99 C4 17 A9 13 99 CC 17 60 8B 4B AB AD  -- ÿe.ôƒ.©.ôÃ.`ãK´≠
+   $018090: 8F 14 8D 70 14 9C 8F 14 9C 71 14 9C C2 18 AD DF  -- è.çp.úè.úq.ú¬.≠ﬂ
+   $0180A0: 18 8D E2 18 9C DF 18 A2 0B 8E E9 15 20 D2 80 20  -- .ç‚.úﬂ.¢.éÈ. “Ä 
+   $0180B0: 27 81 CA 10 F4 AD B8 18 F0 04 22 1C F8 02 AD DF  -- 'Å .Ù≠∏..".¯.≠ﬂ
+   $0180C0: 18 D0 06 9C 7A 18 9C 8B 18 AB 6B BD A0 15 1D 6C  -- .–.úz.úã.´kΩ†..l
+   $0180D0: 18 60 DA 8A AE 92 16 18 7F B4 F0 07 AA BF 00 F0  -- .`⁄äÆí..¥.™ø.
+   $0180E0: 07 FA 9D EA 15 BD C8 14 F0 3C A5 9D D0 38 BD 40  -- .˙ùÍ.Ω».<•ù–8Ω@
+*dump
+   $0180F0: 15 F0 03 DE 40 15 BD 4C 15 F0 03 DE 4C 15 BD 58  -- ..ﬁ@.ΩL..ﬁL.ΩX
+   $018100: 15 F0 03 DE 58 15 BD 64 15 F0 03 DE 64 15 BD E2  -- ..ﬁX.Ωd..ﬁd.Ω‚
+   $018110: 1F F0 03 DE E2 1F BD AC 15 F0 03 DE AC 15 BD 3E  -- ..ﬁ‚.Ω¨..ﬁ¨.Ω>
+   $018120: 16 F0 03 DE 3E 16 60 BD C8 14 F0 25 C9 08 D0 03  -- ..ﬁ>.`Ω».%….–.
+   $018130: 4C C3 85 22 74 86 00 51 81 72 81 A2 9A E4 9A 52  -- L√Ö"tÜ.QÅrÅ¢ö‰öR
+   $018140: 9A 7B 9A 6D 81 56 81 C2 85 3C 95 13 99 71 9F 57  -- ö{ömÅVÅ¬Ö<ï.ôqüW
+   $018150: 81 A9 FF 9D 1A 16 60 20 C3 85 20 34 AC 20 32 90  -- Å©.ù..` √Ö 4¨ 2ê
+   $018160: D6 AA D6 AA 20 0E 80 F0 03 20 04 9A 60 22 49 FB  -- ÷™÷™ .Ä. .ö`"I˚
+   $018170: 00 60 A9 08 9D C8 14 B5 9E 22 74 86 00 75 85 75  -- .`©.ù».µû"tÜ.uÖu
+   $018180: 85 75 85 75 85 75 85 75 85 75 85 75 85 75 85 6E  -- ÖuÖuÖuÖuÖuÖuÖuÖn
+   $018190: 85 75 85 75 85 75 85 5D 85 C3 E1 75 85 75 85 75  -- ÖuÖuÖuÖ]Ö√·uÖuÖu
+   $0181A0: 85 78 F8 75 85 75 85 11 B0 0B B0 14 B0 14 B0 DA  -- Öx¯uÖuÖ.∞.∞.∞.∞⁄
+   $0181B0: 83 B0 85 C2 85 DD 84 75 85 6B 84 C3 BD 83 85 7C  -- É∞Ö¬Ö›ÑuÖkÑ√ΩÉÖ|
+   $0181C0: 85 49 B9 49 B9 3F B9 3F B9 96 AE A2 AE 87 F8 2F  -- ÖIπIπ?π?πñÆ¢Æá¯/
+   $0181D0: CD 9A 85 C2 85 39 83 35 84 F2 83 C2 85 7C 85 7C  -- ÕöÖ¬Ö9É5ÑÚÉ¬Ö|Ö|
+   $0181E0: 85 7C 85 5B E0 C2 85 E0 83 C2 85 87 F8 7F F8 7F  -- Ö|Ö[‡¬Ö‡É¬Öá¯¯
+*dump 18020 14
+   $018020: AB 6B 8B 4B AB 20 CF AB AB 6B 8B 4B AB 20 32 90  -- ´kãK´ œ´´kãK´ 2ê
+   $018030: AB 6B 8B 4B                                      -- ´kãK
+
+
+
+XDUMP [addr [length]] val: Perform a hex/ASCII dump of [length] bytes,
+exclusive-ored with the specified value, starting at the specified address.  As
+with DUMP, if length is specified, start address must also be specified.  The
+value with which to XOR the data is required.  Examples:
+
+*xdump ff                Dumps 256 bytes, starting at the current PC, exclusive-
+                          oring them with $FF.
+*xdump ff00 ff           Dumps 256 bytes, starting at $FF00, exclusive-oring
+                          them with $FF.
+*xdump ff00 14 aa        Dumps $14 bytes, starting at $FF00, exclusive-oring
+                          them with $AA.
+
+*xdump ff00 ff
+   $00FF00: EB 14 4A 1B 3D DF 36 FF 00 CF FA 36 FF FE CF FC  -- Î.J.=ﬂ6..œ˙6.˛œ¸
+   $00FF10: 56 FF FE 7A DD 1D DF 42 2B EB 14 4A 27 3D DF 7A  -- V.˛z›.ﬂB+Î.J'=ﬂz
+   $00FF20: FF 56 5F FF C7 1A FF E7 92 77 E7 7A DB 1D DF 94  -- .V_.«..ÁíwÁz€.ﬂî
+   $00FF30: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  -- ................
+   $00FF40: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  -- ................
+   $00FF50: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  -- ................
+   $00FF60: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  -- ................
+   $00FF70: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  -- ................
+   $00FF80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  -- ................
+   $00FF90: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  -- ................
+   $00FFA0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  -- ................
+   $00FFB0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  -- ................
+   $00FFC0: AC AA AF BA AD DF B2 BE AD B6 B0 A8 B0 AD B3 BB  -- ¨™Ø∫≠ﬂ≤æ≠∂∞®∞≠≥ª
+   $00FFD0: DF DF DF DF DF DF FD F6 FE FF FE FF 80 8C 7F 73  -- ﬂﬂﬂﬂﬂﬂ˝ˆ˛.˛.Äås
+   $00FFE0: 00 00 00 00 4B 7D 4D AF 4B 7D A4 7E FF 7F 9A 7C  -- ....K}MØK}§~.ö|
+   $00FFF0: 00 00 00 00 4B 7D 4B 7D 4B 7D 4B 7D FF 7F 4B 7D  -- ....K}K}K}K}.K}
+
+-------------------------------------------------------------------------------
+
+SFX addr: Print SNES-equivalent banked address for specified absolute address. 
+This command will allow you to enter absolute offsets within a file that you may
+find using Norton DiskEdit or other file editing program, and will return the
+banked address to which DSFX and the SNES will translate that offset.  Example:
+
+*sfx c203
+01C203
+
+-------------------------------------------------------------------------------
+
+ABS addr: Similar to SFX, but accepts an SFX address as its input, and displays
+the equivalent absolute address.  It occurred to me after I released v1.00 that
+it might be useful to know the offset into the image file of an address you
+find using DSFX.  Example:
+
+*abs 1c203
+00C203
+
+
+
+FIND xx [..16]: Search the file for a sequence of up to 16 bytes.  Useful for
+locating instructions and data.  Note that the fewer bytes you specify in your
+search, the more locations will be found containing the specified data.  I
+recommend ALWAYS specifying at least two bytes to be found with the FIND
+command.  Example:
+
+*find a9 05
+0099D4  009B50  00ABC4  00ABFB  00AC24  00AC4D  00AD0B  00C33F  00C920  00E2C9 
+00F145  00F1BC  00F288  00FB10  00FD08  00FE5C  018504  019330  0199CD  01C2A3 
+01C507  01C816  01C843  01CE8E  01CF71  01D15C  01DC72  0285C5  028ACF  0290A9 
+029AF0  029BEF  02A441  02A45B  02AA8D  02AD5E  02B794  02BF3D  02C23F  02C57C 
+02C7D4  02D7FB  02F1FE  02F4BA  0394DA  039683  03ABB3  03AD78  03CE1D  048F26 
+04901D  0491EE  04DCC2  04E522  04E529  04E637  04E826  04E864  04F76D  058202 
+05BECF  0BFE62  0CCECB  0CD3AA  0CD8BB  0DA761  0DBAE8  0DEAC3  
+
+-------------------------------------------------------------------------------
+
+GRAB name start [end]: Extracts the region from start to end from the file being
+disassembled, and writes it to a second file.  If end address is not specified,
+the last address of the source file is assumed.  I added this command because
+one of the suggestions I have received since I released v1.00 was to add the
+capability to disassemble code that's going to be run on the SNES' sound
+processor.  I think the best way to handle that is to just have a seperate
+disassembler for that microprocessor, so if I ever actually DO write it, that's
+what the GRAB command is for...extracting code for the sound processor into a
+seperate file that can then be disassembled by another program.  If anyone
+else comes up with a use for this, please let me know.  Example:
+
+*grab marsound.bin 17300 1ffff     Extract the region from $17300 to $1FFFF
+                                    from the source file, and write it to a
+                                    file called "MARSOUND.BIN"
+
+
+
+Revision history:
+
+v1.00: Released 5/11/92.
+
+v1.10: Corrected bug in DC that caused length to be interpreted as a decimal
+        value rather than a hexadecimal value.
+       Corrected bug in FOUT and DASM commands that caused auto-selection of
+        start and end address to fail, causing a "Subscript out of range"
+        error if start address was not specified.
+       Corrected bug in FOUT and DASM commands that caused end address to
+        be interpreted to be the same as start address if both start and end
+        address were specified.
+       Corrected bug which caused FOUT to not work at all.
+       Corrected bug in LAB that caused a "Subscript out of range" error if
+        the word LAB was followed by a non-hexadecimal expression that did
+        not match a defined label.
+       Corrected bug which caused default symbol table to not be loaded if
+        a file with no associated symbol table was specified for disassembly
+        on the command line.
+       Added ABS command.
+       Added GRAB command.
+       Included default symbol table that I forgot to include with v1.00.
+
+v1.20: Corrected bug which caused addresses produced by branch instructions
+        to be misinterpreted when searching for associated labels.
+       Corrected bug which caused the operands of short JMP and JSR instructions
+        to be misinterpreted.
+       Added HEDR command.
+       Added DELL command.
+       Added ability to replace existing labels.
+
+Thanks to:
+
+Fabulous Furlough- For the idea behind the HEDR command, as well as the impetus
+to add label deletion/replacement.
+
+R. Bubba Magillicutty- For pointing out the problem with the disassembly of JMP
+and JSR instructions, because I'd have DIED before I noticed that as a problem.

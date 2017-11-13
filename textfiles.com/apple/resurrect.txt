@@ -1,0 +1,209 @@
+  RESURRECTION
+ 
+  by Harold D. Portnoy
+ 
+  Copyright 1990
+ 
+ ============================================================
+ 
+      When an AppleWorks word processor or data base file goes bad is not the
+ time to worry about how you are going to repair the damage.
+ 
+      CHANGE-A-FILE (CHGFIL.BXY) is a batch file utility that reads AppleWorks
+ Word Processor (AWP) and text (TXT) files; converts AWP files to TXT files, TXT
+ files to AWP files, and AWP 3.0 files to AWP 2.x files; and rapidly repairs
+ damaged AWP and ADB (data base) files.
+ 
+ ------------------------------------------------------------
+ 
+      While CHANGE-A-FILE can readily restore damaged AppleWorks word processor
+ (AWP) and data base (ADB) files, it cannot restore a file on a disk with a
+ damaged directory. RESURRECTION can restore these files .... most often
+ rapidly, but occasionally with a little work. The disk blocks containing the
+ file that cannot be accessed are still on the disk. The problem is where are
+ the blocks and how can they be placed in an accessible file. RESURRECTION
+ answers these two questions. RESURRECTION is not a substit ute for Change-A-
+ File (see note below). RESURRECTION                                        -  -
+ 
+ Source/Destination Selection 
+ 
+      Insert the damaged disk (source) into a disk drive and then enter the slot
+ and disk number or accept the default values. The complete file name, including
+ the prefix, of the file to be created (destination) from the damaged file is
+ then entered. The destination file cannot be on the disk in the source
+ slot/drive. This prevents the new file from being on a damaged disk. Next the
+ filetype is selected (TXT, AWP, or ADB).      The destination file does not
+ have to be completed in one session. To append to a partially completed file,
+ enter the destination file name. At 'File already exists. Replace? (N/Y)',
+ enter 'N'. At 'Append ? (N/Y)', enter 'Y'. New blocks will then be added to the
+ end of the previous file.
+ 
+ Function Selection 
+      The function screen is divided into an upper and lower half. The file name
+ is printed in the left upper corner and the total blocks on the source disk in
+ the right upper corner. The number of blocks on the disk is initially
+ determined from the volume directory on block 2. If block 2 is damaged, then an
+ attempt is made to determine volume size by two other methods. If all methods
+ fail, then a 'VOLUME BLOCKS $' window will open. Enter the volume size in
+ blocks. This should be rarely necessary. The follow ing can be used to
+ determine the number of blocks. A 5.25 inch disk has $118 blocks (140 blocks);
+ a 3.5 inch disk, $640 (1600 blocks); and hard discs, $800 * size in megabytes.
+ The functions are printed on the bottom line of the screen. The following can
+ be selected: Arrows, Quit, Read, Write, Dump, Scan.
+ 
+      Read: Blocks from the damaged disks are accessed either by the up and down
+ arrows, which select the blocks sequentially, or by entering 'R'. A window
+ appears with 'Read Block $'. Enter the desired block number. The block is
+ displayed in the lower half of the screen. The block number is displayed in the
+ left margin at 'Read Block'. For ease of review, only the characters in the
+ range of $20 - $7F (the text characters) are printed to the screen. All other
+ characters are replaced with a period.
+ 
+      Write: Enter 'W' to write the block to the new file. The block is
+ displayed on the upper half of the screen. Only a previously read block can be
+ written to file. The block number is displayed in the left margin at 'Write
+ Block'.      The next block in the file can be accessed by the arrows or 'R'
+ and the process repeated until all the blocks in the old file are transferred
+ to the destination file. Once a block in the source file is found, succeeding
+ blocks are frequently found in sequential order and easily accessed by the up
+ arrow. 
+ 
+      Dump: Any block that has been read can be dumped to the printer by
+ entering 'D'. The easiest way to reconstruct a file is to first dump all the
+ blocks, which are identified with a block number,  to a printer. Determine the
+ order of the blocks. Reenter the program and write the blocks to the
+ destination file in the proper order.      The printer output is set to slot 1.
+ If you use a different slot, then change the low nibble of byte $03 (C1) to the
+ slot number. This is most easily accomplished using a block editing utility
+ such as ProSel Block Warden. Alternately the following patch will suffice after
+ setting the prefix to the directory containing RESURRECTION.
+ 
+           POKE 768,19n  (where n = slot number + 2) 
+           BSAVE RESURRECTION,TSYS,A$300,L1,B3
+ 
+      Scan: Scan allows bad blocks to be easily identified. Selecting 'S' brings
+ up the 'SCAN BLOCK $' window. Enter the block number from which the scan should
+ start. The bad block numbers will then be printed in hex. The scan can be
+ interrupted by pressing any key. The block numbers can also be sent to a
+ printer.
+ 
+      Auto-Restore: There are two Auto-Restore functions: by file name and by
+ index block. Auto-Restore by file name is the best method to restore a file. It
+ requires, however, that a parent directory be intact. Auto-Restore by index
+ block only requires that the index block of the file be intact. It is less
+ efficient than restoring by file name and should be used only after Auto-
+ Restore by file name has failed. It is much more efficient than reconstructing
+ a file using the Read/Write functions. Entering 'A' brings up a menu for
+ selecting either Auto-Restore by file name or by index block.
+ 
+      Auto-Restore by file will restore a file as long as the parent directory
+ or subdirectory and the index block(s) of the file are intact. If the volume
+ directory is damaged or any of the other directories up to, but not including,
+ the parent subdirectory, the file can still be recovered. A common cause for
+ failure to access a file is damage to the volume directory in block 2. If the
+ directory file entry of the file is not in block 2, the file can be recovered.
+ On selecting by file name, the 'Find File' window is opened. Enter the file
+ name only. Do NOT enter any prefix. The file type must be the same as
+ previously selected. Auto-Restore will search the damaged disk for the file.
+ 
+ Pressing any key will abort the search. If the file is found, identifying
+ attributes are displayed in a window. The attributes are parent directory or
+ subdirectory, file type, size in blocks, and modification date and time. If
+ this is the correct file enter 'Y' at 'Accept (N/Y)'. If not, you will be given
+ the option of continuing the search or aborting. 
+      When the file is accepted, Auto-Restore automatically reconstructs the
+ damaged file under the destination file name. DO NOT INTERRUPT the
+ reconstruction. When complete the program returns to the input menu.
+ 
+      Auto-Restore by index block requires that there be at least two blocks in
+ the file and cannot directly handle files in excess of 256 blocks. It is ideal
+ for sapling files, that is, files of 2 - 256 blocks. Most files fall into this
+ category. It cannot detect seedling files (1 block). Tree files ( > 256 blocks)
+ must be reconstructed from file segments of 256 blocks. The algorithm used to
+ detect an index block may not detect all index blocks and may recognize a non-
+ index block as an index block (pseudo- index block). The former is more
+ important in that a desired file cannot be detected. 
+      Selecting Auto-Restore by index block presents a new function screen:
+ Select Arrows (up and down), Accept and Next index block; and an 'Index Block
+ $' window. Enter '0' in the window, when searching for a file for the first
+ time. If you have an idea of approximately where the file is on the disk, then
+ enter a block number that is known to be before the index block of the file.
+ Select 'N'. The disk will be searched for an index block. When found, the first
+ two blocks of the file will be displayed on the  screen. If you need more
+ information in order to decide if you have the correct file then select the up
+ arrow and two more blocks will be presented until the file ends. Selecting the
+ down arrow, backs up two blocks. 
+      When you are satisfied that the correct file has been found, select 'A'
+ and the file will be reconstructed. In the search, errors such as 'Bad Block'
+ and 'Block Range Error' may be encountered. The former indicates a bad block
+ has been encountered. The latter indicates that the algorithm found a pseudo-
+ index block and a file block number was tried that exceeded the volume size.
+ Continue by selecting 'N' for the next index block. 
+      With a little time and effort, tree files can be first reconstructed into
+ multiple files of 256 blocks. AppleWorks can then be used to append one file to
+ the next in order to reconstruct the original tree file. Not the best, but
+ better than block by block.
+ 
+      Quit: Enter 'Q' to complete the destination file.
+ 
+      ESC: Entering ESC at any point in the program resets to the initial
+ screen. At the initial 'Slot' request, ESC quits the program. The destination
+ file is not saved.
+ 
+ NOTE      The text files can be read with any appropriate utility such as
+ 'View' in Change-A-File. AWP and ADB files must first be processed by Change-A-
+ File's 'AWP File Doctor' or 'Restore ADB' in order to be accessed by
+ AppleWorks. 
+ 
+ Icons      CF.RES.ICONS contains Change-A-File and Resurrection icons. The
+ Change-A-File icon is courtesy of Karl Bunker. To use these icons in the
+ Finder, place CF.RES.ICONS in the ICONS subdirectory of the boot volume
+ (BOOT.VOLUME/ICONS/CF.RES.ICONS) and reboot.  The two programs must have file
+ names of CHANGE.FILE and RESURRECTION.
+ 
+ -------------------------------------------------------
+   IMPORTANT NOTICE
+ 
+      Auto-Restore is not accessible unless you have the CHANGE-A-FILE password.
+ If RESURRECTION is placed in the same directory as CF.SYSTEM, the Auto-Restore
+ function will be unlocked on entering the password and then quitting
+ CHANGE.FILE. 
+      Transfer the CHANGE.FILE and RESURRECTION files to the volume directory of
+ a disk under ProDOS (P8). Rename CHANGE.FILE to CF.SYSTEM. Be sure this file is
+ the first .SYSTEM file in the directory (e.g. ahead of BASIC.SYSTEM). Boot the
+ disk. (You must boot directly into CF.SYSTEM.) The password screen will be
+ presented. Enter the password. When the menu is presented, select Quit. The
+ CHANGE.FILE will be rewritten to the disk without the screen. The Auto-Restore
+ function of RESURRECTION will be activated.  Rename CF.SYSTEM to CHANGE.FILE or
+ any other name of your choice. Whether you have the password or not, the
+ password screen will be removed. If you enter the password, all the utilities
+ will be able to be used in both programs. If not, only the 'free' utilities
+ will be able to be used. 
+ 
+      The CHANGE-A-FILE password can be obtained for $10.00 from: 
+     Change.File 
+           c/o Harold D. Portnoy 
+           1431 Woodward 
+           Bloomfield Hills, MI 48013
+ 
+ ------------------------------------------------------------
+ 
+ All rights reserved.
+ 
+ AppleWorks, copyright Claris Corporation ProSel, copyright Glen Bredon
+ 
+ 
+      Suggestions, bugs and other trivia to:
+ 
+         Harold D. Portnoy
+ 
+ 
+         Compuserve [75156,2436]         GEnie [H.PORTNOY]
+ 
+ Versions:
+ 
+      1.0- First attempt.      1.1- Improved layout and docs. Adds scan.
+ 1.2- Adds Auto-Restore.      1.3- Improved Auto-Restore. Also removes bug.
+ 1.4- A few bug fixes and minor improvements.      1.5- Improved determination
+ of volume size and a bug           fix.      1.6- Adds Auto-Restore by Index
+ Block.      1.7- Improved algorithm for Auto-Restore 

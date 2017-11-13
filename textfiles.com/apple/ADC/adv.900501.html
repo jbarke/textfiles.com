@@ -1,0 +1,540 @@
+America Online
+APPLE II DEVELOPMENT FORUM CONFERENCE LOG
+Tuesday, May 1, 1990  10:00 p.m. eastern time
+Topic:  Operating Systems
+Forum Leader:  AFL Dyfet
+
+AFL Dyfet  Good evening and welcome to the Apple II Development Forum. 
+           Tonight our topic
+AFL Dyfet  is Operating Systems.  We will be using PROTOCOL.  This means that
+           if you have
+AFL Dyfet  a question to ask, enter a '?' on a line by itself, and if you
+           wish to comment
+AFL Dyfet  on the question being asked, enter a '!' on a line by itself.  You
+           will each be
+AFL Dyfet  called in turn.  I believe Keith had the first question....GA
+           Kieth...
+KeithR4 No questions yet, GA
+Coach101   I think Keith asked a question before the conference started about
+           what was meant by
+Coach101   channels?  If you are a certified developer you ave access to
+           AppleLink (Apple Edition) and can ask
+Coach101   very detailed programming questions in an official manner (i.e.,
+           channels).
+AFL Dyfet  GA Keith...
+KeithR4    Thanks for answering
+KeithR4    ga
+AFL Dyfet  Okay, I believe Parik now has the floor...
+AFA Parik  has anyone here written a macro program?  if so, whats the best
+           way to 
+AFA Parik  intercept key-calls?  ga
+AFL Dyfet  GA Keith...
+KeithR4    What language and development system are you using Parik?
+AFA Parik  asm65816
+KeithR4    Apw or Merlin?
+AFA Parik  orca :)
+Coach101   PRIZM or EDIT
+KeithR4    Sorry can't help you there. ga
+AFA Parik  rose (heh)  ga, never mind
+AFL Dyfet  :) Okay, getting back to your question, I believe there is some
+           sample source
+AFL Dyfet  on how to steal keyboard interrupts from C...you may wish to start
+           by looking
+AFL Dyfet  at that.
+AFA Parik  ok!  thanks
+AFL Dyfet  Okay, Coach now has the floor...GA Coach...
+Coach101   My question has to deal with intermodule communication...
+Coach101   Specifically, if you have a driver, a permanent init, and a Cdev
+           that comprise some variety
+Coach101   of service support for an application program, how can the init,
+           driver, and Cdev communicate with
+Coach101   each other.   ga
+AFL Dyfet  My first thought is message center...GA Dave...
+Dave Lyons Use MessageByName and MessageCenter to publish an
+Dave Lyons address that the others can look up & then call.  (Several of
+           your
+Dave Lyons compenents can publish their own hooks, or invent your
+Dave Lyons own variations.  I'm using this approach in a
+Dave Lyons not-quite-released-yet Nifty List, and it works well.  Now, Matt
+           has another approach:  (GA)
+AFA JoeyS  <drooling over the thought of a new NiftyList...>
+Matt DTS   Dave (and Dave)'s method is well and good, but if you really have
+           a GS/OS driver installed, it's not
+Matt DTS   necessary.
+Matt DTS   If you have a GS/OS driver (which, by the way, is absolutely the
+           most intelligent way to control
+Matt DTS   hardware), you make it so that the driver handles ALL the hardware
+           requests through DControl, DStatus,
+Matt DTS   DRead and DWrite calls.  If you need to set default parameters
+           (for example, default color on a color
+Matt DTS   printer), use DControl.  If you need to know if the printer's
+           online, use DStatus.
+Matt DTS   Drivers are present before CDevs and Inits are loaded.  If the
+           driver doesn't find it's hardware, it
+Matt DTS   will be unloaded by the Device Manager.
+Matt DTS   So:
+Matt DTS   Get a unique Device ID from DTS for your driver, so you can find
+           it with a DInfo scan just like you ca
+Matt DTS   (can) currently find servers or SCSI hard disks.  Have your
+           CDev/Init search for the driver and call 
+Matt DTS   it to do all the work.
+Matt DTS   (If you want to use MessageByName to indicate that the driver's
+           there and what it's device number is,
+Matt DTS   that's dangerous - new drivers can be installed at any time so you
+           should search every time.)
+Matt DTS   It's simple and lets the driver do all the work, which is what you
+           really want anyway.  GA.
+Coach101   Matts approach is much closer to my requirement...
+AFL Dyfet  GA Dave...
+Dave Lyons So, how does the CDev communicate with the permanent init part?
+Dave Lyons (Or doesn't it need to anymore?)
+Coach101   But, can I have drivers that have no hardware associated with
+           them?  e.g., they do funny things
+Coach101   with an existing driver (AppleTalk for example)?
+Matt DTS   No.  Drivers deal with hardware, not other things (especially not
+           other drivers).
+Matt DTS   You can, however, write your own AppleTalk protocols and get them
+           loaded (if you like).
+Coach101   But, I could have a device driver that talked to the AppleTalk
+           manager right?
+Coach101   Wrong...   Bad, dumb, studid idea!
+Matt DTS   You can have a device driver that makes AppleTalk calls ($E11004,
+           or whatever).  You can't have a
+Matt DTS   device driver that makes calls to the AppleTalk drivers.
+Andy Stein Burger Bill is writing a Hewlet-Packard driver at 300 DPI!
+Matt DTS   You can write a driver that communicates with the supervisory
+           drivers, but there isn't an AppleTalk
+Matt DTS   supervisory driver.  (Protocol?)
+Coach101   Thanks for the ideas, I will mull them all over and see what pans
+           out..   ga
+AFL Dyfet  Okay, I see that Marty is next...GA Marty...
+AFL Marty  One of the members of AOL is having some difficulty with his hard
+           drive....
+AFL Marty  and I said that I'd ask this question here tonight...
+AFL Marty  The member is using a SCSI hard drive with the DMS SCSI card
+           ....
+AFL Marty  (DMA SCSI)...
+A2GS       DMA
+AFL Marty  (thank you)
+Matt DTS   (the GMTA SCSI card)
+A2GS       ABCD
+AFL Marty  and he is getting what sounds like the same unclaimed interrupts
+           errors...
+AFL Marty  that I've heard about before.  He is using an internal modem...
+AFL Dyfet  Is he using the new SCSI drivers?
+AFL Marty  Is there some way to work around this problem?
+AFL Marty  Yes, he uses the new drivers.
+AFL Dyfet  GA Matt...
+AFL Marty  GA
+Matt DTS   1) Using the new drivers is not enough.  He must use the INSTALLER
+           that came with the card to install
+Matt DTS   the modified GS/OS required by the new drivers/manager.
+Matt DTS   2) When using the new OS, >64K interrupts is not a fatal error. 
+           It will still ask you to "restart"...
+Matt DTS   ...but if you press return, you'll be returned to the application
+           with no ill effects.
+Matt DTS   3) (off-chance) When using the new drivers/managers with the OLD
+           SCSI Card (Rev. C), it's vital that
+Matt DTS   you have proper termination - one terminator on the first and last
+           device on the chain (or just one if
+Matt DTS   you have just one device).  The old manager would let you get away
+           with bad termination; the new one
+Matt DTS   does not.  Take it from someone who watched SCSI have a party on
+           his data.
+Matt DTS   GA.
+AFL Marty  Thanks for the info. GA
+AFL Dyfet  Okay, I see that Keith has the next question...GA Keith, you have
+           the floor
+AFL Dyfet  now.
+KeithR4    Is there any Pascal sample source code for doing list controls?
+AFL Dyfet  GA Matt...
+KeithR4    I'm using TML Pascal II and I can't seem to get a list control to
+           work at all. 
+KeithR4    ga
+Matt DTS   Do you mean lists or the new 5.0 Extended List Controls?
+KeithR4    either
+Matt DTS   List Controls are easier than lists.  We haven't released any
+           samples, but we will be within the next
+KeithR4    I tried the normal lists first.  Didn't try the extened.  I nedd
+           to create it
+KeithR4    on the fly ga
+Matt DTS   month or so.  Some will also be in the final Toolbox Reference
+           Volume 3 from Addison-Wesley.
+Matt DTS   (GA)
+AFL Dyfet  GA Dave...
+Dave Lyons Keith, do you want the list in a regular window, or inside a Modal
+           Dialog?
+Dave Lyons And, question 2, what went wrong when you tried it?
+KeithR4    In a regular window ga
+KeithR4    When I selected an item all of the items became garbage
+Dave Lyons Okay, so it showed up correctly to start with, but
+Dave Lyons when it tried to redraw later, the item text was all screwed up,
+           right?
+KeithR4    That's correct
+Dave Lyons The strings for the items have to *stay* in memory where they were
+           when you fed them to the
+Dave Lyons list manager...sounds like you made a *local* array of strings,
+           maybe, so they went away?
+KeithR4    Do I need to do some handle locking?
+Dave Lyons Are your strings in a handle?
+KeithR4    Yes, they may have been local variales.
+Dave Lyons (I mean, one you specifically allocated?)  Or what?
+KeithR4    No, they are not in a handle, should I allocate one?
+Dave Lyons Locals sounds like a very good bet--make 'em global or otherwise
+           long-lived, and life will be good.
+KeithR4    Thanks, done.
+Dave Lyons (No, there's no special advantage to having 'em in a handle...you
+           still have to have them somewhere
+Dave Lyons to put them in the handle anwyay....)  ga
+AFL Dyfet  Okay, Parik has the next question...GA Parik...
+AFA Parik  will gs/os load cdas into special memory if bit 12 is not set in
+           the omf field
+AFA Parik  and will gs/os purge at least level 3 before running prodos 8? 
+           ga
+AFL Dyfet  GA Matt
+Matt DTS   ExpressLoad (and perhaps the System Loader, not sure) always
+           attempts to load non-special memory
+Matt DTS   before using special memory.  If no special memory is not set, it
+           will be allowed but not preferred.
+Matt DTS   2) No.  GS/OS asks for the P8 memory and if some stuff needs to be
+           purged to get it, it will be purged
+Matt DTS   to get it.  It doesn't go around kicking out people's dormant data
+           for thrills.
+Matt DTS   (GA)
+AFL Dyfet  GA Dave...
+Dave Lyons Checking, but I don't think CDAs (when loaded by the system) get
+           to use special memory even if
+Dave Lyons no regular memory is available.  That's the flag on InitialLoad,
+           right?
+AFA Parik  i allocate a direct page in my Cda and it must be left after cda
+           is exited. i
+AFA Parik  use $4115 as memory-bits, and it doesn't get purged before running
+           p8.  :( 
+WinkieJim  Would prevent using P8 programs if they were loaded into special
+           memory
+Matt DTS   The memory manager will purge your handle if it's in special
+           memory to get it for P8 - if it can.
+AFA Parik  ga, i just have a key for disposing DP memory inside program. 
+           kinda messy.
+Dave Lyons Ah, but it would
+Matt DTS   It can't purge locked blocks, for example.
+Dave Lyons purge levels 3 and 2 first, before getting rid of his level-1
+           blocks in bank 0.  Are you leaving
+Dave Lyons that page there while not in your CDA on purpose, or are we just
+           trying to explain the results
+Dave Lyons of a bug?
+AFA Parik  no, the page is used by a background interrupt.  
+Dave Lyons Hmmm....
+AFA Parik  (after exiting CDA).  it uses Memory Attributees of block may be
+           moved or
+AFA Parik  purged, and purge level 01.
+WinkieJim  That's a no-no...I think
+AFA Parik  I've used the WHERE utility of Prosel-16, and the PURGE.MEM. 
+           It'll get rid of
+AFA Parik  it.  But gs/os won't!  :(
+Dave Lyons You need a way to shut that down nicely before P8 launches.
+AFA Parik  ga anyways, message-base discussion is better.
+AFL Dyfet  GA Winkie...
+WinkieJim  Is there any way you can have your interrupt routine allocate the
+           direct page 
+WinkieJim  itself when it's called so you don;t keep the direct page all the
+           time?
+AFA Parik  good idea!  
+WinkieJim  Just a suggestion gs
+WinkieJim  ga
+Coach101   You cannot use the MemoryManager at interrupt time...  Right?
+AFA Parik  wait, that won't work.  the sound tool uses a direct page also and
+           is left on
+AFA Parik  :(  ga
+Matt DTS   (Wrong.)
+WinkieJim  Sorry just a thought...
+AFL Dyfet  GA with your comment, A2...
+WinkieJim  (i usally just save a few bytes on the direct page and put them
+           back when i'm 
+WinkieJim  done...I know: very dangerous.
+A2GS       Without offending Matt,  :)  can you have the sound tools generate
+           interrupts
+A2GS       which are vectored to your sound interrupt handling routine which
+           allocates
+A2GS       or rather sets the DP to your address?
+A2GS       Of course the problem then is resetting the DP.
+AFA Parik   yes, but the sound tools need a direct page!  
+AFA Parik  i think i'll leave the sound tools off and try replacing $E1/002C.
+            ga with the
+AFA Parik  next q
+A2GS       Oh, I see...never mind I thought you meant that the sound tools
+           needs the DP
+AFL Dyfet  Okay, I believe Andy has the next question...GA Andy...
+Andy Stein When I use System 5.0.2 with my Vulcan 40 Megabyte hard drive,
+           every once in a
+A2GS       during an interrupt.   (A2GS<---SMACK)
+Andy Stein while, I find all my files strewn about the directory, in no
+           particular order.
+Andy Stein It seems to occur after I've booted a System disk that does not
+           have the Vulan 
+Andy Stein driver on it.  Also, why won't some Prodos 8 and 16 programs run
+           properly on it
+Andy Stein ?
+Andy Stein ga
+AFL Dyfet  GA A2....
+A2GS       You probably have the FINDER info files on the same sys. Disk
+           which contains
+A2GS       your Vulcan Drivers and when you boot up another disk, the Finder
+           can't "FIND"
+A2GS       the files.  I Think?  :)   GA
+AFL Dyfet  GA Matt...
+Matt DTS   Not probable.  The Finder only stores info files for a volume on
+           that volume, not other volumes.
+Andy Stein Even after, when I boot up with Vulcan, the files are still messed
+           up.
+Matt DTS   It doesn't, for example, put any information about your hard drive
+           on a floppy, or vice versa.
+Matt DTS   "strewn about in no particular order"
+Matt DTS   Lemme point out that files on ProDOS disks *aren't* in any
+           particular order.  The Finder will always
+Matt DTS   sort them by some criteria, but other directory listers (ProSEL,
+           APW/ORCA, BASIC.SYSTEM) don't, so
+Matt DTS   they'll seem to be in some weird order.  Is this what you're
+           seeing?
+Matt DTS   (ga)
+AFL Dyfet  GA Head...
+Andy Stein I mean, the files aren't in the visual order that they were
+           originally in.
+HeadCase   Could it be you have the preferences set on one finders not to
+           save finder info?
+Andy Stein For example, the AppleWorksGS is moved from the top to the bottom
+           left, the
+Andy Stein Xenocide from the bottom to the middle.
+Andy Stein (On the main directory.)
+A2GS       That's what the Finder files are used for (among other things)
+AFL Dyfet  Coach...
+Coach101   Finder defaults come from the disk that you boot from....   
+Coach101   The placement of files on the desktop (if you drag
+Coach101   files to the desktop) come from the device containing the
+           files....  
+Andy Stein Usually PD disks mess it up, like Bouncing Bluster, and that
+           Tertrisosas game.
+Coach101   This can get very confusing if you boot from multiple disks into
+           the Finder...
+Coach101   Could some combination of this be the difficulty?
+Andy Stein Yes, Coach, that's exactly what I mean.
+A2GS       I know that...but it is possible (although far fetched,
+           admittedly) he may have
+A2GS       accidently copied the finder files to his sys. disk.
+Andy Stein Some disks only run from their own version of the Finder, and not
+           my hard
+Andy Stein disk's.
+A2GS       Only thing I can think of...that's why I'm so stubborn   :)
+sidley     bye folks  wierd stuff here...
+AFL Dyfet  Perhaps we can move this discussion into the message base...
+Andy Stein I'm afraid to use Bouncing Bluster and Tertosisas, because evry
+           time, my
+Andy Stein main directory gets messed up.
+A2GS       LOL Andy
+AFL Dyfet  Okay, I believe Scott has the next question...
+AFL Scott  Has anyone seen problems with self-modifying code on a GS with a
+           Transwarp?
+A2GS       But only while your using that app. under that SYS. disk, right?
+Coach101   No, but since they hav a cache, it certianly could be a problem!
+AFL Scott  Reason I'm asking is that I'm working on a contract where the code
+           is 
+AFL Dyfet  Scott, the Cache may be killing you (as Coach just said)...
+AFL Scott  heavily self-modifying and it appears to work on some TWGS's but
+           not on 
+AFL Scott  others.
+AFA Parik  turn off interrupts before modifying?
+AFL Dyfet  GA Dave...
+AFL Scott  I'm aware of that, but one would think that the cache would see a
+           miss and
+AFL Scott  re-read.
+Dave Lyons Before we jump off the deep end, isn't their cache write-through? 
+           It's pre-fetching that would kill
+Dave Lyons self-modifying code, and there's enough self-modifying code in the
+           Apple II world that
+Dave Lyons I don't see how it can be a problem (I mean, everything would
+           break).  Including all OS calls
+AFL Dyfet  Most self modifying code I have seen does have some distance
+           between the
+AFL Dyfet  instructions doing the modifying, and the modified
+           instruction...
+AFL Dyfet  Usually it's a jump address being co-erced further in, or some
+           games with an
+AFL Dyfet  absolute address being used as a pointer in a LDA/STA...
+Coach101   Scott, you probably need to call AE and get some details on their
+           cache implementation.
+Coach101   And let us know what they say!
+AFL Dyfet  Scott, also, are you modifying the NEXT instruction to be
+           executed, or
+AFL Dyfet  something further in the program that comes in later?
+Coach101   I presume all the cards pass AE built-in diagnostics?
+AFA Parik  (someone should also tell Zip Chip @ AppleFest just in case)
+AFL Dyfet  Another tricky one may be branches...some cache systems try to
+           follow both
+AFL Dyfet  paths, just in case...
+Coach101   And then there is DMA!
+AFL Dyfet  We lost Scott...
+AFL Dyfet  Well, without knowing the specific cercumstances, there isn't much
+           to speculate
+AFL Dyfet  on...A2 has the next question and the floor now...GA A2...
+A2GS       Where can I get info on writing decompression routines for the 3
+           (I believe)
+A2GS       standard $C0 filetypes.
+A2GS       ?
+A2GS       GA
+AFL Dyfet  GA Parik...
+AFA Parik  source code is provided in the adv library.  i wrote a exe file
+           that will unpac
+AFA Parik  all three.  look for dev util #1 source code.  there are also
+           others. ga
+A2GS       Prefer text.
+AFA Parik  (a filetype technote details the exact format if you wish)
+A2GS       APW Shell file?
+AFA Parik  apw/orca/merlin/prosel
+A2GS       Thanx GA
+AFL Dyfet  Okay, I believe that Dave Lyons has the next question...GA
+           Dave...
+Dave Lyons Oh, hi...wasn't paying
+Dave Lyons attention. :)  Anyway, as I was saying
+Dave Lyons before I got so rudely kicked off my connection ("Login failure:
+           your account is already
+Dave Lyons logged on."), uh,
+A2GS       Dave, just plug it into the wall and turn on the button on the
+           back.   :)
+Dave Lyons there is self-modifying code
+Dave Lyons in the APW C library routines that make GS/OS calls, so if the
+           TWGS didn't deal with
+Dave Lyons self-modifying code, I think we'd have noticed it already.  ga
+Coach101   It may have to do with the spacing between the
+Coach101   modification and the modifier and how recently
+Coach101   the modified element was cached....
+AFL Dyfet  Considering how many 'esoteric' coding practices have been used in
+           the history
+AFL Dyfet  of Apple II programming, I suspect you are correct, Dave :)...but
+           it would have
+AFL Dyfet  been helpful to know the exact circumstances he was working
+           with...
+Dave Lyons FYI, the self-
+Dave Lyons mod code in the library is STA blah, JSL $E100A8, blah(word). 
+           It's very near-by in
+Dave Lyons memory, but then it isn't actually fetched for a while.  Hmmm.
+AFL Dyfet  Dave, that's near, but not as near as    INC blah, LDA #blah, for
+           example :)
+Dave Lyons (What?   INC Blah+1,  Blah: LDA #blarg  ?)
+AFL Dyfet  Yes...
+Dave Lyons Well, I have no TWGS here at home...somebody try it.
+A2GS       Why not just INC Blah ?
+AFA Parik  will try, brb
+Dave Lyons (Because INC Blah would make the LDA # into a TAX. :)
+A2GS       Blah could be holding a number.
+AFL Dyfet  That would also be self modifying, A2 :)...
+AFL Dyfet  But it would be the LDA that is modified :)
+A2GS       Just the fact that the number at blah is incremented...means that
+           blah is being
+A2GS       modified.
+A2GS       blah doesn't have to be an op-code.
+Dave Lyons Oh, I see what you're saying...I guess the idea
+Dave Lyons is that if there's a problem with self-mod code, it's because of
+           the processor (or its close
+Dave Lyons friends) fetching *instructions* ahead, but always doing a real
+           memory or cache access for data,
+Dave Lyons since it *expects* that data changes.  Yes?
+AFL Dyfet  Yes, basically, Dave...I've seen MUCH WORSE problems on heavily
+           cached RISC
+AFL Dyfet  machines, for example :)
+A2GS       couldn't be, otherwise there would be a potential problem with any
+           INC op.
+AFL Dyfet  Well, now that Scott is back, we may find out just what he was
+           modifying :)
+AFL Scott  Dave, I was wondering if you could explain your use of
+           Pre-Fetched.
+AFL Scott  (I'm sorry, I was bumped and the system wouldn't let me sign back
+           on until
+AFL Scott  the darn in use flag was cleared).
+AFA Parik  (it blew my motherboard!  :)  just kidding, worked fine)
+Dave Lyons (Me, right?)
+AFL Scott  Right, Dave Lyons.
+Dave Lyons What I was saying is that a write-through cache, like I believe
+           the TWGS has,
+Dave Lyons doesn't present a problem, because all stores go
+Dave Lyons to real memory & maybe also to the cache, but they never leave
+           outdated information in the
+Dave Lyons cache.  Pre-fetching, or pipelining (if I'm using the term
+           correctly) would be some
+Dave Lyons additional storage where upcoming instructions are stored, but
+           which *isn't* updated on writes.  THAT
+Dave Lyons would be a problem, but as far as I know the TWGS does NOT
+           implement anything like that.  (I
+Dave Lyons hypothesize that if it *did*, life would be very bad for a lot of
+           existing Apple II software.  But
+Dave Lyons I could be wrong.)
+Dave Lyons ga
+AFL Dyfet  While performing the write to real memory (for the write-through),
+           the TW may
+AFL Dyfet  still acknowledge CPU requests from memory pre-fetched, HOWEVER,
+           it may not
+AFL Dyfet  immediately update the cache memory as well, since that would
+           waste an extra
+AFL Dyfet  (7mhz) cycle...this is typical in many RISC caching systems...
+Dave Lyons Can you suggest a test that would resolve the question?
+Matt DTS   I think I'm gonna take off.  G'night, all.
+AFL Scott  Thanks, Dave and David.  A test.. yeah.
+AFL Dyfet  Try the inc BLAH, blah: lda #0, and see if a TAX was executed
+           before a brk :)
+AFL Scott  And I've done it... it works on my machine but has problems on
+           others.
+AFL Dyfet  (in other words, LDX #0, LDA #1, INC BLAH  blah: LDA #0, 
+           BRK...:)
+AFL Scott  See, I have a problem with self modifying code in terms of
+           reliability and
+AFL Scott  maintainability in APPLICATIONS.
+A2GS       Are we still on blah?
+AFL Dyfet  (wwops, make that LDA #0, LDX #1 :)
+Dave Lyons Scott, on the machines where it
+Dave Lyons malfunctions, does disabling the TWGS solve the problem?
+AFL Scott  Yes and no... The problems seem to stem from timing.  So, when the
+           machine is
+AFL Scott  in Slow, it works.  This isn't acceptable to me... Additional
+           problems surface
+AFL Scott  when Sane calls are caught by the FPE init ( I haven't seen those
+           either).
+Dave Lyons Is any of your code getting executed at interrupt time?
+AFL Scott  For the record, it's not MY code.... Explain interrupt time.
+Dave Lyons Well, interrupt time is when an interrupt has come along (a
+           heartbeat
+Dave Lyons interrupt, sound interrupt, or whatever), but has not yet returned
+           control to the code it
+Dave Lyons interrupted.  Self-mod code is very scary if you've got any of the
+           same code running in the foreground
+Dave Lyons *and* getting called from inside an interrupt...it's very hard to
+           be reentrant
+Dave Lyons that way.
+A2GS       In other words, are any interrupt handling routines vectored
+           toward your code?
+A2GS       I believe that's what DAVE is asking, right?
+AFL Scott  No, there are no interrupt routines in the code I'm working with. 
+           Only thing
+AFL Scott  that happens is a DMA comes along from a hardware device but that
+           is way after
+AFL Scott  this code is called.
+Dave Lyons Yes, Thank you, Paul, you've crystalized my thoughts exactly.
+Dave Lyons :)
+A2GS       Paul??
+A2GS       :)
+Dave Lyons (That's what Letterman sez to Paul all the time)
+A2GS       Remind me to listen to Sheaffers return comment  :)
+AFL Scott  IE... there is no interrupting going on...  The DMA call is
+           initiated with
+AFL Scott  a JSL to the ROM on the Board.
+AFL Scott  And I don't see that, either.. but that's what they do... 
+Dave Lyons Well Scott, something *weird* is going on in them thar
+           machines...hard to tell what it is from
+Dave Lyons here.  You've *never* seen a problem w/o a TWGS in there,
+           though?
+A2GS       What do you expect...it's an Apple  :)
+AFL Scott  Never.  In fact the company I
+AFL Scott  am doing this for is recommending pulling the TWGS, and I find
+           that 
+AFL Scott  an unacceptable compromised.
+AFL Scott  -d.
+AFL Scott  I shouldn't have asked this here, though.  I should ask AE.
+AFL Scott  Rather I shouldn't have gone this deep.

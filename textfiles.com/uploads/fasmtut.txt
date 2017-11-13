@@ -1,0 +1,331 @@
+=================
+FASM Tutorial
+=================
+
+Late at night...
+July 22, 2010
+
+by Jakash3
+
+As my choice assembler, I find fasm to be an excellent and simplified program.
+It is especially great for beginners and uses the well known intel style asm
+syntax for Windows. For this tutorial, I will be demonstrating the creation
+of console applications with fasm assembly in both 16 and 32 bit assembly
+format.
+
+Let's start with the simple 16-bit version. In 16-bit assembly, we have 2 byte
+registers and we fill the 1 byte AH register with a number that represents a
+sub-function to execute when calling an interrupt. Additional parameters for
+that function are placed in various other registers, normally those registers
+would be the general purpose registers but sometimes it may also be the source
+and destination index registers (SI and DI).
+
+Let's take a look at a hello world com file in fasm assembly:
+--------------------
+org 100h
+
+mov ah,09
+mov dx,msg
+int 21h
+mov ah,08
+int 21h
+int 20h
+msg db "hello world!$"
+--------------------
+We know that all com file executable code starts at offset 0x100, so that's
+what we place as the first line of code. Org 100h means origin (I think), the
+specified number will be the address of where the program will start at. Also
+notice that hexadecimal number values have an 'h' prefixed after the value.
+
+After that we begin our com file where all our data and code goes in one
+segment. Assembly code syntaxing looks standard,
+--------------------
+mov ah,09  ;Place value 9 into ah register, index of sub-function to print str
+mov dx,msg ;Place address of msg variable reference into dx for str to print
+int 21h    ;Execute interrupt call to print the string
+mov ah,08  ;Value 8 into ah, sub-function to wait for character input (pause)
+int 21h    ;Execute interrupt call
+int 20h    ;Exit com file
+msg db "hello world!$"  ;The $ terminated string whose address will be
+                        ;referenced with the 'msg' keyword.
+--------------------
+Simple enough right? But if you want more memory but still use 16 bit code,
+you're going to have to break out of com files and use MZ format EXE programs.
+The MZ executable format does not have code starting at 0x100 like com files,
+and instead of a 64k limitation, MZ exe files now have more memory to have up
+to 4 segments of 64k memory. Each of these segments have their address 
+referenced in the following registers:
+
+CS = Code Segment
+DS = Data Segment
+ES = Extra Segment
+SS = Stack Segment
+
+To use the MZ exe format in your assembly code, just use the format keyword
+specifier in fasm like in the following example:
+--------------------
+format MZ
+
+entry main:start			; program entry point
+stack 100h				; stack size
+
+segment main				; main program segment
+  start:
+	mov	ax,text
+	mov	ds,ax
+	mov	dx,hello
+	call	extra:write_text
+	mov	ax,4C00h
+	int	21h
+segment text
+  hello db 'Hello world!',24h
+segment extra
+  write_text:
+	mov	ah,9
+	int	21h
+	retf
+--------------------
+Notice that I'm using different segments here. I specify I'm in a new segment
+using the 'segment' keyword followed by the desired name of the segment. If
+you take a look at Ralf Brown's Interrupt List, you see that the int 21/ah=09
+function parameter for printing the string is: DS:DX -> '$'-terminated string
+That means the segment pointed to by ds plus the offset found in dx, must
+point to the string that's terminated with '$'. Now in com files, everything
+lies in one segment so we didn't have to worry about that. But now we're
+dealing with different segments so we must change the value of the ds register
+so that ds (base segment address) + dx (offset address) = the address of
+data that we are referencing when preparing to print a string.
+
+So in that program, we moved the address of the text segment into ax, and
+copied that value into the ds register
+
+Since the hello message lies in a different segment, then "mov dx,hello"
+operation would put the address revelevant to text segment into dx. hello is
+the first data declared after declaring the text segment therefore that data
+lies at an offset of 0 from text. So the segment:offset address of hello is
+text:0000. From here we call a label within another segment by declaring the
+full segment:offset addr to call and then print the string, return and exit.
+
+Moving on to 32 bit fasm is where it gets a little interesting. Now in 32-bit
+assembly, we do not call interrupts anymore; instead, we have to call dll
+functions. We do so by pushing the arguments to the stack and then issueing
+the call. In this example I will utilize the msvcrt.dll library from the C-
+Language runtime.
+--------------------
+format PE console
+entry main
+
+include 'macro/import32.inc'
+
+section '.data' data readable writeable
+msg db "hello world!",0
+p db "pause>nul",0
+
+section '.code' code readable executable
+main:
+push ebp
+mov ebp,esp
+sub ebp,4
+mov dword [esp],msg
+call [printf]
+mov dword [esp],p
+call [system]
+mov dword [esp],0
+call [exit]
+
+section '.idata' import data readable
+library msvcrt,'msvcrt.dll'
+import msvcrt,\
+printf,'printf',\
+system,'system',\
+exit,'exit'
+--------------------
+Ok so, first we introduce the format of the executable. This is a PE format 
+executable console application (There's also format PE GUI). "entry main"
+specifies the label at which we will start in our program, I used main.
+
+Here we include an include file that comes with fasm. The fasm assembler
+gets the path of the include file according to that inf conig file that comes
+in the root directory of the fasm download. import32.inc contains macro
+definitions that allow us to easily reference and import dll functions.
+In other words, it allows us to use the 'library' and 'import' macros.
+
+now for our data section, the 4th statement means that this section contains
+non-executable data that we can read and write to during run-time. Inside this
+section, I've declared 2 variables names msg and p, each of these variables
+end with a null character.
+
+Now for our readable and executable code section. Starting with our entrypoint
+label main, I set up a stack frame and allocate 4 bytes on the stack by
+subtracting 4 from the value of esp. Now in that 4 byte range I place the
+address of msg in there and call printf, Next I place the address of the data
+for the pause command on that same area (overwriting the previous address for
+my msg data) and then I call system. Then I call exit with the dword (int) 
+argument 0 on the stack. Now this is all not needed, I just want to show you
+how the stack and dll calls work. I personally prefer this method as it really
+shows what's going on and it strives to save memory space by reusing old
+blocks of memory that has been placed on the stack. 
+
+An easier method goes like this:
+--------------------
+push msg
+call [printf]
+push p
+call [system]
+push 0
+call [exit]
+--------------------
+Simple: I push arguments, I call the function. It may not make much of a
+difference in this application, but With each push I'm subtracting 4 from esp
+and thus memory addressing could add up and become complicated on the stack.
+Unless you are a l337 user like me fine tuning data on the stack, this is not
+suggested. Otherwise, have fun pushing it...if you know what I mean.
+
+Now another simple method for newbies is to use the 'invoke' macro which is
+found in the 'macro/proc32.inc' include file. It's as if you're calling a
+function from a high level language.
+--------------------
+invoke printf,msg
+--------------------
+invoke calls the function. The first argument is the name of the function and
+the rest are the aruments for that function. An important thing to note is
+that when calling dll functions, the required arguments must be pushed in
+reverse order from last to first. So if I needed to call printf with 2
+argument pointers: "Your name is %s",name
+Then I will need to do this:
+--------------------
+push name
+push msg
+call [printf]
+--------------------
+However, in the case of using invoke, this macro automatically pushes the args
+in reverse order for you. So you can call it normally like this:
+invoke printf,msg,name
+
+As for actually importing dlls before doing this, you declare your imports in
+the '.idata' section. I used the macros library and import. Library macro
+(found in import32.inc) allows me to import a dll name specifier. With each
+pair of arguments for the library macro, I specify the associated name of that
+dll and then the actual name of that dll.
+
+For import, the first argument must be an associated dll name, following that,
+each pair of arguments would be the name the desired specifier for a function,
+followed by the actual name of that function found in the dll. Notice that I
+also used backslashes to expand my one line statement on multiple lines for
+easier readability.
+
+Well that's it for this tutorial, check out these 2 samples of 32 bit asm and
+their equivalent C code:
+
+Name.asm:
+--------------------
+format PE console
+entry main
+include 'macro/import32.inc'
+
+section '.data' data readable writeable
+msg db "Enter your name: ",0
+chrarr db "%s",0
+msg2 db "Hello %s",0dh,0ah,0
+p db "pause",0
+
+section '.code' code readable executable
+
+main:
+push ebp
+mov ebp,esp
+sub esp,24
+mov dword [esp],msg
+call [printf]
+lea eax,[ebp-12]
+mov dword [esp+4],eax
+mov dword [esp],chrarr
+call [scanf]
+mov dword [esp],msg2
+call [printf]
+mov dword [esp],p
+call [system]
+mov dword [esp],0
+call [exit]
+
+section '.idata' import data readable
+library msvcrt,'msvcrt.dll'
+
+import msvcrt,\
+printf,'printf',\
+scanf,'scanf',\
+system,'system',\
+exit,'exit'
+--------------------
+Name.C:
+--------------------
+#include "stdio.h"
+#include "stdlib.h"
+
+int main() {
+char name[12];
+printf("Enter your name: ");
+scanf("%s",name);
+printf("Hello %s\n",name);
+system("pause");
+return 0;
+}
+--------------------
+Loop.asm:
+--------------------
+format PE console
+entry main
+
+include 'macro/import32.inc'
+
+section '.data' data readable writeable
+intl db "%d",0dh,0ah,0
+p db "pause>nul",0
+
+section '.code' code readable executable
+main:
+push ebp
+mov ebp,esp
+sub esp,12
+mov dword [ebp-4],1
+loopA:
+mov eax,dword [ebp-4]
+cmp eax,11
+jge BreakA
+mov eax,dword [ebp-4]
+mov dword [esp+4],eax
+mov dword [esp],intl
+call [printf]
+mov eax,dword [ebp-4]
+inc eax
+mov dword [ebp-4],eax
+jmp loopA
+BreakA:
+add esp,4
+mov dword [esp],p
+call [system]
+mov dword [esp],0
+call [exit]
+
+section '.idata' import data readable
+library msvcrt,'msvcrt.dll'
+import msvcrt,\
+printf,'printf',\
+scanf,'scanf',\
+system,'system',\
+exit,'exit'
+--------------------
+Loop.C:
+--------------------
+#include "stdio.h"
+#include "stdlib.h"
+
+int main() {
+int i;
+for (i=1;i<11;i++) {
+printf("%d\n",i);
+}
+system("pause>nul");
+return 0;
+}
+--------------------

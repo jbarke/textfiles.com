@@ -1,0 +1,237 @@
+ ZDDDDDDDDDDDDDDDDDD? IMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM; ZDDDDDDDDDDDDDDDDDD?
+ 3   Founded By:    3 :  Network Information Access   : 3 Mother Earth BBS 3
+ 3 Guardian Of Time 3D:            19AUG90            :D3    Text Files    3
+ 3   Judge Dredd    3 :          Judge Dredd          : 3  (713)-ITS-DOWN  3
+ @DDDDDDDDBDDDDDDDDDY :            File 46            : @DDDDDDDDDBDDDDDDDDY
+          3           HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<           3
+          3      IMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM;      3
+          @DDDDDD6 Security Exposures and Controls for MVS GDDDDDDY
+                 HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<
+
+  MVS has many areas of concern to the data security officer.  If these are
+not adequately addressed, the installation exposes itself to the threats of
+computer viruses, theft and fraud.  This article describes some of the major
+security exposures (hmm, what shall we use these for?) in MVS and suggests a
+remedy for each.
+  The Implementation of most of the suggested control mechanisms requires the
+purchase of some type of optional security software package.  This will be
+generically referred to as "security software".
+
+
+AUTHORIZED LIBRARIES
+
+  Authorized libraries are by far the greatest area of exposure in the MVS
+enviornment.  According to IBM's statement on integrity, MVS guarantees
+integrity for all processing done by unauthorized programs running in the
+system.  That is, and unauthorized program cannont preform a task that would
+compromise the integrity of the system or of data outside the program's realm.
+  So what is an 'authorized' program?  It is one that can execute privileged
+instructions and bypass normal security checks and controls.  IBM never
+guaranteed integrity for authorized programs (except for those that it wrote
+as part of the operating system).  Indeed, by the very nature of these programs
+it is impossible for them to do so.  The installation is responsible to ensure
+that authorized programs function as desired and that they are secured from
+unauthorized access.
+  For a program to be authorized it must meet 2 criteria.  It must be linkedited
+with AC=1 and it must reside in an authorized library.  The first condition
+is easy to satisfy.  Anyone who knows how to linkedit a program can get past
+this condition, therefore, in which all the controls are needed.  That is, the
+installation must ensure that authorized libraries are not subject to abuse.
+  Authorized libraries are installation-defined and are specified in the
+following members of SYS1.PARMLIB:
+
+                      IEAAPFxx
+                      LNKLSTxx
+                      LPALSTxx
+
+  Three steps can be taken to control the use of authorized libraries.
+   1 - ensure that there are security profiles protecting all existing
+       authorized libraries and allow update access to only a handful
+       of induviduals.  Further, make sure that security profiles are
+       added and deleted as meccessary.
+   2 - Implement formal procedures for adding or deleting authorized libraries
+       and for adding, deleting, or modifying programs in an autthorized
+       library.
+   3 - Conduct periodic reviews to ensure that everything is in place.
+
+
+TAPE BYPASS LABEL PCOCESSING (BLP) PROCEDURES
+
+  MVS JCL allows the option of bypassing the tape label when processing a tape
+data set.  By bypassing the tape label, security checking is not done; thus,
+and unauthorized user can read or even destroy tape data.
+  There are 2 ways to restrict the use of the tape BLP option.  One is to
+specify JES2 parameters such that BLP processing is allowed only via specified
+initiationrs and control the use of these special initiators.  The second way
+is to use the tape management system to disallow this option.
+
+
+SYSTEM PARAMETER LIBRARIES
+
+  SYS1.PARMLIB and SYS1.PROCLIB contain system parameters that are used during
+system startup.  The parameters in these systems determine options that will
+be in effect for the system.  If an unauthorized person updates data in them,
+the system may start improperly or meay even fail to start.
+  Ensure that security profiles exist to protect these libraries.  Specifically
+keep to a minimum the number of people who can update them.  Also, establish
+change control procedures for all updates to these libraries.
+
+
+SYSTEM DATA SETS
+
+  Data sets beginning with SYS1 are system data sets.  Together they constitute
+the operating system.
+  Restrict access, especially UPDATE access, to all system data sets.
+Generally, only the systems programmers need to update the system data sets.
+
+
+STARTED TASKS
+
+  Started tasks are initiated from an operator console.  Started tasks, if not
+properly controlled, can bypass security software to access and even destroy
+important data.
+  Use the security software to protect all started tasks.  Identify all started
+tasks and assign to each one appropriate access using the security system.
+Make sure that for each entry a started task exists in PROCLIB.  Lastly,
+institute procedures for adding and removing started tasks.
+
+
+PROGRAM PROPERTIES TABLE
+
+  IBM provides the Program Properties Table (PPT) to sepcify programs needing
+sprecial powers.  This table should be protected against unauthorized access.
+An unwarranted program in this table can bypass normal security software
+processing and checking.  Obsolete or unnecesssary programs in the PPT may
+result in unauthorized programs gaining special powers.
+  Examine all entries in the PPT and make sure each entry is justified.
+
+
+IEHINTT And IMASPZAP PROGRAMS
+
+  IEHINTT is the tape initialization program that can destroy tape labels and
+therefore data on tape.  IMASPZAP can modify contents of a program.  Both these
+utilities have potential use to cause damage by bypassing security controls.
+An installation may have other programs whoese use should be restricted also.
+  Use the program protection feature of the security software to restrict
+access to these programs.
+
+
+MVS CATALOGS
+
+  If an MVS catalog is destroyed, it can result in widespread disruption of
+service.  The MVS master catalog is the most critical because all data set
+searches are funnelled through it.  The master catalog, if properly protected,
+can also enforce data set naming standards for the first-level qualifier.
+  For user catalogs, use security software to ensure that only the systems
+programmers are permitted to delete user catalogs.  For a master catalog, ensure
+that only the systems programming staff is permitted to write into, modify or
+delete a master catalog.
+
+
+SYSTEM EXITS
+
+  System exits, such as SMF or JES exits, are provided by IBM to modify the
+operating system using standardized interfaces.  The intended use is to tailor
+the operating system environment to suit an installation.  The use of system
+exits to tailor the MVS enviornment should not be discouraged; however, since
+they alter the operating system, their use and implementation must me
+monitored.  Otherwaire, there is room for a time bomb or virus to creep in.
+  Guarantee that proper controls and procedures exist for installing system
+exits.  Ensure that source code for system exits is always availalbe and
+examine the source code to ensure there are no time bombs.  Use the System
+Modification Program (SMP) to install all exits.  This will guarantee system
+software integrity.
+
+
+SMF DATA SETS
+
+  Security software packages produce SMF records for logging violations and so
+on.  Other system events and activities also generate SMF records; therefore
+many different SMF record types are produced.  However, the system allows
+an installation to specify which SMF record types are to be collected and
+which are to be disgarded.  This leaves open the pssibility that important
+SMF records may have been suppressed, allowing security violations to go
+unnoticed.
+  Ensure that the member SMFPRMxx in SYS1.PARMLIB collects records produced
+by the security software and other records required by an installation.
+
+
+SYSTEM LOG
+
+  The System Log (SYSLOG) data set contains a log of many of the system
+activities.  Among other things, security software violations and other
+messages that are sent to SYSLOG.  The information contained in SYSLOG is
+useful in tracking down certain events after they have occurred.  For this
+reason, it is essential to have available the SYSLOG for at least the last
+few days.
+  Collect the SYSLOG and archive at least daily.  Assuming a daily collection
+cycle, a Generation Data Group (GDG) with 10 generations will allow the viewing
+of the last 10 days' log.  Make sure the GDG is protected by the security
+software to allow read access but not modify or delete access.
+
+
+TSO TERMINAL TIMEOUT
+
+  If a TSO terminal is left unattended, anyone can manipulate the TSO user's
+powers to access the system.  A terminal may remain signed on by unattended
+for a long time, leaving the possibility of abuse.
+  Use the mechanism MVS provides to automatically logoff a terminal session
+that has been inactive for x minutes, where x is installation-specified (member
+SMFPRMxx in PARMLIB).
+
+
+VOLUME PROTECTION
+
+  Some volumes contain sensitive information.  It maybe desireable to allow
+only select individuals to look at the VTOCs of these volumes in order to
+prevent misuse of the information.  Use the security software's volume
+protection controls to prevent unauthorized users from viewing the contents
+of these volumes.
+
+
+TSO ACCOUNT AUTHORITY
+
+  This authority allows a person to view and update records in SYS1.UADS
+which contains profile records and information for all TSO users.  With a
+security software package, this information can be stored in the security
+database.  However, there may still be a need to store some important
+information in SYS1.UADS for backup purposes.
+  Assign the ACCOUNT authority judiciously.  Minimize the number of people
+who have the TSO ACCOUNT attribute.
+
+
+TSO OPERATIONS AUTHORITY
+
+  The attribute allows a person to enter some of MVS commands such as the
+display of initiators.  Minimize the number of people who have the TSO
+OPERATIONS attribute.
+
+
+SECURITY SOFTWARE
+
+  At IPL time the system may have been tailored such that is asks the operator
+if the cecurity software is to be active.  This allows the operator to remove
+the security software from the system.
+  Make sure the security software is always active in the system by tailoring
+the system so that at IPL time the security software is automatically started
+and there is no terminating option.
+
+---
+
+Well thats it. Ugg. Its been a long day. Some comments and such...
+Nilrem  "I'm just burned out.  Mabye in Austin the board will be better."
+Guardian Of Time "In December, we'll be back, better than before, and I
+                  am going to use some of Dr. Ripco's techniques on the
+                  new board..."
+The People At Phrack - any word on the file that was sent in?
+The People At CUD/TD - its gotten better with time, now you put relevant
+                       stuff in.
+Chester - "when i go over there he lets me rape his system!" hahaha...
+
+well, take it easy people.
+-JUDGE DREDD/NIA
+
+[OTHER WORLD BBS]
+
+
+

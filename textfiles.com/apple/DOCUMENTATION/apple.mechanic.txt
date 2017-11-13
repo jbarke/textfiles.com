@@ -1,0 +1,370 @@
+           *****APPLE MECHANIC*****
+
+
+SHAPE EDITOR/FONT EDITOR:
+
+USE KEYS 1 thru 6
+
+KEY #1     EDIT- shape
+KEY #2     SAVE- shape
+KEY #3     LOAD- shapes
+KEY #4     CATALOG- disk
+KEY #5     DRIVE- drive/slot change
+KEY #6     DISPLAY- shapes
+
+
+ESC KEY    EXIT- program
+
+
+
+#1
+EDIT:      Press key #1-
+                 view shape table
+           RIGHT ARROW
+           LEFT  ARROW view shapes up to 12, in memory.
+           ZERO,COLON,HYPHEN- shapes 10,11,12 to view.
+           RETURN- give you two rectangles on screen and flashing cursor.
+           ARROW KEYS,A,Z - right, left,up,down.
+           SHAPE EDITOR- limit 999 vectors. Change max in beginning of program.
+           X(erase)- Use X as a "backspace" key.
+           P=PRE-PLOT-After you have selected shape,before RETURN select P,now you can draw with series of dots.When finished with P hit RETURN. 
+           I=IMPRINT- After selecting shape you want,you can imprint any existing shape by hitting I,select shape to imprint (arrow keys,1-9,zero, colon,or hyphen) and hit RETURN.To reposition imprint A,Z,Arrow keys. To keep imprint on screen,hit RETURN.To erase imprint-ESC key.
+           PLOTTING TIPS- To move plotting course without changing the drawing use SPACE BAR.          
+
+
+
+HOW TO USE SHAPE TABLES:
+
+           Set ROT & SCALE  to minimum values 0 and 1. Then decide where in memory to load shape table. Example 25,000 is a nice round number.
+           
+           10 ROT=0: SCALE = 1
+           20 SH = 25000:D$=CHR$(4)
+           30 D$;"BLOAD SHAPES,A";SH
+
+SETTING THE SHAPE TABLE POINTER:
+
+           To tell your APPLE where your shape table is(location 25000) you need two pokes-
+           40  POKE 232,SH-INT?(SH/256) * 256                  
+           50 POKE 233,INT?(SH/256)
+           
+           These two pokes put 25000 into the shape table pointer at memory locations 232 & 233. ALWAYS INCLUDE THE TWO POKES AT THE BEGINNING OF YOU SHAPE TABLE PROGRAMS OR YOU'LL LOSE THE WHOLE SHAPE.
+           To alternate between shape tables,simply re-poke a new location into the shape table pointer at 232,233 each time you change.
+
+HCOLOR:
+
+           HCOLOR=0 OR 4: BLACK
+           HCOLOR=1:      GREEN
+           HCOLOR=2:      VIOLET
+           HCOLOR=3 OR 7: WHITE
+           HCOLOR=5:      ORANGE
+           HCOLOR=6:      BLUE
+
+DRAW AND XDRAW:
+
+           Draw means just that,draw a shape for a shape table,example command-
+           99 DRAW 3 AT 100,90:REM(AT X,Y)
+           The first number after DRAW is the number 1-255, of the shape to be drawn. The next two numbers are the horizontal and vertical hi-res coordinates of the starting point of the shape. IF YOU GET AN ILLEGAL QUANTITY  ERROR- you have attempted to draw outside the screen limits or specified a shape number larger then the number of shapes available.
+
+           XDRAW- works like DRAW but ignores HCOLOR and plots dots in the opposite color of the dot being plotted.
+           BLACK(0/4) IS OPPOSITE WHITE (3/7)
+           GREEN(1) IS OPPOSITE VIOLET(2)
+           ORANGE (5) IS OPPOSITE BLUE(6)
+
+HI-RES COORDINATES:
+           To tell a shape where to appear,specify the coordinates (horizontal,vertical) of the shapes starting point.Don't specify outside of screen limits or it will CRASH.
+
+           HORIZONTAL: 0 TO 279
+           VERTICAL: 0 TO 191
+           VERTICAL W/4 TEXT LINES: 0 TO 159
+
+DRAWING WITHOUT COORDINATES:
+
+           After first shape is drawn, you don't need to specify coordinates for the next DRAW  or XDRAW. Each successive shape without coordinates will begin at the point where the previous shape stopped.
+
+SCALE:
+           You can enlarge a shape by setting SCALE equal to a number,2-255 or 0. A SCALE of zero is equivalent to a SCALE of 256.
+
+ROT:
+           You can rotate a shape by setting ROT before you draw-
+           ROT=0: NORMAL
+           ROT=16:ROTATED 90 CLOCKWISE
+           ROT=32:  "    180 (UPSIDE DOWN)
+           ROT=48:  "    270 CLOCKWISE
+           ROT values between the above only apply when SCALE is set larger the minimum(1). ROT values greater then 64 simply repeat the cycle until ROT=255
+
+
+MOVING A SHAPE:
+
+           More than one way to move a shape. Basically you have to DRAW the shape, ERASE it, and REDRAW it in a new position. This XDRAW does all that
+
+           100 FOR X = 0 TO 279
+           110 XDRAW 5 AT X,100: REM DRAW SHAPE
+           115 XDRAW 5 AT X,100: REM ERASE SHAPE
+           120 NEXT X
+           With DRAW you erase the shape by re-DRAWing it in the background color.
+
+           OTHER EXAMPLES:
+
+           100 FOR X = 0 TO 279
+           110 HCOLOR=3:DRAW 5 AT X,100: REM DRAW
+           120 HCOLOR=0:DRAW 5 AT X,100: REM ERASE
+           120 NEXT X
+
+                 OR
+
+           113 FOR I = 1 TO 50: NEXT
+           117 FOR I = 1 TO 1: NEXT
+
+
+
+OTHER HI-RES MANIPULATIONS:
+
+           HGR -clears page 1 to black
+           HGR2-clears page 2 to black
+           HCOLOR=X:HPLOT 0,0:CALL 62454- clears hi-res in HCOLOR X
+           
+
+The following "switches" do not clear the screen,but REVEAL whatever is currently on the page 1 or 2 text,hi-res,or lo-res screens:
+
+           POKE 49323,0-view hi or lo res
+           POKE 49233,0-view text screen
+           POKE 49234,0-view full graphic,lo or hi res
+           POKE 49235,0-view graphics plus 4 text lines(VTAB 21-24)
+           POKE 49236,0-view page 1 (hi,lo res or text)
+           POKE 49237,0-view page 2
+           POKE 49238,0-view lo res
+           POKE 49239,0-view hi res
+           POKE 230,32- allows drawing on page 1
+           POKE 230,64- allows drawing on page 2
+           POKE 230,96- allows drawing on page 3(not directly viewable)
+           PRINT PEEK(228) -prints  HCOLOR code                                       PRINT PEEK(231) -prints current SCALE value
+           PRINT PEEK(249) -prints current ROT value
+           CALL 62923- stores last plotted coordinates at 224-226
+           PEEK(226) -VERTICAL position during last CALL 62923
+           PEEK(224)+PEEK(225)*256       -horizontal during CALL 62923
+
+
+
+
+
+FONT EDITOR:
+
+95 hi res characters
+Use with HI-WRITER
+         XTYPER
+
+SHAPE FONTS TAKE UP MORE MEMORY AND DISK SPACE THAN ANY OTHER HI-RES FONTS.---  18 SECTORS  FOR LARGE
+           7 SECTORS FOR SMALL
+
+DOS TOOLKIT ONLY USE 5 SECTORS,REASON IS FLEXIBILITY AND ATTRACTIVENESS.
+
+
+LARGE FONTS vs SMALL FONTS:
+
+           All font names in APPLE MECHANIC are preceded by a  }(shift-M).All are large-height fonts,except those with "small" in their names.
+           Another way to tell-by sectors.Full 96 character large fonts will be 16-20 sectors,small fonts will be 6-10 sectors.
+
+
+TO USE FONT EDITOR:
+
+           "RUN FONT EDITOR"
+           USE 1-6 KEY INSTRUCTION IN BEGINNING OF THIS PROGRAM
+
+           LOAD W/KEY#3 FONTS YOU MIGHT WANT TO SEE
+
+
+EDITING:
+           Key #1-gives you a striped flashing cursor,use ARROWS or A,Z keys.
+           Also see ASCII value of the key that will type character.
+           Hit RETURN, 
+           THREE OPTIONS:
+           
+           (I)-Grid imprint-Prints selected character as a 10x blowup of grid.
+           (E)-Erase/Redraw- Temporarily erases character so can be redrawn.
+           (S)-Shadow Imprint-Prints a shadow of character on 10x grid.Shadow is for reference or tracing,does not effect final shape.
+
+           SPACE BAR -changes cursor for SOLID to OUTLINED and back,representing PLOT and NO-PLOT.
+
+
+DISPLAY- KEY #6:
+
+           Select 6 and type as you normally would. ESC = between upper and lower case. To type a save use Xtyper or Hi-Writer programs
+
+
+
+
+
+
+XTYPER PROGRAM:
+
+Use this program to type Page One hi-res screen,up to three shape-fonts at a time. To start, type "RUN XTYPER"  and make sure disk has at least one large or one small shape-font on it including every font you intend to use.
+
+
+MAIN MENU:
+
+           Running Xtyper or Ctrl-R while typing display Menu & lets you load fonts,clear hi-res screen,load and save hi-res images and quit program.
+
+
+(1,2,&3)LOADING FONTS:
+
+           You can load up to 3 large or small fonts.Select 1,2,or 3 and enter name of font(example- "BLOAD FONTNAME,A18880")
+
+
+(X)CLEAR HI-RES SCREEN:
+           Hit X to clear,if you have no image loaded on hi-res page 1.If you get a snowy screen,type Crtl-R,X,Y, and RETURN
+
+(L)LOAD HI-RES PICTURE:
+           Select L to load a hi-res picture from your disk.
+
+(S)SAVE EXISTING PICTURE:
+           After you typed on a cleared screen or on your picture,select S to save entire image on disk. File will be listed on catalog of disk by B for Binary and an "034" for 34 sectors.It helps to name file with the word "picture" in its name or any similar identification. Apple Mechanic files have "@" for picture files.
+           WARNING:Lock files so you don't accidentally enter a font name when saving a hi-res image.
+           Note*** To see hi-res picture on page 1 when not running a program type HGR(return)and BLOAD PICTURE ,A$2000(return),where "picture" is the name of the image you want to see.
+
+(C)CATALOG:
+           Select C to catalog main menu.You can check file names fonts or hi-res.You will be given the option also of locking and unlocking files.
+
+(Q)QUIT:
+           Select Q lets you quit Xtyper. Message "GOTO 2000 TO CONTINUE" if you "RUN" instead of "GOTO 2000" you would have to reload your fonts.
+
+
+TYPING WITH XTYPER:
+
+KEYS***
+
+RETURN- same as typewriter
+ESC- upper and lower case
+CTRL-P - left-square bracket
+SHIFT-M- right-square bracket
+CTRL-T-underscores
+CTRL-Q-backslash
+
+CURSOR MOVEMENT:
+           Arrows,left & right
+           Ctrl-L= right one plot
+           Crtl-K= left one plot
+           Crtl-A= up one type line
+           Crtl-Z= down one type line
+           Crtl-S= up one plot
+           Crtl-X= down one plot
+
+ERASING:
+   THE TOP OF THE CURSOR MUST BE ALIGNED VERTICALLY WITH THE TOP OF A CAPITAL LETTER ON THE LINE OF TYPE ON WHICH YOU WISH TO MAKE AN ERASURE
+
+           Ctrl-B=backspace/erase:
+Place the left of your cursor at the right of the character you want erased.
+           
+           Ctrl-E=character/erase:
+This method works only with white type on a black background. Align vertically, and position its left edge so it touches any part of the character to be erased.
+
+           Ctrl-W=wipe out:
+Erase entire line of type in black from the top of the caps cursor down.
+
+OVERTYPING:
+           Place cursor over character,aligning the top and left edges,change typing color(crtl-o) to the color of the background,and type over the characters to be erased.
+
+
+(CTRL-F)FONT CHANGE:
+           Select Ctrl-F will allow you to type a new font.Can't select a font number that has not been loaded into memory.
+
+
+(CTRL-O)COLOR CHANGE:
+           Select Ctrl-O,gives you a new typing color.XTYPER WILL NOT LET YOU CHOOSE AN ALTERNATE COLOR #7(WHITE) OR #4(BLACK)
+
+(CTRL-G)GRID:
+           Select Ctrl-G will display a 4x4 grid. Hit Ctrl-G again will erase the grid. DO NOT TYPE OVER GRID.
+
+(CTRL-R)RETURN TO MAIN MENU:
+           Select Ctrl-R will give you main menu.
+
+LEADING NOTES (LEADING ):
+           Vertical distance between lines of type. Xtyper puts two lines of leading between character, large and small. To change default value of 2,change the first non-REM program line of Xtyper. The variables LD(1),LD(2), and LD(3) represent the leading for the three fonts in memory.
+
+DEFAULT ERASE COLOR:
+           Second non-REM program line in Xtyper. The variable BG is the erase color used by crtl-B and ctrl-w.
+
+
+
+
+
+HI-WRITER PROGRAM:
+
+Hi-Write is meant to be used as part of your Applesoft programs!!!!! You can add instructions after line 500 to Hi-Writer instead of Xtyper as your main program,save disk space and typing.
+
+LIST LINES 50-53 OF HI-WRITER:
+
+           50 FLAG=0:REM (0=LOAD, 1=DON'T)                                           51 FT$(1)= "]BLOCK"
+           52 FT$(2)= "]SMALL STANDARD"
+           53 FT$(3)= "]APPLE"
+
+The variable FLAG in line 50,tells Apple whether or not to load the three fonts form Lines 51-53.
+
+Hi-Writer lets you access yp to three fonts at one time. Let FLAG =0 and enter the names of your three fonts at lines 51-53. If you only want one or two fonts enter a blank FT$(3)=""
+
+
+PROGRAM VARIABLES:
+(lines 90-500)do a GOSUB 100
+
+           A$:-Words to be printed
+           FT:-Current Font Number(1-3)
+           FT3$:-Name of Font 3 to be loaded
+           VT:-Vtab (1-24)
+           HT:-Htab (1-40)
+           IN:-Inverse(1-yes0-no)
+           CT:-Auto-Center(1-yes0-no)
+           HC:-Hcolor type(0-7)
+           CL:-Hcolor for Clearing Screen (0-7)
+           RT:-Rot value for printing(0-3)
+
+
+                 A$
+           520 A$="HELLO":GOSUB 100
+
+                 UPPER/LOWER CASE
+           590 A$="B@EAGLE @B@ROS":GOSUB 90
+
+                 FT & FT3$
+           Set FT equal 1,2,3 any time you want to change fonts.You can replace 3 as many times as possible.To replace 1 & 2 change lines 51 & 52 reset FLAG in line 50 to zero,and re-run the program.
+
+                 CT & GOTO 400:CENTERING
+           550 CT=1:VT=8.2:A$="FRIED EGGS":GOSUB 100
+                 or
+           A$="PITTSBURGH":FT=3:GOTO 400
+
+
+                 INVERSE
+           IN to 1 words that follow will be printed in inverse. IN is automatically reset to zero after each GOSUB 100. Add at least one space both before and after a word to be inversed.
+
+                 HC:HCOLOR
+           HC determines HCOLOR of the words that follow.
+
+                 RT:ROTATION
+           RT will print your words rotated. 1= 90  clockwise
+         2= 90  counter-clockwise
+         3= upside-down
+
+                 CL:CLEARING SCREEN
+           Value 0-7 for HC followed by  GOSUB 100 will clear screen in HCOLOR VT,HT and reset to 1.
+
+
+POKE TXT,0= reveals the lower sixth of the text screen VTAB 21-24
+
+POKE FULL,0=switch to full hi-res with text screen "hidden" behind.
+
+TEXT= switch you entirely over to a text screen without erasing hi-res.
+
+POKE HIRES,0= switch you back to hi-res without clearing the screen.
+
+OUT OF MEMORY?:
+
+           5000 ? CHR$(4):"RUN NEXT PROGRAM" insert in your program and entire new version of Hi-Writer will continue.
+
+NON-KEY CHARACTERS:
+
+           CHR$(95)=underscore
+           CHR$(92)=backslash
+           CHR$(91)=left square bracket
+
+
+ERRORS:
+           ONERR GOTO 450 in line 55. Type "TEXT" or hit RESET to f

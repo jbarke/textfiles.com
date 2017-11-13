@@ -1,0 +1,372 @@
+Subject: Battlezone high score upgrade (LONG)
+Date: 23 Jun 1994 12:06:29 GMT
+Organization: Texas Instruments
+Lines: 365
+Distribution: world
+Message-ID: <2ubts5$94c@osage.csc.ti.com>
+NNTP-Posting-Host: bugs.tiuk.ti.com
+
+  Well I finally got my Battlezone permanent high score fix working,
+thanks to the 48Z02 datasheet that Clive Bittlestone sent (the chip
+has 2  chip enables that do not behave the same, and I was using 
+the wrong one, so I swapped a couple of wires and bingo).
+Also thanks go to Doug Jefferys and all the other folks that sent
+me ideas for future improvements and alternative ways to preserve
+the high scores.
+
+I'd be interested in any feedback folk have.
+Problems? Praise? .... whatever, so I can make adjustments to 
+this document.
+
+Regards, John.
+
+* John Keay                               ! Texas Instruments Ltd. * 
+* keay@tiuk.ti.com                        ! Bedford, U.K.          *
+* Disclaimer:  All opinions expressed herein are personal. etc etc *
+
+-----------------------------------------
+UPGRADE: Battlezone Permanent high score.
+-----------------------------------------
+
+AUTHOR:  John Keay
+WRITTEN: June 1994
+
+DISCLAIMER
+----------
+
+The opinions expressed within this document are those of the
+author only and not necessarily those of the author's employer.  This
+document is provided for informational purposes only.  Although the
+author has made every effort to provide accurate information, he cannot
+guarantee the accuracy or usefulness of any of the information contained
+herein due to the complexity of the issues involved.  The author takes
+no responsibility for anything arising as a result of anyone using the
+information provided in this document, and the reader hereby absolves
+the author of any and all liability arising from any activities
+resulting from the use of any information contained herein.
+
+THE UPGRADE
+-----------
+
+This upgrade will allow Battlezone high scores to be remembered
+while the machine is switched off. Simple as that.
+
+The upgrade needs no special intervention by the user after the
+upgrade has been installed and the machine has been powered up
+once. The upgrade has been designed so the machine only saves the top
+5 highscores (so mere-mortals can get on the score sheet occasionally).
+It has also been designed so that the saved high scores can be cleared
+out by reseting the machine with one of the coin switches held down.
+
+The fix is implemented by replacing Battlezone's existing program
+RAM with battery-backed-ultra-lower-power-CMOS-SRAM. Then a new
+EPROM can be blown that will convince Battlezone not to initialize
+the area of this RAM that is used for the high scores (unless the operator
+wants this to happen). The batteries in the zero-power replacement SRAM
+we are going to use should last about 10 or 20 years, so your highscores
+will be safe for quite a while.
+
+Read these detail through a couple of times, if you plan to do
+the fix, because I haven't always got things in exactly the correct order.
+"...and now Sir Launcelot, Sir Galahad and I jump out of the rabbit....." :-)
+
+THE DETAILS
+-----------
+
+I rate this upgrade "easy-ish" on a scale of "trivial" to "impossible",
+but please take infinite care when upgrading, Battlezone is a machine
+that is close to my heart (number 2 on the all-time greats list IMHO) and
+I'd hate to hear about *ONE* functional machine not recovering from
+the "upgrade".
+
+As half the fix is a software patch there is enless scope for different
+variations, but I will stick to just one example with more patches to 
+follow later. This means you will need access to an EPROM programmer
+to use the upgrade. Here is the parts list:
+
+Number     Part list
+------     ---------
+ 1         2716    - 2K x 8 EPROM
+ 1         MK48Z02 - 2K x 8 Zero power (TM) SRAM.
+ 1         24-pin DIL socket
+ 2         18-pin DIL socket           
+
+The most expensive part was the zero powered SRAM cost which
+me about 6 pounds ($9).
+
+First I'll describe the hardware change and then I'll talk about
+the software change.
+
+HARDWARE
+--------
+
+Firstly we need to disable the two static RAMs that Battlezone currently
+uses as program RAM (as we are going to install some more and we don't
+want them fighting it out).
+
+1) Socket H2 & J2.
+The 2 RAMs in question are 2114s at locations H2 & J2 on the Battlezone
+CPU board (the larger one with the reset button). I desoldered these
+chips and installed sockets (but you can disable them anyway you like).
+Remember to be very careful desoldering chips from these old boards
+because the wire tracks on the board have a tendency to peel away
+from the board (as I rediscovered to my horror and I had to add a jumper
+wire or two). This is the hardest stage of the fix so take your time so
+you don't damage the board.
+
+You will need access to pins 8 & 10 at either H2 or J2 later so if
+you disable the chips some other way bare that in mind.
+
+Once you have removed the 2114s solder in 2 new 18 pin sockets, insert
+the original 2114s and re-test your board in the machine. Everything OK?
+
+This might be a good time to ensure the Battlezone power supply is
+producing greater than 4.75V. Adjust the small trim pot of the Audio card
+if it isn't. The new SRAM we are going to install will protect itself
+if the voltage is too low.
+
+2) Piggy-back socket on EPROM.
+The next stage is to solder a socket to the back of the replacement
+2716 eprom chip that we are going to use to replace the PROM at location
+N1 (it should be labelled 036-409 or something). It is best if the ROM
+has already been programed with the new data as detailed below. Not all
+the pins on the socket should be connected to the EPROM. Also find a socket
+with a hole in the centre (or you wont be able erase the EPROM to change to
+patch without de-soldering things). If your EPROM eraser has enough head
+room you should have no problem erasing and programming the EPROM even with
+the socket attached.
+
+    Socket from above
+
+   1 |O|---U---|O| 24            Socket and eprom from side
+   2 |O|-------|O| 23
+   3 |O|       |O| 22              +--------------+
+   4 |O|       |O| 21 R/W          |              |  socket
+   5 |O| Hole  |O| 20 Gbar         +--------------+         
+   6 |O| here  |O| 19 A10            ||||||||||||   Solder most pins together        
+   7 |O|       |O| 18 Ebar         +--------------+         
+   8 |O|       |O| 17              |              |  eprom  
+   9 |O|       |O| 16              +-||||||||||||-+         
+  10 |O|       |O| 15                ||||||||||||           
+  11 |O|-------|O| 14                                       
+  12 |O|-------|O| 13
+
+  Blow-up of socket to eprom connection 
+ 
+        .......----------+
+                         |
+                         |Socket
+                         |
+        .......----++----+
+                   ||
+        .......----||----+
+                   \/    |
+Solder here------> __    | EPROM
+                  |  |   |
+        .......---\  /---+
+                   ||   
+                   ||   
+                   \/
+
+Pins 18/19/20/21 on the socket are not soldered straight through. Bend these
+pins up before you solder the rest to their corresponding EPROM pin. I
+used some connection wire to connect pins 19 and 20 round (not over) to
+pin 12 (GND) on the socket. I also used 2 lengths of single core wire (so I could
+insert one end into a socket) to connect pins 18 and 21 to one of the now
+vacant 2114 sockets at H2 or J2.
+
+In summary:
+
+Socket pin   Connected to
+----------   ------------
+ 18 (Ebar)    pin 8 on socket H2 or J2 (this is the RAM select).
+ 19 (A10)     ground
+ 20 (GBar)    ground
+ 21 (R/W)     pin 10 on socket H2 or J2 (this is the read/write signal).
+
+3) Plug and play.
+Assuming you have patched the EPROM, all you have to do now is plug and play.
+
+- Carefully remove the PROM in socket N1.
+- Plug the EPROM with a socket on its back into N1.
+- Connect the 2 single core jumper wires to the vacant H2 or J2 sockets.
+- Insert the 48Z02 into the socket (on the back of the EPROM) at N1.
+- Hold down the right coin slot switch (to reset the scores) and switch
+   the machine on.
+
+Is it still working?
+
+- Wait for the monitor to warm up. :-)
+
+Is it working?
+
+The patch described in this release of the document, should start off
+with a high score of 0000 and the entire high score table should
+be blank. If that seems OK have a few games and check things still
+work OK and that the top few scores are remembered when the power is
+off. Put the old 2114's and/or the EPROM back in if you have
+any problems to help isolate the problem.
+
+
+SOFTWARE
+--------
+
+Now for the software fix. Fortunately all the code that needs patching
+is in one ROM. Unfortunately I have no intentions of broadcasting ATARI
+code across the net (for the obvious reasons), so you will have to make do with
+just the changes, and find a way to edit them into your own binary file
+of the ROM.
+
+OK here is the patch, in a weird format I just invented. :-)
+
+7800
+7FFF
+7b58 {
+  A2 00 AD 00 08 29 01 F0 02 A2 3C A9 00 9D 00 03 E8 D0 FA A2
+  0F 9D 0E 03 9D 2C 03 CA D0 F7 20 1F 53 4C 00 50
+}
+7AE6 {
+ EA EA EA
+}
+
+There are several ways you can patch the binary image, once it has been
+read from the original 036-409. I loaded the code into a memory monitor
+tool and edited the changes in by hand then saved it out, but it is
+simple enough to write a simple perl or C program to automatically do
+the changes (and I have code in both those languages available if you
+get completely stuck). Some editors also allow you to edit binary
+data in hex, this is also an ideal way to do the change.
+
+ROM 409 represents the code between addresses 0x7800 - 0x7FFF, so
+the new data needs to be entered starting at 0x7B58 and 0x7AE6 (which
+is therefore 0x358 and 0x2E6 bytes from the start of the file).
+e.g
+ 0x7B58 needs to be set to 0xA2
+ 0x7B59 needs to be set to 0x00
+ etc....
+
+The first 2 lines contain the start and end addresses of the 036-409
+ROM. Next is a list of bytes to be placed at certain locations.
+
+------------- patch for 036-409 ---------------------
+7800                             <---- start location for ROM 409
+7FFF                             <---- end location for ROM 409
+7b58 {                           <---- 1st lot of changes start here.
+  A2 00 AD 00 08 29 01 F0 02 A2 3C A9 00 9D 00 03 E8 D0 FA A2
+  0F 9D 0E 03 9D 2C 03 CA D0 F7 20 1F 53 4C 00 50
+}
+7AE6 {                           <---- another lot of changes start here
+ EA EA EA
+}
+-----------------------------------------------------
+
+That is about all you need to know about the patch. However here are
+all the gory details for those that are interested.
+
+7ae6  ea                   NOP             ; don't clear page 3
+7ae7  ea                   NOP             ; don't clear page 3
+7ae8  ea                   NOP             ; don't clear page 3
+
+
+
+7b58  a2 00                LDX  #$00       
+7b5a  ad 00 08             LDA  SWITCH     
+7b5d  29 01                AND  #$01       ; Is right coin switch down?
+7b5f  f0 02                BEQ  L7b63      ; branch if is   
+7b61  a2 3c                LDX  #$3c       
+7b63  a9 00      L7b63     LDA  #$00       
+7b65  9d 00 03   L7b65     STA  hiscore,X  ; clear all or most of page 3
+7b68  e8                   INX  
+7b69  d0 fa                BNE  L7b65 
+7b6b  a2 0F                LDX  #$0F       ; number of bytes to clear
+7b6d  9d 0E 03   L7b6d     STA  D30E,X     ; clear score
+7b70  9d 2C 03             STA  D32C,X     ; clear initial
+7b73  ca                   DEX  
+7b74  d0 f7                BNE  L7b6d 
+
+7b76  20 1f 53             JSR  init34X    ; carry on as before
+7b79  4c 00 50             JMP  L5000      ; carry on as before
+....
+....
+7b9d   Free space down to this location (inclusive).
+
+The top ten scores are each stored in 3 BCD bytes starting at location 0x0300
+in the RAM (the score is multiplied by 1000 when it is displayed). This
+section is then followed by the top ten initials (3 bytes each).
+
+0x300 Score 1
+0x303 Score 2
+0x306 Score 3
+....
+0x31B score 10
+0x31E Initials 1
+0x321 Initials 2
+....
+0x339 Initials 10
+
+
+KNOWN PROBLEMS
+--------------
+
+The main problem with this patch is that I haven't had a look at the test mode
+code yet, and because the data in ROM 409 has been changed the Battlezone
+test mode spots this and complains. This will not effect normal operation
+but if you put the ROM into test mode you will have problems.
+
+I may just be a case of juggling the checksums for the ROM so they match
+the original ones, or it may be more complicated. Also the test mode
+might mess with our score locations (while it is testing the RAM).
+I'll be looking into this problem and will post a new patch that will
+pass test mode when I've figured it out (or someone has beaten me to it).
+
+Until then simply don't enter testmode. If you really need to check things
+out then put the original ROM (and SRAM) back in first.
+
+BATTERY LIFETIME
+----------------
+
+The 48Z02 spec says the lifetime of the battery is almost independent
+of the amount of time the chip is its backup mode. The lifetime is dependent
+solely on the temperature. An average chip will have a battery lifetime of
+20 years at 70 degrees C. Also 99% of chips will have a lifetime of 11 years
+at 70 degress C.
+
+THE FUTURE
+----------
+
+There are loads of possibilities for future enhancements that I have discussed
+with various folks.
+
+*) I still had about 30 bytes ROM space left over after the fix, and it would
+    be possible to use this space to initialize the lower scores to something
+    other than zero. I quite liked the blank zero entries so I left it that way.
+
+*) Rather than the top 5 scores being reset, the user could select how many
+    scores are saved using the DIP switches. Unfortunately there aren't enough
+    spare switches in Battlezone, but we could hi-jack the language setting
+    switches (which would also free up buckets of ROM space).
+
+*) As *ALL* the Program RAM is saved, it might be possible in implement a pause
+    game feature. You could switch your machine off and then resume when
+    it was switched back on again.
+
+*) Remember the address line A10 on the new SRAM? We tied it to gnd? Well
+    it is probably possible to tie the pin straight through and double
+    the amount of program RAM available for future patches. The decode appears
+    to be alright and there appears to be room in the memory map but I
+    haven't tried it yet.
+
+*) What other games could do with a similar fix? Well if you send me the
+    schematics :-) who knows what we might be able to do. I tried to make
+    the fix described above as general as possible by explaining each stage
+    in detail, but it's not easy to do when describing a specific fix.
+    Hopefully there may be very similar fixes for other boards. I for one
+    would be interested to hear what other boards people manage to apply
+    this principle to.
+
+"Share and enjoy"
+
+* John Keay                               ! Texas Instruments Ltd. * 
+* keay@tiuk.ti.com                        ! Bedford, U.K.          *
+* Disclaimer:  All opinions expressed herein are personal. etc etc *
+

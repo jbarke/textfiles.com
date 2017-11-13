@@ -1,0 +1,207 @@
+     This is part two in a planned six-part series about the credit card in-
+     dustry.  It would be best if you read part one before reading this
+     part.  Enjoy.
+
+      DEFINITIONS
+      -----------
+
+     Some more new terms that are used in this posting.
+
+     ABA - American Bankers Association
+
+     ACH - Automated Clearing House - an organization that mechanically and
+           electronically processes checks.
+
+     ANSI - American National Standards Institute
+
+     Embossing - creating raised letters and numbers on the face of the
+           card.
+
+     Encoding - recording data on the magnetic stripe on the back of the
+           card.
+
+     Imprinting - using the embossed information to make an impression on a
+           charge slip.
+
+     Interchange - sending authorization requests from one host (the
+           acquirer) to another (the issuer) for approval.
+
+     ISO - International Standards Organization
+
+     NACHA - National Automated Clearing House Association
+
+     PAN - Personal Account Number.  The account number associated with a
+           credit, debit or charge card.  This is usually the same as the
+           number on the card.
+
+     PIN - Personal Identification Number.  A number associated with the
+           card, that is supposedly know only to the cardholder and the card
+           issuer.  This number is used for verification of cardholder
+           identity.
+
+
+      THE ORGANIZATIONS
+      --- -------------
+
+     ISO sets standards for plastic cards and for data interchange, among
+     other things.  ISO standards generally allow for national expansion.
+     Typically, a national standards organization, like ANSI, will take an
+     ISO standard and develop a national standard from it.  National stan-
+     dards are generally subsets of the ISO standard, with extensions as al-
+     lowed in the original ISO standard.  Many credit card standards
+     originated in the United States, and were generalized and adopted by
+     ISO later.
+
+     The ANSI committees that deal with credit card standards are sponsored
+     by the ABA.  Most members of these committees work for banks and other
+     financial institutions, or for vendors who supply banks and financial
+     institutions.  Working committees report to governing committees.
+
+     All standards go through a formal comment and review procedure before
+     they are officially adopted.
+
+
+      PHYSICAL STANDARDS
+      -------- ---------
+
+     ANSI X4.13, "American National Standard for Financial Services -
+     Financial Transaction Cards" defines the size, shape, and other
+     physical characteristics of credit cards.  Most of it is of interest
+     only to mechanical engineers.  It defines the location and size of the
+     magnetic stripe, signature panel, and embossing area.  This standard
+     also includes the Luhn formula used to generate the check digit for the
+     PAN, and gives the first cut at identifying card type from the account
+     number.  (This part was expanded later in other standards.)  Also, this
+     standard identifies the character sets that can be used for embossing a
+     card.
+
+     Three character sets are allowed - OCR-A as defined in ANSI X3.17,
+     OCR-B as defined in ANSI X3.49, and Farrington 7B, which is defined in
+     the appendix of ANSI X4.13 itself.  Almost all the cards I have use
+     Farrington 7B, but Sears uses OCR-A.  (Sears also uses the optional,
+     smaller card size as, allowed in the standard.)  These character sets
+     are intended to be used with optical character readers (hence the OCR),
+     and large issuers have some pretty impressive equipment to read those
+     slips.
+
+
+      ENCODING STANDARDS
+      -------- ---------
+
+     ANSI X4.16, "American National Standard for Financial Services - Finan-
+     cial Transaction Cards - Magnetic Stripe Encoding" defines the
+     physical, chemical, and magnetic characteristics of the magnetic stripe
+     on the card.  The standard defines a minimum and maximum size for the
+     stripe, and the location of the three defined encoding tracks.  (Some
+     cards have a fourth, proprietary track.)  
+
+     Track 1 is encoded at 210 bits per inch, and uses a 6-bit coding of a
+     64-element character set of numerics, alphabet (one case only), and
+     some special characters.  Track 1 can hold up to 79 characters, six of
+     which are reserved control characters.  Included in these six charac-
+     ters is a Longitudinal Redundancy Check (LRC) character, so that a card
+     reader can detect most read failures.  Data encoded on track 1 include
+     PAN, country code, full name, expiration date, and "discretionary
+     data".  Discretionary data is anything the issuer wants it to be. 
+     Track 1 was originally intended for use by airlines, but many Automatic
+     Teller Machines (ATMs) are now using it to personalize prompts with
+     your name and your language of choice.  Some credit authorization ap-
+     plications are starting to use track 1 as well.
+
+     Track 2 is encoded at 75 bits per inch, and uses a 4-bit coding of the
+     ten digits.  Three of the remaining characters are reserved as
+     delimiters, two are reserved for device control, and one is left unde-
+     fined.  In practice, the device control characters are never used, ei-
+     ther.  Track 2 can hold up to 40 characters, including an LRC.  Data
+     encoded on track 2 include PAN, country code (optional), expiration
+     date, and discretionary data.  In practice, the country code is hardly
+     ever used by United States issuers.  Later revisions of this standard
+     added a qualification code that defines the type of the card (debit,
+     credit, etc.) and limitations on its use.  AMEX includes an issue date
+     in the discretionary data.  Track 2 was originally intended for credit
+     authorization applications.  Nowadays, most ATMs use track 2 as well.
+     Thus, many ATM cards have a "PIN offset" encoded in the discretionary
+     data.  The PIN offset is usually derived by running the PIN through an
+     encryption algorithm (maybe DES, maybe proprietary) with a secret key.
+     This allows ATMs to verify your PIN when the host is offline, generally
+     allowing restricted account access.
+
+     Track 3 uses the same density and coding scheme as track 1.  The con-
+     tents of track 3 are defined in ANSI X9.1, "American National Standard
+     - Magnetic Stripe Data Content for Track 3".  There is a slight contra-
+     diction in this standard, in that it allows up to 107 characters to be
+     encoded on track 3, while X4.16 only gives enough physical room for 105
+     characters.  Actually, there is over a quarter of an inch on each end
+     of the card unused, so there really is room for the data.  In practice,
+     nobody ever uses that many characters, anyway. The original intent was
+     for track 3 to be a read/write track (tracks 1 and 2 are intended to be
+     read-only) for use by ATMs.  It contains information needed to maintain
+     account balances on the card itself.  As far as I know, nobody is actu-
+     ally using track 3 for this purpose anymore, because it is very easy to
+     defraud.
+
+
+      COMMUNICATION STANDARDS
+      ------------- ---------
+
+     Formats for interchange of messages between hosts (acquirer to issuer)
+     is defined by ANSI X9.2, which I helped define.  Financial message au-
+     thentication is described by ANSI X9.9.  PIN management and security is
+     described by ANSI X9.8.  There is a committee working on formats of
+     messages from accepter to acquirer.  ISO has re-convened the interna-
+     tional committee on host message interchange (TC68/SC5/WG1), and ANSI
+     may need to re-convene the X9.2 committee after the ISO committee fin-
+     ishes.  These standards are still evolving, and are less specific than
+     the older standards mentioned above.  This makes them somewhat less
+     useful, but is a natural result of the dramatic progress in the indus-
+     try.
+
+     ISO maintains a registry of card numbers and the issuers to which they
+     are assigned.  Given a card that follows standards (Not all of them
+     do.) and the register, you can tell who issued the card based on the
+     first six digits (in most cases).  This identifies not just VISA,
+     MasterCard, etc., but also which member bank actually issued the card.
+
+
+      DE FACTO INDUSTRY STANDARDS
+      -- ----- -------- ---------
+
+     Most ATMs use IBM synchronous protocols, and many networks are migrat-
+     ing toward SNA.  There are exceptions, of course.  Message formats used
+     for ATMs vary with the manufacturer, but a message set originally de-
+     fined by Diebold is fairly widely accepted.
+
+     Many large department stores and supermarkets (those that take cards)
+     run their credit authorization through their cash register controllers,
+     which communicate using synchronous IBM protocols.
+
+     Standalone Point-of-Sale (POS) devices, such as you would find at most
+     smaller stores (i.e. not at department stores), restaurants and hotels
+     use a dial-up asynchronous protocol devised by VISA.  There are two
+     generations of this protocol, with the second generation just beginning
+     to get widespread acceptance.
+
+     Many petroleum applications use multipoint private lines and a polled
+     asynchronous protocol known as TINET.  This protocol was developed by
+     Texas Instruments for a terminal of the same name, the Texas Instru-
+     ments Network E(something) Terminal.  The private lines reduce response
+     time, but cost a lot more money than dial-up.
+
+     NACHA establishes standards for message interchange between ACHs, and
+     between ACHs and banks, for clearing checks.  This is important to this
+     discussion due to the emergence of third-party debit cards, as dis-
+     cussed in part 1 of this series.  The issuers of third-party debit
+     cards are connecting to ACHs, using the standard messages, and clearing
+     POS purchases as though they were checks.  This puts the third parties
+     at an advantage over the banks, because they can achieve the same re-
+     sults as a bank debit card without the federal and state legal restric-
+     tions imposed on banks.
+
+     In the next installment, I'll describe how an authorization happens, as
+     well as how the settlement process gets the bill to you and your money
+     to the merchant.  After that I'll describe various methods of fraud,
+     and how issuers, acquirers, and accepters protect themselves.  Stay
+     tuned.
+
+                     Joe Ziegler
+                     att!lznv!ziegler

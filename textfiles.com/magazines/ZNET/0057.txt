@@ -1,0 +1,1346 @@
+_____________________________________
+ZMAGAZINE  ^^^          June 29, 1987
+Issue #59  HOT Atari News and Reviews
+_____________________________________
+Zmag Staff:
+
+Ron Kovacs-Editor/Publisher
+Ken Kirchner-Assistant Publisher
+Susan Perry-Assistant Publisher
+_____________________________________
+Xx SPECIAL NOTE
+
+This weeks edition is larger than the
+recent issues because we have been
+receiving many articles for 
+publishing. We are also closing out
+the month with our older articles.
+_____________________________________
+Xx ZMAG INDEX 59
+
+/*/ XModem and PC Pursuit
+
+/*/ CompuServe Watch
+
+/*/ CompuServe Control Key Guide
+
+/*/ FCC Proposal Part 2
+
+/*/ ZMAG Newswire
+
+/*/ Flash Help
+
+/*/ New Product Announcement
+
+/*/ 30 Secrets of the Old Atari
+
+/*/ Software Review by Steve Godun
+
+/*/ Upgrades and Expansions
+_____________________________________
+Xx TELETALK ISSUE 12 EXCERPTS
+Why is X/Modem so slow on PC Pursuit?
+_____________________________________
+QUESTION:  -I use XMODEM across the
+system and transfers take twice [or
+thrice] as long as they should. Why?-
+
+ANSWER:  As best as I can tell, the
+information we were passed from the
+Net Exchange BBS was well-meaning but
+wrong.  Here is the scenario as I
+figger it--someone let me know if I'm
+wrong, too.
+
+XMODEM sends data in a 132-byte block
+that resembles a mini-packet:
+
+<----------Direction of transmission
+
+   [SOH] [#] [#] [DATA] [CHK]
+     |    |   |    |      |___ChkSum
+     |    |   |    +128 bytes of data
+     |    |   |_________ block number
+     |    |_____________ Block number
+     |_____Start of header (ASCII 01)
+
+
+This closely matches the size of a
+Telenet packet (generally 128 bytes)
+and can, for our purposes, be
+considered a packet's worth of data.
+PC Pursuit is set to forward data
+only on full packets and on
+expiration of idle timers (which are
+set for 1/10 second).
+
+The delay occurs because a connection
+through PC Pursuit goes through four
+modems and two entirely separate data
+transmissions.  Each block of data
+must undergo the following (assuming
+a download from the BBS to the user):
+ _____      _________      __________
+|     |__  (         )__   |        |
+| BBS | /__(   PDN   ) /___|PCP user|
+|_____|    (_________)     |________|
+
+|_____|     |_______|      |_______|
+      |             |      |_____  1.1
+      |             |_Variable (0.1/1+
+      |__________1.1 seconds
+
+That's potentially 3+ seconds to
+transfer data that would take
+slightly over 1 second to transmit in
+a direct connection--maybe 35%
+efficiency.
+
+To make matters worse, the
+acknowledgment (ACK) from the user to
+the BBS may take upwards of a second-
+-instead of a fraction of a second-
+-to be transmitted back into the
+network, have idle timers expire, be
+forwarded to the outdialer, and be
+transmitted to the BBS.  As you can
+see, though, the real delay is *not*
+because of the delay in sending the
+ACK, but because the block size and
+packet size so nearly match, the two
+computers are almost never working
+simultaneously.
+
+A protocol that uses a larger block
+size--YMODEM, for instance--will run
+faster over the system, but not
+because it needs fewer
+acknowledgements. Instead, while
+sending the larger block, it causes
+data forwarding on a full-packet
+condition.  After the first packet
+gets sent, both machines are doing
+work for most of the rest of the
+transmission, as such:
+
+    BBS              USER
+    ---              ----
+Start of 1K block
+Sends packet 1       Does nothing
+
+Sends packet 2       Receives packet 1
+
+Sends packet 3       Receives packet 2
+
+Sends packet 4       Receives packet 3
+
+Sends packet 5       Receives packet 4
+
+Sends packet 6       Receives packet 5
+
+Sends packet 7       Receives packet 6
+
+End of 1K block
+Sends packet 8       Receives packet 7
+
+Does nothing         Receives packet 8
+
+(Of course, the BBS is not really
+sending the *packet*, just a packet's
+worth of data.)  In effect, YMODEM
+wastes only 2 of every 9 128-byte
+transfers; it should run at about 75%
+efficiency.  In addition, since it
+only has a single ACK per kilobyte
+(instead of 8), less time is spent in
+waiting for the idle timer to expire.
+
+Of course, to make things more
+confusing, there are XMODEM packages
+using 256-byte and 1K blocks and
+XMODEM packages that allow a -window-
+of unacknowledged blocks to be sent,
+among other flavors.
+
+Recently, the default parameters for
+the PC Pursuit ports were changed; by
+whom, I don't know. For best results,
+users should break to command mode
+and set X.3 parameters 1 and 10 to 0
+(disables break to command mode and
+word wrap) and set ITI parameter 57
+to 1 and parameter 63 to 0 (enable
+8-bit transparent mode).  This is all
+done with similar commands as those
+issued when connecting to Exec PC.
+_____________________________________
+Xx COMPUSERVE WATCH
+   ...HAPPY IBM FILE CONVERTER...
+       ...MINDSCAPE UPDATE...
+_____________________________________
+Capture from CompuServe's Atari8 SIG
+
+#: 190292 S3/Utilities
+    20-Jun-87  13:08:26
+Sb: IBM to Atari and back
+Fm: SYSOP*Bill Aycock 76703,4061
+To: ALL
+
+Still looking for a way to transfer
+files between your Atari and your IBM
+machine? If you have a Happy-enhanced
+1050 disk drive, you're in luck!
+
+I just received in the mail today
+Revision 7.10 of Happy's Warp Speed
+Software. One of the claims made for
+this revision was a -feature that
+allows converting files to and from
+IBM PC format using the HAPPY 1050
+ENHANCEMENT.-
+
+After a very brief test, I can say
+that this feature works! The steps
+are pretty simple:
+
+1. Format a SINGLE-SIDED disk in your
+   IBM, using the command 'FORMAT
+   A:/1'.
+
+2. Copy the IBM files onto this disk.
+
+3. Boot your Atari with a Warp Speed
+   DOS, and run the program
+   IBMXFR.AUT which is on the back
+   side of the distribution disk.
+   Make sure you have an Atari-format
+   disk handy!
+
+4. Select a few options, such as
+   translation of CR/LF to EOL, then
+   tell the program to copy from IBM
+   to Atari.
+
+That's it! Swap disks as directed,
+and the file you choose is copied
+from IBM format to Atari format.
+Going from Atari to IBM works much
+the same way. This should work for
+any kind of file, but is most useful
+for text files. Or, you could
+download Atari programs on an IBM,
+then transfer them to an Atari disk
+to run them.
+
+As I said, my test was very brief.
+I'll do some more testing later and
+try to time how fast the program
+runs. If you have any questions, let
+me know!
+
+--bill--
+
+#: 189751 S7/HOT News/Rumors
+    13-Jun-87  09:49:10
+Sb: MINDSCAPE/ATARI GAMES
+Fm: SYSOP*Mike Schoenbach 76703,4363
+To: All
+
+Online Today             OLT-291
+
+MINDSCAPE TO PUBLISH ATARI'S
+STAND-ALONE ARCADE GAMES FOR HOME
+
+Mindscape Inc. has signed an
+exclusive agreement with Atari Games
+Corp. to publish home computer
+versions of the Milpitas, Calif.,
+company's stand-alone video games
+that now usually are found in coin
+arcades.
+
+According to a statement from the
+Northbrook, Ill., software publisher,
+first in the line-up of new titles
+will be Atari's Paperboy and Gauntlet
+games. Then, over the next few years,
+Mindscape expects to publish Road
+Runner, Road Blasters, Gauntlet II
+and others in home computer formats.
+
+-There are tremendous growth
+opportunities in the retail versions
+of coin-op games,- says Mindscape
+President/CEO Roger Buoy. -We look
+forward to working with Atari
+because, with their consistently
+high-quality products and keen
+perception of the market, they are
+far and away the best company with
+which to be associated.-
+
+--Charles Bowen
+_____________________________________
+Xx COMPUSERVE CONTROL KEY GUIDE
+_____________________________________
+Control Keys on CompuServe
+
+By:SYSOP*Charles McGuinness 76701,11
+
+KEY  Description
+===  ================================
+^A   Stop at end of line (delayed ^S,
+     sorta)
+
+^B   Type-ahead control C. -hits-
+     when the program next asks for
+     input.
+
+^C   Interrupt.  Either kills the
+     program outright or tosses it
+     into an interrupt routine.
+
+^D   Disconnect.  If you're direct
+     connected to a node, this is the
+     equivilent to hanging up.
+
+^E
+^F
+^G   Beep! Break character...
+
+^H   Backspace
+
+^I   Tab
+
+^J   Line feed.  Break character
+
+^K   Vertical tab
+
+^L   Form feed
+
+^M   Return
+
+^N
+
+^O   Disable/enable output toggle.
+     Output is bit-bucketed until
+     another ^O or the program
+     explicitly turns it back on.
+     (Note the SIG is very good at
+     turning it back on just before
+     prompts)
+
+^P   -soft- interrupt -- flushes
+     output, sets a bit program can
+     check.  Like ^C, but gentler.
+
+^Q   Resume from ^S or ^A
+
+^R
+
+^S   Suspend output
+
+^T   Use to give a job status in the
+     old days, nothing now
+
+^U   Abort current line
+
+^V   Retype current line
+
+^W   Alternate version of ^Q
+
+^X
+^Y
+
+^Z   End of file.  One of the fun
+     ways to get a program to end
+     occasionally, usually with messy
+     tracebacks.  The SIG program is
+     immune, but there's always some
+     program floating around that
+     isn't careful enough.
+
+-- charles
+_____________________________________
+Xx FCC PROPOSAL Part 2
+_____________________________________
+In a move that could sharply increase
+telecommunications costs, the Federal
+Communications Commission last week
+proposed that enhanced service
+providers no longer be exempt from
+paying interstate access charges as
+of January 1, 1988.
+
+The charges could include a 3 cent
+per minute traffic-sensitive access
+charge, a 4.3 cent per minute
+terminating access charge, and a 2
+cent per minute originating charge,
+depending on such factors as whether
+the call is local said Ruth Milkman,
+an attorney in the policy division of
+the FCC's common carrier bureau.
+Affected services include Telenet,
+Tymnet, Compuserve, and Dow Jones
+News/Retrieval.
+
+Paulo Guidi, president of Telenet
+Communications Corp of Reston,
+Virginia, called the proposal
+misguided and said it would
+discriminate against users of
+computer oriented services.
+
+-It's an issue we're going to be
+looking at very carefully- said Ken
+Allen, executive director of the
+Information Industry Association, a
+lobbying group in New York.
+
+The FCC is presently inviting
+comments from interested parties.
+_____________________________________
+Xx ZMAG NEWSWIRE
+_____________________________________
+SSI/TSR AGREEMENT?
+
+Strategic Simulations Inc. and TSR
+Inc. have signed a letter of intent
+to enter into a strategic alliance.
+The five-year licensing agreement
+gives SSI exclusive worldwide rights
+to produce and market a product line
+series of games based on TSR's
+classic Advanced Dungeons and
+Dragons(r) fantasy role-playing game.
+SSI will be the first company to
+bring TSR games to the computer. The
+agreement is valued at up to several
+million dollars over the contract
+period.
+
+At least ten different role-playing
+and several action game versions are
+planned by SSI for the most popular
+microcomputers, including C-64/128,
+Apple II series, IBM/compatibles,
+Atari ST and Amiga. Versions are also
+planned for family game systems, such
+as the Nintendo. The games will
+appear on the market beginning early
+next year and will be sold in SSI
+packaging with joint SSI/TSR logo
+identification. The games will be
+marketed through SSI distributors,
+retail, and hobby store channels
+amounting to over 10,000 outlets
+worldwide.
+
+Randy Broweleit, Vice President of
+Sales at SSI, states: -It's a high
+mark of recognition to be selected by
+TSR, the giant of the industry and
+creator of the most famous and
+popular fantasy role-playing game of
+all time, as their exclusive partner.
+We expect to create wonderful
+exciting new computer games based on
+a very complementary relationship.-
+
+Michael Cook, Vice President of New
+Product Development at TSR said: -We
+are also pleased to begin a long-term
+relationship with SSI, whom everyone
+recognizes as a leading quality games
+producer. SSI's credentials as one of
+the finest creators of computer
+games, and their proven product line
+allows us to combine strengths to
+produce the best possible fantasy
+role-playing and action computer
+games.-
+_____________________________________
+Xx FLASH HELP
+Common Questions and Answers about FLASH terminal program
+_____________________________________
+<1>
+I have a touch tone line. How do I
+tell FLASH to dial using touch tone?
+
+Answer:
+Go to the menu-bar and select DIAL
+DIRECTORY from the EDIT section.
+Click on the button that says 'ALTER
+SETTINGS' and change the Prefix to
+ATDT. Then hit return to exit the
+dialog and select SAVE from the FILE
+section. When the File Selection
+dialog box appears, click on
+-Configuration- and save the
+configuration as the default name
+FLASH.CNF. This makes sure that the
+dialer prefix will stay as ATDT the
+next time FLASH is run.
+
+<2>
+I'm trying to upload a message to
+CompuServe using Ascii upload but the
+text appears scrambled and there are
+missing characters.
+
+Answer:
+Change the ASCII upload setting to
+set METERING on. If you are using the
+SIG editor that gives you line
+numbers, then set PROMPTING on and
+enter ':' as the prompt character.
+
+<3>
+All of a sudden the cursor is moving
+on the screen, but I can't see any
+text being displayed. What's happened
+and what can I do to fix it?
+
+Answer:
+Line noise has resulted in FLASH
+being sent an escape sequence that
+has changed the text color to the
+white. The same error can cause text
+and background colors to become
+reversed. If you are using a color
+monitor then you may see strange
+combinations of text and background
+color e.g. red text on a black
+background.
+
+The solution is to use the MODE
+command to reset the terminal
+emulation mode. Press on ALT-M and
+hit enter. This will reset the colors
+to their default values while leaving
+the terminal emulation type
+unchanged.
+
+<4>
+While uploading or downloading a file
+using Xmodem I see error messages on
+the bottom line of the screen. Does
+this mean the file transfer was bad?
+
+Answer:
+Xmodem is very good at recovering
+from errors due to line noise and
+it's quite normal to see occasional
+error messages such as Checksum error
+or Sector number error. If a fatal
+error occurs, FLASH will always put a
+message on the bottom of the screen
+which includes the phrase 'Xmodem
+Aborted'.
+
+In addition, the other computer will
+usually realise that a fatal error
+occurred and also display an error
+message. FLASH will typically try at
+least ten times to send/recieve each
+block of the file before giving up.
+
+<5>
+How do I edit the FLASH DO files?
+
+Answer:
+Simple! Just load them into the FLASH
+capture buffer and edit them in place
+then save them back to disk. To embed
+control codes in a DO file, simply
+hold down the control key and press
+the appropriate key, e.g. control-C
+shows up as an arrow facing right.
+
+To load a file into the FLASH capture
+buffer, select LOAD from the FILE
+heading of the menu bar and select
+CAPTURE from the dialog box that
+appears. To save the entire capture
+buffer, select SAVE from the FILE
+heading of the menu bar and click on
+the CAPTURE box. You can save just a
+part of the capture buffer by marking
+out a block and saving it. The block
+commands are all under the BLOCK
+heading of the menu bar.
+
+If you want to load in a DO file for
+editing without clearing out all the
+other text in the capture buffer,
+select MERGE from the FILE heading of
+the menu bar and then select the
+filename to merge into the buffer.
+You can then edit that file and,
+after marking it as a block, save it
+back to disk using the SAVE BLOCK
+option under the BLOCK heading of the
+menu bar.
+
+BRODERBUND, UNISON DROP LAWSUIT
+(June 22)
+
+Broderbund Software and Unison World
+said today they have settled their
+legal dispute over the similarities
+of their respective graphics
+programs, The Print Shop and
+PrintMaster.
+
+In a joint statement this week, the
+two publishers said, -Whatever our
+differences have been in the past
+with respect to this lawsuit, we both
+feel our time, effort and money would
+be better spent in developing and
+marketing new and better software
+than in expensive, protracted
+litigation.-
+
+Broderbund and its affiliate,
+Pixellite Software, filed a US
+District Court suit in May 1985
+alleging that Unison World's
+PrintMaster infringed the copyright
+of their Print Shop program.
+
+FCC ATTORNEY EXPLAINS RATIONALE
+BEHIND CONTROVERSIAL PROPOSAL
+
+The Federal Communications Commission
+recently proposed to eliminate the
+exemption from interstate access
+charges enjoyed by commercial online
+database services since 1983.
+
+Such a move, according to FCC
+attorney Ruth Milkman and co-author
+of the proposal, has been considered
+by the agency for several years.  She
+told Online Today that when the
+charges were first assessed in 1983,
+it was felt that -enhanced service
+providers- (such as CompuServe) would
+suffer from the enormous increase in
+user fees that would result.
+Consequently, the FCC decided to
+gradually implement the policy over a
+period of years.
+
+If this proposal passes, it will take
+effect Jan. 1, 1988.
+
+Milkman said the charges are assessed
+to those companies that use the local
+telephone exchange for interstate
+purposes. -It's a way of making the
+people who use the local exchange and
+incur the cost pay for it,- she
+explained.
+
+She added that the direct financial
+effect on individual users is
+difficult to determine, since the
+cost will vary in different parts of
+the country depending on the cost of
+the local telephone exchange.
+
+According to Milkman, the FCC said it
+was concerned that the charges
+currently paid by enhanced service
+providers did not contribute
+sufficiently to the cost of the
+enhanced access facilities they use
+in offering services to the public.
+Concerns about rate shock might
+justify a temporary, but not a
+permanent, exemption from access
+charges.
+_____________________________________
+Xx ZMAG NEW PRODUCT ANNOUNCEMENT
+_____________________________________
+GOOD NEWS COMPUSERVE USERS!
+---------------------------
+
+INTERLINK ST is now shipping!
+INTERLINK is the most advanced yet
+easy to use terminal package for your
+ATARI ST. 
+
+-INTERLINK ST is an outstanding
+telecommunications program for the
+Atari ST and my personal choice for
+ease of use and speed.-
+- Dave Groves Sysop
+  Compuserve's ATARI Forums
+
+-INTERLINK ST has been my terminal
+program of choice for several months
+note and I don't even have the final
+version yet.-
+- ST-LOG April 1987
+
+With features such as:
+
+* MINI BBS collects messages and
+  uploads/downloads files
+
+* Run programs from inside INTERLINK
+  ST
+
+* Loadable transfer and emulation
+  protocols
+
+* GEM Based
+
+* Full disk commands
+
+* Advanced auto dialer
+
+* Super Recorder/Playback lets you
+  handle those repetitive chores,
+  like getting those same stock
+  quotes every day
+
+* Clip Board
+
+* Custom translation tables
+
+* 48 line display option on
+  monochrome
+
+* Full continuous status display
+
+* Type-ahead buffer lets you enter
+  and edit a line before sending
+  it (great for chats)
+
+* Online help gives you a quick
+  reminder when you need it
+
+* Buffer window with powerful entry
+  and edit capabilities, works like a
+  word processor
+
+* Connect Chimes with true carrier
+  timer gently remind you of your
+  connect duration every fifteen
+  minutes
+
+* 20 Macro keys
+
+* Built-in password protection and
+  encryption for your logon data and
+  macro keys
+
+* Supports baud rates 300, 600, 1200,
+  2400, 4800, 9600, and 19200
+
+* Word wrap
+
+* RS-232 spooling
+
+* And much more.......
+
+Come and join the revolution step up
+to INTERLINK ST.
+
+Retail price:  $39.95
+
+Act now until July 30th 1987 and we
+will give you $15 dollars off
+INTERLINK ST when you send in your
+old commercial brand terminal
+program.
+
+Toll Free  800-826-0130
+in Florida   813-923-8774
+
+INTERSECT Software Corp.
+3951 Sawyer Road Suite 108
+Sarasota, Fl 33583
+
+_____________________________________
+Xx 30 Secrets of ATARI Part 1
+_____________________________________
+1.  Nolan Bushnell, Atari's founding
+    father, originally named the
+    company Syzygy (the sun, moon,
+    and earth in total eclipse).  He
+    renamed it to Atari because
+    another company already owned the
+    name Syzygy.
+
+2.  Bushnell is generally believed to
+    be the author of Pong, Atari's
+    first game.  Actually, Magnavox
+    released the Odyssey 100, the
+    first home video game system,
+    which included a game remarkably
+    similar to Pong, several months
+    before Pong's debut in the
+    arcades in 1972.  Years later,
+    Bushnell admitted in court that
+    he had seen an Odyssey prototype
+    on display earlier in 1972. The
+    Odyssey 100 was designed by Ralph
+    Baer.
+
+3.  Bally/Midway rejected Bushnell's
+    Pong when he demonstrated the
+    game in its Chicago offices in
+    1972.  Bushnell went back to
+    California and started Atari.
+
+4.  Given a choice between Mappy and
+    Pole Position, two arcade
+    creations by the Japanese firm
+    Namco, Bally/Midway amazingly
+    opted for Mappy.  Atari had to
+    settle for Pole Position, which
+    went on to become the biggest
+    game of 1983.
+
+5.  Gravitar was one of Atari's
+    worst-selling arcade games. So
+    they took the game out of the
+    cabinets and converted them all
+    to Black Widow.
+
+6.  Mike Hally designed Gravitar. He
+    recently redeemed himself as the
+    project leader for Atari's
+    spectacular Star Wars game.
+
+7.  Rick Mauer never programmed
+    another game for Atari after he
+    did Space Invaders for the VCS.
+    He is said to have earned only
+    $11,000 for a game that grossed
+    more than $100 million.
+
+8.  Todd Fry, on the other hand, has
+    collected close to $1 million in
+    royalties for his widely
+    criticized VCS Pac-Man.
+
+9.  The man for bringing Pac-Man home
+    to Atari- Joe Robbins, former
+    president of coin-op- was
+    severely reprimanded by the
+    chairman of the board Ray Kassar
+    for making the deal with Namco
+    without consulting him.  It seems
+    Robbins was in Japan negotiating
+    a legal matter with Namco at the
+    time, and Namco demanded that
+    Atari buy the home rights to
+    Pac-Man as part of the
+    settlement.  Pac-Man had yet to
+    take off, but when it did,
+    Robbin's gutsy decision paid off
+    as Pac-Man went on to become the
+    company's best-selling cartridge
+    ever.
+
+10. The man for bringing E.T. to
+    Atari?  None other than Warner
+    Communications chairman, Steve
+    Ross.  So convinced was he that
+    E.T. possessed video game star
+    quality, Ross paid Steven
+    Spielberg an enormous sum (did I
+    hear $21 million?) for the rights
+    to the little extraterrestrial
+    bugger.  Designer Howie Warshaw
+    spun the game out in four months,
+    only three million cartridges
+    were sold and Atari began to
+    announce million dollar losses.
+    E.T. is now selling for as little
+    as $5 in some stores.
+
+Next week 11-20...
+_____________________________________
+Xx ZMAG PRODUCT REVIEW
+_____________________________________
+By:Steve Godun
+
+           Bop'n Wrestle
+          Mindscape, Inc.
+            PO Box 1167
+       Northbrook, IL 60065
+     Sug. Retail Price: $29.95
+
+Many of Mindscape's games (such as
+Infiltrator, High Roller, and Balance
+of Power) are or were among the top
+10 programs in Billboard's listings,
+but they were only available for the
+Apple and Commodore computers,
+leaving the large Atari 8-bit field
+longing for some attention.  The
+people at Mindscape FINALLY opened
+their eyes and say this vast amount
+of Atari 8-bit computers and decided
+to convert their best selling titles.
+-Good!- Atari owners cried.  I almost
+thought that Mindscape would start a
+trend that other software companies
+would follow.  If BOP'N WRESTLE is
+the start of this trend, then pray
+that the other companies improve on
+it.  Drastically.
+
+Put simply, BOP'N WRESTLE is one of
+the worst programs I've ever seen for
+the 8-bit Atari.  Not since the days
+of CASTLE WOLFENSTEIN have I seen
+such slow animation, awkward control
+setups, and poor use of color,
+graphics and sound.  I have seen
+BASIC wrestling games that are better
+than this (if the BASIC ones were
+compiled, they would be better than
+this attempt).
+
+One look at the game will tell you
+that BOP'N WRESTLE is a direct (I'm
+talking DIRECT) translation from its
+Apple parent.  Sure, the sound was
+spruced up a bit (and ONLY a bit) for
+the Atari, but the graphics and
+colors are almost identical to the
+Apple version. The controls (joystick
+or keyboard) are extremely
+complicated, and sometimes you'll
+move the stick the right way but
+nothing will happen on-screen.
+
+Also, the opponents you face are
+(naturally) faster and more agile
+than you could ever pray to be, so
+don't expect to get very far until
+you've played it for a few hours
+straight (not that you'd WANT to). A
+little more fluid animation would
+have done wonders for the game, as
+would some more colors and sharper
+detail.  Several times I have gotten
+confused as to which on-screen player
+was me and which was the computer.
+True, there are distinct traits that
+each wrestler has (one looks like
+Hillbilly Jim, another one resembles
+a punk rocker - complete with spiked
+purple hair), but quite often (like
+right after getting into a clinch or
+after performing a move) the two guys
+-mix- and looks like a speckled blob
+until one of 'em gets up.
+
+Controling the man with the joystick
+isn't that easy.  Simple left, right,
+up, and down is fine (of course,
+diaginal moves are -too hard- and
+weren't put in the game).  The
+problem arises when it's time to
+apply a hold or move on your
+opponent. There is no set direction
+for applying any move - it depends in
+the direction your man is facing. For
+example, if you just slammed your
+opponent into the mat and you are
+facing right, a simple elbow drop
+would be accomplished by facing your
+downed opponent, pressing the button,
+and pushing up on the joystick.  Now,
+let's say you have the same situation
+except that your wrestler is facing
+downward (-facing- you, so to speak).
+If you wanted to do a elbow drop now,
+you would have to press the button
+and push the joystick to the RIGHT.
+This can get EXTREMELY confusing at
+times.  I also like making a small
+reference card that I can stand up
+when I'm playing so I don't forget a
+function or move.  With this game, I
+can't do that because there isn't a
+set direction for any given move.
+
+One more minus to BOP'N WRESTLE; For
+reasons that God only knows, the
+program takes up both sides of a
+diskette and takes around 3-5 minutes
+to load.  This is too long for me,
+especially since this game doesn't
+even show an effort on Mindscape's
+part.
+
+There are a FEW pluses to this game
+that I should mention.  First, there
+IS a two-player option available.
+Second, it seems that the list price
+of $29.95 is being cut drastically by
+a few mail order places to around $15
+-$20.  Third, if you can handle the
+controls, there is a variety of moves
+available to you.  Among them are the
+very popular suplex, pile driver,
+head-but, airplane spin, elbow drop,
+the not-so-legal superfly, and the
+slingshot.  I haven't been able to
+find any of the more popular moves
+such as the face rake, sleeper hold,
+or even a standard punch!  The
+simplest moves available are a
+pseudo-punch (looks more like
+clobbering the guy over the head with
+your arm), shin kick, and the very
+pleasant knee-in-the-groin. Kicking
+your opponent when he's down is also
+very possible (not to mention very
+effective).
+
+Overall, I think Mindscape should
+have held back on the release of
+BOP'N WRESTLE until the program was
+improved (or maybe finished?).  It is
+DEFINATELY not worth $29.95, or even
+$20.  $15...maybe.  There is one good
+result of this program.  It's so bad
+that the people won't even WANT a
+pirated copy.
+
+Mindscape, if you want your future
+Atari conversions to work, PLEASE
+don't rush it.
+_____________________________________
+Xx UPGRADES and EXPANSIONS
+_____________________________________
+New, improved and better than ever.
+
+by D.F. Scott
+
+This month, we'll focus on upgrades
+and expansions to every Atari
+computer currently -out in the
+field.- It appears that, by 1987, if
+you own an Atari -- from a 400 on up
+to a 1040ST -- there will be an Atari
+-made expansion available for it. New
+operating systems, new graphics chips
+and new monitors are to be expected.
+
+Among our sources this month are:
+John Skruch
+Manager, Atari's 8-bit product line;
+Larry Samuels, Director of Sales
+Marty Taucher, Public Relations of
+Microsoft Corporation in Redmond,
+Washington. Other sources wish to
+remain unnamed.
+
+Once again, this portion of the
+Status report gives primarily the
+Atari 8-bit story. For the total
+picture, please see the ST section on
+page 45ST.
+
+At the heart of the XE is an eight
+-year-old mother board design, in a
+market that demands faster, brighter,
+bigger machines. The first attempt to
+-modernize- the 8-bits, the 1200XL,
+failed to work -- and failed to sell.
+Once the final versions of the XL
+were completed, they still retained
+-incompatibility- problems with the
+original 400/800s.
+
+I can recall no previous attempt to
+modernize any 8-bit computer which
+has resulted in a perfect track
+record in the software compatibility
+category. Forever inscribed in the
+annals of incommunicability with
+their predecessors are the Apple IIe;
+the Tandy 4D (formerly a TRS-80); and
+(in large, bold letters) the
+Commodore 128. Modernization randomly
+casts some unfortunate programs into
+the realm of future uselessness.
+Third-party software producers do not
+wish to be held captive, waiting for
+their star programs to be declared
+useless at the whim of a computer's
+manufacturer.
+
+Atari's 8-bit development is at an
+extremely crucial phase. Several
+software companies are shifting their
+concentration over to the ST, and
+others, not ready for the arrival of
+16-bit prominence, are shifting their
+concentration away from Atari. So, in
+considering ways to make good their
+investment in the 8-bit line, Atari
+had to discuss something more than a
+mere facelift. In order to win back
+8-bit software producers' support,
+the corporation could not redesign
+the XE.
+
+Atari has come to a compromise. It
+feels the best way to expand the XE
+is externally. A study of external
+expansion methods resulted in the
+corporation's asking itself, -Why not
+provide an expansion to every 8-bit
+computer in the field?- Surprise,
+400/800/XL owners, the 80-column
+expansion unit is for you, too.
+
+The 80-column box, as yet unnamed, is
+planned to plug into the joystick
+port on all 8-bit units--most likely
+port 2. The SIO (serial input/output)
+port is thus saved for daisy-chaining
+through the disk drives. The mother
+board is left untouched, installation
+costs are wiped out, and you don't
+need an 850 interface! All that's
+required to sell it is a package, a
+salesman, a good monitor and the
+usual 90-day manufacturer's warranty.
+
+What will this expansion unit do?
+Here's what we know: the box connects
+the micro to a composite monitor,
+monochrome or color. General output
+for graphics and all alphanumerics
+printed directly to screen memory,
+besides buffered output through an
+input/output control block, will
+still appear in 40-column mode. Only
+text sent through the control block
+(IOCB) E:, number 0 -- called the
+screen editor -- will be converted to
+80-column.
+
+At first thought, this might be a
+disappointment to some who expected
+an instantaneous improvement in
+output. Consider, though, the
+resulting calamity if all text were
+converted, so that all output flooded
+just the left half of the screen.
+Nearly all the 8-bit software
+currently available is geared toward
+a 40-column screen; there are a few
+pieces that offer 60-column
+emulation.
+
+How many programs can you name that
+use the screen editor IOCB instead of
+memory-mapped output? Not even
+AtariWriter Plus uses E:. Because of
+this little inconvenience, Atari
+plans to revise AtariWriter Plus yet
+again, to a sort of -Double-Plus-
+version, becoming the first company
+to capitalize on the new display.
+
+What hasn't been disclosed is whether
+or not doubling x-axis resolution
+will have the expansion box providing
+a new, ST-competitive graphics mode
+for 8-bits. Such a mode, if feasible,
+may work like graphics 9-11 does on
+the GTIA chip, representing a pixel
+by a letter. If there's an expansion
+graphics chip in the box (which I'll
+call the E-box after the E: IOCB), it
+could receive ATASCII text delivered
+to it by IOCB 0 (since that's all an
+IOCB handles) and, after being
+toggled by a -delimeter- or control
+character like reverse-%, go to
+-graphics 12,- and convert the datum
+following the reverse-% to a graphics
+pixel with a representative color or
+hue value. Having created a graphics
+-11-like screen that acts like a 640-
+column by 200-line text output screen
+and with the main computer still
+under the impression it's operating
+the screen editor, the data would be
+output to the monitor in pixel form,
+positioned by tabs, spaces, line
+feeds, or the POSITION statement in
+Atari BASIC.
+
+Again, Atari has not confirmed that a
+new graphics mode will be made
+available, but it hasn't denied the
+possibility of one, when asked. A
+four-color 640x400 8-bit screen would
+have to have 32K of memory, most
+likely in the -E-box.- The graphics
+speed would be dependent upon how
+fast the screen editor wants to work.
+To provide the mandatory power for a
+new graphics mode, the E-box would
+need to be a half-computer itself.
+
+It has a projected price of $79.95,
+which should be plenty for half a
+computer. So -graphics 12- is not out
+of the question. It would compel
+8-bit software producers to treat the
+XE as a new machine entirely. Perhaps
+this will generate some new interest
+in the machine; on the other hand, it
+might make obsolete the existing
+software base, and thus reduce the
+amount of current production. There's
+still a bit of shaky ground here.
+
+If Atari were considering an overall
+consolidation of the computer line,
+in operation as well as in
+appearance, it might consider a
+graphically-oriented DOS, similar in
+appearance to GEM on the ST. One
+report is that Optimized Systems
+Software is redeveloping its ADOS
+text-driven system for use with the
+3.5-inch format. Statements from
+Atari contradict this, claiming it is
+developing its own system, but the
+company is keeping its mouth
+curiously shut as to what this new
+DOS should contain and how it will
+operate. It hasn't denied, though,
+the possibility of the system's being
+a graphic one.
+
+Assuming such a system were released,
+it could not feasibly be implemented
+as an operating environment, as is ST
+GEM. Programs could not be run in a
+-windows- environment unless the
+environment were part of the program
+itself. But an alternate operating
+system called GEOS for the Commodore
+64 shows that a point-and-click,
+-desktop- operating environment is
+feasible -- and good-looking -- for
+6502-based machines, even if it
+doesn't speed up such machines.
+
+File-access and storage capacity in
+the Ataris would most certainly
+improve, and the current ST mouse can
+already plug into an 8-bit unit. If
+the old AtariWriter could fit into an
+8K ROM cartridge, certainly a super
+enhanced version with drop-down
+menus, string search-and-replace and
+cut-and-paste could fit into 64K,
+with plenty of space left over for
+text, especially on the 130XE. What
+some people would spend thousands of
+dollars for when purchasing a
+Macintosh, they may be able to get at
+around $400.00, with color and disk
+speed as a bonus.
+
+The E-box and the 351 may tempt some
+current Atari owners to extract their
+units from closets, where many 8-bits
+rest in limbo.
+
+There was a time when it was
+difficult to find a purpose for a
+home computer. We found out it
+couldn't walk the dog, hand the kids
+a diploma, or balance the budget --
+though it could balance one's
+checkbook. In eight years, we've been
+able to clearly define absolute
+purposes for owning a home computer,
+and word processing is near the top
+of Atari's list -- though game-
+playing, as Leonard Tramiel has said,
+is -what most people use them for.-
+
+Ataris certainly aren't deficient at
+game-playing, but in word-processing,
+limited disk storage capacity and
+that 40-column screen are drawbacks
+to efficient applications. So,
+certainly, the company is making the
+right diagnosis and applying the
+proper solutions. For the Christmas
+season, the XEs will be in a more
+competitive stance against such
+machines as the Laser 128, the low-
+cost Apple IIc-clone now sold in
+major department stores.
+
+One important note: Atari no longer
+has plans to build a monitor (at one
+time called XC 1411) for the 8-bit
+line. Anybody wanting a composite
+monitor to attach to his E-box will
+have to look to other sources. The
+8-bit product line manager, John
+Skruch, tells us his division has
+more important business at hand than
+to take some other manufacturer's
+monitor and conceive a fancy box for
+it.
+
+For the ST, programs like Flash! and
+ST-Talk should work with the SX,
+though, since it will operate in a
+totally different manner for the XE
+than the XM 301 and its predecessors,
+Atari will have to come up with a new
+piece of terminal software -- for
+both 5.25-inch and 3.5-inch disk
+formats. For the experienced 8-bit
+modem user, it will have to compare
+with 1030 Express.
+
+Following up from last month: Sales
+and Marketing Director Larry Samuels
+tells us XE advertising for TV is in
+production now, with plans currently
+to buy only into local air time, not
+expensive national network time.
+
+Author's Biography:
+
+D.F. Scott is an artist, writer,
+educator and programmer living in
+Oklahoma City. He is currently
+engaged in the study of quantum
+physics, computing and other ways in
+which elementary particles interact
+with each other. Otherwise, he fills
+infinite pieces of paper.
+
+This article ctsy of the HELP BBS.
+_____________________________________
+ZMAGAZINE    ISSUE 59   June 29, 1987
+Please contribute (c)1987 Ron Kovacs
+_____________________________________

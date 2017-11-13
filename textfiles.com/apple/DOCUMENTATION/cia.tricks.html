@@ -1,0 +1,376 @@
+33
+
+
+#33 : 063 CIA/TRICKS
+
+
+
+
+<=-=*=---------------------------=*=-=>
+           The  C.I.A  Files
+     Intermediate Level Tricks with
+              Tricky Dick
+
+      Typed by The Camel Jockey
+         Revised by Bets C.
+     Apple Manor  (716) 654-POOF!
+<=-=*=---------------------------=*=-=>
+
+  Avoiding D.O.S Lang. Card Clobber
+
+     D.O.S.  3.3  has particularly  pesky subroutine which stores a $00  in the
+first byte of the language  card whenever we do a PR#6.  This in  turn makes 
+D.O.S.  think that the  language card is empty.  So if you  happen to have
+INTERGER BASIC (or  some other program) there, and then  boot up from the
+keyboard, you alwas  have to reboot your System Master  and hang around while
+it reloaeds  INTEGER.  Most of the time, however,  a perfectly good image of
+INTEGER is  still in the language card in spite  of the LANGUAGE NOT AVAILABLE 
+message you get when you ry to call  it.
+
+     Fixing this is a piece of cake.  Just read in track $00, sector $09,  and
+write 3 'EA' over the '8D 00 E0'  in line $D0, leaving it looking like 
+this.
+
+     D0: C0 A9 00 EA EA EA 4C 44
+
+     Then write it back to the disk.   Any disk with this patch in its  D.O.S. 
+will leave INTEGER in peace  when
+booting.
+
+           Important Note
+
+     I know it seems obvious, but  don't forget to reboot the  D.O.S.  you've
+just altered with the  following patches if you want to see  them in
+action.
+
+      Switching the HELLO file
+
+     To make this simple alteration,  read in track $01, sector $09.  Starting
+with byte $75 in line $70,  you will see the name of the HELLO  program.  If
+you want another file  on the disk to run automatically on  boot-up, put the
+cursor over the  first byte of the HELLo file's name  (a
+'C8' for 'H' on most disks), and  hey in SHIFT 2 (the " character).  Now type
+in the new file's name and  press down the CTRL, SHIFT and @  keys together,
+returning to normal  operation.  If the name of the new  file is shorter than
+that of th old  one, there will be some unwanted  characters tacked on at the
+end.  Be sure to type 'A0's' (ASCII for  spaces) over these before writing  the
+sector back to the
+disk.
+
+  Using a Binary or EXEC HELLO file
+
+     Normally, when  D.O.S.  finishes  booting into RAM, it issues a RUN 
+command to start the HELLO program.  However, if you used the foregoing  method
+to switch HELLO to a machine  language or EXEC file, you will  obviously want 
+D.O.S.  to issue the  correct BRUN or EXEC command on  boot up.  To do this
+read in track  $00, secor $0D and change byte $42  from a
+'06' to:
+
+    (1) a '34' to BRUN a binary hello
+        program;
+
+    (2) a '14' to EXEC and EXEC file.
+
+     Now write the sector back to the  disk.  You may wish to make this and  th
+e
+foregoing patch on a COPY of  your CIA disk so that it's BRUN's  Tricky Dick
+immediatly on boot-up.  If you do, you should leave line $40  looking like the
+example
+below.
+
+   40: 03 A9 34 05 AD 62 2A
+              \
+             Binary HELLO flag
+
+   Loading a Program between  D.O.S
+           and its Buffers
+
+     Having carried out the  preceeding two operations, you might  decide that
+it would also be useful  to place your program in some secure  spot in memory
+where subsequent  loading and running of other files  cannot overwrite it.  The
+best was  of doing this is to move  D.O.S.  buffers down and load your program 
+on top of them.  A simple  D.O.S.  patch will insure their complete  safety
+even if  D.O.S.  is  coldstarted.
+
+  To set things up, read track $00,   sector
+$0C
+
+       00: D3 1C 81 1E 75 2A
+           ^^ ^^
+
+     The next step is to subtract the  length of your program in bytes from 
+$1CD3, the number shown in reverse  at the beginning of line $00.  So if  your
+file was, say, $200 (decimal  512) bytes long, you'd have to work  out that
+$1CD3 - $200 = $1AD3.  You  should now reverse the high and low  bytes of this
+result in the  classical 6502 manner, type them  over the
+'D3 1C', and write the  whole works to the
+disk.
+
+    00: D3 1A 81 1E BD 1E 75 2A
+
+     What happens is, the '1A D3'  gets changed to '9A D3' on boot up,  moving
+the buffers down the required  abount.  This allows you to fix your  program to
+run $9D00 - $200 = 9B00  in
+RAM.
+
+    Eliminating the Pause during a
+              CATALOG
+
+     If you manage to accumulate a  large number of files on a single  disk, yo
+u
+may find it useful to have  continuous scrolling during a  CATALOG.  If so.
+read in track $01,  sector $0D of the disk whose  D.O.S.  you wish to provide
+this service.  Then simply change byte $34 from a 
+'CE' to a '60' as shown below.
+
+    30: 8D 20 ED FD 60 9D 33 D0
+                     \
+                  Changed byte
+
+     Write this block to the disk and  you will find, after rebooting, that  th
+e
+patched version of  D.O.S.  will  not stop after each screenful of  file names
+during a CATALOG, but  will scroll rapidly through to the  end of the list.  If
+you have an  autostart monitor, you can use  CTRL S to stop/start the
+listing.
+
+      Changing the "DISK VOLUME"
+           Catalog Message
+
+     In order to personalize your  disk, you might like to have some  message
+other than "DISK VOLUME 254"  appear when a CATALOG is executed.  If so, read
+track $02, sector $02  and change the "DISK VOLUME" message  (written
+backwards!) that begins at  byte $B0.  If you write over the  space ($A0) at
+byte $AF, you can  squeeze in up to 12 characters by  hitting SHIFT 2 (the
+" sign) and  typing them in backwards.  So if  your new heading is to be say 
+"Sammy's Disk", lines $A8 - $B8  would look like the illustration 
+below.
+
+                  First byte of entry
+                                   !
+ A8:C9 C1 C2 D3 D2 C1 C2 CB:IABSRABK:
+ B0:D3 C9 C4 A0 D3 A7 D9 CD:SID S'YM:
+ B8:CD C1 D3 04 11 0F 04 00:MASDQOD@:
+                              !
+                   Last byte of entry
+
+     If you carried out the  preceeding instructions, and  rebooted, you should
+get the  following heading on each
+CATALOG.
+
+           SAMMY'S DISK254
+
+     This looks a bit messy, so to  get rid of the '254', read in track  $01,
+sector $0C and type 3 'EA's'  over bytes $C0-$C2, ending up
+with:
+
+    C0: EA EA EA 20 2F AE 20 2F
+
+     After writing this back to the  disk and rebooting, your catalog  message
+will blaze forth in its most  pristine
+form.
+
+       Putting Headings on the
+           Catalog Track
+
+     There are few more frustrating  experiences than searching through  dozens
+of disks for a program you  urgently need, realizing that you  have overlooked
+it, and then having  to start the whole tedious business  from scratch once
+again.  Some order  can be brought to disk choas by  inserting heading on the
+catalog  track and making sure the type of  files that they apply to are placed
+ underneath.  For example, it might  be useful to get the following  display
+upon CATALOG a
+disk.
+
+        T 000 GAMES
+        T 000 -----
+       *B 062 PIRATE'S SWAG
+       *B 071 ROBIN HOOD'S LOOT
+
+     With a newly initialized disk in  the drive, type in the following 
+sequence:  SAVE XXXXX  SAVE YYYYY  DELETE XXXXX  DELETE YYYYY.  Then  examine
+track $11, sector $0F and  you will see the 'X' and 'Y' strings  just beneath
+the HELLO entry.  The  'X's' will most likely be in line  $30.  So start by
+placing the cursor  on the 'FF' in the line above (byte  $2E) and type in
+'24 00 00'.  This  should leave your cursor on the  first of the 5
+'D8's' (ASCII for  'X') in line 30.
+
+     Now you can press SHIFT 2 and  type in the letters G A M E S,  leaving the
+string 'C7 C1 CD C5 D3'  in place of the 'D8's'.  Be sure to  finish this
+sequesnce by pressing  CTRL SHIFT P (CTRL @) to get back  into normal mode. 
+Lines $28 and $30  should look like
+this.
+
+ 28:A0 A0 A0 A0 02 00 24 00:    B@$@:
+ 30:00 C7 C1 CD C5 D3 A0 A0:@GAMES  :
+
+     The next step is to press 'M' 3  times to bring your bursor over the 
+'13' at the end of the string of  'A0's in line $48.  Type in 'A0 00'.  This
+should bring your to the  beginning of the deleted entry for  the 'Y' program.
+
+     Now you have only to repeat the  above process.  In other words, just 
+type '24 00 00' over the 'FF 0F 02'  in line $50.  Then follow this with  a
+SHIFT 2 and hit the '-' key 5  times, leaving a trail of 'AD's'  over th
+'D9's'.  After CTRL @, move  straight down to the '14 02' and  replace this
+with an 'A0 00'.  Finally check everything and write  the sector back to the
+disk.  Reboot  and do a CATALOG to make sure the  heading got set up O.K.
+
+     If you want a flashing instead  of a normal heading, press SHIFT 7  (the
+' character) before typing in  the heading's letters.  Inverse  characters can
+be obtained by  changing the normalscreen ASCII  numbers as
+follows:
+
+  Numbers beginning with a 'C'....
+
+              change the 'C' to a 'O'
+
+
+  Numbers beginning with a 'D'....
+
+              change the 'D' to a '1'
+
+
+  'A0' (a space)....
+
+              change the 'A' to a '2'
+
+     If you change the ASCII for  "GAMES" in this manner, you would  end up
+with:
+
+  30: 00 07 01 05 13 A0 A0 :@GAMES  :
+
+     You can now transfer your  favorite games to the disk and they  will
+automatically appear beneath  the heading.  If after doing this  you still have
+some space left over,  you can easily use the same  procedure to shove anothr
+heading  underneath the games on the catalog.  Further files can be add below
+this,  and so on.
+
+     By the way, when you SAVEed the  'X' and 'Y' files, 4 sectors were  set
+aside by  D.O.S.  to store their  nonexistent data.  Subsequently  DELETEing
+them readjusted the bit  maps to reclaim this wasted space.
+
+     Another point to take note of  was the '24' we put in the dummy  files'
+track pointer byte.  This was  done to prevent the catalog heading  from being
+accidently DELETEd.  If  you now try to access "GAMES" with  any  D.O.S. 
+command you will get an  I/O ERROR, since track $24 cannot be  reached on te
+Apple drives (the  '-'s' are safe in any case because  they are illegal catalog
+ 
+characters).
+
+ Hiding the HELLO File on the Catalog
+
+     If you used the foreoing method  to create headings and want to get  the
+word "HELLO" out of the way-or  you simply want to conceal the  existence of
+your HELLO program  during a CATALOG - you can make it  do a dissappearing act
+as follows.  First, read in track $11, sector $0F  and put the cursor over the
+first  'A0' after the HELLO file's name.  Then type in 19 '88's' and check
+your work by counting up the inverse  'H's' which will have appeared in  the
+ASCII value for CTRL H.
+
+     Having done this, you now need  to let  D.O.S.  in on your little  secret
+so that it can recognize  HELLO on boot-up.  So what you now  have to do is
+change the  D.O.S.  record of the HELLO file's as  described a couple of
+sections back  under "Switching the HELLO file".  Follow those instructions to
+read in  track $01, sector $09 and add 19  '88's' after the HELLO program's 
+name.  The program will run  automatically when you boot the  disk, but of
+course,  D.O.S.  will  ignore any direct commands referring  to HELLO, since
+HELLO now contains  19 extra control characters.
+
+     A couple of points are worth  noting here.  First of all, it seems  that
+19 '88's' is always the correct  formula, regardless of the file  name's length
+(but you can't hide  files whose names are longer than 11  letters due to the
+30 character  maximum permitted by  D.O.S.).  Secondly, the reason this method 
+works is that CTRL H's output  backspaces to the monitor.  So what  happens is
+that the HELLO file's  name gets printed for a tiny  fraction of a second, too
+quick for  anyone to spot it.  Then along comes  the next filename to completel
+y
+ overwrite
+it.
+
+   Changing  D.O.S.  Error Messages
+
+     If you feel capable of a more  elequent trun of phrase then the  author of
+Apple  D.O.S., you might  like to change the wording of some  of the  D.O.S. 
+error messages.  These begin on track $01, sector  $08, byte $75, and end on
+the next  sector ($09), byte $3D.  So let's  assume, for example, that you want
+ to change I/O ERROR message to CRASH  OUT (clearly a far more decriptive 
+choice).  Start by reading in track  $01, sector $08.  The message starts  in
+line
+$C8.
+
+ C8:41 54 43 C8 49 2F 4F 20:ATCHI/O :
+                ^^
+
+     Position the cursor over the  '49', press SHIFT 7 (the ' sign) to  go into
+normal ASCII mode, and type  "CRASH OU".  Now press CTRL @,  followed by SHIFT
+2 (the " sign) to  switch to high ASCII (the last  character is in high ASCII
+to flag  the end of the message).  Type in  the final 'T' and write the sector 
+back.  Boot the disk, leave the  drive door open, and type "LOAD  HELLO".  Your
+altered message should  quickly appear.
+
+     This can be done with any of the  error messages.  Just remember to  end
+up with high ASCII character,  and make sure your own message's  does not
+exceed the one you are 
+replacing.
+
+  Some Ideas for Advanced Programmers
+
+     Here are a few Tricky Dick  tidbits that you assembly language  programmer
+s
+may find useful.  And  even if you don't know your way  around an assembler too
+well yet,  some of these may prove helpful.
+
+     When you have one of the C.I.A.  modeules in memory, hitting CTRL E 
+causes Tricky Dick to jump to it and  begin execution.  This feature makes  it
+possible for you to install your  own programs and access it with the  same
+instructions.  Furtermore, you  can easily interface your code with  Tricky
+Dick to call Tricky's  internal routines.
+
+     The first thing Tricky Dick does  on CTRL E is attempt to distinguish  a
+C.I.A. module from left-over  garbage in RAM.  In order to do  this, it EOR's
+the byte at $8000  with the one at $8001, then CMP's  this with the byte at
+$8002.  If a  match is found, it JSR's to $8003  where the modules' code
+begins.  If  a match does not occur, a tone is  sounded and normal operation is
+ resumed.  To use the CTRL E hook,  you need to assemble your programs  to run
+at this address and set up  the first 3 bytes accordingly.
+
+     Tricky Dick contains both a 3.3  and a 3.2 RWTS.  The 3.3 version  begins
+at $3800, and the 3.2 at  $3000.  They both use the same IOB  which starts at
+$815, and share the  device characteristics table which  starts at $826.  The
+information on  these two lists is in exactly the  same order you would
+normally  expect.  A JSR to $121f invokes a  subroutine which looks at $82A to 
+determine which  D.O.S.  version has  been selected, then calls the 
+appropriate RWTS.  Reading or  writing with the RWTS will be done  using the 
+D.O.S.  marks shown in  Tricky Dick's display.  Tricky Dick  stores its sector
+data into a buffer  starting at $2E00.
+
+     If you want to BSAVE Tricky Dick  any patches or changes to it, use 
+A$803, L$3800.
+
+     You can call each of the 3  versions of RWTS in the machine 
+independently.  Thus, you could, for  example, use the  D.O.S.  RWTS at  $B800
+to read a disk, and one of the  Tricky Dick RWTS's to write it out  again or
+vice versa.  With Tricky  Dick and a module in memory, there  is still free
+core from $4000 to  $7FFF for use as a buffer or  anything else.  After your
+program  has done its thing, it can return  control to Tricky Dick at any time 
+with an
+RTS.
+
+      Moving Closer to the Disk
+
+     Well, that just about loses this  file on Tricky Dick for now, though  I'l
+l
+be returning to some of this  utility's more sophisticated  capabilities when I
+show you how to  work on copy protected disks.  However, without a little help
+from  the other members of the C.I.A.,  there are just some jobs taht Tricky 
+can't do.  You'll find that for some  of the work you'll be wanting to  carry
+out, you're ging to need to  delve into the most inaccessible  parts both of
+normal and abnormal  disks - and make complete sense of  all the information
+they contain.  That's why you need to meet The Linguist.
+
+-----* APPLE MANOR (716) 654-POOF!
+
+
+[5]  #36  Library #8
+
+<1-58/Last-33> <?/Q/A

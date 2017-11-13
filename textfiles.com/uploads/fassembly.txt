@@ -1,0 +1,202 @@
+                                             
+====================================
+File Operations in Assembly Language
+====================================
+
+by Jakash3
+February 20, 2010
+
+All of which can be and was done using debug.exe
+
+The following all use the MS-DOS API (int 21) to do these file operations.
+
+(MKDIR) Create Folder
+----------------------------------------
+C:\>debug
+-a 0100
+xxxx:0100 mov ah,39                ;Create folder func.
+xxxx:0102 mov dx,010c              ;Points to pathname
+xxxx:0105 int 21                   ;Do it
+xxxx:0107 mov ax,4c00              ;AH=Exit, AL=Errorlevel
+xxxx:010A int 21                   ;Do it
+xxxx:010C db "C:\NewFolder1",00    ;Null terminated pathname
+xxxx:011A
+-n makef.com
+-r cx
+CX 0000
+:001a
+-w
+Writing 001A bytes.
+-q
+----------------------------------------
+Remove Folder
+----------------------------------------
+C:\>debug
+-a 0100
+xxxx:0100 mov ah,3a               ;Remove folder func.
+xxxx:0102 mov dx,010C             ;points to pathname
+xxxx:0105 int 21                  ;Do it
+xxxx:0107 mov ax,4c00             ;Exit func., AL=Errorlevel
+xxxx:010A int 21                  ;Do it
+xxxx:010C db "C:\OldFolder1",00   ;Null terminated pathname
+xxxx:011A
+-n rmvf.com
+-r cx
+CX 0000
+:001a
+-w
+Writing 001A bytes.
+-q
+----------------------------------------
+Create/Truncate File
+----------------------------------------
+C:\>debug
+-a 0100
+xxxx:0100 mov ah,3c     ;Create file func.
+xxxx:0102 mov cx,2      ;Archive file attribute
+xxxx:0105 mov dx,010f   ;Points to filename
+xxxx:0108 int 21        ;Do it
+xxxx:010A mov ax,4c00
+xxxx:010D int 21
+xxxx:010F db "C:\Users\jakash3\newfile1.txt",00
+-n mkf.com
+-r cx
+CX 0000
+:002D
+-w
+Writing 001A bytes.
+-q
+----------------------------------------
+Note:
+File attributes are specified by the hex value of a bit array.
+----------------------------------------
+  0   1   2   3   4   5   6   7
++---+---+---+---+---+---+---+---+
+| ? | ? | ? | 0 | 0 | ? | 0 | 0 |
++---+---+---+---+---+---+---+---+
+----------------------------------------
+0 - Read Only
+1 - Hidden
+2 - System
+3 - Volume label (ignored)
+4 - Reserved, must be zero (directory)
+5 - Archive
+6 - Unused
+7 - Unused
+
+A Read-Only Archive file: 10000100
+In hex that would be: 84
+So 84 would be the value for CX in the 3C function of Int 21.
+
+Open File
+----------------------------------------
+C:\>debug
+-a 0100
+xxxx:0100 jmp 011c
+xxxx:0102 db "C:\Users\jakash3\data.txt",00
+xxxx:011C mov ah,3d     ;Open file func.
+xxxx:011E mov al,40     ;Bit field for read/write access
+xxxx:0120 mov dx,0102   ;Points to filename
+xxxx:0123 int 21        ;Do it
+----------------------------------------
+File access mode bit fields for this function:
+----------------------------------------
+  0   1   2   3   4   5   6   7
++---+---+---+---+---+---+---+---+
+| ? | ? | ? | 0 | 0 | 0 | 0 | 0 |
++---+---+---+---+---+---+---+---+
+----------------------------------------
+000 - Read Only (mov cl,0)
+001 - Write Only (mov cl,20)
+010 - Read/Write (mov cl,40)
+
+After the interrupt call, AX should contain the file handle if no errors occurred.
+
+Close File
+----------------------------------------
+C:\>debug
+-a 0100
+xxxx:0100 jmp 011c
+xxxx:0102 db "C:\Users\jakash3\data.txt",00
+xxxx:011C mov ah,3d     ;Open file function
+xxxx:011E mov al,40     ;Bit field for read/write access
+xxxx:0120 mov dx,0102   ;Points to filename
+xxxx:0123 int 21        ;Do it
+xxxx:0125 mov bx,ax     ;Move file handle to BX for 3e function -------+
+xxxx:0127 mov ax,3e00   ;Close file function <------------------------/
+xxxx:012A int 21        ;Do it
+----------------------------------------
+Read from file
+----------------------------------------
+C:\>debug
+xxxx:0100 jmp 012b
+xxxx:0102 db "C:\Users\jakash3\ab.txt",00 ;filename to read from
+xxxx:011A db 00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,24 ;'$' terminated 10 byte buffer
+xxxx:012B mov ah,3d     ;Open file function
+xxxx:012D mov al,00     ;Read-Only file access
+xxxx:012F mov dx,0102   ;Points to filename
+xxxx:0132 int 21        ;Do it
+xxxx:0134 mov bx,ax     ;Move retrieved file handle into BX
+xxxx:0136 mov ax,3f00   ;Read from file function
+xxxx:0139 mov cx,10     ;Read the first 0x10 bytes of file
+xxxx:013C mov dx,011a   ;Address of buffer to store bytes read
+xxxx:013F int 21        ;Do it
+xxxx:0141 mov ax,0900   ;Print string function
+xxxx:0144 mov dx,011a   ;Points to '$' terminated string to print
+xxxx:0147 int 21        ;Do it
+xxxx:0149 mov ax,4c00   ;Exit function (AL=Errorlevel to return)
+xxxx:014C int 21        ;Do it
+xxxx:014E
+-rcx
+CX 0000
+:004e
+-n readfile.com
+-w
+Writing 0004E bytes
+-q
+----------------------------------------
+Write to file:
+----------------------------------------
+C:\>debug
+xxxx:0100 jmp 0101
+xxxx:0102 db "C:\Users\jakash3\ab.txt",00
+xxxx:011A db "hello world!",00
+xxxx:0127 mov ah,3d   ;Open file function
+xxxx:0129 mov al,20   ;Write-Only file access
+xxxx:012B mov dx,0102 ;Points to filename
+xxxx:012E int 21      ;Do it
+xxxx:0130 mov bx,ax   ;Move retrieved file handle into BX
+xxxx:0132 mov ax,4000 ;Write to File function
+xxxx:0135 mov dx,011a ;Points to data to write
+xxxx:0138 mov cx,0d   ;Number of bytes to write
+xxxx:013A int 21      ;Do it
+xxxx:013C mov ax,4c00 ;Exit function
+xxxx:013F int 21      ;Do it
+xxxx:0140
+-r cx
+CX 0000
+:0040
+-n wfile.com
+-w
+Writing 0040 bytes.
+-q
+----------------------------------------
+Delete file:
+----------------------------------------
+C:\>debug
+-a 0100
+xxxx:0100 mov ah,40   ;Delete file function
+xxxx:0102 mov dx,010c ;Points to filename
+xxxx:0105 int 21      ;Do it
+xxxx:0107 mov ax,4c00 ;Exit function
+xxxx:010A int 21      ;Do it
+xxxx:010C db "C:\Users\jakash3\ab.txt",00
+xxxx:0124
+-r cx
+CX 0000
+:0024
+-n delf.com
+-w
+Writing 0024 bytes.
+-q
+----------------------------------------

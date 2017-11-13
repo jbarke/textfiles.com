@@ -1,0 +1,976 @@
+AppleLink
+APPLE II DEVELOPMENT FORUM CONFERENCE LOG
+February 21, 1989  10:00 p.m. Eastern time
+Topic: Apple II Operating Systems
+Forum Leader: James Luther (Jump Long)
+
+
+AFA Gary J Tonight's topic is Operating Systems.
+DennisDoms (Operating Systems, I think)
+AFA Gary J Hi Dave
+DennisDoms It just seemed to be a good, friendly RT with some good info.
+Matt DTS   I'm glad to hear it!
+Matt DTS   Hi Dave, Doug, Everyone Else.
+Dave Lyons Howdy, all.
+Jump Long  Hi all!
+HeckOfAGuy wehn do we start?
+AFA Gary J Hi Jump!
+Jump Long  <- AFL Jim left his disk at work.
+AFA Gary J :)
+SEGlass    Whats the topic tonight?
+HeckOfAGuy bye
+AFA Gary J Operating Systems.
+Matt DTS   Jim left here right around an hour ago, like a good little soldier
+           (OSs, Steve)
+SEGlass    I guess I'll stick around.  I might know a thing or two.
+Matt DTS   I've heard that.
+Jump Long  I wonder how many times I'll have to tell who I am tonight...
+SEGlass    Thats the one about Dorthy and a wizzard, right?
+AFA Gary J heheh...
+AFA Gary J Jim IS here!
+Jump Long  <- AFL Jim (really!)
+SEGlass    where?
+Jump Long  Anyway... Welcome to the Apple II Development Forum. Tonight's
+           topic is AppleII
+Jump Long  Operating Systems.
+Jump Long  I guess we'll start off with no protocol until things get going.
+Jump Long  (here Steve)
+SEGlass    Now I see.
+Jump Long  The floor is open...
+AFA Gary J I've got one, (if nobody else does...)  
+Jump Long  Hi Guy
+AFA Parik  why does GS/OS replace the control panel vector?
+Jump Long  GA Gary
+Guy Rice   Hello JML.
+AFA Parik  (bugs in the ROM version, etc)
+AFA Gary J What is it about the GetFileInfo call that could cause a "Block
+           number out of
+Dave Lyons A better question is DOES GS/OS replace the control panel vector,
+           I think.
+AFA Gary J range error" in GS/OS?
+Jump Long  <- Jim M Luther
+Guy Rice   I'm sure it does...
+AFA Parik  it does, I've got two GSs, one w/ ProDOS 8 and one w/ GSOS and one
+           points to
+Dave Lyons Gary, it reads the bitmap and finds that there's a free block past
+           the end
+Dave Lyons of the volume!
+AFA Parik  routines in bank $14 and one points to routines in $FE.  I
+           disassembled them
+SEGlass    !
+Guy Rice   GS/OS replaces it I think so that you can't get in while the Busy
+           flag is set.
+Dave Lyons (I tried it a little bit ago & posted a msg in your folder in
+           ADV:OS.)
+AFA Parik  both and they seem to be the same except for a few minor
+           differences.
+AFA Gary J Yes, but doesn't ProDos 8 read the bit map as well?
+AFA Gary J Ok, Thanks Dave!
+Dave Lyons Parik, do you have SoftSwitch installed?
+AFA Parik  nope
+SEGlass    Wow, this all went by too fast!!!!
+AFA Parik  (Hi Scott)
+Jump Long  Maybe we better go to protocol...
+ScottG25   (Hi Everyone)
+Jump Long  Q= Parik, Gary
+SEGlass    Please
+AFA Gary J Q = Parik
+Dave Lyons !
+AFA Parik  :)
+Jump Long  GA Steve
+AFA Parik  Question again: GS/OS replaces the Control Panel vector ($E1/0048)
+           with its
+AFA Gary J Q = Parik (Steve, Dave)
+AFA Parik  own routine in bank $14.  Is there some bug in the ROM version
+           which is
+AFA Parik  located at bank $FE?
+SEGlass    GSOS does not replace the vector.
+Guy Rice   It does.
+SEGlass    The event manager does replace the vector.
+SEGlass    It always has replaced since the very first ROM.
+SEGlass    It has nothing to do with the OS.  
+AFA Parik  ok, thanks.  
+AFA Parik  (any particular reason why?  :)
+SEGlass    The idea was that the CDA request should be an event, not always
+           an
+Dave Lyons Well, I just checked (event mgr off), and there is indeed a
+           RAM-based version
+Guy Rice   Right.
+SEGlass    interrupt.
+SEGlass    That way an event based program could control whats going on
+Dave Lyons installed there (I hadn't noticed before).  It's a patch on the
+           System Disk,
+SEGlass    a little better. GA.
+Dave Lyons but it isn't actually part of GS/OS.  (Just TOOL.SETUP / TS2.)
+Guy Rice   In other words, System 4.0 replaces it.
+Guy Rice   ?
+AFA Gary J Q = Parik (Dave)
+Dave Lyons Correct.
+AFA Gary J Q = Parik (Dave), Guy
+AFA Parik  GA
+Dave Lyons I haven't compared the ROM version w/ the RAM version, but
+Jump Long  Guy, GA
+Guy Rice   Ooops - sorry, that was a mistake... ga
+Dave Lyons I remember there were some (relatively harmless, but ugly?) bugs
+           in the ROM.
+Jump Long  ooops
+Dave Lyons (Ken Kashmarek rewrote the thing as SOFTSWITCH.INIT or something,
+           too.)
+Dave Lyons (ga)
+Jump Long  Guy, was that a question or not at question?
+Guy Rice   Nope. sorry.
+AFA Parik  They're both almost the same BTW.  Is it safe to put a $00 in
+           $E01D67 to 
+Jump Long  OK, Gary, do you want to repeat your question or did you get
+           enough of an
+Jump Long  answer?
+AFA Parik  disable the control panel?  This fools it into believing its being
+           re-entrant.
+AFA Parik  re-entrant = re-entered.
+AFA Gary J I think Dave answered my question.  He was nice enough to test my
+           situation.
+SEGlass    !
+Jump Long  GA Steve
+AFA Gary J I was getting a "block out of range" error on my hard drive when
+           doing a 
+AFA Gary J GetFileInfo call on the volume.
+SEGlass    I think I just remembered why we patched it.
+AFA Gary J GA
+SEGlass    There was a problem if you went into the CDAs and an NDA was the
+SEGlass    front window.  The event manager would pass all keystrokes to
+SEGlass    the NDA even though it was not on the part of the screen you could
+           see.
+SEGlass    We fixed it by telling the system that the CDA menu was active and
+           not allowing
+SEGlass    keystroke events to passed on to NDAs at this time.  Leaving the
+           CDAs
+SEGlass    activated the NDAs again.
+SEGlass    GA
+Dave Lyons !
+Jump Long  GA Dave
+AFA Gary J Q = Parik (Dave)
+Dave Lyons I don't understand...did it pass the keystrokes _only_ to the NDA,
+           or would
+Dave Lyons they also get seen by a CDA doing ReadChar calls?  (I've never had
+           trouble
+Dave Lyons typing in Nifty List with NDAs open, on any version of the System
+           Disk.)
+Dave Lyons (ga)
+SEGlass    The way GetNextEvent works is that before the event is returned to
+           the
+SEGlass    calling routine, SystemEvent is called.  SystemEvent looks at the
+           
+SEGlass    top window.  If it is a system window, then it sees if that system
+           window
+SEGlass    wants the kind of event that is being looked at.  If it does want
+           the
+AFA Gary J Q = Dave (Steve)
+SEGlass    event, then it passes it on the the NDA and the event manager
+           returns
+SEGlass    a null event.  If the NDA does not want that kind of event, the
+           event
+SEGlass    manager returns it.  An NDA that does not accept keystrokes would
+           not
+SEGlass    have caused a problem.
+Dave Lyons Well...I'm still baffled, then.  I'm pretty sure I have a lot of
+           NDAs that have
+SEGlass    Does that help?  GA.
+Dave Lyons -1 (all events) for their event masks, even though they don't
+           actually do
+Dave Lyons anything with keyDown events if they get them.  I'll look into it
+           some more.
+Dave Lyons (done)
+Jump Long  For those that just wandered in, I'm AFL Jim (really!)
+Matt DTS   He is not!  I'M AFL JIM!
+Guy Rice   Heheh...
+AFA Gary J Sure you are.. :)  And I'M Steve Wozniak!
+JSchober   :)
+SEGlass    I thought you were John Scully
+Jump Long  haha, Matt - You could be if you went a couple of cubes over!
+Jump Long  (and knew the secret code :)
+Jump Long  Anyway... back to OSs
+SEGlass    !
+JSchober   (did I miss anyone's FN??  %)
+Coach101   ?
+Jump Long  GA Steve
+AFA Gary J Q = (Steve), Coach
+SEGlass    Just an interesting point to note:  we have not yet been talking
+           about
+SEGlass    anything relating to an OS on the GS.  
+SEGlass    This desk manager stuff and event manager stuff is all independent
+           of
+Jump Long  Gary was...
+AFA Gary J :)
+SEGlass    the OS.  The patch may have first appeared on the 4.0 disk which
+           
+SEGlass    is so well noted for GS/OS, but many people have trouble
+           distinguishing where
+SEGlass    the OS starts and stops.  Not that I'm complaining, the same
+           problem happens
+SEGlass    inside Apple for all our product lines too.  GA.
+Dave Lyons [No problem:  The OS starts at $E100A8 and B0. :) ]
+AE JohnS   :-)
+AFA Gary J Q = Coach
+Jump Long  GA Coach
+Coach101   With regard to disk caching,
+Coach101   When I set the size with the Apple Nda, when is that emory
+           actually
+Coach101   used, what can cause a release of that memory, and what happens
+           if
+Coach101   the amount of memory is not available at the time that GsOs goes
+Coach101   to do a Cache operation (presuming that the memory is not a hard
+Coach101   set aside from the time the value is set in the Nda)    GA
+Jump Long  I think that was covered in the message boards several months
+           ago...
+Dave Lyons !
+Matt DTS   ! (Since no one else is)
+Dave Lyons (ga Matt)
+Jump Long  GA Dave
+Matt DTS   (dave, quit that)
+AFA Gary J Q = Coach (Dave, Matt)
+SEGlass    I knew Dave and Matt could answer!
+AFA Gary J :)
+Jump Long  Let's all answer...
+Matt DTS   The cache size set by the Disk Cache NDA is the maximum size that
+           the cache may grow to.
+AFA Gary J Q = Coach (Matt OR Dave..both at the same time)
+Jump Long  If the memory isn't available, GS/OS won't get it.
+Matt DTS   It is not all allocated when you set the cache size (which is done
+           through a mostly-undocumented...
+Matt DTS   ResetCache call), but is allocated as drivers and FSTs request
+           that blocks be cached.
+Dave Lyons  ! --> ?
+Matt DTS   It is only released when a driver/FST asks a particular cached
+           block to be flushed from the...
+Matt DTS   ...cache or a ResetCache call is allocated.  (GA, Dave)
+Dave Lyons I would have got that mostly wrong, BTW.  Anyway, now I have a
+           question
+Dave Lyons instead:  What is the difference between a 0K and a 16K cache
+           setting?  I read
+Dave Lyons that the cache is always at least 16K.  Does that mean it's
+           setting+16K, or
+Dave Lyons min(16K,setting) ?
+SEGlass    16K or is this a trick question
+Dave Lyons (I mean the "maximum cache size", of course.)
+SEGlass    !
+AFA Gary J Q = Coach & Dave (Matt)
+Matt DTS   The OS has an internal cache that FSTs may use that is at least
+           16K, regardless of the NDA setting.
+Jump Long  GA Steve
+Jump Long  and Matt
+Dave Lyons Okay, so the effective maximum is 16K more than the setting.  Got
+           it.
+SEGlass    The settings above 0 are in addition to what the OS will do
+           anyway.
+Matt DTS   (Steve will correct me if I'm wrong.)
+SEGlass    There are other times that the cache is flushed.
+AFA Gary J Q = Coach & Dave (Steve & Matt)
+SEGlass    Most specifically, when the disk from which the blocks came from
+           is
+Matt DTS   That's true.  I forgot about that.
+SEGlass    ejected.  
+SEGlass    Caching also works differently depending on whether or not 
+SEGlass    sessions is on or off.
+SEGlass    I'm not sure of the details, but generally, many more blocks are
+           cached
+Dave Lyons ?
+SEGlass    if sessions is on.  Also, applications can get involved in
+           caching, but again
+SEGlass    I don't know the details.  GA.
+AFA Gary J Q = Coach, Dave
+Jump Long  Coach, is this enough or do you have a follow-up question?
+Matt DTS   !
+Matt DTS   ! = "Do you want more details or is that enough?"
+Jump Long  GA Matt, give us details.
+Coach101   A ? and !
+Matt DTS   I'll let Coach go first since he has the floor.  GA.
+Jump Long  OK, GA Coach
+Coach101   first the comment.   Since re-booting a II-Gs is an infrequent
+Coach101   happening, and I never eject my hard-disk (intentionally), it 
+Coach101   is reasonable that I could accumulate some long unused cache
+Coach101   blocks from an application that ran an hour ago.  Now I come
+Coach101   along and have a memory hungy application that does not have
+Coach101   much need for disk cacheing.  Is there a provision for an
+           application
+Coach101   to cause the cache to be flushed?  Now I forgot the second ?  Ga
+SEGlass    !
+Jump Long  GA Matt or Steve
+AFA Gary J Q = Coach (Matt/Steve), Dave
+Matt DTS   (GA Steve - researching)
+SEGlass    Unless an application does something special, there are not
+SEGlass    many blocks that the OS will cache by itself.  The exception to
+           this
+Dan Burton !
+SEGlass    is the sessions call which causes the cache to be flushed when
+Matt DTS   !
+SEGlass    sessions are turned off.  But there is still the potential for
+           problems.  The
+AFA Gary J Q = Coach (Steve/Matt, Dan), Dave
+SEGlass    cache is not purgable.  GA
+Coach101   So,
+Dan Burton It would be nice to be able to turn cache off or bea able to fulsh
+           it for us 
+Jump Long  Matt, GA
+Coach101   BeginSession followed by EndSession will effectively reduce the
+Dan Burton Crazy people that use 1 CMS drive on 2 IIGSs
+Coach101   current cache to its smallest size (16k) ?
+Dave Lyons !
+Matt DTS   (everyone else GA - I just wanted to stick my foot in the door)
+Dave Lyons Dan, write your own device driver that never caches any blocks on
+           your drive.
+Dan Burton I thought about it.
+SEGlass    I don't know if the session calls will flush any more than what is
+           collected
+SEGlass    during the time sessions is on.  An easy FlushAll is a good idea. 
+           I don't
+SEGlass    know if it is easy to do, but Matt is researching...   Any news
+           matt?
+AFA Gary J Q = Coach (Steve), Dave
+SEGlass    GA
+Matt DTS   Hold on - let me find the latest question...
+AFA Gary J (he must be multi-tasking again  :)
+Coach101   Applicatiion level Flush All --- I think?
+Jump Long  Steve, are cache blocks purgable at any level by the Memory
+           Manager?
+Matt DTS   Ok.  First, ResetCache will flush the cache.  We didn't document
+           this call in Volume 1 mostly...
+Matt DTS   ...of time constraints.  We'll try to get it in the Final (A-W)
+           manual, and probably a tech note too.
+Jump Long  (never mind)
+Dave Lyons (It's in NLIST.DATA, tho, I think.)
+Matt DTS   Second - a Session in progress effectively directs all blocks that
+           are written as cached NOT to be...
+Matt DTS   ...written to disk as well, until an EndSession is encountered. 
+           Since the ProDOS FST automatically...
+AFA Gary J Q - Coach (Matt/Steve), Dave
+Dave Lyons !
+Matt DTS   ...caches (or requests caching for) "system blocks" (directories,
+           bit-maps, etc.), this has the effect
+AFA Gary J Q + (Dave)
+Matt DTS   ...of writing just the data blocks to disk immediately, and not
+           writing all the directory...
+Matt DTS   ...updates until the end of the session.  This keeps the drive
+           head from moving around so much...
+Matt DTS   ...and increases speed.  The whole scheme fails if the application
+           asks that all the files it's...
+AFA Gary J Q = Coach (Matt/Steve, Dave), Dave
+Matt DTS   ...reading/writing be cached as well, since those will kick out
+           all the system blocks in the cache...
+Matt DTS   ...unless the cache is big enough to hold EVERYTHING, and things
+           will be around normal speed.
+Matt DTS   For more information on this, I strongly recommend (since I was
+           strongly suggested to write it)...
+Matt DTS   ...GS/OS TN #3, "Pointers on Caching", which should be right here
+           in the ADV library.  GA.  (Whew!)
+AFA Gary J Yes, it is in the library.
+Coach101   I read Tn 43.  It did an outstanding job of discussing and
+Jump Long  I might note that Gary Little's new book has the ResetCache call
+           documented in
+Jump Long  it.
+Coach101   explaing when to use cacheing.  It did not address the items
+           that
+AFA Gary J Q = Coach (Dave), Dave
+Coach101   have come forth in this discussion.  Thanks for all the
+           information.
+Coach101   That finishes my questions ...    Ga....
+Dave Lyons Does ResetCache flush the internal 16K, too?
+Jump Long  Dave GA
+Dave Lyons :)
+Dave Lyons (No big deal--just wondering if Doug is going to fry his drive
+           trying to use
+Dave Lyons it.)
+Jump Long  ResetCache resizes the cache to the battery RAM setting.
+Dave Lyons Mmmm.  So it doesn't necessarily remove all blocks from the cache,
+           right?
+Jump Long  I would _guess_ that flushes it in the process (I don't know).
+ScottG25   ?
+Dave Lyons Okay, a more interesting pair of questions:  Does the Finder use
+           Sessions? and
+AFA Gary J Q = (Dave), Dave, Scott
+Dave Lyons is the cache limited by its set size even during a session?
+SEGlass    Yes and I thing no.
+DaviesDoug !
+SEGlass    thing should be think
+Jump Long  GA Doug
+DaviesDoug Think I've seen a couple of SESSION calls in FINDER (kludging
+           through it...
+DaviesDoug one day)
+AFA Gary J Q = Dave (Doug), Scott
+Dave Lyons Okay, good.
+Dave Lyons Well, let me throw out 2 more things quickly:
+Dave Lyons Can generated drivers generate disk-switched events, or whatever
+           the right
+Dave Lyons terminology is?  For example, what about a Laser 3.5 drive on a
+           UDC card or
+Dave Lyons something?  (Somebody on Info-Apple was complaining that GS/OS
+           would prompt
+Dave Lyons for a disk & never notice that he switched disks.)
+Matt DTS   Stupid Macintosh crashes all the **** time...
+Matt DTS   ...<grumble grumble grumble>
+SEGlass    Use a real system!
+Jump Long  Turn off intermail, Matt ;)
+Dave Lyons Nobody tackling that one?
+Matt DTS   What
+Matt DTS   ('s the question?)
+Jump Long  Repeat it, Dave
+Dave Lyons The ? was can a generated device driver come up with disk-switched
+           events, like
+AFA Gary J Q = Dave (??), Scott
+Dave Lyons for a 3rd-party 3.5" drive on a 3rd-party interface card.  A user
+           was 
+Dave Lyons complaining that GS/OS never noticed he switched disks & kept
+           prompting for
+Dave Lyons the one he had already inserted.
+Jump Long  on what drive and card, Dave? (you'll like this Matt)
+Matt DTS   A generated driver never generates disk-switched EVENTS, to the
+           best of my knowledge.  However...
+Guy Rice   Heheh!
+Dave Lyons I think it was a Laser 3.5 drive on a UDC card, but that might be
+           wrong--I can'
+Dave Lyons t check the msg right now.
+AFA Gary J Q = Dave (Matt), Scott
+SEGlass    Did he crash again?
+Matt DTS   ...a generated Extended SmartPort driver can return disk-switched
+           errors when they occur.  GA.
+JSchober   ...let me try to hunt down Dave's message on info-apple here...
+           hang on...
+Dave Lyons While Joe's doing that, I want to take a quick poll:  How many
+           people here
+Dave Lyons are reasonably sure they've had a volume damaged because a buggy
+           3rd-party
+Dave Lyons utility accidentally overwrote part of GS/OS's cache?  I have. 
+           (Some Apple
+Dave Lyons people already know how I feel about this.)
+JSchober   (Dave:  got an approximate date-posted on that message?)
+Dave Lyons (Yeah, approximately yesterday or today, I think.)
+JSchober   Ok...
+AFA Gary J Q = Dave, Scott
+Matt DTS   {S About Applelink}
+Coach101   Getting at checksumming, Dave?
+Dave Lyons Yes, Coach, I'd like to see the OS do some checking when reading
+           from the
+Dave Lyons cache to make sure it hasn't been tromped over.
+SEGlass    If you run something that trashes random memory, check summing the
+           cache
+Coach101   I see the problem Dave, but that little old 65816 is very
+SEGlass    is not going to make it safe to run that application.
+Coach101   overworked.  But, it would protect the inexperienced appliance
+Guy Rice   It will prevent that application from destroying the disk,
+           though...
+Dave Lyons Right, I don't mean that checksumming would make me feel safe
+           using a buggy
+Jump Long  It could be tromping on the OS in many other places.
+Dave Lyons application--only that it would point out the problem in some
+           cases!  I'd want
+Coach101   user.  I would probably turn it off and take my chances with
+DaviesDoug Welcome back matt!!!!!!!!!
+DaviesDoug hehe
+AFA Gary J Q = Dave, Scott
+Dave Lyons it to cause a fatal error giving the address of the trashed block,
+           and there'd
+Coach101   _better_ software.   Or......   Hardware memoryp protect!!!
+Dave Lyons be some chance of identifying the culprit from the data it stored
+           over the
+Dave Lyons cache.
+SEGlass    The only time that cached memory is written is when the 
+JSchober   (stupid ALINK software... BUFFER FULL on the catalog...
+           sorry...)
+SEGlass    application uses the sessions call.
+Matt DTS   Not exactly, Steve.
+Dave Lyons No, Steve:  Here's what happened to me.  Something overwrote the
+           last 1/4 of
+AFA Gary J Careful, Joe.  BillP is here  :)
+Coach101   WRITE-THROUGH I DEARLY HOP!!!!!!
+Dave Lyons the cached image of the first block of my *:system directory. 
+           Some change
+SEGlass    The one exception is the bitmap and directory blocks.
+BillP      :X
+AFA Gary J Q = Dave, Scott
+JSchober   (oops!  uhhh... HIII, Bill.... %)
+Dave Lyons was made to some file in that dir block (file added or deleted, or
+           locked or
+Guy Rice   That's some exception!
+Dave Lyons unlocked or whatever), and the damaged block was read from the
+           cache, changed,
+Dave Lyons and re-written.  Presto!  Lots of warnings to move the data to
+           another disk.
+Dave Lyons Ick.  I realize checksumming would decrease performance, but not
+           all _that_
+Dave Lyons much.  It could be limited to system blocks if that would help,
+           and it could
+Dave Lyons be a configurable option (which I would leave ON most of the time,
+           but which
+Dave Lyons could default to OFF for people not developing software).
+Matt DTS   On the other hand, protecting developers makes it much easier for
+           them to accidentally....
+SEGlass    Could be an interesting Programmer preference.
+Matt DTS   ...release buggy software (bugs they didn't find because they had
+           checksumming on).
+AFA Gary J Q = Dave (Matt/Steve), Scott
+Dave Lyons Matt, WHAT?  How could that happen?
+Dave Lyons They would FIND bugs that they otherwise would miss.  A checksum
+           failure, in
+Dave Lyons my plan, would cause a fatal error, not a re-read from disk.
+SEGlass    Not the way I'd put such a feature in.  Disks would not get
+           trashed but
+Matt DTS   It couldn't if your suggestion of a fatal error for bad checksum
+           was taken.  That's the first I've...
+Matt DTS   ...heard of it.
+SEGlass    the App would not keep running!
+Dave Lyons Well, maybe I didn't make my vision clear enough when I mentioned
+           it before,
+SEGlass    There are things that can be done now to simulate something like
+           this.
+AFA Gary J Q = Dave (Matt/Steve), Scott
+Dave Lyons but that's what I've wanted all along--something to make SURE you
+           notice when
+Dave Lyons something bad happens.
+SEGlass    One could write a heart beat task that checksummed blocks that it
+           owns
+SEGlass    and put up messages when the mem is trashed.  It would use memory
+           but it 
+SEGlass    would be a good test.  You could even link it into the Tool
+           Dispatch vector
+SEGlass    so it would run more often.  (It would slow things down a lot so
+           you'd
+SEGlass    probably want to make it part of a CDA so you could turn it on
+           and
+SEGlass    off).
+SEGlass    GA
+Dave Lyons Yes, that's a good idea.  I may do something like that sometime. 
+           But Murphy's
+Dave Lyons Law says that the GS/OS cache is going to get trashed, and the
+           blocks my
+Jump Long  How would you get it to take care of the Cache blocks?
+Dave Lyons heartbeat routine checks are not. :)
+AFA Gary J Q = Dave (Matt/Steve), Scott
+Dave Lyons After my latest debugging experience last night, I'm also
+           considering something
+Dave Lyons to check the current QD port for validity on all appropriate
+           calls.  (I found
+Jump Long  Would it cause an check of some kind everytime the cache blocks
+           changed?
+Dave Lyons a formerly-mysterious Finder problem.)
+SEGlass    Necessity is the mother of invention.
+Matt DTS   (GA)
+SEGlass    Jim, the heartbeat task would only check its own memory, hoping
+           that if
+SEGlass    an application is going to trash something, it will trash the
+           blocks being
+SEGlass    checked.  It is not bullet proof, but very little is.  It would
+           just be
+AFA Gary J Q = Dave (Jim - Matt/Steve), Scott
+SEGlass    a tool to help find problems earlier.
+SEGlass    GA
+Jump Long  OK
+Dave Lyons (done)
+Jump Long  Scott, GA
+ScottG25   What does GS/OS Error 54 mean besides out of memory... Which
+           memory, main?
+Dave Lyons What led to that error, again, Scott/
+Dave Lyons ?
+DaviesDoug !
+Matt DTS   It quite often means that you've used a length byte instead of a
+           word on a class one call.
+Dave Lyons (That's just a question mark, not a question.)
+DaviesDoug main? a thought all memory was created equal
+DaviesDoug matt, protocal!
+ScottG25   An _OpenGS call....
+AFA Gary J Q = Scott (Doug, Dave, Matt)
+Dave Lyons (By _OpenGS do you mean call number $2010?)
+ScottG25   Plenty of memory in the machine...
+SEGlass    Bye all.
+JSchober   CUL Steve.
+Matt DTS   G'night Steve.
+Dave Lyons Bye, Steve.
+Jump Long  By Steve
+ScottG25   Yep, Dave...
+BillP      Good to see you online Steve!
+Matt DTS   Scott, are you sure you have a length word on the pathname string
+           in the parameter block?
+BillP      they always leave before I can type  :(
+ScottG25   I can't say 100% sure, Matt, but if I substitute a P16 Open and
+           change the
+ScottG25   param block it works...  I will have to be 100 sure...
+Dave Lyons Example:  ABC = $03 $00 $41 $42 $43.    BTW, it should be
+           _OdysseyII.
+ScottG25   though.
+Matt DTS   What error $54 means is that GS/OS tried to allocate some memory
+           and couldn't get it.
+Dave Lyons By "change the parm block" what do you mean exactly?  Are you also
+           changing
+ScottG25   100=100% sure.
+Dave Lyons the string?
+Matt DTS   However, this doesn't always occur exactly like you might think it
+           would.
+Matt DTS   GS/OS allocates all of it's own memory that it asks for at
+           run-time in discrete 8K blocks.
+ScottG25   Nope... Same string.... just substituting what a P16 open wants...
+           and comment-
+AFA Gary J Q = Scott (Doug, Matt/Dave)
+ScottG25   ing out the GSOS stuff..
+Matt DTS   Are you changing the string to have a length WORD for GS/OS
+           instead of a length BYTE for P16?
+Dave Lyons You have a problem, then.
+DaviesDoug .done.
+ScottG25   No, Matt... should I?
+Matt DTS   (don't mean to repeat myself, but I'm a mite confused)
+JSchober   (just looked at the GS/OS Open in NList... Christ, what IS all
+           that?!)
+Dave Lyons P16 "ABC" = $03 $41 $42 $43, but GS/OS (class 1 string) "ABC" =
+           $03 $00 $41 $42
+Dave Lyons $43.
+Matt DTS   Yes!  That's the cause of the error.
+ScottG25   Aha! thanks!:))
+Matt DTS   GS/OS is taking the first word of your string and trying to
+           allocate memory to process it.
+Dave Lyons That's the parameters, Joe!  Luckily, only 2 of them are required
+           (that's what
+Dave Lyons the "2-15" means at the beginning).
+AFA Gary J Q = Scott
+Matt DTS   If the first character of the pathname has ASCII value greater
+           than $20, GS/OS will think the...
+Matt DTS   ....pathname is longer than 8K, and will be unable to allocate
+           memory to process it.  Error $54.
+JSchober   Yeah, I know THAT!  :)  But ... "+GET_FILE_INFO"... oh oh OH!
+           <geez, I'm
+ScottG25   SF GetFile returns a word instead of a byte?
+Matt DTS   (and it MUST have ASCII greater than $20, you know.)
+JSchober   awake... that's a nice touch!  Gotta get myself that GS/OS Tech
+           Ref RRSN...>
+ScottG25   in the pathname?
+Dave Lyons Yeah, +GET_FILE_INFO means all the parameters GET_FILE_INFO
+           returns.  Too 
+Dave Lyons many to list there.
+Matt DTS   SFGetFile returns length byte.  Standard File returns all Class
+           Zero structures.
+JSchober   Yeah, that just hit me.  Like I said, pretty nifty addition... :) 
+           So what's
+JSchober   "acc"?
+ScottG25   Thanks! Guys!  
+Matt DTS   If this out-of-memory problem happens at a particularly bad time,
+           GS/OS will have a...
+Dave Lyons Acc=access, I think.  It lets you specify what you're going to do
+           with the
+Matt DTS   ...Fatal System Error (GS/OS dialog shows up, the error number is
+           2).
+Dave Lyons file.  If you're just going to Read from it, say so with the
+           Access parameter,
+Matt DTS   HINT HINT HINT HINT HINT HINT HINT
+Dave Lyons and it will have a nice effect on what other users can do with the
+           same file
+Dave Lyons in a shared environment.
+Matt DTS   What Dave just said.
+JSchober   OIC... hmmm!  Now I REALLY gotta get the Ref -- that sounds
+           terrific...
+Matt DTS   ProDOS, as a file system, is pretty wimpy about access privileges.
+            Other file systems (and maybe...
+Matt DTS   therefore future FSTs) aren't.  Programmers need to be able to
+           handle error $4E (access error) in a...
+Matt DTS   ...better way than trying to set the access bits to something they
+           can work with.  In some file...
+Matt DTS   ....systems, you will be unable to set the access to a different
+           value.  So get used to it.
+Matt DTS   Also...
+Matt DTS   ...what Dave says about requesting access is a very good strategy.
+            If you are in a file system...
+Matt DTS   ....where you have permission only to do certain things (like
+           read, not write), then if you try...
+Matt DTS   ....to write to the file, you'll get an error $4E.  If you OPEN
+           the file with request_access = $00...
+Matt DTS   ....you'll have to be able to handle $4E on every system call.  If
+           you OPEN with request_access = ...
+Matt DTS   ...just what you need (read and write but not rename, if that's
+           what you're going to do)...
+Matt DTS   ....you'll get an error $4E on the OPEN if something's not going
+           to work.  Handle it one...
+Matt DTS   ...place instead of twenty or thirty.  Good idea.
+Matt DTS   (GA)
+JSchober   Hmm.  NICE, indeed!!  :)  Thanks for the info.  Gotta run, folks
+           -- thanks for
+JSchober   the chat.  See yuz...
+Coach101   ?, $0000 on Acc promotes to all bits stored in the files
+Matt DTS   (lots of typing for me tonight)
+Coach101   directory entry as opposed to what is currently possible?
+Matt DTS   Yes, that's true, Coach...
+Matt DTS   ...but an FST has no way to tell you what access you really GOT,
+           where by asking specifically...
+Matt DTS   ...it can return error $4E if you asked for something you can't
+           do.
+Coach101   Huh?, somebody knows that I can not get Write at the present
+Coach101   time, that person would return a $4E (if the FST does not know)?
+Matt DTS   If I OPEN a file that I have only read and rename access to, but I
+           ask with request_access = 0...
+Matt DTS   ...the FST has no way to tell me "Hey, you got read and rename but
+           that's it!".  If I try to WRITE...
+Matt DTS   ...or anything else I don't have permission for, I'll get error
+           $4E.  HOWEVER...
+DaviesDoug !
+Jump Long  You can always do a GetFileInfo before opening a file to see that
+           access.
+DaviesDoug the open call doesn't give you the error?
+Matt DTS   ...if I OPEN with request_access = read+write, and all I have is
+           read+rename, the FST will return...
+Coach101   Ok, finally it penetrates the gray material...
+ScottG25   (night!)
+Guy Rice   :)
+Matt DTS   ...error $4E on the OPEN call, instead of when you try to WRITE
+           when you don't have access to.
+Matt DTS   Doug:  No.  The FST doesn't know what you're going to try to do;
+           it can't return an error just...
+DaviesDoug answered my question
+Matt DTS   ...because you have less than full access.  You just get an OPEN
+           file with permission to do...
+Matt DTS   ...whatever you can.  (Sorry, I was already typing, and I don't
+           think I can stop now!)
+Guy Rice   ::watches Matt's fingers sizzle::
+AFA Gary J <fast fingers Matt...>
+Matt DTS   Quick!  Get me to a piano!
+Guy Rice   hehe!
+Coach101   Matt, in a shared file environment, can one _opener_ lock
+Matt DTS   Geez...I've been at work for nearly 12 hours now...
+Coach101   other _opener_'s by type of open request?
+DaviesDoug did matt mention he was at work?
+Dan Burton We do that all the time here Matt
+Matt DTS   Be quiet, Doug.  <mutual admiration society>
+Matt DTS   Coach:  What??
+Coach101   Matt....  Work?????   Whats Ripleys address??
+Matt DTS   I'll pretend I didn't read that.
+Coach101   In a shared file environment, can one _opener_ specify access
+Coach101   permissions for future _opener_s (as in till the original _opener_
+           
+Dan Burton If you were at HOME you wouldn't need to answer the hard
+           questions
+Coach101   closes the file) as a function of the next _opener_'s access
+           modes?
+Matt DTS   Can't speak for all shared systems.  I can speak for AppleShare as
+           a model, though it doesn't...
+Matt DTS   ...run under GS/OS (just P16) at this time.
+Matt DTS   Under AppleShare, the *owner* of the file (the person who created
+           it) has the right to determine
+Matt DTS   who has what privilges to the file or folder.  The three privilege
+           levels are...
+Matt DTS   See Folders, See Files, Make Changes. (Hold on just a second
+           here...)
+Dan Burton Does AppleShare allow you to set defaults for privilges?
+Matt DTS   Those privileges can be granted or denied for "everyone", "owner",
+           or "group" (a list of people put 
+Dan Burton I get tired of having to change them every time I create a new
+           folder.
+Matt DTS   put together by the server administrator).  So I could make a
+           folder that I, the owner...
+Matt DTS   ....could have all privileges to, but set "make changes" only for
+           everyone else.
+Guy Rice   (Shades of Unix... :)
+Matt DTS   Since they can make changes, they can put files in the folder, but
+           they can't see inside the folder.
+Coach101   Wath your language
+Matt DTS   That makes it a "drop box".  They can put files in it for me, but
+           no one but me can get to them.
+TimH06     Dan, no there is no provision for default privileges.  Although
+           it's not...
+TimH06     impossible to do.
+Coach101   Matt, what I was looking for was an ability at _open_ time to
+           lock
+Dan Burton How do you do it? 
+Coach101   other users from the file (during a master file update for
+Coach101   example).  
+TimH06     Dan, it would be something that we would have to add to the system
+           software.
+Matt DTS   In AppleShare, there's a facility to lock ranges of the file from
+           others.  Also...
+Matt DTS   ...files opened for one person to WRITE to are closed to the rest
+           of the people on the server.
+Matt DTS   (in AppleShare at least)
+Coach101   Which, going back about three pages or so, means that someone
+Dave Lyons Tim, are you saying simply that any software that creates new
+           folders is free
+Coach101   (maybe) should pass out the $4E to me at open time.  Not read
+           time
+Coach101   since the error is found at Open time.
+Dave Lyons to set the access rights during what the user sees as a single
+           "create folder"
+Dave Lyons operation?
+TimH06     Dave, yes that's possible.
+TimH06     Coach, if someone has opened the file on the server for write
+           access....
+TimH06     you'll get the access error when you try to open it while he still
+           has it open.
+TimH06     Huh?
+TimH06     Does that make any sense to you?
+Coach101   Ok, I thought it was said earlier tht the error would get
+Coach101   to me when I tried the _not valid_ operation (i.e., the read).
+DaviesDoug he said WRITE ACCESS
+DaviesDoug in the open call
+Matt DTS   yes, that's true, Coach - OPENing a file that someone else has
+           open with WRITE ACCESS is invalid.
+Matt DTS   (in AppleShare.)
+Coach101   (and interesting in GsOs?)
+TimH06     Matt, if an Application opens a file for write access, can an NDA
+           open it
+TimH06     again for read?
+Coach101   Now if only ALPE did not barf everytime something happened on my
+Matt DTS   Not as far as I'm aware.
+Coach101   II-Gs AppleLink connection.....
+Coach101   Applelink === Appletalk
+DaviesDoug turn appletalk off...I do
+TimH06     Blasphmey! (spelling?)
+Coach101   Na....  ALPE is from Apple...  AppleTalk is from Apple....  They
+Coach101   support their pure-Apple stuff.... They will fix it in the
+           end....
+DaviesDoug yes THEY SHOULD
+Matt DTS   ALPE is more from Quantum than it is from Apple, but leave
+           complaints and they'll work on it.
+TimH06     That was Blasphemey
+TimH06     Opps, blaspheme.
+DaviesDoug they never answer ours very well
+DaviesDoug they think we're real idiots
+DaviesDoug and try to tell us something that makes absolutely no sense or was
+           totally
+DaviesDoug obvious
+Coach101   Quote.... sort of....  AppleLink does not support networked
+Dave Lyons Did anybody answ your question Tim?  Yes, if a file is open for
+           writing, it
+Coach101   computers.... Of course the fact that what blows ALPE up is when
+Dave Lyons can still be opened again for reading, and any part that is not
+           actually
+Dave Lyons range-locked can be read, too.
+Coach101   my wife prints to a printer (I do nothing) seemed to be
+Coach101   un-impressive to ALPE/Quantum/Apple (whoever actually answers
+DaviesDoug I was talking about Quantum Matt
+Coach101   the questions/complaints).
+Matt DTS   (Whew!)
+DaviesDoug you guys are great
+DaviesDoug when your at WORK
+DaviesDoug not at HOME
+Jump Long  hehehe
+DaviesDoug did I mention matt wasn't at HOME
+Dan Burton downd Doug!                                      
+AFA Gary J Dave:  Thanks for the help with my problem on the message
+           boards.
+TimH06     Dave, what!?  If someone opens a file for writting, I don't think
+           anybody else
+DaviesDoug ruff ruff, growl....
+TimH06     can open it at all.
+TimH06     I'm talking ProDOS here.
+DaviesDoug did I mention dan was listening to the Police?
+Dave Lyons No problem, Gary.
+Jump Long  I'll bet Matt is wearing a hat right now...
+Jump Long  ...a blue one.
+Dave Lyons Oops, I thought you were talking about GS/OS & AppleShare, Tim,
+           and I just
+Dave Lyons learned that you wouldn't have asked that question if you were.
+           :)
+Dave Lyons Under ProDOS:  No, once a file is open, any other open will just
+           give you an
+Matt DTS   What?  GS/OS and AppleShare don't work together!  Is your head on
+           straight, Dave?
+Dave Lyons already-open error.  ProDOS can't tell the difference between an
+           application
+Dave Lyons and a DA....
+Dave Lyons I meant System Disk 3.2, Matt.  Sorry.
+Matt DTS   If you opened it read-only first, though, you can open it
+           read-only again.
+Jump Long  Take one step back, Dave :)
+Matt DTS   Oh.  That makes more sense.  (and say "Mr. Glass, May I?")
+Coach101   Or is that steps into the future...
+Dave Lyons Or the lower level AppleTalk protocols--whichever ones it is that
+           let you
+Dave Lyons specify access rights when opening a shared file.  I've never done
+           it, only
+Dave Lyons read about it.
+Matt DTS   Gee, after destroying two motherboards, I'm getting better at this
+           chip-pulling business <grin>.
+DaviesDoug is that a new olympic event?
+Coach101   Matt, have you had mmuch positive reaction to the new
+DaviesDoug I've heard of chip throwing
+Coach101   Apple Partners/....  program?
+Matt DTS   Coach, I personally have seen about 5% positive reaction.
+DaviesDoug apple partners?
+TimH06     What do you guys think about the new program.......Bye Matt.  Nice
+           knowin' ya.
+Matt DTS   He asked a question, I answered it.
+Coach101   I think its good....   Does that mean I have to leave?
+DaviesDoug Anyone put that neat graphics demo out here yet....the ray tracing
+           one
+TimH06     No!!!!!  Sign him up Matt!
+Coach101   Look at it this way....   Apple is in the business of selling
+Coach101   appliances in the II market place (as opposed to programming
+Coach101   environment machines).  $675 just cannot cover the costs they
+Coach101   must expend in the developer support area.  Now if $675 (if I
+           remember
+Coach101   the correct number) breaks a developer, then that developer is
+Coach101   not selling much software....  ergo, is not contributing much to
+DaviesDoug Bang! Bang! Bang! Bang! Bang! Bang! Bang! Bang! Bang! Bang! Bang!
+           Bang! Bang!
+TimH06     Well I don't know.  Matt, you're up to 10 peanuts a day.  Peanuts
+           aren't cheep
+Coach101   Apple's profit picture....   Nasty, but I think the logic is
+TimH06     you know.
+DaviesDoug Bang! Bang! Bang! Bang! Bang! Bang! Bang! Bang!
+TimH06     Just kidding folks.
+DaviesDoug 21 gun solute to the death of PROTOCOL (spelled right)
+Coach101   correct.....   Now, $675 is less than $60 per month.  I know a
+Coach101   lot of hobbyists in golf, tennis, .....  that spend that much on
+Dave Lyons _I'm_ not selling much software, but.... :)
+DaviesDoug salute was spelled wrong though
+Coach101   their hobby a month.  Why not pay apple if what I am really
+           doing
+Coach101   is supporting a hobby?
+Matt DTS   ($600, Coach.  $50/month.)
+Coach101   Sorry about any protocol violation..... The fingers were working
+Jump Long  Try to find a racket club for that...
+DaviesDoug protocol is dead
+AFA Gary J Protocol is dead for the night..
+Coach101   the eyes on the tube were dis-engaged.
+Coach101   Ah, but Dave, I thought you were a _national treasure_?
+Dave Lyons :)
+Jump Long  Do you think the amount or support from Apple through
+           non-developer services
+Dave Lyons Coach, even _without_ the $50/month Partners fee, a lot of
+           developers 
+Jump Long  channels is enough (help to users groups, information on services
+           such as this,
+Jump Long  etc)?
+Dave Lyons _already_ spend a lot of money on their "hobby."  If the $600/yr
+           meant you
+Dave Lyons got all the stuff you wanted FREE from APDA, that'd be a different
+           story!
+Jump Long  amount or = amount of
+Dave Lyons I agree that devs who can't afford the $600 can do okay with APDA
+           membership
+Coach101   The unmentioned item in Apda, is what the _discount_ on 
+Coach101   Apple material is.  
+Dave Lyons and online (but non-guaranteed) help.
+Coach101   On the other side, the support through non-developer channels
+Coach101   (speaking for ALPE only) is OUTSTANDING..    All knowledgeable
+Coach101   sources (Dave Lyons, AFLs, AFAs, etc.) should get _FREE_
+Coach101   status in the new program....   They are in effect promoting
+Coach101   Apple by helping people......
+AFA Gary J Great idea, Coach!  :)
+Dave Lyons Wouldn't bother me, either. :)
+AFA Gary J (heheh  :)
+Coach101   I come from a __large__ mainframe environment, where I pay
+Coach101   lots of money for support (support is not free even when you
+Coach101   buy the multi-mega-$$ iron).....  Goes back to an _unbundling_
+Coach101   loss on IBMs part some ~20 years ago!!!
+Coach101   Oops.... Sorry about the languague 
+Jump Long  I think the government had something to do with that, Coach.
+           Something related
+Jump Long  to third-party maintenance.
+Coach101   Disagree......
+Coach101   The initial thing that caused software (and software support) to
+Coach101   not be free was that a leasing company sued IBM on the basis
+Coach101   that IBM would only provide software on machines that they (IBM)
+Coach101   installed.  Thereby destroying any after/re-market in the
+           hardware
+Coach101   arena.  Prior to that loss (after which you started paying for
+Jump Long  (the third party)
+Coach101   software and software support, immediately from IBM other
+Matt DTS   Well, gang, I have to keep a private engagement in PC, so I'll see
+           you all later (and some sooner).
+Matt DTS   G'night all.
+Coach101   companies fell in line).  The maintenance issue, came about a
+Jump Long  Bye Matt
+Coach101   little later.  I think the leasing company was .... na... I am
+Coach101   not sure so no name

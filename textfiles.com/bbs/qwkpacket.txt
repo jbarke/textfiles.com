@@ -1,0 +1,82 @@
+This file briefly describes the QWK file format.
+
+The following is an abbreviated version of Appendix G of DELUXE.DOC:
+DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+         All of the messages in a mail packet are contained in a file
+         named MESSAGES.DAT.  The file's logical record length is 128
+         bytes.  The first record of MESSAGES.DAT always contains
+         Sparkware's copyright notice produced by The Qmail Door.
+         Messages start in record #2 and use this format:
+
+              Starting Position,Length   Description
+              ------------------------   ----------------------------
+                        1,1              Message status flag
+                        2,7              Message number
+                        9,8              Date (MM-DD-YY)
+                       17,5              Time (HH:MM)
+                       22,25             To
+                       47,25             From
+                       72,25             Subject
+                       97,12             Password
+                      109,8              Message reference number
+                      117,6              Number of blocks
+                      123,1              Message status
+                      124,2              Conference number
+
+         The text of message continues in the next record.  You can
+         find out how many blocks make up one message by looking at
+         the value of "Number of blocks".   Message text is delimited
+         by a pi symbol (ASCII 227) between lines.
+
+         The xxx.NDX files contain record numbers that point into the
+         MESSAGES.DAT file for actual messages.  Each conference that
+         contains messages has its own "xxx.NDX" file.  The "xxx" is
+         the conference number for the index file.
+
+         Each .NDX file uses a five byte logical record length and is
+         formatted to:
+
+              Starting Position,Length      Description
+              ------------------------      ------------------------
+                       1,4                  Record number of message
+                                            in MKS$ format.
+                       5,1                  Conference number.
+DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+
+The formula for converting x, a LONGINT in MKS$ format, to MKSToNum, a
+binary integer, is:
+
+MKSToNum := ((x AND NOT $ff000000) OR $00800000)
+             SHR (24 - ((x SHR 24) AND $7f));
+
+It's not pretty but it works (and it only handles positive numbers).
+
+The CONTROL.DAT is a text file containing information about
+the host BBS and conference information.  Here is a sample
+one with comments:
+
+Ivo Andric Memorial BBS                 ;bbs name
+Victoria, BC, CANADA                    ;bbs location
+604-380-0297                            ;bbs number
+Gwen Barnes, Sysop                      ;format is "First Last, Sysop"
+20001,ANDRIC                            ;DOOR_SERIAL,PACKET_ID
+01-09-1991,14:54:44                     ;mm-dd-yyyy,hh:mm:ss ..pkt time
+GREG HEWGILL                            ;user name
+                                        ;name of QMENU file if exists
+0                                       ;unknown
+0                                       ;unknown
+254                                     ;total # of conferences - 1
+0                                       ;# of first conf
+Local                                   ;name of conf (10 chars max)
+1                                       ;# of second conf
+I_Central                               ;etc...for 255 confs
+...
+255                                     ;this is the 255'th conf (#24
+U_C_Prog                                ; is omitted from this packet)
+HELLO                                   ;filename of welcome file
+NEWS                                    ;filename of news file
+GOODBYE                                 ;filename of goodbye file
+
+If you're looking at a real CONTROL.DAT, any further lines you can
+ignore because current mail doors don't generate it (it's obsolete).
+

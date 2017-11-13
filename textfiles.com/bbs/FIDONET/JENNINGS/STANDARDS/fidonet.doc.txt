@@ -1,0 +1,285 @@
+Tom Jennings
+30 Apr 84
+Fido #1: (415)-864-1418
+
+	Some preliminary ideas for the FidoNet. (If youç
+haven't heard, FidoNet is an intersystem message forwardingç
+system mostly for Fidos, but could be used for others asç
+well.)
+
+	Please, don't worry about all the seeming complexityç
+here. Most will go away. I have just typed everything Iç
+could think of all at once, and not all is applicable.ç
+(Besides, you're (probably) not gonna code it.)
+
+	There are some points that need ideas: mainly, howç
+to pay for it, how it will appear to callers trying to sendç
+mail, and any mysterious operational type problems you see.ç
+Like most of Fido, I imagine this too will be built with 90%ç
+suggestions.
+
+	If you have any ideas on this proposed system,ç
+please leave me a note on Fido #1 at the above number.ç
+Thanks.
+
+		O P E R A T I O N
+
+
+	From a callers point of view, the system will haveç
+one additional feature when entering a message. One way orç
+another the caller tells Fido which system the message is toç
+be sent to. This could consist of a prompt (System A, B,ç
+...) or some such thing. (Any ideas?)
+
+	In any case, mail will only work from a MAILç
+subdirectory. Messages left here will be like all otherç
+messages; readable or not, depending on the privacy, etc.ç
+Replies can be left, etc, which get mailed in the same way.
+
+	It may be desirable to search this area for eachç
+user after signon, the same way message searching works now.ç
+If old messages don't pile up like in other areas, thisç
+should be nice and fast.
+
+	There will not be any automatic confirmation ofç
+received messages. It will be up to the user to do so, byç
+mailing a message stating that is was received. Maybe itç
+will be possible to confirm, by reading the RECV'D flag fromç
+the message, but that won't go into the first one.
+
+	In the MAIL area, the usual message searchç
+("Messages to you" etc) should be adequate, if mail trafficç
+is less than or the same as the current message traffic.
+
+	I M P L E M E N T A T I O N
+
+	The only change to Fido will be a new command lineç
+parameter:
+
+	<number>/Y
+	<number>/W
+
+	/Y Is the hour of the day to start doing mail asç
+opposed to normal BBS stuff. /W is the window width, inç
+minutes, to do mail in. For example, 0200/Y 90/W says doç
+mail from 2:00AM, for up to 90 minutes, i.e. until 3:30AM.ç
+During this time, Fido will not accept any normal callers.ç
+Also, outside these times, Fido will not accept mail. If noç
+switch is present, or the window is set too small (TBD) thenç
+it will not send or receive mail, like it does now.
+
+	Neither will it bump someone off if they happen toç
+call just before the appointed time. However, as soon asç
+they logoff, it will start handling mail if it's supposedç
+to.
+
+	The mailer (the program that actually sends andç
+receives mail) is a seperate program. It is run from theç
+batch file (RUNBBS.BAT) right after Fido.EXE. This worksç
+like Control-C and errors do; via ERRORLEVEL. For instance,ç
+the batch file might look like:
+
+	    FIDO  ... 0200/Y 90/W
+	    IF ERRORLEVEL 4 GOTO MAIL
+	    IF ERRORLEVEL 1 GOTO END
+	    RUNBBS
+	MAIL:
+	    MAILER 0200/Y 90/W
+	    RUNBBS
+	END:
+
+	Like current Fidos, ERRORLEVEL is 0 if normalç
+termination (caller hung up, etc) 1 if Control-C or stackç
+overflow, 2 if disk file error (disk full, missing files,ç
+etc) or 4, the new level for: "Time to do Mail".
+
+	If it's time to do mail, Fido exits with ERRORLEVELç
+4. If 4 or higher, it runs MAILER, which then runsç
+RUNBBS.BAT which starts it all over again. Otherwise, if 1ç
+(or higher) it is an error, it goes to the end and stops.
+
+	When run, the mailer sits and waits for phone calls,ç
+or if instructed to do so, (command line switches or aç
+command file, whatever) makes calls. If a human type callerç
+calls, they will get a message to the effect "Waiting forç
+mail, please call back after <xxx>", where <xxx> is the endç
+of the window to wait for mail, and hang up on them. (The /Wç
+and /Y switches will be duplicated in the mailer, forç
+reasons I'll not bother with now.)
+
+			C O S T
+
+	First, it is very important that we figure out whatç
+it would cost. This is the second most important part. Theç
+cheaper it is, the more likely FidoNet can be made operable.ç
+However, no matter how cheap it is, if an ingenous way ofç
+paying for it doesn't exist, then it all falls flat.
+
+	Right now, late night long distance (coast to coast)ç
+toll charges are about $13.00 per hour. ATT is proposing, asç
+part of some other boring issue, lowering this to $10.00 perç
+hour. This is quite cheap; a lot of messages can be sent inç
+an hour.
+
+	I hereby declare the mail size unit to be the Cubit:
+
+	1 Cubit == 80 characters * (1200 / baud rate)
+
+	A cubit of mail sent at 300 baud will cost 4 timesç
+as much as one sent at 1200. When 4800 baud modems becomeç
+available, the price per cubit will drop.
+
+	Unlike commercial mail systems that are out forç
+profit, FidoNet's mail unit, the Cubit, is small enough toç
+account for very small messages, but large enough not to beç
+too small to account for. There are 12.8 cubits in a K byte. 
+
+	An error checking transfer protocol is needed;ç
+XMODEM will not be used, as transfer times routinely doubleç
+with long phone lines. (Dont want to pay for that.) More onç
+that later.
+
+	As an example, say we want to send a small (fiveç
+lines, 64 characters per line) message from Los Angeles toç
+New York. Each message has a header (to, from, date, etc)ç
+that consumes about 80 characters. Assume also that theç
+transfer rate is 1200 baud, and also that the transmissionç
+method has a 10% overhead. 
+
+Msg size:	      4.	Cubits
+Message Overhead:     1.	Cubit
+Message Size:	      5.	Cubits
+Message Size:	    400.	Characters
+
+Cost Per Hour:	     13.00	Dollars
+Chars/Second:	    120.0	(10 bits/char)
+Cubits/Second:	      1.3636..	(120sec / (cubit * 1.10))
+
+Cubits/Hour:	  4,909.	(3600 sec * cubits/sec)
+Cost/Cubit:	      0.2648	Cents ($13.00/cubits/hr)
+
+Sample Msg Cost:      1.324	Cents
+
+	Yes ... its cheap. Remember, this is pure cost, noç
+hardware maintenaince overhead, no payroll, no profit, etc.ç
+Delivery time, nor even delivery, is garenteed. The aboveç
+does NOT include any connect/disconnect or disk accessç
+overhead. However, it also does not count any savings fromç
+text compression, which could save 10% to 40% maximum.ç
+Probably more like 20% maximum in the real world.
+
+	P A Y I N G    F O R    A L L    T H I S
+
+	This is the most serious problem. The technical partç
+is easy! Also, BBS's in general are run more like littleç
+fiefdoms than businesses, in the sense the are usuallyç
+operated privately, and almost never pay for themselves,ç
+never mind make money! If FidoNet takes inordinate amountsç
+of effort on the part of the sysop, it'll probably fold upç
+due to that also.
+
+	There are a couple of ways this can be paid for, butç
+none are really any good for typical free systems. (Noteç
+that receiving (accepting) mail costs nothing. FidoNet mightç
+be able to operate well with only a few well placedç
+"benefactors", and work acceptably well with only localç
+"paying" nodes, if mail is limited to say, an area code.)
+
+	IF YOU HAVE ANY IDEAS AT ALL ON THIS SUBJECT PLEASEç
+LET ME KNOW!!!!!! THIS WILL MAKE OR BREAK THE FIDONETç
+IDEA!!!!
+
+	In any case, some sort of accounting will have to beç
+done. Except for very rare cases, mail will have to be paidç
+for. The mailer will be able to account for each messagesç
+cost, length of transmission, etc. There must be a methodç
+for limiting mail sent by a specific user, and a "sysop"ç
+type feature for relatively unlimited, or at leastç
+differently limited, mail. The information associated with aç
+peice of mail will have to be worked out in detail later,ç
+and while not too complex (any complexity can be put uponç
+the mailer) it must be adequate for future expansion.
+
+	Presumably, not everyone will be allowed to forwardç
+mail indescriminately. That would be awful nice, butç
+unfortunately not practical. There may be exceptions: forç
+instance, for a club-run system, you might want to let anyç
+user send a fixed amount of mail over a fixed period ofç
+time, say, a month. If it was a dues paying club, a numberç
+could be worked out that would accomodate this. Anythingç
+beyond that amount would have to be accounted for by someç
+other method.
+
+
+IDEA #1
+
+	Club-run systems. Basically, covered above.
+
+IDEA #2
+
+	Private, pay-ahead system. While this is veryç
+workable, it means even more work for the sysop, andç
+probably some legal liability, like running a business,ç
+unless the proper rigamarole wording is used, i.e.ç
+"donations" not "charges".
+
+	No one will be able to send mail unless they mailç
+some amount of money to the sysop. The amount donated isç
+kept in a list maintained by the mailer, who subtracts theç
+cost of the message from the balance. Usual warnings if notç
+enough, etc, and probably a warning when it reaches someç
+threshold.
+
+		T H E    N E T W O R K
+
+
+	Might as well be trendy and use some networkç
+terminology here. Some of it's even handy.
+
+	The topography of FidoNet is in keeping withç
+bulletin board philosophy; totally random and as littleç
+organization as possible. Also, there is no control over theç
+location of the various message nodes (mail send/receiveç
+systems).
+
+	My first thought was to pass mail over as short aç
+distance as possible; however, this is a waste of time, asç
+late night long distance calls are charged on a per hourç
+basis, and in any case the more transfers the higherç
+likelyhood of messages getting lost.
+
+	Message delivery time, if all is well, should beç
+overnight. If a system goes down, delays will be inç
+increments of 24 hours.
+
+	There should also probably be a "broadcast" typeç
+message, that stops at each node. Also, there really isn'tç
+anything stopping binary files from being mailed; they areç
+not included here mainly because costs will skyrocket, butç
+it would be a nice way to do Fido updates, etc.
+
+
+	So, my current idea (any other ideas at allç
+welcome!) is:
+
+	Each sender has a list of systems it can forward to.ç
+This can be used to limit forwarding to non-toll call areasç
+if desired. Also, this same list can be used to send mailç
+destined for one system, to be sent to a different system,ç
+for further forwarding. This allows cheapskates to letç
+someone else make the toll calls. (If they in turn let itç
+go) Also, it lets a well funded system forward mail forç
+other systems.
+
+	If there are messages destined for five differentç
+systems, there will be five calls made (unless theç
+abovementioned forwarding is done). This "nodeless" systemç
+is then relatively insensitive to down machines, etc, suchç
+that only mail for the down system will not be sent. 
+
+	If the net gets tied up (everyone calling everoneç
+else, for instance, though I think thats unlikely!) thenç
+some message forwarding can be done to lessen the trafficç
+load between busy systems.
+
+

@@ -1,0 +1,127 @@
+MiniSport Laptop Hacker - Vol 16 Oct 1993
+Copyright (c) 1993 Brian Mork -- "not to make money, but to keep it that
+way for others, too."
+
+>>> ADMIN
+Welcome back!  Saudi Arabia was not so rewarding this time.  I brought
+back rugs & gold, but the enforcement of the southern no-fly zone on Iraq
+has become almost routine.  Forces are getting spread thin to other
+theaters, so I guess it's good that there's little unexpected activity in
+this arena.  Remember, MLHacker is now distributed on several nets.  Be
+sure to use the easiest method for you.  I need to hear if R95 is working
+for you folks (the program used to split this issue into 2K parts).  I
+want to get the $15 registration fee off to the Texas Packet Radio Socie-
+ty once "testing" is completed.  I can even send binaries to you with
+this utility.  You can get copies on disk of any software or text files I
+refer to by sending me a disk and SASE.  I'll put a variety of other
+MLHacker related goodies on there, too.
+
+Please forward your MLH contributions--otherwise it's just me rambling
+about what projects I'm working on.  My computer now has its own number
+(509-244-9260).  Until I get everything "glued" together, it will be up
+intermittently accepting logins as an Internet host or FAX receiver.  I'm
+available on Internet, Packet, or USMail, too (see below).  Please, con-
+tribute!
+
+>>> TECH HELP REQUESTED
+I have the PMP (Poor Man's Packet) running in the modem slot of my Minis-
+port, thanks to the help of a local ham.  The receive works fine, but
+upon transmit, the software chokes.  I'm convinced that on the Minisport,
+the algorithms coded in C just aren't fast enough.  Has anybody out there
+rewritten critical sections in assembly?
+
+Even *more* people have reported in with dead power supplies.  This is
+the single biggest weakness of the Minisport.  If you're an intrepid
+hacker who has figured out the power supply board or you're an insider
+with releasable information, please contact me.  Thank you, Steve, for
+the info you've been able to forward.
+
+>>> RADIO SCANNING WITH COM2
+The previous issue quoted a segment by N9IYJ on how to turn your modem
+port into a second PC-compatible serial port.  If you're really atten-
+tive, you've noticed that besides the MLH series, I just distributed re-
+views of Optoelectronics new counters onto the same nets that get MLH.
+Guess what?  The data port on OE's 3000A and M1 counters are perfectly
+compatible with the MiniSport COM2 modem header!  I just built another
+plug in board (the first being my Poor Man's Packet board) that hosts
+N9IYJ's circuit for a PC port, plus the feed through to a 1/8 phone jack
+to communicate with the counters.  A little toggle switch selects which
+set of circuitry to use.
+
+I set about to write a program to acquire the data in order to avoid OE's
+steep price for the same.  As I reduced the requirements to a flow chart,
+I realized the logic was trivial.  The communication package I use has a
+script, or command language, that can do it with no normal "programming"
+on my part.  Now I just run the terminal program, plug the MiniSport into
+the M1 counter I own, and run the command file.  Admittedly, some ad-
+vanced features go away, but it cost NO programming effort and NO dol-
+lars.  It generates a LOT of data, quickly!  Feel free to expand the log-
+ic to your taste (e.g., check validity of the filename).  Here's the Pro-
+comm equivalent:
+
+---------------------------cut here-------------
+  set port com2     ;Minisport's modem header
+  set baudrate 4800 ;3000A docs say 2400 baud. Typo?
+  set parity none
+  set stopbits 1
+  set cr_in cr_lf   ;map each inboudn CR to a CR/LF pair
+  message "Enter filename for frequency data: "
+  kflush            ;flush the keybord
+  get S0
+  message "^MReceived filename:"
+  message S0
+  isfile S0
+  if success
+    message "Requested file already exists, appending data."
+  endif
+  message "ESC to terminate command script & not save data."
+  message "Turn off meter or disconnect cable to terminate & save data."
+
+  rflush            ;flush the receive buffer
+  log open S0
+  if failure
+    message "Can't open the requested file; exiting command file"
+    goto exit
+  endif
+
+request:
+  transmit "^M"     ;A "^M" generates a carriage return
+  waitfor "^M" 3     ;Wait for the counter's CR
+  if waitfor
+     goto request
+  else
+     goto nodata    ;to stop data collection, turn off meter!
+  endif
+
+nodata:
+  message "Incoming data timeout: saving previous data."
+
+exit:
+  log close
+---------------------------cut here-------------
+
+The hardware to connect the M1 and the MiniSport is electrically trivial.
+Connect the 1/8 phone jack shield to Pin 4 of the Minisport modem header
+(see the numbering convention in MLHacker Volume 8).  Connect the 1/8
+phone jack ring to Pin 7 of the header; phone jack tip to Pin 9.
+
+I post-process all my data with SuperCalc. From there it can be collated,
+sorted, plotted, averaged, etc.  What can you do with this combo? Try
+parking your car across the street from the police station.  Turn on the
+two battery powered units and read the newspaper for a few minutes.  Save
+the data on disk and head home.  Whip out SuperCalc (or Lotus or whatev-
+er) import the frequencies and manipulate to your heart's content.  A
+histogram of how many hits on each frequency looks neat. The short stacks
+at frequencies different than what you know about deserve attention with
+your scanner.  Voila!
+
+MLHacker isn't the place for the full story, but I figured since I en-
+joyed getting this system working, others might like to know about it.
+See the previously mentioned reviews for the full story on the counters.
+Internet and Compuserve have reviews on scanners, and I'm writing up
+procedures for the full data collection and processing to be release lat-
+er.
+
+73, Brian Mork (Opus-OVH)     KA9SNF@wb7nnf.#spokn.wa.usa
+                              Internet BMORK@opus-ovh.spk.wa.us
+                              6006-B Eaker, Fairchild, WA 99011

@@ -1,0 +1,130 @@
+MiniSport Laptop Hacker (TM) - Vol #26.  December 1994
+To discourage pecuniary interests, Copyright (c) 1994 Brian Mork
+
+>>> ADMIN
+Index issue follows!  Compendiums of all issues are available from 
+ftp.cs.buffalo.edu as \pub\ham-radio\mlhackXX.zip, or on SimTel archives 
+(eg. oak.oakland.edu) as \SimTel\msdos\packet\mlhackXX.zip.  The XX in 
+the filename indicates the last issue number, and replaces the previous 
+convention of using mlhacker.zip for all compendiums.
+
+The 1995 astronaut class has been selected.  My previous aircraft 
+commander made the cut.  Nineteen people out of thousands.  I'm 
+extremely happy for him, but the announcement finalizes the fact that I 
+wasn't selected this round.  The next round starts (for active duty 
+military) in April '95, with potential final announcement November-ish.  
+Wish me the best this time around.
+
+I have a Linux 1.0.9 kernel up and running on my main system's boot 
+drive.  I used the Slackware 2.0.0 distribution from Internet.  Any 
+other Linux users out there?  It's been a *long* time since I've messed 
+around with Unix.  I kind of feel like I have the bases covered:  
+486DX/66MHz Unix (better than the college computer I learned on), a 1MHz 
+64K RAM, CP/M computer, and Minisports in between.
+
+>>> MORE DISK SPACE
+I've received confirmation from the field that Stacker works great on 
+the Minisport.  Jim Harvey has done some extensive testing on a 2MB 
+Minisport.  I managed to get the whole deal onto my 1MB Minisport.  
+Results on the 2MB were two RAM drives: 150K and 2.5M.  On the 1MB, 
+you'll get one 560K drive rather than one 349K drive.  Jim's notes 
+follow.
+
+----- cut here -----
+Adventures with Stacker.
+
+I bought a closeout copy of Stacker 1.12 for five bucks at a computer 
+show this past weekend and thought I would share the results of my 
+experiments on the Minisport ZL-2 ram disk.
+
+Stacker creates a big hidden file on your hard drive which contains the 
+compressed data.  It loads a driver in the CONFIG.SYS file which 
+intercepts disk I/O and routes it to the compressed pseudo drive. The 
+conventional (under 640k) memory overhead for the driver is about 40k.
+
+I decided to swap the D: (uncompressed) and E: (compressed) drives as 
+described in the Stacker documentation.  I backed up my ram disk and 
+tried the standard Stacker install program.  It worked, but then had 
+trouble booting because of a problem in a special AUTOEXEC file it 
+created.  I had to delete most of the files on the ram disk anyway to 
+make working room for Stacker.  The compression in place (Incremental 
+method) worked but was less than satisfactory, as most of my data had to 
+be saved and restored anyway, the Stacker files ate up most of the space 
+gained, and the standard install program only takes space in whole 
+megabyte increments which left a large part of the D: drive 
+uncompressed.  On the Minisport, the choices are one meg or none. 
+
+I decided to try installing the program manually to tweak the 
+compression.  A couple of hours of experimentation later, I arrived at 
+the following procedure for a minium Stacker installation (aren't all 
+Minisport owners Minimalists?)
+
+1.   FWL the Stacker files to a Minisport floppy.
+2.   Back up everything on your ram disk to floppys or via FWL to a PC.
+3.   Format your D: ram drive.  Reboot to flush any TSRs out of memory
+     that could interfere with Stacker.
+4.   Insert the Stacker floppy into the Minisport drive.  Log on to the
+     A: drive.
+
+5.   Enter the command:
+          SCREATE D:STACVOL.000 /S=1.2 /M
+            
+6.   When the compressed drive file has been created, copy the stacker
+     drivers to your D: drive with the following commands:
+          COPY A:STACKER.COM D:
+          COPY A:SSWAP.COM D:
+
+7.   Now you must create a CONFIG.SYS to install the Stacker drivers. 
+     The following entries will do this...
+          COPY CON: D:\CONFIG.SYS
+          DEVICE=D:\STACKER.COM  D:\STACVOL.000
+          DEVICE=D:\SSWAP.COM D: E:
+          ^Z
+
+     That last line is a Control-Z character.  If you previouly had
+     other setup commands in a D:CONFIG.SYS file, you can add them now
+     or edit them in later.  These two device commands are the minimum
+     to get Stacker going with the compressed drive swapped to D:
+
+8.   Reboot.  You should see Stacker installing, then the E: and D:
+     drives swapping places.  You will be asked if you want to set time
+     and date, this is because there is no AUTOEXC.BAT file on the
+     compressed drive yet.  Just hit the return key for now.
+
+9.   CHKDSK will show you a D: drive with about 2.5 megs available, and
+     an E: with about 150k available.  Restore all your backed up files
+     including any AUTOEXEC.BAT.  Reboot and all should be normal.
+
+There are several Stacker utilities that you may want to keep on the D: 
+drive besides the two drivers.  I'd recommend SCHECK at least, it gives 
+compression statistics on the new pseudo drive.  If you put these or 
+other utilities on the E: drive, you should add E:\ to the PATH 
+statement in your AUTOEXEC.BAT on D:.  Remember that the E: drive is the 
+uncompressed one after SSWAP.COM flops the letters.
+
+The above is based on Stacker 1.12, not exactly the latest version, it 
+dates from early DOS 5.0 days.  But this should encourage other 
+Minisport owners to try compression programs and report the results. My 
+experiment yielded about a 1.1 meg increase in available ram disk with, 
+to me at least, an acceptable overhead in loading time and low memory 
+usage.
+
+I have obtained five copies of Stacker Version 1 as described in the 
+article.  I will sell these for $8.00 including shipping.  Jim Harvey, 
+18538 Inkster, Redford, Mich 48240
+----- cut here -----
+
+Jim's steps worked great for me.  On the 1MB Minisport, I used /S=0.3 on 
+the command line to SCREATE.  That leaves just enough room for the 
+STACKER.COM file, AUTOEXEC.BAT, and a CONFIG.SYS.  There will be 
+literally 0 bytes left, so there's no room for the SSWAP.COM.  My 
+AUTOEXEC.BAT file moves over to E:, and makes the path search E: and C:.
+D: is left pretty much out of the picture, because there is simply no
+room for anything.  Even, for example, if you edit your AUTOEXEC.BAT 
+file, you'll probably have trouble because with the old file left as 
+a .BAK file, there will be no room to save the new file!
+
+Please provide feedback!      * Direct data 1-509-244-9260
+                              * ARO Net KA9SNF@ka7fvv.#ewa.wa.usa
+                              * Internet bmork@opus-ovh.spk.wa.us
+73, Brian                     * 6006-B Eaker, Fairchild, WA 99011

@@ -1,0 +1,215 @@
+TECHNICAL INFORMATION
+    The source is placed at STARTOFSOURCE when loaded, regardless of its original address.  Important pointers :
+         STARTOFSOURCE  $A,$B     [set to $901]
+         HIMEM          $C,$D     [$9853 DOS 3.3  $AA00 IN ProDos]
+         ENDOF SOURCE   $E,$F
+    HIMEM does not change unless a USER routine changes locations $73,$74.  Such a change will be copied automatically into location $C,$D.
+    
+              General Information
+    When exit to basic or monitor pointers are save on RAM card at $E00A-$E00F. They are restored upon re-entry to Merlin. Entry to Merlin sets current I/O hooks to standard and reconnects DOS.  Same as typing PR#0 and IN#0 from keyboard.  Entry to EDITOR disconnects DOS, so that you can use labels such as INIT without disastrous consequences.
+    IF during assembly the object code exceeds usable ram code will not be written to memory, but assembly will appear to proceed as normal, but OBJECT CODE SAVE at EXEC level is disabled.
+         Symbol table flags
+    MD = MACRO DEFINITION
+    M  = LABEL DEFINED WITHIN MACRO
+    V  = VARIABLE (]VARIABLE)
+    ?  = A SYMBOL THAT WAS DEFINED BUT NEVER REFERENCED
+    X  = EXTERNAL SYMBOL
+    E  = ENTRY SYMBOL
+         LOCAL LABES ARE NOT SHOWN IN THE SYMBOL TABLE LISTING
+
+         Configuration (ProDos)
+    Configuration data is in file called PARMS , to change data just change the source file PARM.S and reassemble.
+                        (DOS 3.3)
+    Data statements in HELLO file contain configuration.
+    
+    DATA #         DEFAULT   PURPOSE
+    1              60        Number of lines per page for printer
+    2              0         Lines to skip at page perforation 0 sends linefeed
+    3              80        Number of characters per line for printer
+    4              $80       $80 if printer does it own CR else 0
+    5              $83       80 col flag 80+3 if in slot 3
+    6,7            $901      Source file start address, never less than $901
+    8,9            $AA00     Do not change
+    10,11          $901      End of source pointer must = source start address
+    12             $DE "^"   The editors wild card character
+    13             4         Number of fields per line in symbol table printout
+    14             $AF "/"   Character searched for by UPDATE SOURCE entry to
+                             assembler.  If this is 0 question bypassed
+    15,16,17,14,20,31        The default tabs for editor and assembler
+    18             8         NUmber of object bytes/line after first line
+    19             5         Error/Bell flag and Ultraterm start parameters.
+    20             $40       Cursor flag. regular cursor=$40 block+0
+    21             0         LSTDO default: 0,1=LSTDO ON, >1=LSTDO OFF. Bit 0, 
+                             if clear, causes shift to 40 col on PRTR command.
+    22             72        Column at which the cycle count will be printed
+                             when using the CYC opcode.
+    23             $EC       Cursor type for Ultraterm.
+    24-44          $F1 to    File type names for the user defined file types
+                   $F7       These names will be shown in the directory when
+                             cataloged by Merlin.  ProDos ONLY.
+
+         ProDos Merlin Pro notes
+    The ProDos version uses TXT files for source files.  This includes files intended for the PUT or USE opcodes, and all such files must have the .S extension in the file name.  It is suggested that you keep files intended for PUT or USE in a subdirectory.
+    It is wise to use a full pathname in operands of the SAV, USES and PUT opcodes, since otherwise the current prefix will be attached to the name and that may not be the prefix you want.
+    Since Merlin runs under its own interpreter rather than the BASIC interpreter, there is no warm re-entry as with the DOS 3.3 version.
+    The ProDos volume ?/RAM/ is disconnected by Merlin.
+
+         Transferring Source file from DOS 3.3 to ProDos Merlin Pro
+    There are two methods of transferring files from the DOS to ProDOS.  Since ProDOs version of Merlin uses text file only, you could load files into the DOS 3.3 version and write them as text files and then transfer them with Apple's CONVERT program. CONVERT is not a literal transfer, as it will clear the high bits in the file.  The ProDos version will set the high bits again, but the tabbing in the editor will be fouled up by this procedure. But you can type FIX in the editor and resave the source file to fix this problem.  Files intended for PUT or USE should be resaved because otherwise, assembly will be slowed.
+    Another method is to transfer the files as binary files from DOS 3.3 and use the fact that the ProDos version of Merlin has the ability to load binary files (or any type). After loading a binary source file, it should be deleted and save back (as a TXT file). The load command automatically permits loading og TXT and BIN files. Other types of files can be loaded by changing the byte used to designate source file type which is kept in location $BE5D, this usually holds a 5.
+
+ERROR MESSAGES
+
+         BAD OPCODE
+    Occurs when the opcode is not valid or the opcode is in the label column
+         BAD ADDRESS MODE
+    The addressing mode is not a valid 6501 instruction
+         BAD BRANCH
+    A branch to an address that is out of range, further than 127 bytes
+         DUPLICATE SYMBOL
+    On the first pass, the assembler finds two identical labels.
+         MEMORY FULL
+    This is usually caused by one of two conditions: Source code too large or symbol table too large.
+         UNKNOWN LABEL
+    Your program refers to a label that has not been defined.  Also occurs if you try to reference a MACRO definition by anything other than PMC or >>>/
+         NOT MACRO
+    Forward reference to a MACRO, or reference by PMC or >>> to a label that is not a macro
+         NESTING ERROR
+    Macros nested more than 15 deep or conditionals nested more than 8 deep
+         BAD PUT
+    This caused by a PUT inside a macro or by a PUT inside another PUt file.
+         BAD INPUT
+    This results from either no input or an input exceeding 37 characters in answer to the KBD opcodes request for the value of a label.
+         BREAK
+    This message is caused by the ERR opcode when the expression in the operand is found to be non zero.
+         BAD LABEL
+    This is caused by an unlabeled EQu MAC ENT or EXT, a label that is too long or one containing illegal characters.
+         BAD ORG
+    REsult from an ORG at the start of a REL file
+         BAD OBJ
+    An OBJ after code start or OBJ not within $4000 to $BFE0
+         BAD REL
+    A REL opcode occurs after some labels have been defined.
+         BAD EXTERNAL
+    EXT or ENT in a macro or an equate of a label to an expression containing an external, or a branch to an external (use JMP)
+         BAD VARIABLE
+    This occurs when you do not pass the number of variables to a macro that the macro expects.  It can also occur for a syntax error in a string passed to a macro variable, such as a literal without the final quote.
+         ILLEGAL FORWARD REFERENCE
+    A label equated to a zero page address after it has been use.  This also occurs when an unknown label is used for some things that must be able to calculate the value on the first pass.  It also occurs if a label is used before it is defined in a DUM section on a zero page
+         TWO EXTERNALS
+    Two or more externals in an operand expression.
+         DICTIONARY FULL
+    Overflow of the relocation dictionary in a REL file.
+         256 EXTERNALS
+    The file has more than 255 externals.
+         ILLEGAL RELATIVE ADRS
+    In rel mode a multiplication, division, or logical operation occurs in a relative expression.  This  also occurs for an operand of the type #>expr or a DFB >expr when the expr contains an external and the offset of the value of the expr from that of the external exceeds 7.
+         ILLEGAL CHAR IN OPERAND
+    A non math character occurs in the operand where the assembler is expecting a math operator.  This usually occurs in macro calls with improper syntax resulting form the textual substitution.
+         ILLEGAL FILE TYPE (ProDos only)
+    TYP opcode used with an illegal operand.  The operand must evaluate to 0,6,F0-F7, or FF.
+
+    General note: When an error occurs that aborts assembly, the line containing the error is printed to the screen. This may not have the same form as it has in the source, since it shows any textual substitutions that may have occurred because of macro expansion.  If it is in a macro call, the line number will be that of the call line, and not of the line in the macro.
+
+    MEMORY FULL ERRORS
+
+    MEMORY FULL IN LINE: xx  Generated during assembly. Cause: too many symbols have been placed in the symbol table, causing it to exceed available space. REMEDY: Make the symbol table larger by setting OBJ to $BFE0 and use DSK to assemble directly to disk.
+
+    ERR:MEMORY FULL. Generated immediately after you type in one line too many. CAUSE: The source code is too large. REMEDY: Break source up into smaller sections and bring in when necessary by using PUT pseudo-op.
+
+    ERROR MESSAGE: None, but no object code will be generated. CAUSE Object code generated from an assembly would have exceeded the available 16K space. REMEDY: Set OBJ to an address less than its $8000 default or use DSK.
+
+
+SOURCEROR
+
+    1. BRUN SOURCEROR from Merlin's EXEC MODE
+    2. To invoke SOURCEROR type USER from the EDIT mode with the screen set to 40 column mode.
+    3. You  will be asked if you want to load an object file to be disassembled.  Do so if needed. Type CTRL-S after file name for SWEET !^
+    4. Next hit return if program to be disassembled is at its original location, or specify in hex the present location of the code if not in its original location, then you will be asked for its original location.
+    5. When disassembling, you must use the original address of the program and not the current address if different.
+    6. When you are done type USER1 from the EDITOR to get rid of SOURCEROR and free up the memory used by the disassembler.
+
+         Commands
+    IF you specify a number greater than the present address you are disasseembling a new ORG will be created.
+
+              L (list)
+    This disassembles 20 lines of code. 2000LLL will disassemble 60 line of code starting at $2000
+    If an illegal opcode is encountered, the bell will sound and opcode will be printed as three question marks in flashing format. In the source code itself, unrecognized opcodes are converted to HEX data, but not displayed on the screen.
+
+              S (SWEET)
+    Similar to L but forces disassembly to start in SWEET 16 mode.
+
+              N (Normal)
+    This is the same as L, but forces disassembly to start in normal ^%02 mode.
+
+              H (HEX)
+    This creats the HEX data opcode. It defaults to one byte of data.  If you insert a one byte hex number after the h, that number of data bytes will be generated.
+
+              T (TEXT)
+    This attempts to disassemble the data at the current address as an ASCII string.  Depending on the form of the data, this will be disassembled under the pseudo-opcode ASC, DCI, INV or FLS. The appropriate delimiter is automatically chosen. The disassembly will end when the data encountered is inappropriate, when 62 characters have been treated, or when the high bit of the data changes. In the last condition, the ASC opcode is automatically changed to DCI. Sometimes the change to DCI is inappropriate.  This change can be defeated by using TT instead of T in the command.
+
+              W (WORD)
+    This disassembles the next two bytes at the current location as a DA opcode.  Optionally, if the command WW is used, these bytes are disassembled as a DDB opcode.
+    If W- is used as the command, the two bytes are disassembled in the form DA LABEL-1.  The latter is often the appropriate form when the program uses the address by pushing it on the stack.  You may detect this while disassembling or after the program has been disassembled.  In the latter case, it may be to your advantage to do the disassembly again with some notes in hand.
+
+         / (cancel)
+    this cancels the last command
+
+         R (read)
+    This lets you look at memory in a  format that makes imbedded text stand out.  To look at the data from $1000 to $10FF type 1000R. This is total independent of the disassembly address.
+
+         Q (Quit)
+    This ends disassembly and goes to final processing which is automatic.
+
+    DEALING with the finished source
+
+    You may notice that some DA's would have been more appropriate in the DA LABEL-1 or the DDB LABEL formats.  In this and similar cases, it may be best to do the disassembly again with some notes in hand.
+    The source will have all the exterior or otherwise unrecognized labels at the end in a table of equates.  You should look at this closely. It should not contain any zero page equates except ones resulting from DA'a Jmp's or Jsr's. This is almost a sure sign of an error in the disassembly.
+
+    Changing Sourceror's label table
+    
+    The label tables used by Sourceror are just assembled Merlin source files. The source file is on the Merlin disk and can be modified directly by the user.  It must be assembled and saved under the same name as the previous label files.
+
+APPLESOFT LISTING INFORMATION
+
+    A fully labeled and comment source listing of Applesoft Basic can be generated by the program SORUCEROR.FP on the opposite side of the ProDos Merlin Diskette.
+    WARNING: SOURCEROR.FP and some temporary work files are deleted when sourceror.fp is brun. For this reason make a backup copy and uses the backup copy.
+    1. Boot ProDos Merlin
+    2. BRUN SOURCEROR.FP form Merlin's Disk command
+    3. When Sourceror.fp finishes, L)oad the file APPLESOFT.
+    4. Type the following to print the listing on your printer:
+         PRTR 1 "I80N""APPLESOFT LISTING"
+         ASM
+    The entire first pass will take 3.5 minutes then a print out to printer will begin. It will take 105 pages and an hour and a half to print on a 80 character per second printer.
+    By using the XREFA utility with the Applesoft source you can produce a listing of every subroutine, zero page address and where they are used and called. To do this:
+    1 Load the Applesoft file form the SOURCEROR.FP disk
+    2 Quit to the EXEC mode and press D for disk
+    3 BRUN /MERLIN/UTIL/XREFA
+    4 Go to the EDITOR 
+    5 Issue the following command : USER 3,
+    6 Issue the PRTR command : PRTR 1 "I80N" "APPLESOFT XREF".
+    7 Issue the ASM command to start the assembly process.
+
+UTILITIES
+
+    FORMATTER
+ This is for enhancing the use of Merlin as a general text editor. To use BRUN if from the exec mode, then issue the USER command from the editor.
+
+    XFER,XREFA
+ These provide a means of generating a cross reference listing of all labels used within a Merlin assembly 
+    XFER instructions
+    1 GO merlins exec mode and C the disk then BRUN XREF
+    2 Type in appropriate USER command at editor
+         USER 0 - prints assembly listing and alphabetical cross reference
+         USER 1 - print assembly listing and both alphabetical and numerically sorted cross reference
+         USER 2 - print alphabetical cross reference only.
+         USER 3 - Print alphabetical and numerical cross reference
+    XREFA
+ This is an address cross reference program and is handy when you have lots of PUT files
+
+    PRINTFILER
+   SAves an assembled listing to disk as a sequential disk file.
+ Applications
+    Incorporating the assembled text file in a document being prepared by a word processor.
+    SEnding the file over a telephone line using a modem.
+    Mail the file to someone who wants to work with the complete disassembly without having to assemble the program.

@@ -1,0 +1,120 @@
+Copyright 1983
+NPG,Ltd.
+		       FINGERPRINTING KIDS
+
+  Issue:  Should parents voluntarily create detailed identification records
+(including fingerprints) on their children in anticipation of possible runaway
+problems or abductions?  (1) Yes.  You can never tell when terrible things will
+happen to a child, so its best to be prepared.	(2) No.  The vast majority of
+missing children are not abducted.  Whether abducted or not, fingerprinting will
+do no good.  It wastes time and money and pushes us that much closer to the
+creation of the Orwellian National Data Center that Congress rejected fifteen
+years ago.
+
+  BACKGROUND:  As of early 1983, 11 states had launched programs to fingerprint
+children.( These were New York, Virginia, Florida, Georgia, New Jersey,
+California, Pennsylvania, Massachusetts, Nebraska, Connecticut, Rhode Island,
+Kansas, Illinois, and Indiana.)
+
+  Most of this activity was stimulated by the passage of the Missing Children
+Act in October 1982.  What the new law did was to legitimize the use of the
+FBI's national computer network,the National Crime Information Center (NCIC) for
+non-criminal purposes.
+
+  All of the programs are voluntary.  In some cases the police departments
+retain the records, while in others the fingerprint cards are turned over to the
+parents for safekeeping.  The apparent purpose of the program is to help provide
+positive identification to link either children picked up, or bodies recovered,
+with missing person notices.
+
+  Every year about 1 million children are reported missing.  Of these most,
+about 800,000, are away from home for less than two weeks.  About 150,000 of the
+total missing are abducted; of these two thirds are abducted by a divorced
+parent.
+
+  Some of the reasons behind the missing children are not pretty.  According to
+an article in Parade, "about 35 percent of runaways leave home because of
+incest, 53 percent because of physical neglect.  The rest are "throwaways,"
+children kicked out or simply abandoned by parents who move away.  Every state
+has laws against incest, child abuse, abandonment, child pornography and the
+procuring of children, but they are rarely enforced."
+
+  POINT:  Conscientious parents should have their childrens' fingerprints
+recorded to help in the event of an abduction; they shouldn't wait until after
+something terrible happens, but should take reasonable steps now.  Thousands of
+children are runaways, and in many cases it is all but impossible to determine
+clearly who they really are.  People change, but fingerprints don't.
+Well-intentioned but misguided civil libertarians worry about Big Brother.  But
+they tend to overlook the obvious benefits of the program and concentrate on
+wildly imaginative fantasies about Big Brother.  If they would come down to
+earth once in a while, and visit with and share the anguish of a family of an
+abducted child, they would quickly change their attitudes.  Besides, in most
+cases the police do not keep the records, the parents do.
+
+  COUNTERPOINT:  Absent some showing that the fingerprinting will actually help
+keep children safe and help capture criminals who harm or abduct them, parents
+should refuse to have their children fingerprinted.  In promoting the child
+fingerprinting program, police officials tend to be vague about how the program
+will increase the average child's safety.  How does it improve children's safety
+to be fingerprinted?  Surely, it may help identify a body, but that is not much
+help.  Besides, dental records do the same thing and probably do a better job.
+People forget that this program is geared to eventually entering the child's
+identification data into the National Crime Information Center.  That is a
+criminal records databank, and it could be very harmful to a child in the future
+to have what many employers will automatically take to be a "criminal record."
+And that is not far fetched.  In April 1983 the Congress' General Accounting
+Office released a report saying that in some states children picked up as
+runaways are jailed along with real criminals.	GAO found that in five states
+(Virginia, Massachusetts, New Hampshire, North Carolina, and Oregon) 39 percent
+of the juveniles incarcerated had not been charged with a serious offense,
+despite federal standards requiring that.  Running away from home, shoplifting
+and other minor thefts made up most of the offenses.  Even advocates admit to
+the possibility of a stigma.  A PTA Council President in Virginia spoke out in
+favor of the program:  "I can't think at this point of a practical reason for
+not having your fingerprints taken.  It seems to me the higher the percentage of
+the population that has its fingerprints on file, the less stigma will be
+attached to it." Another mother, as her child was being fingerprinted, told a
+New York Times reporter, "Unless you're planning a life of crime for your child,
+I can't see why any parent would object." If we are really serious about
+reducing the runaway problem, we should demand that our police officials start
+looking closely into the family situations from which the runaway came from.  If
+there is evidence of incest or abuse, the offendor should be prosecuted.  Maybe
+if more abusive parents got that message, they would be less inclined to do the
+things that cause the vast majority of runaway cases in the first place.
+
+QUESTIONS:
+o Do you think that the police will be more effective in locating missing
+children if there are copies of their fingerprints on record?
+
+o Do you think that there is any problem with having your own records stored in
+a criminal record computer system?  Would anyone assume from such records that
+you have done something wrong?
+
+o If a child runs away from home because of incest or physical abuse, should
+the police help put him back in that home?
+
+o Do you think that the voluntary fingerprinting program will make the next
+generation of American citizens less reluctant to let government keep more
+records on them?  Or will it have the opposite effect and make people used to
+having this kind of record kept?
+
+REFERENCES:
+     Fingerprinting of Children Spreading, New York Times,
+February 22, 1983
+     Fingerprinting the Kids Won't Solve the Problem, The Fairfax
+Journal (editorial), April 15, 1983, p.A6
+     Reston Kids Ink Up for Fingerprints, Adrian Higgins, The
+Fairfax Journal, September 19, 1983, p.A1
+     Jersey County Fingerprints Pupils, Franklin Whitehouse, The
+New York Times, January 26, 1983, p.B1
+     Alexandria Cops To Fingerprint School Kids, Joe O'Neill, The
+Fairfax Journal, February 23, 1983, p.A4
+     Child Abductions A Rising Concern, Associated Press, The New
+York Times, December 5, 1983
+     Finding Missing Children, The Washington Post (editorial),
+May 28, 1982
+
+(Note:	Please leave your thoughts -- message or uploaded comments -- on this
+issue on Tom Mack's RBBS, The Second Ring --- (703) 759-5049.  Please address
+them to Terry Steichen of New Perspectives Group, Ltd.)
+

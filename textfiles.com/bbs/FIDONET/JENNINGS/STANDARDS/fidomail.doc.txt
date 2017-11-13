@@ -1,0 +1,1518 @@
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 1
+
+        
+                
+                Tom Jennings
+                2269 Market Street #118
+                San Francisco CA 94114
+        
+                FidoNet Node #1
+                415/864-1418
+        
+        INTENT
+        
+                This document is an attempt to describe and define
+        the packet protocol used to support electronic mail under
+        the Fido/FidoNet system.
+        
+                It will not describe or define Fido/Fidonet software
+        operation, nor even describe what the system does; for that,
+        I refer you to the following Fido manuals:
+        
+        Fido's Installation Manual      (INSTALL.DOC)
+        Fido's Operating Manual         (FIDO.DOC)
+        Fido's FidoNet Manual           (FIDONET.DOC)
+        
+                Only the lower layers of the protocol will be
+        discussed here; routing, forwarding, dialing algorithms and
+        such will not be covered. These are mentioned, albeit
+        briefly, in Fido's FidoNet Manual.
+        
+        BACKGROUND
+        
+                FidoNet was designed to be more or less portable
+        within the existing "public domain" software base, ie. any
+        system that can support binary transfers via XMODEM or it's
+        variants is in theory capable of supporting FidoNet. This
+        does not mean to imply that the current Fido/FidoNet
+        software will be/can be transported to machines not
+        currently supported; it means that no designed in
+        limitations were intended. 
+        
+                This document merely covers the algorithms used, and
+        the problems encountered, in the automatic transfer of
+        packets and files used by the MSDOS Fido/FidoNet system.
+        
+        DESCRIPTION
+        
+                FidoNet is a true electronic mail system supported
+        by the Fido Bulletin Board System software, under MSDOS
+        version 2. It's function is to transfer textual messages,
+        and binary files, between physically seperate computers on
+        an automatic, unattended basis.
+        
+        BASIC ASSUMPTIONS
+        
+                The basic unit of data in FidoNet, like most MSDOS
+        and CPM software, is the byte, which here means 8 bits. All
+        data transfers assume the availability of an 8 bit byte
+        capable channel; 7 bit ASCII is not adequate. Parity, if
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 2
+
+        used, must be transparent to the software.
+        
+                FidoNet is transaction oriented; a channel
+        (connection) is made, data transferred, the channel closed.
+        In all existing cases, this means a typical modem/phone line
+        connection; dial, connect, transfer, disconnect, though
+        anything that might be considered a "channel" will work.
+        
+                The most basic design criteria for FidoNet is
+        extremely short channel connect times, since the usual
+        channel is a telephone line, where costs are accumulated on
+        a per minute basis. Lowest possible costs is the single most
+        important issue here. For this reason, all packets are
+        preassembled; no processing at all is done at packet
+        transfer time.
+        
+                Due to the lack of real time operating systems,
+        FidoNet runs on an alternating basis with Fido. While Fido
+        is running, users enter messages, attach files and the like,
+        to be later processed by FidoNet. When FidoNet gains control
+        (at a predetermined time of day) it packetizes outgoing
+        messages, then makes attempts to send these packets, and may
+        receive packets from other nodes, all asynchronouously. When
+        FidoNet's time slot is over, it deletes any un-sent packets,
+        unpacks any packets that were received, and then passes
+        control back to Fido. Note that incoming packets are not
+        examined in any way until the FidoNet time slot is over.
+        
+                A basic concept in FidoNet is the "node". A node is
+        any computer capable of sending or receiving FidoNet mail
+        packets. All discussions of packet transfers here will
+        assume point to point transfers.
+        
+                As background information, it should be noted that
+        routing, forwarding, cost accounting, etc is done at a much
+        higher layer; routing, for instance is done even before
+        packets are created, and determines the destination node. It
+        has no effect on packet transfer.
+        
+        SOFTWARE ASSUMPTIONS
+        
+                Fido/FidoNet is written in 'C' (Lattice flavor) and
+        makes use (of course) of C style structures and strings.
+        Luckily, these are quite simple. Here are the following
+        basic components used throughout FidoNet:
+        
+        CHARACTERS:
+                An 8 bit byte. The usual micro type "character"; all
+        8 bits may be signifigant. Usually 128ASCII.
+        
+        STRING:
+                A one dimension array of 8 bit characters,
+        terminated by a null. (hex 0) Some are of a fixed length; in
+        this case, signifigant text is left justified, followed by
+        the null, and the rest of the string is indeterminate. In
+        practice, FidoNet strings vary from very few characters up
+        to 4000 characters or so.
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 3
+
+        
+        INTEGERS:
+                All integer variables are 16 bits ('C' shorts)
+        unsigned, and are in Intel (big endian) format; least byte
+        first in the byte stream.
+        
+        LONGS:
+                A long integer is 32 bits, in Intel format.
+        
+        WHAT A PACKET IS
+        
+                A packet is a file that consists of a header, a
+        variable amount of variable size messages, and a trailer.
+        Each message within a packet has a header, and a single
+        string of plain text.
+        
+                +---------------+
+                |               |
+                |               | Header
+                |               |
+                +---------------+
+                |               | Message #1
+                +---------------+
+                |               |
+                /               /
+                /               /
+                |               |
+                +---------------+
+                |               | Message #N
+                +---------------+
+                |               | Trailer
+                +---------------+
+        
+        
+                The header and trailer are of fixed length. All of
+        the messages are variable length, but have a fixed number of
+        fields within them.
+        
+                Packets must be treated as a byte stream; for many
+        of the components, "type" flags determine the format of
+        upcoming data, therefore it is difficult to "read ahead",
+        except for buffering purposes.
+        
+        THE HEADER:
+        
+                The header is a fixed length structure, and contains
+        the originating and destination nodes, the date the packet
+        was made, a version number, and some extra space for future
+        expansion.
+        
+                Foolishly, there is no "type" identifier in the
+        packet header.
+        
+        A PACKET MESSAGE:
+        
+                Each message contains an interger "type", followed
+        by the message fields. These are: attribute, originating
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 4
+
+        node, destination node, two zeros, cost, date string, "to"
+        string, "from" string, "Subject" string, followed by the
+        text string.
+        
+                The type, attribute, orig and dest node numbers, the
+        two zeros and cost are all integers. The other are serial
+        byte streams, strings, of variable length.
+        
+                                INPORTANT NOTE:
+        
+                Due to extreme shortsightedness in the original
+        packet design, the message type 1 did not include the
+        originating and destination node numbers; FidoNet inserted
+        the node numbers found in the packet header when the message
+        was unpacked and stored in the system.
+        
+                Routing meant that messages for many different nodes
+        were packed into a single packet; needless to say this means
+        that the node numbers may not be the same for each message,
+        as was the previous assumtion.
+        
+                A message type 2 (the one described above) was added
+        to accomodate the "extra" information. Starting in version
+        10, FidoNet will no longer create message type 1, though it
+        will continue to receive them. Other implementations may
+        ignore message type 1, and assume that all are message type
+        2.
+        
+        THE TRAILER:
+        
+                The trailer consists of a single integer 0. This can
+        be thought of as a message type 0. This ends the packet; any
+        data following it (as when XMODEM rounds the packet up to
+        the next highest 128 bytes) should be ignored.
+        
+        
+        SYSTEM ASSUMPTIONS
+        
+                Fido and FidoNet were designed using some basic
+        software building block concepts, admittedly stolen from
+        Ward Christensen's MODEM program. 
+        
+                XMODEM with CRC error checking is used for the basic
+        mail packet transfer. No further discussion will be made as
+        to XMODEM implementation nor operation. Please refer to
+        other documents.
+        
+                MODEM7, or more accurately, TELINK, protocol is used
+        to transfer any files "attached" after the message packet.
+        TELINK is identical to MODEM7, with the addition of an extra
+        data block, that passes MSDOS dependent file information
+        (time, date, exact file size) before the first data block.
+        FidoNet is still MODEM7 capable; all that is necessary is to
+        NAK the extra block, whose header character is ASCII SYN
+        instead of SOH when receiving from a TELINK based FidoNet.
+        For sending to TELINK based receiving FidoNets it is not
+        necessary to send this extra block. This protocol is also
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 5
+
+        described elsewhere.
+        
+        
+                FidoNet assumes the presence of a clock of some
+        sort, for failsafe monitoring of packet transfers, and for
+        accounting purposes, to monitor actual connect times.
+        Accounting is outside the scope of this document.
+        
+                A clock timer, preferably interrupt driven, is
+        needed to monitor the initial connection process, though may
+        be done using polled counters, if they are "calibrated".
+        This is fairly important; it prevents excessive connect
+        times if either the sender or receiver fails at any point.
+        
+        
+                There are two basic subroutines used in the Fido
+        implementation of FidoNet. While these are very low level
+        hardware dependent routines, they are very important in
+        concept.
+        
+        DELAY ( N )
+        
+                Delay for N centiseconds. This is just a time delay,
+        or time waster routine. It is used for generating time
+        delays for accomodating the telephone companies equipment.
+        
+        MODOUT ( CHARACTER )
+        
+                Send a character to the modem. This is shown for
+        illustration purposes; it is used in the diagrams to follow.
+        
+        MODIN ( N )
+        
+                Receive a character from the mode, but wait no
+        longer than N centiseconds. If a character is received, it
+        is returned; if it times out, -1 is returned. Since
+        characters are 8 bits, -1 (16 bits) indicates that no valid
+        character was received. This is a very basic, very important
+        function, upon which all of FidoNet is based.
+        
+                The centisecond timer does not need to be accurate.
+        10% or less error is ideal, 20% is acceptable, and Fidonet
+        will usually still operate at up to 100% error. However,
+        repeatability will suffer, and sensitivity to the "length"
+        of a telephone connection will increase rapidly above 25%
+        error. 
+        
+                This is implemented on MSDOS as an interrupt driver
+        timer; a polled timing loop is adequate if adjusted to match
+        the processor speed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 6
+
+        PACKET TRANSFERS
+        
+                Packet transfers will be described in two ways here;
+        first, a prose description, lacking exact details, and a
+        diagram with tables, with exact timing relationships and
+        values.
+        
+                A FidoNet session consists of the following:
+        
+                - Building routing tables
+        
+                - Building list of active nodes
+        
+                - Creating packets
+        
+                        - Compiling Messages
+        
+                        - Compiling list of attached files
+        
+                - Sending/receiving Packets
+        
+                - Deleteing outgoing packets, marking sent messages
+        
+                - Unpacking incoming packets
+        
+                - Return control to Fido
+        
+                Only the creating of packets and attached file
+        lists, their transmission and reception, and unpacking is
+        covered here. The other steps are Fido dependent, and will
+        vary from implementation to implementation.
+        
+        
+        CREATING PACKETS:
+        
+                FidoNet makes a number of passes through all of the
+        messages in the system. The first pass is merely to
+        determine which nodes have messages destined to them. Each
+        node is marked in a table, for later use in making packets
+        and dialing.
+        
+                Additional passes are made, one for each node there
+        is mail to. A packet file is created on disk, using the
+        destination node number to create a unique filename (44.out
+        for a packet to node 44, etc), and the packet header is
+        written out.
+        
+                When a message to this node is found, the message is
+        written out to the packet file. (The messages as stored in
+        Fido are described later in detail)
+        
+                After the last message is written to the packet, the
+        trailer is written out, the file closed.
+        
+                This process is repeated for all nodes that have
+        mail to be sent.
+        
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 7
+
+        SENDING PACKETS:
+        RECEIVING PACKETS:
+        
+                FidoNet alternates sending and receiving packets for
+        most of the time slot. When it is not actually sending (or
+        attempting to send) a packet, it is waiting for one.
+        
+                If there are no incoming calls, FidoNet makes
+        outgoing calls at a random one or two minute interval. A
+        node is chosen to call from the table compiled while making
+        packets. A node is picked sequentially from this table,
+        trying each one in sucession. When the end of the table is
+        reached, it starts over at the beginning.
+        
+                When it is time to place a call, the next node is
+        chosen from the table, the telephone number is dialed. If no
+        connection is made, FidoNet goes back into receive mode. 
+        
+                If a connection is made, CRs are sent, to determine
+        the baud rate. When the called system determines the baud
+        rate, it sends the "signon" message telling human callers it
+        is not available. This message is detected by the caller,
+        and terminates the baud detection. If baud is not detected
+        in 8 seconds, the caller disconnects.
+        
+                The sender then waits for the line to clear (the
+        signon message to stop), then sends a character designated
+        as "TSYNC". This tells the receiver that it is a FidoNet
+        node calling, instead of a human caller. There is a 60
+        second limit placed on the TSYNC sequence. The receiver then
+        goes into XMODEM file receive, with a unique name for the
+        incoming packet. (0.in, 1.in ...) 
+        
+                After sending TSYNC, the sender transmits the packet
+        (N.OUT) using normal XMODEM protocol.
+        
+                After the packet is sent, the receiver goes
+        immediately into MODEM7 mode, to receive any attached files.
+        
+                If there are no attached files, the sender sends an
+        EOT, which when received by the receiver in MODEM7, tells it
+        "no more files". If there are attached files, the sender
+        sends all of the files in the attached file list, using
+        MODEM7.
+        
+                After either sending the attached files, or after
+        sending the EOT meaning no attached files, the sender delays
+        five seconds, then disconnects. After receiving the last
+        attached file (or the EOT) the receiver delays two seconds
+        and disconnects. The delay is to accomodate the telephone
+        systems peculiarity of keeping connect information on a
+        seperate, faster, channel that the data itself; without the
+        delay, it is possible for the "disconnect" to get there
+        before the character does.
+        
+                If the packet was sent sucessfully, the sender
+        deletes the outgoing packet, the attached file list, and
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 8
+
+        marks the node table as "sucessful", and then returns to the
+        receive and wait mode.
+        
+        UNPACKING PACKETS:
+        
+                When FidoNet mail time is over, any unsent outgoing
+        packets are deleted, and all messages that were sent
+        sucessfully are marked as SENT.
+        
+                Each incoming packet (0.in, 1.in ...) is unpacked
+        and deleted. First, the destination node number is compared
+        to the nodes actual number. If it does not match (this
+        packet not really meant for this node) the packet is deleted
+        without further unpacking. If it matches, the messages are
+        unpacked and placed in the message area.
+        
+                The packet is read as a byte stream, and interpreted
+        as read. When a message type is found, FidoNet assembles the
+        message as it goes.
+        
+                Note that it is possible to receive part of a
+        packet; Fidonet will unpack all complete messages and store
+        them in the message area. It may find an error, such as an
+        incomplete packet. This is not a necessary feature; since
+        the packet was aborted, it will be sent again the next
+        night.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 9
+
+        FIDONET DIALING AND PACKET TRANSFER
+        
+                This is the final, detailed, description of the
+        actual packet transfer. Some shorthand notation will be used
+        here; "clock" means a general purpose timer for monitoring
+        elapsed time, and is set and read during many parts of the
+        packet protocol. The two subroutines described above are
+        also used through out.
+        
+                The descriptions her are in a C like "pseudo code",
+        for simplicity. Function or subroutine calls are shown as:
+        
+                function(parameter);
+        
+                Where function() is the subroutine, and "parameter"
+        is a parameter passed to the function. Parameters here may
+        be numeric values or strings, which can be determined from
+        context. Functions without parameters are shown as
+        function(). Functions may return a value, so that:
+        
+                x= function()
+        
+                Sets variable X to the value returned by function().
+        
+        IMPORTANT NOTE:
+        
+                Ther is one extremely important construct that does
+        not, and cannot show up in these diagrams. This is a
+        mechanism to monitor Carrier Detect on the modem, and return
+        directly to a high level subroutine for error handling. This
+        is important due to the huge number of place where carrier
+        loss would have to be checked for, with the corresponding
+        high number of error return checks.
+        
+                This can be implemented with a C like "set_jmp",
+        which stores the stack pointer and a return address, and
+        jumps to the return address if carrier is lost.
+        
+                Also, in the Fido implementation, this error exit is
+        taken when the clock goes over the set limit. This frees the
+        high level code from having to watch the clock constantly.
+        
+                The actual high level packet receive and send C
+        source is included at the end of this document to hopefully
+        make this a bit clearer.
+        
+        
+                All mnemonics are standard ASCII control characters,
+        with the exception of "TSYNC", described below.
+        
+        Control Character Definitions
+        
+        Char    Hex     Dec
+        ----    ---     ---
+        CR      0d      13
+        EOT     04       4
+        TSYNC   ae     174
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 10
+
+        
+        
+        PACKET TRANSMISSION:
+        
+        send_packet:
+        
+        Attempt to place the call. If no connection, just return,
+        where FidoNet will wait for an incoming call, or delay one
+        or two minutes to place the next outgoing call.
+        
+                set baud rate from node list
+                dial phone number,
+                if no connection, return
+        
+        A connection has been made. Determine the baud rate first.
+        This "whacks return" up to eight times; if no message
+        appears from whacking, it stops and calls it an error. The
+        "double whack" (sic) seems to work better than a single CR.
+        When the receiver determines the baud rate, it sends 4 CRs,
+        and the signon message, which also contains CRs. The sender
+        notices this and stops sending its CRs.
+        
+                for (i= 1 to 8) {
+                        send CR, delay(20), send CR;
+                        if (modin(100) == CR) break out of loop;
+                }
+        
+                if (no CR received above) {
+                        mark table as one "connect",
+                        disconnect,
+                        return.
+                }
+        
+        Baud rate is now detected. Set the failsafe timer, wait
+        until the line clears (the signon message stops coming),
+        then send TSYNC. If one minute elapses, disconnect and
+        return.
+        
+                print ("Connected");
+        
+                set clock to zero;
+                while (clock is less than one minute) {
+                        if (modin(50) == -1) break out of loop;
+                }
+                if clock == one minute {
+                        disconnect,
+                        return.
+                }
+        
+                send (TSYNC);
+                disable clock;
+                print ("Sent TSYNC");
+        
+        Presumably, all connected now. Start sending the packet via
+        XMODEM. XMODEM will timeout after so many tries, so that
+        this will not hang if the other end fails or is not a
+        FidoNet.
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 11
+
+        
+                print "Sending Packet"
+                xmodem send (packet);
+        
+        Packet transmission complete. Mark the in memory table as
+        "succesful". If there are attached files, send them now,
+        otherwise just send an EOT.
+        
+                success= 1;
+        
+                if (attached files) 
+                        modem7 send attached files
+        
+                else send EOT.
+        
+        All sent, delay 5 seconds to let things settle down.
+        
+                delay(500)
+                disconnect,
+                return.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 12
+
+        PACKET RECEPTION:
+        
+        Carrier was detected while waiting to place a call or
+        waiting for an incoming call. Determine baud rate first,
+        display the signon message, then wait for TSYNC. There is a
+        one minute limit waiting for TSYNC. Note that connect()
+        watches the clock while waiting for CRs, and will take a
+        fatal error abort if it goes over the set limit. This
+        example therefore assumes that it will not timeout.
+        
+        receive_packet:
+        
+                reset clock,
+                connect()                       determine baud rate
+        
+                print to modem:
+                        "FidoNet Version x.x
+                        FidoNet Node #N
+                        Processing mail Only"
+        
+                while (clock less than one minute) {
+                        if modin(100) == TSYNC break out of loop;
+                }
+        
+                if (over one minute) {
+                        disconnect,
+                        return;
+                }
+        
+        All connected, received TSYNC. Wait for the incoming packet.
+        Each incoming packet is named sequentially, starting at 0;
+        0.in, 1.in, 2.in, etc. If no packet was received, quite now;
+        no sense in trying to get attached files if no packet
+        received.
+        
+                xmodem receive packet
+                if no files received {
+                        disconnect,
+                        return.
+                }
+        
+        Since it may have taken a few seconds to close up and write
+        out the packet file, the sender may have sent extra EOTs
+        from the end of the XMODEM packet transfer. Delay a bit, and
+        flush out the modem.
+        
+                delay(200),
+                flush modem,
+        
+        Now just go right into MODEM7 receive, for any attached
+        files. If there are none, the sender will send us an EOT,
+        which tells MODEM7 there are no more files. It can also just
+        hang up at this point, since the packet has already been
+        received. After the last, if any, file(s) received, delay 2
+        seconds and disconnect.
+        
+                receive modem7 *.*
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 13
+
+                delay(200),
+                disconnect,
+                return.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 14
+
+        IMPLEMENTATION NOTES:
+        
+                These are some suggestions on implementing FidoNet
+        on all systems. They are merely suggestions; obviously you
+        can do what you want.
+        
+        
+        LOW LEVEL FUNCTIONS:
+        
+                As mentioned before, there are some low level
+        functions that at least some of which are probably
+        universal. The ideas below may make it easier to implement a
+        "bullet proof" FidoNet.
+        
+        ELAPSED TIME CLOCK:
+        
+                This is a necessity, in one form or another. It's
+        accuracy does not need to be high. In Fido, it is
+        implemented as a timer tick interrupt, that increments in
+        memory variables: 'millisecs', 'seconds', 'minutes', and a
+        function to clear the clock, ie. set the above counters to
+        zero. (millisec is almost never actuall milliseconds; on the
+        IBM PC, for instance, the clock tick is at 55.55 mS; 55 is
+        added to 'millisec' every clock tick.)
+        
+                There is an additional variable called 'limit', that
+        is the time limit to enforce for a particular routine.
+        Setting it to zero effectively disables the limit.
+        
+                Thirdly, there is a function called limitchk(), that
+        does two things:
+        
+        1.      Watches the set time limit vs. the minute counter
+        
+        2.      Watches the carrier detect line from the modem
+        
+                If either one of these events happens, it takes the
+        fatal error trap, and returns directly, instead of returning
+        normally.
+        
+        
+        limitchk() {
+        
+                if (limit > 0) {
+                        if (minutes >= limit) frc_abort();
+                }
+                if ! dsr()) frc_abort();
+        }
+        
+                frc_abort() is the fatal error jump, back to the
+        caller directly. dsr() is a function that returns false (0)
+        if carrier is lost. If no fatal errors, limitchk() just
+        returns.
+        
+        
+        MODIN(N)
+        MODOUT()
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 15
+
+        
+                These two are the lowest level character IO in Fido.
+        modin(N) returns either a character from the modem, or -1
+        (TIMEOUT) if no character was available within N
+        centiseconds. This avoids hanging forever waiting for a
+        character that may never come.
+        
+                modout() merely sends a character to the modem.
+        
+                Both of these functions check for errors by calling
+        limitchk() while waiting for input or output ready.
+        
+        modin(n)
+        int n;
+        {
+                millisec= 0L;
+                while (millisec < (10 * n) ) {
+                        if (character ready) return(modem char);
+                        limitchk();
+                }
+                return(-1);
+        }
+        
+        modout(c)
+        char c;
+        {
+                while (output not ready) {
+                        limitchk();
+                }
+                send char to modem
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 16
+
+        MESSAGES
+        
+                While the message format is very Fido dependent, it
+        may be illustrative to show the correspondence between a
+        "normal" Fido message and one that has been installed in a
+        packet.
+        
+                This is the format of a Fido message, as contained
+        in any Fido Message Area.
+        
+        
+        /* Message header structure. The message text is just a long
+        string. */
+        
+        struct _msg {
+                char from[36];          /* who from, */
+                char to[36];            /* who to, */
+                char subj[72];          /* message subject, */
+                char date[20];          /* creation date, */
+                int times;              /* number of times read, */
+                int dest;               /* destination node, */
+                int orig;               /* originating node */
+                int cost;               /* actual cost of msg */
+                int caca[6];            /* extra space, */
+                unsigned reply;         /* thread to previous */
+                int attr;               /* message type, */
+                int up;                 /* thread to next */
+        };
+        
+        /* The message text starts at the byte following the end
+        of the structure, and is terminated by a single null. */
+        
+        /* Bit values for msg.attr */
+        
+        #define MSGPRIVATE 1            /* private message, */
+        #define MSGREAD 4               /* read by addressee */
+        #define MSGSENT 8               /* sent OK (remote) */
+        #define MSGFILE 16              /* file attached to msg */
+        #define MSGFWD 32               /* being forwarded */
+        #define MSGORPHAN 64            /* unknown dest node */
+        #define MSGKILL 128             /* kill after mailing */
+        
+        
+                A Fido message is 191 bytes minimum; 190 bytes of
+        header, above, and a variable amount of message text, null
+        terminated. A fairly large klunky thing to pass around. When
+        compacted into a packet, it is much smaller. As an example,
+        assume the following message:
+        
+        From: Tom Jennings  On Fido 1
+        To: John Madill  On Fido 2
+        Subject: Test message
+          This is text in the test message.
+        
+                A hex dump of this test message follows. Note that
+        the null terminated strings are followed by garbage; please
+        ignore it.
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 17
+
+        
+        54 6F 6D 20 4A 65 6E 6E-69 6E 67 73 00 00 8E 36   Tom Jennings...6
+        00 00 00 FE FF 06 00 00-00 00 96 36 31 00 F3 21   ...~.......61.s!
+        0A 00 00 00 4A 6F 68 6E-20 4D 61 64 69 6C 6C 00   ....John Madill.
+        86 99 F8 27 86 99 02 28-00 00 91 36 57 61 69 74   ..x'...(...6Wait
+        20 2E A0 99 AE 16 68 21-74 65 73 74 20 6D 65 73    . ...h!test mes
+        73 61 67 65 00 00 65 00-FF 00 FC FF 00 00 B8 99   sage..e...|...8.
+        40 00 AF 06 AF 06 65 06-40 00 65 00 65 00 FC FF   @././.e.@.e.e.|.
+        00 00 AF 06 0D 06 40 00-65 00 FF 00 FC FF 00 00   ../...@.e...|...
+        DA 99 65 00 AF 06 7E 60-1D 1A 83 F2 99 36 BC 27   Z.e./.~`...r.6<'
+        32 33 20 4F 63 74 20 38-34 20 20 31 36 3A 31 39   23 Oct 84  16:19
+        3A 34 38 00 01 00 02 00-01 00 1B 00 00 00 00 00   :48.............
+        00 00 00 00 00 00 00 00-00 00 81 00 00 00 20 20   ..............  
+        54 68 69 73 20 69 73 20-74 65 78 74 20 69 6E 20   This is text in 
+        74 68 65 20 74 65 73 74-20 6D 65 73 73 61 67 65   the test message
+        2E 0D 0A 0D 0A 00                                 ......          
+        
+                When the message is packetized, it becomes much
+        smaller; an entire packet, header, the above message and
+        trailer, is only 164 bytes. The extra space and most of the
+        Fido dependent items are removed.
+        
+        01 00 02 00 C0 07 09 00-02 00 10 00 19 00 0E 00   ....@...........
+        00 00 01 00 00 00 00 00-00 00 00 00 00 00 00 00   ................
+        00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00   ................
+        00 00 00 00 00 00 00 00-00 00 01 00 01 00 1B 00   ................
+        32 33 20 4F 63 74 20 38-34 20 20 31 36 3A 31 39   23 Oct 84  16:19
+        3A 34 38 00 4A 6F 68 6E-20 4D 61 64 69 6C 6C 00   :48.John Madill.
+        54 6F 6D 20 4A 65 6E 6E-69 6E 67 73 00 74 65 73   Tom Jennings.tes
+        74 20 6D 65 73 73 61 67-65 00 20 20 54 68 69 73   t message.  This
+        20 69 73 20 74 65 78 74-20 69 6E 20 74 68 65 20    is text in the 
+        74 65 73 74 20 6D 65 73-73 61 67 65 2E 0D 0A 0D   test message....
+        0A 00 00 00                                       ....
+        
+                The packet header format is as follows. It is
+        possible to follow, and hand disassemble, the message
+        packet.
+        
+        struct _hdr {
+                int orig;               /* originating Node # */
+                int dest;               /* destination node */
+                int year,month,day,hour,minute,second;
+                int rate;               /* baud rate */
+                int ver;                /* packet version */
+                int extra[19];
+        } pkthdr;
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 18
+
+        #include <stdio.h>
+        #include <ctype.h>
+        #include <bbs.h>
+        #include <xfbuf.h>
+        #include <ascii.h>
+        #include <xtelink.h>
+        
+        #define TSYNC 0xae
+        
+        extern char ver[];
+        
+        extern unsigned crcmode;                /* 1 if CRC mode, */
+        extern unsigned filemode;               /* transfer type; XMODEM, MODEM7, TELINK */
+        
+        /* Statistics on file transmission. */
+        
+        extern unsigned totl_files;             /* total files sent/rec'd */
+        extern unsigned totl_failures;          /* how many failed, */
+        extern unsigned totl_errors;            /* error count, soft errors incl */
+        extern unsigned totl_blocks;            /* number blocks sent, */
+        
+        extern int minutes,seconds;
+        extern int pktnum;                      /* incoming packet number */
+        
+        extern struct _route route[ROUTE_SIZE]; /* routing table */
+        extern int maxnode;                     /* number of nodes in route table */
+        
+        extern struct _sched sched[SCHEDS];     /* scheduled events */
+        extern char tag;                        /* handy local copy of the tag */
+        extern int event;                       /* handy local copy of the current event */
+        
+        extern struct _nmap nmap[MAXNODES];     /* working node table */
+        extern int nn;                          /* current node, */
+        extern int nodetotal;                   /* number of nodes in the table */
+        
+        extern struct _pkthdr pkthdr;           /* FidoNet packet header */
+        extern struct _mail mail;               /* MAIL.SYS */
+        extern struct _node node;               /* in memory node descriptor */
+        extern struct _sys sys;
+        
+        extern char *_txbuf;            /* message display buff, ASCII upload */
+        
+        extern int sysfiles;            /* total system files, */
+        
+        extern int overwrite;           /* 1 == allow overwriting files */
+        extern int xferdisp;            /* 1 == display up/dn load status */
+        
+        extern int rate;                /* baud rate */
+        extern int cd_flag;
+        extern int limit;
+        
+        /* Carrier detected. Determine the baud rate, display a message to
+        tell humans what were doing, then get in sync with the sender. Once
+        in sync, receive the mail packet. */
+        
+        rcv_mail() {
+        
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 19
+
+        int i,n;
+        char pktname[80];
+        int msg_pkts,msg_blocks;
+        
+                gtod(pktname);
+                lprintf("Call in @ %s\r\n",pktname);    /* log the call, */
+        
+                cprintf(" * Incoming Call\r\n");
+                clr_clk();                      /* reset the clock, */
+                limit= 1;                       /* limit to connect, */
+                cd_flag= 0;                     /* watch Carrier Detect */
+        
+        /* We get an abort if: timeout, no sync (human caller), actual file transfer
+        error, or packet received and sender hangs up. Totl_files is 0 if no
+        packets transferred. */
+        
+                totl_blocks= 0;
+                totl_files= 0;
+                msg_pkts= 0;
+                msg_blocks= 0;
+                set_abort(0);                   /* trap carrier loss here, */
+                if (was_abort()) {
+                        if (msg_pkts == 0) {
+                                cprintf("          Receiving Mail Packet Aborted\r\n");
+                                lprintf("\r\n*Aborted\r\n");
+        
+                        } else {
+                                cprintf(" * Received %u packets\r\n",msg_pkts);
+                                lprintf(" %u pkts %u blks OK\r\n",msg_pkts,msg_blocks);
+                                if (totl_files > 0) {
+                                        cprintf("          Received %u files\r\n",totl_files);
+                                        lprintf("Recv'd Files\r\n");
+                                }
+                        }
+                        cd_flag= 0;                     /* real CD, */
+                        if (dsr()) discon();            /* hang up, delay for telco */
+                        else delay(200);                /* delay for telco */
+        
+                        return(msg_pkts);
+                }
+        
+        /* The sender whacks CR until it gets a CR back. It then waits for the
+        message to stop, sends a TSYNC, and starts the transfer. */
+        
+        /* -------------------- One Minute to Complete This ---------------------- */
+        
+                cprintf(" * Determining Baud Rate\r\n");
+                connect();                      /* determine baud rate, */
+                modout(CR);                     /* tell Tx we got baud right */
+        
+                mprintf("\r\r\r\r\n   FidoNet Version %s\r\n",ver);
+                mprintf("   FidoNet Node #%u\r\n",mail.node);
+                mprintf("   Processing mail only.\r\n");
+                mcrlf();
+        
+                cprintf(" * Waiting for Sync\r\n");
+                while (modin(100) != TSYNC)
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 20
+
+                        limitchk();
+        
+        /* ------------------- End One Minute to Complete -------------------- */
+        
+        /* All connected. Transfer the mail packet. No time limit, but the
+        file receive will abort if there is an error. */
+        
+                limit= 0;                       /* no time limit */
+        
+                sprintf(pktname,"%u.in",pktnum++);      /* pick a new name, */
+                cprintf(" * Waiting for Mail Packet (%s)\r\n",pktname);
+                lprintf(" %s ",pktname);
+        
+                crcmode= 1;                     /* CRC, */
+                filemode= XMODEM;               /* file xfer mode, */
+                recieve(pktname);               /* receive a packet, */
+        
+                msg_pkts= totl_files;
+                msg_blocks= totl_blocks;        /* number of mail packets, */
+                totl_files= 0;
+                totl_blocks= 0;
+        
+        /* Let extra EOTs, etc settle out, then flush it so the file receive
+        doesnt get the extra EOTs. */
+        
+                delay(200);                     /* delay for last char */
+                while (modin(10) != TIMEOUT);
+        
+        /* Wait for any incoming files. If there areent any, then the caller
+        will just hang up if an older version, or will send EOT if no files. */
+        
+                filemode= TELINK;
+                recieve(mail.filepath);         /* get any files, */
+                delay(200);
+                frc_abort();                    /* error trap exit */
+        }
+        
+        /* Send a mail packet to the remote. Dial the number, if error, return 0 to
+        indicate no connection. Also, 'minutes' upon return reflects the actual
+        connection time. */
+        
+        send_mail() {
+        
+        char pktname[80],fllname[80];
+        int n,f;
+        int msg_pkts,msg_blocks;
+        int online;
+        
+                cprintf(" * Calling Fido%u %s %s\r\n",node.number,node.name,node.phone);
+                online= 0;                      /* no connect yet */
+                *_txbuf= '\0';                  /* in case no file, */
+                sprintf(fllname,"%u.fll",node.number);
+                f= _xopen(fllname,0);           /* read in file list, */
+                n= _xread(f,_txbuf,_TXSIZE);
+                _txbuf[n]= '\0';                /* null terminate it, */
+                _xclose(f);
+        
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 21
+
+                gtod(pktname);
+                lprintf("Call out Fido%u @ %s\r\n",node.number,pktname);
+        
+                sprintf(pktname,"%u.out",node.number);  /* local packet to send */
+                ++nmap[nn].tries;               /* log another try, */
+        
+        /* We get an abort if (1) it times out dialing, (2) we fail to connect 
+        or (3) transmission sucessful, and receiver hung up. totl_files tells
+        us what happened. */
+        
+                totl_blocks= 0;
+                totl_files= 0;
+                msg_pkts= 0;
+                msg_blocks= 0;
+                set_abort(0);
+                if (was_abort()) {
+                        if (online) {
+                                nmap[nn].time+= (minutes * 60) + seconds;
+                                ++nmap[nn].connects;
+                        }
+        
+                        if (msg_pkts == 0) {
+                                cprintf("          Packet Transmission Aborted\r\n");
+                                lprintf("*Nothing sent\r\n");
+        
+                        } else {
+                                cprintf(" * Sent %u packets %u files\r\n",
+                                        msg_pkts,totl_files);
+        
+                                lprintf(" Sent %u pkts %u files\r\n",msg_pkts,totl_files);
+                                nmap[nn].success= 1;
+                                _xdelete(pktname);      /* done with that packet */
+                                _xdelete(fllname);
+                        }
+        
+                        cd_flag= 0;
+                        if (dsr()) discon();
+        
+                        return(msg_pkts);
+                }
+        
+        /* Set the baud rate from the node list, and dial the number. Dialing is
+        aborted if either a no-connect from the modem, or a timeout if no modem
+        is connected. */
+        
+                rate= 0;                                /* assume 300 baud, */
+                if (node.rate >= 1200) rate= 1;         /* unless higher */
+                baud(rate);
+                cd_flag= 1;                             /* dont bomb on no carrier */
+        
+        /* -------------------- One Minute to Dial ---------------------- */
+        
+                limit= 1;                               /* 1 min to dial, */
+                clr_clk();                              /* reset the clock, */
+                if (dial(node.phone) == 0) {
+                        cprintf(" * No connection\r\n");
+                        lprintf("*No connection\r\n");
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 22
+
+                        frc_abort();                    /* do abort handler */
+                }
+        
+                rate= 0;                                /* again for stupid hardware */
+                if (node.rate >= 1200) rate= 1;         /* that dials at fixed rates */
+                baud(rate);
+        
+                cd_flag= 0;                             /* now watch carrier */
+                cprintf(" * Connected at %u baud\r\n",node.rate);
+                lprintf(" Connect @ %u\r\n",node.rate);
+        
+        /* -------------------- One Minute to Connect and Sync --------------- */
+        
+        /* Send CRs until we get a CR back, saying we detected baud correctly. */
+        
+                online= 1;                              /* connected now */
+                clr_clk();                              /* reset clock, */
+                limit= 1;                               /* 1 min to connect, etc */
+        
+        /*300*/ while (modin(100) != TIMEOUT)           /* quiet line, */
+                        limitchk();
+        
+                for (n= 8; --n;) {                      /* limited tries for baud test */
+                        modout(CR);                     /* send CR CR until we */
+        /**/            delay(20);                      /* get one back, */
+        /**/            modout(CR);
+                        if (modin(100) == CR) break;
+                }
+                if (n == 0) {
+                        lprintf("*autobaud failed\r\n");
+                        frc_abort();                    /* give up if no response */
+                }
+        
+        /* We got a CR from the receiver. Baud rate detected. Now, wait for the
+        prompt junk to go away, then send our sync character to say we're ready
+        to send. */
+        
+        /*100*/ while (modin(50) != TIMEOUT)            /* wait for quiet line, */
+                        limitchk();
+                modout(TSYNC);                          /* send our sync, */
+                lprintf(" Sent TSYNC\r\n");
+        
+        /* -------------------- End One Minute Connect and Sync -------------- */
+        
+                limit= 0;                               /* no limit now */
+        
+                cprintf(" * Sending Packet\r\n");
+        
+                filemode= XMODEM;
+                crcmode= 1;
+                transmit(pktname);
+                msg_pkts= totl_files;
+                msg_blocks= totl_blocks;
+        
+                totl_files= 0;
+                totl_blocks= 0;
+                if (strlen(_txbuf) == 0) {              /* if no files, just */
+
+
+
+
+
+
+
+        Fidonet Electronic Mail Protocol 20 Oct 84        Page 23
+
+                        modout(EOT);                    /* send EOT, */
+        
+                } else {
+                        filemode= TELINK;               /* now send any files, */
+                        transmit(_txbuf);
+                }
+                delay(500);
+                frc_abort();                            /* do termination code */
+        }
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

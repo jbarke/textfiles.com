@@ -1,0 +1,86 @@
+                       Documentation for EXECUTIONER
+                             by Glen E. Bredon
+ 
+ The EXECUTIONER will take a ProDOS file of any type and convert it to an
+ EXEC file for uploading.  The file parameters (such as file type) will be
+ correctly put in the EXECed file.
+ 
+ Directions:
+ 
+ 0.  An ESC at any (Y/N) prompt quits the program.  At other places it
+     usually sends you to the start of the program.  Hitting RETURN on
+     an empty filename also aborts the program as will Control-open apple-
+     RESET.
+ 
+ 1.  You are asked if you want packed mode.  A packed file is still a text
+     file but is compressed relative to standard dumps and an interpreter
+     routine is written into the file so that the file can still be EXECed.
+     Packed files are much shorter than unpacked ones and are recommended
+     for large files.  The packed mode includes a checksum and the EXEC
+     will produce an error message if the checksum is not ok.  (The file
+     will still be saved but its parameters will not have been fixed.)
+ 
+ 2.  If you chose packed mode then you are asked if you want 4 bit or 6 bit
+     packing.  The 4-bit mode just removes space between hex bytes.  The
+     6-bit mode is a denser packing in which lower case characters are
+     significant.  It is possible that some people will have trouble with
+     the EXEC of such files.  Time will tell.  For sizable files, the
+     4-bit compression is slightly more than twice the original file size,
+     while 6-bit mode produces a file about 45% larger than the original.
+ 
+ 3.  You are shown the current prefix and you can type over it to change it.
+     Just hit return to accept it as shown.  Hit ESC to go to the start of
+     the program.  You MUST set the prefix to the directory containing the
+     file you want converted.
+ 
+ 4.  The directory specified by the prefix is read and the last file in
+     that directory is displayed after a prompt for the file to be converted.
+     You can use the up/down arrow keys to see other files in that directory.
+     (The last one is displayed first because it is expected that that will
+     be the usual selection.)  You could also backspace to the beginning and
+     just type the name of the file you want to convert.
+ 
+ 5.  You will be shown some of the file characteristics of the file you have
+     selected and asked if it is correct.  If NO then you go back to the
+     start of the program.  If YES then the file is loaded for processing.
+ 
+ 6.  You are asked for the name of the destination EXEC text file.  This can
+     be a full pathname if you want it in another directory.  If you hit
+     return on the first character, the program is aborted, if you hit ESC
+     then you return to the start of the program.
+ 
+ 7.  If the text file exists, you will be asked if you want it deleted.
+     (A locked file is never deleted, that would defeat the purpose of locking
+     it in the first place.)  If not, or if you answer YES then the program
+     proceeds to create the EXEC file.
+ 
+ 8.  When the file is made, you are asked if you want to do another.  If YES
+     then you return to the start of the program.  If NO, it exits.  The
+     EXECUTIONER is a SYS (stand alone) program, so it exits through the
+     "quit" routine.
+ 
+ 9.  Note that the created EXEC file always has a "header" placed at $E00, then
+     the hex code of the converted file, placed at $1000, then a BSAVE command
+     then a E00G or E05G as the last line.  Do not modify this last line;
+     it is essential.  Also, do not modify the file name it is saved under,
+     which is always the original name of the file.  This name is also in
+     the "header" and if it is changed in the BSAVE line, the EXEC will not
+     work correctly.  In the packed modes there is an empty line before the
+     BSAVE line.  This is essential as it is the signal for the decompressor
+     that the data is finished.
+ 
+ 10. If the original file is a BAS file then, after step 6, you are asked
+     if you want a BASIC listing EXEC file.  This is just a listing with
+     spaces removed and "PRINT" changed to "?".  (There is no check on too
+     long lines.)  If you chose this option then previous answers to the
+     packing questions are ignored.  This is just a conveniece feature so
+     that separate means of making such files are unnecessary.
+ 
+ 11. You can use the "startup" position in the EXECUTIONER file, or the
+     startup in PROSEL or other program selectors to specify the destination
+     file directory (or the entire pathname if you want).  For example, if
+     the startup is "/HARD1/MODEM/" then in step 6 above, this text will
+     be placed after the prompt the cursor following it.  You can modify
+     it just as if you had typed it.
+ 
+ 

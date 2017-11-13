@@ -1,0 +1,454 @@
+*::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*
+*                                                                *
+*                    CATALOG Function Handler                    *
+*                                                                *
+*----------------------------------------------------------------*
+*                                                                *
+*      This function handler is only called by the CATALOG       *
+* command.  The overall execution pattern of the function, as    *
+* well as several customizing techniques, are described in the   *
+* preamble given with the catalog command handler (CMDCATLG,     *
+* $A56E).                                                        *
+*                                                                *
+*::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*
+
+
+(AD98)
+FNCATLOG JSR ZWRKAREA ;Initialize the work area.
+
+                      * Zero out the FM work area so it can be customized
+                      * in accordance with the calling function.
+                      * (Although some work bytes may not be subsequently
+                      * altered, don't be lulled into thinking that they
+                      * are not important.  Zero values are just as relevant
+                      * as non-zero values.)
+                      * (P.S.  Don't confuse the FM work area with its image
+                      * (FM work buffer) that is housed in the chain of
+                      * DOS buffers.)
+                      (ABDC)
+                      ZWRKAREA LDA #0
+                               TAX          ;Initialize the x-index.
+                      ZEROWRKA STA FMWKAREA,X ;Put a $00 byte in work area.
+                               INX
+                               CPX #45      ;Work area is 45 bytes long.
+                      (ABE5)   BNE ZEROWRKA
+
+                      * Begin customizing the work area.
+                      * Get volume, drive, slot & catalog track
+                      * values from the FM parameter list.  Put
+                      * drive, slot*16, catalog track and
+                      * complemented volume number in the work area.
+                      (ABE7)   LDA VOLFM    ;Volume number.
+                               EOR #$FF     ;Calculate 1's compliment of volume #.
+                               STA VOLWA
+                               LDA DRVFM    ;Drive #.
+                               STA DRVWA
+                               LDA SLOTFM   ;Get slot #.
+                               ASL          ;Calculate slot * 16.
+                               ASL
+                               ASL
+                               ASL
+                               TAX          ;Set (x) = slot * 16.
+                               STX SLOT16WA
+                               LDA #$11     ;Normal catalog trk = #17.
+                               STA TRKWA
+                      (AC05)   RTS
+
+(AD9B)   LDA #$FF     ;Allow any volume to be cataloged.
+(AD9D)   STA VOLWA    ;(When RWTS is later entered, this value is
+                      ;EORed with #$FF to simulate a complemented
+                      ;volume number of 0 (ie. #$FF EOR #$FF = $00).
+                      ;After RWTS reads the addr checksum, it chks
+                      ;to see if the correct volume was read off
+                      ;the disk.  If the complement of the vol #
+                      ;is 0, or if it matches the vol # read off
+                      ;the disk, execution proceeds as if the
+                      ;correct volume was found.)
+(ADA0)   JSR READVTOC ;Read the VTOC.
+   
+                      * Read the Volume Table of Contents (VTOC).
+                      (AFF7)
+                      READVTOC LDA #1       ;Read opcode for RWTS.
+                      (AFF9)   BNE RDWRVTOC ;ALWAYS.
+
+                      * Common to read/write the VTOC.
+                      (AFFD)
+                      RDWRVTOC LDY ADRVTOC  ;Get the address of the VTOC from the FM
+                               STY IBBUFP   ;constants table & designate it as the
+                               LDY ADRVTOC+1 ;I/O buffer in RWTS's IOB.
+                               STY IBBUFP+1
+                               LDX TRKWA    ;Enter RWTS driver with (x)/(y) = trk/sec
+                               LDY #0       ;values of the VTOC.
+                      (B00E)   JMP RWTSDRVR ;Call RWTS driver to read/write the VTOC.
+                               ------------
+
+                      * Read/Write Track/Sector driver.
+                      RWTSDRVR .
+                               .
+                      (See dis'mbly of RWTS driver using READ.)
+                               .
+                               .
+                               (RTS)
+
+(ADA3)   LDA #22      ;Set index to allow 22 screen lines
+(ADA5)   STA SCRNSRCH ;between pauses.
+
+* Print two <cr>'s & the words
+* "disk volume".
+(ADA8)   JSR CRCATLOG
+
+                      * Print a <cr> and check if a pause is required.
+                      (AE2F)
+                      CRCATLOG LDA #$8D     ;Print a <cr>.
+                               JSR COUT
+                      (AE34)   DEC SCRNSRCH ;Reduce line counter to see if a pause 
+                                            ;is required or not.
+                      (AE37)   BNE CRCATRTN ;No pause required.
+                      (AE39)   JSR RDKEY    ;Pause until a key is pressed, so information
+                                            ;can be absorbed before it scrolled off the
+                                            ;screen.
+                      (AE3C)   LDA #21      ;Reset the screen line counter.
+                               STA SCRNSRCH
+                      CRCATRTN RTS
+                      (AE41)
+
+(ADAB)   JSR CRCATLOG ;Do it again. (See dis'mbly above.)
+(ADAE)   LDX #11      ;12 chars to print (11 to 0).
+PRDSKVOL LDA DSKVOLUM,X ;Get char of reverse string.
+         JSR COUT     ;Print char.
+         DEX
+         BPL PRDSKVOL ;More chars in string.
+(ADB9)   STX A5L+1    ;Nonsense instruction (cause the hi byte is
+                      ;not used in the PRVOLNMB routine accessed
+                      ;below).
+(ADBB)   LDA IBSMOD   ;Get vol # found (from RWTS's IOB) and put
+         STA A5L      ;it in A5L.
+(ADC0)   JSR PRVOLNMB ;Go print the volume number.
+
+                      * Convert 1 hex byte to a three-digit decimal
+                      * number (with leading zeroes if applicable).
+                      * NOTE:  This is a BUGGY routine.  Because it
+                      * doesn't use the hi byte, numbers greater than
+                      * 255 are expressed as 256 mod.
+                      * (P.S.  To use this as a stand-alone routine,
+                      * load A5L with the hex value to be converted
+                      * and then call PRVOLNMB.  The (a) and (y)
+                      * registers are destroyed.  Conversion is done
+                      * by simulating division via successive subtractions
+                      * of powers of 10.)
+                      (AE42)
+                      PRVOLNMB LDY #2       ;Index for number of conversion factors
+                      (AE44)                ;and digits.
+                      ZONSTK   LDA #0       ;Initialize the count of the number of
+                                            ;subtractions done.
+                      (AE46)   PHA          ;Save the count on the stack.
+                      GETVNMB  LDA A5L      ;Get the low byte hex value and compare it
+                      (AE49)   CMP BASETEN,Y ;to the table of conversion factors.
+                                            ;Conversion table contains powers of 10:
+                                            ;        10^2=100, 10^1=10, 10^0=1.
+                      (AE4C)   BCC TONEGASC ;Branch if number < conversion factor.
+                               SBC BASETEN,Y ;Subtract the conversion factor.
+                               STA A5L      ;Store the remainder.
+                               LDA A5L+1    ;Nonsense - not used.
+                               SBC #0       ;Nonsense - not used.
+                               STA A5L+1    ;Nonsense - not used.
+                               PLA          ;Get counter for the number of subtractions.
+                               ADC #0       ;Add (c).  If remainder > conversion factor,
+                               PHA          ;then add 1.  Else, add nothing.
+                      (AE5D)   JMP GETVNMB  ;Go back to do more subtractions with the
+                               ------------ ;same conversion factor.
+                      TONEGASC PLA          ;Get the result of the division (ie. the
+                      (AE60)                ;whole number of subtractions).
+                      (AE61)   ORA #$B0     ;Convert count to a negative ASCII char.
+                               JSR COUT     ;Print the character.
+                               DEY          ;3 chars/volume number (ie. 2 to 0).
+                               BPL ZONSTK   ;(3 conversion factors.)
+                      (AE69)   RTS
+
+(ADC3)   JSR CRCATLOG
+
+                      * Print a <cr> and test if a pause is required.
+                      (AE2F)
+                      CRCATLOG LDA #$8D     ;Print a <cr>.
+                               JSR COUT
+                      (AE34)   DEC SCRNSRCH ;Reduce line counter to see if a pause 
+                                            ;is required or not.
+                      (AE37)   BNE CRCATRTN ;No pause required.
+                      (AE39)   JSR RDKEY    ;Pause until a key is pressed, so information
+                                            ;can be absorbed before it scrolled off the
+                                            ;screen.
+                      (AE3C)   LDA #21      ;Reset the screen line counter.
+                               STA SCRNSRCH
+                      CRCATRTN RTS
+                      (AE41)
+
+(ADC6)   JSR CRCATLOG ;Do it again.
+
+* Read the directory sector into the
+* directory sector buffer.
+(ADC9)   CLC          ;(c) = 0, read the first directory sector.
+(ADCA)                ;(c) = 1, read the next directory sector.
+RDDIRSEC JSR RDDIRECT ;Go read the directory sector.
+
+                      * Read a directory sector.
+                      (B011)
+                      RDDIRECT PHP          ;Save (c) on the stack:
+                                            ;     (c)=0=read the first directory sector.
+                                            ;     (c)=1=read the next directory sector.
+                      (B012)   JSR PT2DIRBF ;Select the directory sector buffer.
+
+                                            * Designate the directory sector buffer
+                                            * as the I/O buffer in RWTS's IOB.
+                                            (B045)
+                                            PT2DIRBF LDA ADRDIRBF ;Get the addr of the directory sector buffer
+                                                     STA IBBUFP   ;from the FM constants table & designate it
+                                                     LDA ADRDIRBF+1 ;as the I/O buffer in RWTS's IOB.
+                                                     STA IBBUFP+1
+                                            (B051)   RTS
+
+                      (B015)   PLP          ;Get signal back from stack to see if
+                                            ;dealing with first directory sec or not.
+                      (B016)   BCS RDNXTDIR ;Go read the next directory sector.
+
+                      * Read the first directory sector (c = 0).
+                      (B018)
+                      RDFIRDIR LDY FIRDIRSC ;(y)/(x) = trk/sec values of the first
+                               LDX FIRDIRTK ;directory sector (from the the VTOC buf).
+                      (B01E)   BNE DODIRRD  ;ALWAYS - go read in the directory sector.
+     
+                      * Read the next directory sector (c = 1).
+                      (B020)
+                      RDNXTDIR LDX DIRLNKTK ;Get the track number of the next directory
+                                            ;sector from the link in the current
+                                            ;directory sector.
+                      (B023)   BNE GETDIRLK ;Link not zeroed out.
+                               SEC          ;Link zeroed out, so exit with (c) = 1 to
+                      (B026)   RTS          ;signal that there are no more directory
+                               ============ ;sectors.
+
+                      (B027)
+                      GETDIRLK LDY DIRLNKSC ;Get the sector number of the next directory
+                                            ;sector from the link in the current
+                                            ;directory sector.
+
+                      * Call to read in the directory sector.
+                      (B02A)
+                      DODIRRD  STX CURDIRTK ;Save the trk/sec values of the directory
+                      (B02D)   STY CURDIRSC ;sector that we are about to read (so that
+                                            ;they will become the current directory
+                                            ;sector values the next time around).
+                      (B030)   LDA #1       ;Read opcode for RWTS.
+                      (B032)   JSR RWTSDRVR ;Call RWTS driver to do the READ.
+
+                                            (B052)
+                                            RWTSDRVR .
+                                                     .
+                                            (See dis'mbly of RWTS driver using READ.)
+                                                     .
+                                                     .
+                                                     (RTS)
+
+                      (B035)   CLC          ;Because link didn't zero out, signal that
+                      (B036)   RTS          ;more directory sectors exist and then exit.
+                               ============
+
+(ADCD)   BCS TOFMXTOK ;Ran out of directory sectors so go exit.
+(ADCF)   LDX #0       ;Initialize index into the directory sec.
+
+* Evaluate the track number.
+(ADD1)
+DESCRPTK STX CURDIRNX ;Save index to entries into the directory.
+(ADD4)   LDA FIL1TSTK,X ;Trk # of 1rst T/S list for file (from
+                      ;the file description in directory sec.)
+(ADD7)   BEQ TOFMXTOK ;Trk # = 0, so no more entries in the
+                      ;current directory buffer.
+(ADD9)   BMI NXDESCRP ;Trk# = $FF = deleted file, so skip it.
+     
+* Check the file status & then print
+* a locked symbol ("*") or space.
+(ADDB)   LDY #" "     ;Default (y) = space in case file not locked.
+         LDA FIL1TYPE,X ;Get the file type.
+         BPL PRLOCODE ;Hi bit is clear so file is unlocked.
+(ADE2)   LDY #"*"     ;Reset (y) = locked symbol.
+PRLOCODE TYA          ;Either print an "*" or a space.
+(ADE5)   JSR COUT     ;Go print char.
+
+* Print the character code for the
+* file type and a trailing space.
+(ADE8)   LDA FIL1TYPE,X ;Get the file type again & make
+(ADEB)   AND #$7F     ;sure that the hi bit is off so we can
+                      ;index the table that contains character
+                      ;code symbols for the different file types.
+(ADED)   LDY #7       ;Set (y) to indicate that 7 relevant bits
+                      ;are left after the hi bit is shifted out.
+(ADEE)   ASL          ;Throw away the hi bit.
+CHRTYPIX ASL          ;Shift remaining bits until a hi bit is set.
+(ADF1)   BCS PRTFTYPE ;The number of shifts required to set the
+                      ;carry designates the index to the table
+                      ;of characters representing the file types.
+(ADF3)   DEY          ;Reduce counter for number of shifts done.
+(ADF4)   BNE CHRTYPIX ;No set bits encountered yet, so go back
+(ADF6)                ;to do more shifts.
+PRTFTYPE LDA FTYPETBL,Y ;Got a set bit, so now get char from the
+                      ;table of file type symbols.
+(ADF9)   JSR COUT     ;Print the file type symbol.
+(ADFC)   LDA #" "     ;Print the trailing space.
+
+* Print the file size (which is
+* expressed in terms of sectors).
+(AE01)   LDA FIL1SIZE,X ;Get the low & hi bytes of the file size
+         STA A5L      ;(in sectors) from the file description in
+         LDA FIL1SIZE+1,X ;the current directory sector & stick
+         STA A5L+1    ;them in A5L/H.
+(AE0B)   JSR PRVOLNMB ;Print the file size.
+
+                      * Convert 1 hex byte to a three-digit decimal
+                      * number (with leading zeroes if applicable).
+                      * NOTE:  This is a BUGGY routine.  Because it
+                      * doesn't use the hi byte, numbers greater than
+                      * 255 are expressed as 256 mod.
+                      * (P.S.  To use this as a stand-alone routine,
+                      * load A5L with the hex value to be converted
+                      * and then call PRVOLNMB.  The (a) and (y)
+                      * registers are destroyed.  Conversion is done
+                      * by simulating division via successive subtractions
+                      * of powers of 10.)
+                      (AE42)
+                      PRVOLNMB LDY #2       ;Index for number of conversion factors and
+                      (AE44)                ;digits.
+                      ZONSTK   LDA #0       ;Initialize the count of the number of
+                                            ;subtractions done.
+                      (AE46)   PHA          ;Save the count on the stack.
+                      GETVNMB  LDA A5L      ;Get the low byte hex value and compare it
+                      (AE49)   CMP BASETEN,Y ;to the table of conversion factors.
+                                            ;Conversion table contains powers of 10:
+                                            ;        10^2=100, 10^1=10, 10^0=1.
+                      (AE4C)   BCC TONEGASC ;Branch if number < conversion factor.
+                               SBC BASETEN,Y ;Subtract the conversion factor.
+                               STA A5L      ;Store the remainder.
+                               LDA A5L+1    ;Nonsense - not used.
+                               SBC #0       ;Nonsense - not used.
+                               STA A5L+1    ;Nonsense - not used.
+                               PLA          ;Get counter for the number of subtractions.
+                               ADC #0       ;Add (c).  If remainder > conversion factor,
+                               PHA          ;then add 1.  Else, add nothing.
+                      (AE5D)   JMP GETVNMB  ;Go back to do more subtractions with the
+                               ------------ ;same conversion factor.
+                      (AE60)
+                      TONEGASC PLA          ;Get the result of the division (ie. the
+                                            ;whole number of subtractions).
+                      (AE61)   ORA #$B0     ;Convert count to a negative ASCII char.
+                               JSR COUT     ;Print the character.
+                               DEY          ;3 chars/volume number (ie. 2 to 0).
+                               BPL ZONSTK   ;(3 conversion factors.)
+                      (AE69)   RTS
+
+(AE0E)   LDA #" "     ;Print a space after the size.
+(AE10)   JSR COUT
+
+* Print the file name.
+(AE13)   INX          ;Kick (x) up because the name starts at the
+         INX          ;4th byte from the start of the file
+         INX          ;description entry.
+         LDY #29      ;Counter for 30 characters/name (0 - 29).
+PRTFNAME LDA FIL1TSTRK,X ;Get char for file name and print it.
+(AE1B)   JSR COUT     ;(P.S.  Since the output hook still points
+                      ;to DOS's output handler, ctrl-D and a
+                      ;subsequent DOS command can be embedded in
+                      ;the filename as a protection scheme.)
+(AE1E)   INX          ;Kick up index into the file description.
+         DEY          ;Reduce the character counter.
+         BPL PRTFNAME ;Branch if more characters to print.
+(AE22)   JSR CRCATLOG ;Print a <cr> after the name & chk 4 pause.
+
+                      * Print a <cr> and test if a pause is required.
+                      (AE2F)
+                      CRCATLOG LDA #$8D     ;Print a <cr>.
+                               JSR COUT
+                      (AE34)   DEC SCRNSRCH ;Reduce line counter to see if a pause 
+                                            ;is required or not.
+                      (AE37)   BNE CRCATRTN ;No pause required.
+                      (AE39)   JSR RDKEY    ;Pause until a key is pressed, so information
+                                            ;can be absorbed before it scrolled off the
+                                            ;screen.
+                      (AE3C)   LDA #21      ;Reset the screen line counter.
+                               STA SCRNSRCH
+                      CRCATRTN RTS
+                      (AE41)
+
+* Kick up the index into the current
+* directory sector buffer to point at
+* the start of the next file description entry.
+(AE25)
+NXDESCRP JSR NXPLUS35 
+
+                      * Add 35 bytes to the index so it points to
+                      * the next entry in the current directory
+                      * sector.
+                      (B230)
+                      NXPLUS35 CLC
+                               LDA CURDIRNX
+                               ADC #35
+                               TAX          ;Check if there is space left for more
+                               CPX #245     ;entries in the current directory sector.
+                      (B239)   RTS          ;Exit with (c) conditioned:
+                                            ;   (c) = 0 = more space in directory
+                                            ;             sector.
+                                            ;   (c) = 1 = no more space, ran off the end
+                                            ;             of the directory sector.
+
+(AE28)   BCC DESCRPTK ;(c)=0, so go look for more entries in this
+                      ;particular directory sector.
+(AE2A)   BCS RDDIRSEC ;(c)=1, so there are no more entries in this
+         ------------ ;directory sector.  There4, go back to read
+                      ;in another directory sector.
+(AE2C)
+TOFMXTOK JMP GOODFMXT ;Go exit the file manager cleanly.
+         ------------
+
+
+* Exit the file manager.
+(B37F)
+GOODFMXT LDA RTNCODFM
+         CLC          ;(c) =  0 to signal good operation.
+         BCC FMEXIT
+BADFMXIT SEC          ;(c) = 1 to signal unsuccessful.
+FMEXIT   PHP          ;Save status on stack.
+         STA RTNCODFM ;Store return code in FM parameter list.
+         LDA #0
+         STA STATUS
+(B38E)   JSR CPYFMWA  ;Copy the work area to the work buffer.
+
+                      * Copy the FM work area (non-chain) to
+                      * the FM work buffer (in DOS chain).
+                      (AE7E)
+                      CPYFMWA  JSR SELWKBUF ;Select the FM work buffer (in DOS chain).
+
+                                            *  Point the A4L/H pointer at the FM work buffer.
+                                            (AF08)
+                                            SELWKBUF LDX #0       ;Set index to select work buffer.
+                                            (AF0A)   BEQ PT2FMBUF ;ALWAYS.
+
+                                            (AF12)
+                                            PT2FMBUF LDA WRKBUFFM,X ;Get address of selected buffer from the
+                                                     STA A4L      ;FM parameter list & put it in the pointer.
+                                                     LDA WRKBUFFM+1,X
+                                                     STA A4L+1
+                                            (AF1C)   RTS
+
+                      (AE81)   LDY #0       ;Initialize index.
+                      STORWRK  LDA FMWKAREA,Y ;Get byte from the FM work area.
+                               STA  (A4L),Y ;Put it in the work buffer.
+                               INY
+                               CPY #45      ;45 bytes to copy (0 to 44).
+                               BNE STORWRK
+                      (AE8D)   RTS
+
+(B391)   PLP          ;Retrieve status of success of operation
+                      ;from the stack.
+(B392)   LDX STKSAV   ;Adjust stack pointer to force exit to the
+         TXS          ;caller of the function handler even if we
+(B396)   RTS          ;are several subroutines deeper than the
+         ============ ;original entry point.  (That is, return to
+                      ;AFTRFUNC ($A6AB) in the FMDRIVER routine
+                      ;($A6A8).)

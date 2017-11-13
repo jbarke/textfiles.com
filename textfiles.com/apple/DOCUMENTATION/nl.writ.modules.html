@@ -1,0 +1,472 @@
+
+===============================
+Writing Nifty List 3.4p Modules
+
+David A. Lyons        17-Oct-91
+===============================
+
+This is sketchy documatation for writing your own modules.  Along with
+the sample module, hopefully it's enough to get you started.
+
+
+-------------------------------------------------------
+Using Nifty List Services from Outside a Command Module
+-------------------------------------------------------
+Many Nifty List service calls can be made from outside of Nifty List
+command modules.  But if you're not a module, you need a special way to
+determine the Nifty List service address.  Here it is:
+
+1.  Call MessageByName with
+      createFlag=0
+      input record = $1F "DAL Systems: Nifty List service"
+
+2.  Pass the resulting Message type to MessageCenter, along
+    with action=2 (get message) and a new handle you've
+    created with NewHandle.  MessageCenter sizes and fills in
+    your handle.  The address of the Nifty List service routine
+    is at offset $28 in the handle (it's the only thing in
+    there besides the system overhead and the name string).
+
+Starting with Nifty List 3.3, there is another way to ask Nifty List
+to do things if you are running under System 6:  Call SendRequest
+by name to "DAL Systems~Nifty List~" with reqCode = $8000+nlXXXX,
+dataIn = data value for the service, and dataOut = NIL if you don't
+want a result, or a pointer to a 6-byte buffer if you do (first word
+is the recvCount from SendRequest, and the other 4 bytes are the
+service result).
+
+------------------------
+Command Module Structure
+------------------------
+A Nifty List command module has the same basic structure as an NDA, so
+it should be possible to write Nifty List modules in common high-level
+languages, as well as in assembly.  (Be careful if your compiler is trying
+to be helpful by putting special glue code around some of the entry
+points.)
+
+The module's filetype must be $BC, and the auxiliary type must be $4001.
+Modules have to be in the same directory at Nifty List.
+
+
+------------------
+DAOpen: @infoTable
+------------------
+The module's DAOpen routine returns pointer to the module's info table,
+which has the following format.
+
+*
+* Info Record
+*
+InfoRec  dc.w InfoEnd-InfoRec       ;size of this Info record
+         dc.w 0                     ;format (use 0)
+         dc.w 0                     ;patch type (use 0)
+         dc.l NLService             ;address to patch
+         dc.w 12                    ;bytes per cmd in cmdTbl (use 12)
+         dc.l cmdTbl                ;pointer to command table
+InfoEnd
+
+The command table looks like this:
+
+*
+* Command Table--for each command in this module:
+*    +000:  pointer to command name (Pascal string)
+*    +004:  address of command entry point
+*    +008:  address of help routine
+*
+* (The first entry is for the module itself.)
+*
+cmdTbl   dc.l moduleName,0,HelpModule
+         dc.l nameOne,cmdOne,helpOne
+         dc.l nameShPurge,cmdShPurge,helpShPurge
+         dc.l 0
+
+For each command there's a pointer to the Pascal-string name, a
+pointer to the command's entry point (which should RTL), and a
+pointer to the command's Help routine (which should display help
+and then RTL).
+
+
+--------
+DAAction
+--------
+Nifty List calls the DAAction routine with A equal to one of the
+following.  X and Y are undefined.  You should return A=0 (the
+return value may eventually be used to refuse to shut down, for
+example, but right now you must always return 0 in A).
+
+A = actBirth
+    Called when Nifty List first loads a module
+
+A = actDeath
+    Called when Nifty List is about to remove a module
+
+A = actEnterNL
+    Called when the user enters the Nifty List command environment
+
+A = actExitNL
+    Called when the user leaves the Nifty List command environment
+
+
+-------------------------
+NLService(long,code):long
+-------------------------
+Nifty List patches over 4 bytes at the address indicated in the
+module's info record.  The module should JSL *to* the patched location
+to call a Nifty List service routine, with parameters on the stack.
+
+Every service takes a four-byte input parameter (although some of the
+services ignore part or all of this parameter).  Some services also
+return a four-byte result.
+
+To call a service with no result space:
+
+    pha
+    phx
+    pea nlXXXXXX
+    jsl NLService
+
+The service removes the long input and the service code from the
+stack before returning (just like a toolbox call would).
+
+To call a service that needs result space:
+
+    pha
+    pha                    ;make room for result
+    phx
+    phy                    ;push 4-byte input
+    pea nlXXXXXX
+    jsl NLService
+    ply
+    plx                    ;pull 4-byte result
+
+
+Here is a list of all the services.
+
+
+*
+* Environment management
+*
+0000 nlRecover()
+         Does not return.  Enters Nifty List command level but BRKs when
+         you leave.  For debugging when you've crashed and need a special
+         way to go into Nifty List because you were already in a CDA.
+
+0001 nlEnter():result
+         Attempts to call Nifty List command level.  Returns 0 if
+         successful.
+
+0002 nlRemoveNL(@WordBuff):Handle
+         Data = pointer to 2-byte result buffer (gets ID for UserShutDown),
+         Result = handle to feed to RemoveCDA (NIL if can't remove)
+
+0003 nlGetInfo(@buffer)
+         Data = pointer to 256-byte buffer to receive table; first word =
+                length in bytes, including the length count itself.
+         Buffer:
+           +000  TableSize   Word
+           +002  nlVersion   Long
+           +006  nlMemID     Word
+           +008  nlBusyFlag  Word
+           +010  CompactFlg  Word
+
+0004 nlInstallHook(ref,@hook)
+         [not implemented]
+         This will allow modules to install routines for NL to call at
+         certain times.
+
+0005 nlRemoveHook(ref,@hook)
+         [not implemented]
+
+0006 nlGetDirectory():@dirname
+         Returns pointer to class-1 string giving name of directory
+         Nifty List is executing from.  (Don't change the string,
+         just use it.)
+
+0007 nlNewSession(@callBackProc):sessionRef
+         Creates a Nifty List session and returns a long value
+         distinguishing the new session from all other sessions.
+
+0008 nlKillSession(sessionRef)
+         Destroys a Nifty List session that was created with
+         nlNewSession.
+
+0009 nlSetSession(sessionRef):oldRef
+         Makes the specified session the current one, returning
+         the old session reference.  When you're done doing your
+         stuff, call nlSetSession again to restore the old one.
+
+         CallBack(LongIn,code)  (Pascal-style parameters)
+
+         Code:
+           0 = cbWrite = output (LongIn points to word-string)
+           2 = cbWriteC = output (LongIn points to a C string)
+           4 = cbFlush (output all the output, if you've been saving some)
+           6 = cbGetKey (store a key at *LongIn (word) or don't--defaults
+                 to the "continue" key)
+           8 = cbChkAbort (store a $0001 at *LongIn to ask for abort)
+          $A = cbAbort (abort, don't return!)
+          $C = cbGetString (input into GS/OS result buffer at LongIn)
+
+         CallBack is called with B and D undefined (must preserve).
+
+000A nlWelcome(0)
+         Outputs the Nifty List title screen.
+
+000B nlLoadStuff(0):error
+         Forces the data file to get loaded, if it isn't.
+         Input parameter is 0.  Result is error code (0 if
+         no problem).
+
+000C nlGetTextState [NL 3.3]
+         [For internal use for now.]
+
+000D nlSetTextState [NL 3.3]
+         [For internal use for now.]
+
+*
+* Information services
+*
+0010 nlGetFirstHandle(Kind):Handle
+         Kind = 0, 1, or 2
+         Result = first handle in one of the Memory Manager's 3 handle
+                  chains (0=Used, 1=Purged, 2=Free)
+
+0011 nlGetHandleInfo(@info)
+         info:
+           +000 = handle (Long)
+           +004 = @buffer
+         What's returned in buffer:
+           +000 = count of bytes returned
+           +002 = at least 20 bytes of stuff--a copy of the *current*
+                  format of a Master Pointer record (ptr, attr, id,
+                  size, previous, next)
+
+0012 nlLookup(@stuff)
+         Data = pointer to stuff:
+           +000: Word    Section number to look in (nlSecSysTool, etc)
+           +002: Long    Data to look up
+           +006: Page    @outbuffer (256 bytes)
+         Returns a pascal string in the output buffer (null string
+         means nothing found)
+
+0013 nlIndLookup(@stuff)
+         Data = pointer to stuff:
+           +000: Word    Section number to look in (nlSecSysTool, etc)
+           +002: Long    Index (1=first item in section, etc)
+           +006: Page    @outbuffer (256 bytes)
+         Returned in outbuffer:
+           +000: Long    Value associated with the Index-th piece of data
+           +004: PString String associated with the Index-th piece of data
+                    (null string if no data found)
+
+0014 nlGetProcName(address/4):@procName [NL 3.1]
+         Data = address.
+         Result = address of Pascal string name associated with the address,
+                  or NIL if none.
+
+0015 nlClassifyAddr(address/4):result [NL 3.3]
+         Data = address.
+         Low word of result indicates the owner of the address:
+           0 = System (for example, ROM or a RAM-based system tool set)
+           1 = System-owned toolbox patch (within TSx)
+           2 = non-system-owned RAM address
+           3 = strange or invalid
+         High word of result contains a corresponding ASCII character:
+           0 = blank
+           1 = "+"
+           2 = "*"
+           3 = "?"
+
+*
+* Utility
+*
+0020 nlScanHandles(@parms)
+         parms:
+           +000  Word   WhichList   (0=used handles, 1=purged, 2=free)
+           +002  Ptr    BankValue   Any pointer to desired bank
+           +006  Ptr    theProc     Procedure to call for each handle
+                                    (gets parameter = Handle)
+
+     theProc must remove the 4-byte parameter from the stack before
+     returning.  When theProc gets control, the Bank register is
+     already set to the bank specified by BankValue (byte +2).
+
+
+0021 nlDisasm1(@code):@NewAddress [NL 3.2]
+         Disassembles one line of code at the specified address, and returns
+         a pointer to the byte just following the line disassembled.
+
+0022 nlExecCmdLine(@cmdline):0
+         Executes a specified command line (pointer to GS/OS
+         string).  The return value is reserved & is currently
+         always 0.
+
+0023 nlGetRange(@buffer):NumParms
+         Returns 2 if the user typed a range before your command;
+         otherwise returns 1.
+
+         Fills your 16-byte buffer with the following:
+           +000  rangeStart
+           +004  rangeEnd
+           +008  rawStart
+           +012  rawEnd
+
+         This is for fetching the one or two hex numbers or addresses
+         the user typed *before* your command.  They are already parsed
+         by Nifty List.
+
+         Use rangeStart and rangeEnd if you're looking for *addresses*.
+         The bank byte is handled appropriately for you.
+
+         Use rawStart and rawEnd if you're looking for *numbers*; no
+         special bank handling is done for these values, so typing
+         a 0 always gets you a 0, not a $xx0000.
+
+
+0024 nlGetAGlobal(ref):value/4
+         Data = reference number, value = long result
+
+         Retrieves a value from a Nifty List global variable (the
+         reference number values are in the equates file).
+
+0025 nlSetAGlobal(@(ref,value))
+         Data = ptr to a record:
+            +000  reference word
+            +002  long value
+
+         Stores a value into a Nifty List global variable.
+         ref = nlgNUM1: the number parsed before your command
+
+0026 nlAbortToCmd(ignored)
+         Aborts to the Nifty List command line, if possible
+         [should return error if Nifty List not active--doesn't check yet]
+
+*
+* Input/Output
+*
+0030 nlWriteChar(char)
+         Outputs a character--control characters are acted on.
+
+0031 nlShowChar(char)
+         Outputs a character, but nonprintable characters show up
+         in a harmless way (like as periods).
+
+0032 nlWriteStr(@pascalString)
+         Outputs a Pascal string.
+
+0033 nlShowStr(@pascalString)
+         Outputs a Pascal string, but nonprintable characters show
+         up in a harmless way.
+
+0034 nlWriteCStr(@cString)
+         Outputs a C string.
+
+0035 nlShowCStr(@cString)
+         Outputs a C string, but nonprintable characters show up in
+         a harmless way.
+
+0036 nlWriteText(@record)
+         record+000 = length of text
+         record+002 = pointer to text
+         Writes the specified number of characters.
+
+0037 nlShowText(@record)  [see above]
+         Writes the specified characters, but nonprintable characters
+         show up in a harmess way.
+
+0038 nlWriteByte(byte)
+         Outputs a byte in hex (2 characters).
+
+0039 nlWriteWord(word)
+         Outputs a word in hex (4 characters).
+
+003A nlWritePtr(long)
+         Outputs a pointer (xx/xxxx).
+
+003B nlWriteLong(long)
+         Outputs a long in hex (8 characters).
+
+003C nlGetLn(...)
+         [not implemented]
+
+003D nlGetChar(dummy):char
+         result = character (waits for one to be input)
+
+003E nlCheckKey(dummy):result
+         result, low word 0=no key pressed; nonzero=a key was pressed
+
+003F nlCrout(dummy)
+         Outputs a carriage return (begins a new line).  Does NOT
+         return to the caller if the user hits Apple-period, etc!
+
+0040 nlSpout(dummy)
+         Outputs a blank.
+
+0041 nlPause(dummy)
+         Lets the user pause the screen, do screen dumps, etc.
+         Normally returns right away.  Does not return if the
+         user wants to abort.
+
+0042 nlHandleInfo(handle)
+         Displays address and owner information for a handle,
+         in the same format as the "I" command.
+
+0043 nlWriteNoVoice(@cString)
+         Displays a C String if and only if the user did not set the
+         "v" flag (avoids annoying decorative displays, like lines of
+         dashes, which may be prounced "dash, dash, dash, dash...")
+
+0044 nlShowWString(@wString)
+         Displays a string that begins with a length word.  Nonprintable
+         characters appear in a harmless way.
+*
+* Parsing
+*
+0050 nlChrGet():char
+         Advances to the next character on the command line and
+         returns is.
+
+0051 nlChrGot():char
+         Returns the command line character we're already on.
+
+0052 nlEatBlanks():char
+         Advances 0 or more times, until we're not sitting at a
+         blank.  Returns like nlChrGot.
+
+0054 nlEvalExpr(@buffer):actualSize
+         buffer:
+           +000  Word     MaxExprSize   maximum size of expr this buffer
+                                        can hold (must be at least 4)
+           +002  Word     ActExprSize   actual size of parsed expression
+                                        (returned)
+           +004  n Bytes  Expr          parsed expression (0 or more bytes,
+                                        returned)
+
+         The nlEvalExpr result is just a copy of the ActExprSize word
+         returned in buffer.
+
+         Note that calling nlEvalExpr is a simple way to let the user
+         type a GS/OS pathname.  The expression, starting with the
+         length word, is already a class-one GS/OS string.
+
+*
+* Memory access
+*
+0060 nlGetByte(@addr):byte
+         Data = addr; value = byte found at that address
+
+0061 nlGetWord(@addr):word
+         Data = addr; value = word found at that address
+
+0062 nlGetLong(@addr):long
+         Data = addr; value = long found at that address
+
+
+Reference numbers for globals:
+         01 = nlgNUM1  (appropriate for getting an address-type value that NL parsed
+                       before calling your command)
+         02 = nlgADDR
+         03 = nlgInfoTable (address of the table nlGetInfo uses; need to document
+                            which fields are ok)
+
+[end of Writing.Modules]

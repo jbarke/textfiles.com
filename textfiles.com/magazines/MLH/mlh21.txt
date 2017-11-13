@@ -1,0 +1,154 @@
+MiniSport Laptop Hacker - Vol #21.  April 1994
+To discourage pecuniary interests, Copyright (c) 1994 Brian Mork
+
+>>> ADMIN
+The MLHacker series is formatted to print out on 8.5"x11" sheets manual-
+ly fed into an Epson LQ-850.  I print at 8 lpi, which gives 82 lines per
+page.  My goal is to make each MLHacker one to two pages, to fit front
+and back on one page.  Back issues are available via Internet e-mail and
+ftp archives and direct from my data line listed below.  File download
+privilege is given on the first call.  Use the F)ile option and L)og
+into the \public\computer directory.  No cost 'cause I just like doing
+it.  Do something you're interested in for free and pass it on!
+
+The Air Force has me committed to some massive amounts of overseas
+flights during April and May.  For this reason, I expect MLHacker will
+take a hiatus during that time.
+
+>>> AUTOMOBILE POWER SUPPLY
+Something has been bothering me ever since issue #12 of MLHacker.  I
+mentioned how you could tap into your car cigarette lighter, step the
+voltage down to 9 volts and use that to power your Minisport.  So far,
+true.  My bad recommendation was the placement of a noise-killing capac-
+itor and inductor.
+
+Yes, put a big inductor in series (old lamp ballast works fine) to kill
+ignition glitches.  But don't put the capacitor on the car side of the
+inductor.  Put it on the *computer* side of the inductor.  The problem
+is this:  When you switch off the computer, the magnetic field sustained
+by the inductor collapses, forcing continued current flow.  But the com-
+puter is off!  Being off is a high resistance.  As the charge collects
+on this high resistance, the voltage peaks very high.  To some extent,
+the internal Minisport battery, which is effectively in parallel across
+the power line, begins to conduct (i.e. charge up) as the voltage rises,
+so there is some limit on the voltage.  But I was wrong to suggest put-
+ting the capacitor where the inductor could feed off from it.  It's much
+better to put it on the computer side, where it will dampen the inbound
+current.  An additional improvement would be to put a diode across the
+inductor (cathode, banded end toward the car).  It will then short out
+the inductor spike upon power-down.
+
+Some folks have indicated they run the Minisport straight from 12 volts.
+I'm not sure I'd recommend that, but I'd be interested in anybody's suc-
+cess doing this.  Battery? Direct from car?  One MLH reader is working
+to modify a drill battery pack to power his Minisport.  I hope to talk
+him into writing up notes on the project.
+
+>>> INSIDE THE BATTERY PACK
+Jim sent me a dead battery pack to rip apart.  Aha!  The final link to
+the puzzle.  MLH #12 discusses the wall adapter/battery pack connection.
+MLH #14 discusses the battery pack/computer connection.  Issues #17 and
+#18 discuss the switching power supply board inside the Minisport.  Fi-
+nally, here's the stuff from inside the battery pack.  In the process of
+documenting this, I discovered another error from issue #12--my descrip-
+tion of the small pin on the 3-pin charging connector.  I believe the
+information provided here to be the correct interpretation.
+
+                         BATTERY PACK INTERNALS
+
+ Round Power Supply Connector                         Tab Connectors
+------------------------------                       ----------------
+
+ 9V, 2A BOTM --------------------------------------------- CTR (red)
+
+ 6V, 1A TOP -------------------------------------------+-- AFT (yellow)
+                                                       |
+ 8.3V O.C. LITL ----TC1---+    +---:|:|:|--TC2--:|:|---+
+                          |    |
+ GND SHIELD --------------+----+---------------------------FORW (black)
+
+
+There is also a tiny chip capacitor between the 9V supply rail and
+ground.  A parallel surface mount spot (for a resistor?) is empty on the
+circuit board inside the one battery pack I've inspected.
+
+The charger adapter has four connections: the shield, two similar pins,
+and a third pin smaller than the other two, thus the titles BOTM, TOP,
+and LITL.  The tab connections on the bottom of the battery pack corre-
+spond to the three slide connectors visible inside the minisport when
+you remove the battery pack.  The colors correspond to the wiring color
+visible inside the computer when the bottom is removed.
+
+TC1 is a thermal cutoff unit, tightly mounted to the battery cell clos-
+est to ground.  TC2 appears physically similar.  While charging this
+battery pack, I monitored the voltages on the power supply connector.
+BOTM was 9.2V, TOP was 7.6V, and LITL was zero volts.  I applied a heat
+gun onto TC1, and at 0:12 the voltage at LITL jumped up to 8.3 volts.
+At 0:40, TC1 closed and the voltage at LITL went back to 0 volts.
+
+It seems clear that the design of this system is to overvoltage the bat-
+teries (7.2v onto a 5x1.2 => 6.0v battery pack) and when the batteries
+get warm, the thermal cutoff ungrounds a signal back to the charging
+unit.  To confirm that the charger responds to the signal, I loaded the
+battery pack with a 20 ohm resistor and hooked up the charger, giving
+7.2 volts across the resistor (about 350 mA drain, 2.5 watts).  I would
+expect that if the charger shut off, the voltage would drop a little bit
+as the battery pack picked up the entire load and started discharging.
+Sure enough, after about 20 seconds of heating TC1, the voltage across
+the resistor dropped to 6.8 volts.
+
+Heating TC2 has expected results.  While charging, I measured 7.0 volts
+across an unloaded, charging battery.  At 0:20 of heating, an audible
+click occurred and the voltage dropped to 2.9 volts.  I turned off the
+heat gun and at 1:14, I heard another click and the voltage comes back
+up.  While *not* charging, the voltage goes from 6.5 to 0.0 with nearly
+identical timing.  I think the 2.9 volts observed while charging was
+residual output from the charging unit.
+
+>>> BAYCOM VS POOR MAN'S PACKET
+Poor Man's Packet software works fine to receive packets on the Minis-
+port using the hardware described back in MLHacker #9.  It does not work
+on transmit.  If you try to send a packet, the transmit tones just lock
+up at 1200 Hz or 2200 Hz.  This was confirmed using another ham's
+(thanks Ron) PMP hardware rigged to run off COM1 (normal DB-9 out the
+back).  PMP is written in C, including the AX.25 bit packing routines.
+I think these are just not fast enough when run on the 8 MHz Minisport.
+
+Baycom uses a separately loaded driver to talk to the hardware.  It's
+small and efficient, probably written in assembly.  I got a copy of Bay-
+com software and using Ron's Baycom hardware, which was rigged to oper-
+ate on a parallel port, everything worked fine.
+
+Conclusion? The Minisport needs bit packing routines written in assem-
+bly.  Baycom offers this; PMP does not.  I thought the PMP hardware was
+designed to be bit compatible with Baycom (e.g. RTS does the PTT func-
+tion, and so on).  Apparently, this is not so.  When I redirect the Bay-
+com to COM2, it does not work with the PMP hardware I built and de-
+scribed in MLHacker #9.
+
+I don't have the time right now to do an assembly rewrite of the PMP
+software, so I want to figure out how to use the Baycom software.  Any-
+body out there more familiar with Baycom and what bit lines it uses for
+what?  Eventually I'll poke around and find out what's going on, but
+maybe somebody could save me the trouble.
+
+>>> FUTURE PROJECTS
+I saved up money for several months and purchased a Fluke 97 digital
+storage scope / DMM "do everything" box.  It's roll mode data monitor
+worked great for probing the battery pack.  Expensive, but a *superior*
+bench top accessory.  I'm interested in anybody using one of these.
+Mine has an optical data interface and that will, I'm sure, eventually
+be hooked to my Minisport.
+
+I also picked up a 670 nm laser diode assembly, including a photodetec-
+tor and stepper motor.  The light beam comes up through the shaft of the
+stepper motor, allowing the outbound beam to be aimed onto one of eight
+mirrored segments, and reflected forward.  Inbound light is collected by
+all eight segments simultaneously and focused onto the on-axis photode-
+tector.  I wonder if I can hook this up to the computer to do a laser
+light show.  Or maybe a proof of concept optical radar.  Hmm... :-)
+
+Please provide feedback!      * Direct data 1-509-244-9260
+                              * ARO Net KA9SNF@wb7nnf.#ewa.wa.usa
+                              * Internet bmork@opus-ovh.spk.wa.us
+73, Brian                     * 6006-B Eaker, Fairchild, WA 99011

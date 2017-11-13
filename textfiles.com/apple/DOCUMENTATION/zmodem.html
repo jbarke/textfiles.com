@@ -1,0 +1,1099 @@
+
+
+
+
+ZMODEM PROTOCOL REFERENCE
+
+The
+
+ZMODEM
+
+Inter Application
+
+File Transfer Protocol
+
+
+
+
+
+
+
+
+Chuck Forsberg
+
+
+
+
+
+
+
+
+
+
+
+
+
+Please distribute as widely as possible.
+
+Questions to Chuck Forsberg
+
+
+
+
+
+Omen Technology Inc
+17505-V Northwest Sauvie Island Road
+Portland Oregon 97231
+Voice: 503-621-3406
+Modem (Telegodzilla): 503-621-3746 Speed 1200,300
+Compuserve: 70715,131
+UUCP: ...!tektronix!reed!omen!caf
+
+CONTENTS
+
+
+ 1.  ACKNOWLEDGMENTS....................................   1
+ 2.  ROSETTA STONE......................................   1
+ 3.  YET ANOTHER PROTOCOL, AGAIN?.......................   2
+
+ 4.  ZMODEM Protocol Design Criteria....................   3
+     4.1   Throughput...................................   3
+     4.2   Integrity and Robustness.....................   4
+     4.3   Ease of use..................................   4
+     4.4   Ease of implementation.......................   4
+
+ 5.  PACKETIZATION......................................   5
+     5.1   Link Escape Encoding.........................   5
+     5.2   Header Packet Information....................   6
+     5.3   Binary Header Packet.........................   7
+     5.4   HEX Header Packet............................   7
+     5.5   Binary Data Packets..........................   8
+     5.6   HEX Data Packet..............................   8
+
+ 6.  PROTOCOL TRANSACTION OVERVIEW......................   8
+ 7.  STREAMING TECHNIQUE................................  11
+ 8.  ATTENTION SEQUENCE.................................  11
+ 9.  PACKET/FRAME TYPES.................................  12
+     9.1   ZRQRINIT.....................................  12
+     9.2   ZRINIT.......................................  12
+     9.3   ZSINIT.......................................  12
+     9.4   ZACK.........................................  12
+     9.5   ZFILE........................................  12
+     9.6   ZSKIP........................................  13
+     9.7   ZNAK.........................................  13
+     9.8   ZABORT.......................................  13
+     9.9   ZFIN.........................................  13
+     9.10  ZRPOS........................................  13
+     9.11  ZDATA........................................  13
+     9.12  ZEOF.........................................  13
+     9.13  ZFERR........................................  13
+     9.14  ZCRC.........................................  13
+     9.15  ZCRYPT.......................................  13
+     9.16  ZCOMPL.......................................  14
+
+10.  Transaction........................................  14
+11.  PERFORMANCE........................................  14
+12.  TABLES.............................................  15
+13.  ZFILE FRAME FILE INFORMATION.......................  16
+14.  MORE INFORMATION...................................  18
+15.  ZMODEM Programs....................................  19
+
+
+LIST OF FIGURES
+
+Figure 1.  Protocol Overhead Information................  15
+Figure 2.  Transmission Time Comparision................  15
+Figure 3.  Y/ZMODEM Header Information usage............  16
+
+
+ 1.  ACKNOWLEDGMENTS
+
+Encouragement and suggestions by Stuart Mathison, Thomas Buck,
+John Wales, Ward Christensen, and Irv Hoff are gratefully
+acknowledged.
+
+
+ 2.  ROSETTA STONE
+
+Here are some definitions which reflect the current vernacular in
+the computer media.  The attempt here is identify the file
+transfer protocol rather than specific programs.
+
+Frame         A ZMODEM frame consists of a header packet and 0 or
+more data packets.
+
+Response Time This is the maximum expected delay between the
+receiver sending a packet to the transmitter and
+receiving the beginning of a response from the
+transmitter.
+
+XMODEM        refers to the original 1979 file transfer etiquette
+introduced by Ward Christensen's 1979 MODEM2
+program.  It's also called the MODEM or MODEM2
+protocol.  Some who are unaware of MODEM7's unusual
+batch file mode call it MODEM7.  Other aliases
+include "CP/M Users's Group" and "TERM II FTP 3".
+This protocol is supported by every serious
+communications program because of its universality,
+simplicity, and reasonable performance.
+
+XMODEM/CRC    replaces XMODEM's 1 byte checksum with a two byte
+Cyclical Redundancy Check (CRC-16), giving modern
+error detection protection.
+
+YMODEM        refers to the XMODEM/CRC protocol with the
+throughput and/or batch transmission enhancements
+described in YMODEM.DOC.
+
+ZMODEM        Zmodem is a second generation streaming protocol
+for text and binary file transmission between
+applications running on microcomputers and
+mainframes.
+
+
+ 3.  YET ANOTHER PROTOCOL, AGAIN?
+
+Since its development half a decade ago, the Ward Christensen
+modem protocol has enabled a wide variety of computer systems to
+interchange data.  There is hardly a communications program that
+doesn't at least claim to support this protocol now called
+XMODEM.
+
+Advances in computing, modems and networking have spread the
+XMODEM protocol far beyond the close coupled micro to micro
+environment for which it was designed.  These application have
+exposed some weaknesses.
+
++  The short block length causes throughput to suffer when used
+with timesharing systems, packet switched networks, satellite
+circuits, and buffered (error correcting) modems.
+
++  The 8 bit arithmetic checksum and other aspects allows line
+impairments to interfere with dependable, accurate transfers.
+
++  Only one file can be sent per command.  The file name has to
+be given twice, first to the sending program and then again to
+the receiving program.
+
++  The transmitted file accumulates as many as 127 extraneous
+bytes.
+
++  The modification date of the file is lost.
+
+A number of other protocols have been developed over the years,
+but none have displaced XMODEM to date.
+
++  Lack of public domain documentation and example programs have
+kept proprietary protocols such as MNP, Blast, and others
+tightly bound to the fortunes of their suppliers.
+
++  Hardware and/or software complexity discourages the widespread
+application of BISYNC, SDLC, HDLC, X.25, and X.PC protocols.
+
++  Link level protocols such as X.25, X.PC, and MNP modems do not
+manage application to application file transfers.
+
++  The Kermit protocol was developed to allow file transfers in
+environments hostile to XMODEM.  The performance compromises
+necessary to accomodate non transparent environments limit
+Kermit's efficiency.
+
+   Even with completely transparent channels, Kermit control
+character quoting limits the efficiency of binary file
+transfers to about 75 per cent.
+
+
+ 3.  YET ANOTHER PROTOCOL, AGAIN? (cont)
+
+   Kermit Sliding Windows ("SuperKermit") improves throughput
+over networks at the cost of increased complexity.
+SuperKermit state transitions are encoded in a special
+language "wart" which requires a C compiler.  The SuperKermit
+C code requires full duplex communications and the ability to
+check for the presence of characters in the input queue,
+precluding its implementation on some operating systems.
+
+A number of extensions to the XMODEM protocol have been made
+under the collective name YMODEM.
+
++  YMODEM-k reduces the overhead from transmission delays by 87
+per cent compared to XMODEM, but network delays can still
+degrade performance.
+
++  The handling of files that are not a multiple of 1024 or 128
+bytes is awkward, especially if the file length is not known,
+or changes during transmission.
+
++  YMODEM-g is essentially insensitive to network delays.
+Because it does not support error recovery, YMODEM-g must be
+used hardwired or with a link level protocol.
+
+Another XMODEM "extension" is protocol cheating, referred to as
+"Turbo Download" and OverThruster.  These improve XMODEM
+throughput at the expense of error recovery.
+
+The ZMODEM Protocol is proposed as a means of addressing the
+weaknesses described above while maintaining as much of XMODEM's
+simplicity and prior art as possible.
+
+
+ 4.  ZMODEM Protocol Design Criteria
+
+The design of a file transfer protocol is an engineering
+compromise between conflicting requirements:
+
+4.1  Throughput
+
+ZMODEM is designed for optimum performance with minimum
+degradation caused by delays introduced by packet switched
+networks and timesharing systems.
+
+ZMODEM is optimized for best throughput where line hits
+occur infrequently.  This assumption markedly reduces code
+complexity and memory requirements.
+
+
+ 4.  ZMODEM Protocol Design Criteria (cont)
+
+4.1  Throughput (cont)
+
+It is assumed that many transfers will originate from a
+timesharing system connected to a packet switched network.
+ZMODEM provides features to allow for simple, efficient
+implementation on timesharing hosts.
+
+File transfers begin immediately regardless of which program
+is started first, no 10 second delay.
+
+4.2  Integrity and Robustness
+
+     All packets are protected with 16 bit CRC.
+
+4.3  Ease of use
+
+File names need be entered only once.  Wild Card names may
+be used with batch transfers.  Minimum keystrokes required
+to initiate transfers.  ZMODEM steps down to X/YMODEM if the
+other end does not support ZMODEM.
+
+4.4  Ease of implementation
+
+ZMODEM accomodates a wide variety of systems:
+
++  Microcomputers that cannot overlap disk and serial i/o
+
++  Microcomputers that cannot overlap serial send and
+receive
+
++  Computers and/or networks requiring XON/XOFF flow control
+
++  Computers that cannot check the serial input queue for
+the presence of data without having to wait for the data
+to arrive.
+
+Although ZMODEM provides "hooks" for multiple "threads",
+ZMODEM is not intended to replace link level protocols such
+as X.25.  ZMODEM provides a near optimal general purpose
+application to application file transfer protocol to be used
+with link level protocols such as X.25, MNP, Fastlink, etc.
+
+
+ 5.  PACKETIZATION
+
+ZMODEM uses packets somewhat different from those used in
+X/YMODEM.  X/YMODEM type packets are not used for the following
+reasons:
+
++  Block numbers are limited to 256
+
++  No provision for variable length blocks
+
++  Line hits corrupt protocol signals, causing failed file
+transfers.  In particular, modem errors sometimes generate
+false block numbers, false EOTs and false ACKs.  False ACKs
+are the most troublesome as they cause the sender to lose
+synchronization with the receiver.
+
+   State of the art X/YMODEM programs such as Professional-YAM
+overcome some of these weaknesses with clever proprietary
+code, but a newer protocol is still useful.
+
++  It is difficult to determine the beginning and ends of
+X/YMODEM blocks when they are corrupted by line hits.  This
+discourages rapid error recovery.
+
+5.1  Link Escape Encoding
+
+ZMODEM acheives data transparency by extending the 8 bit
+character set (256 codes) with escape sequences based on the
+ZMODEM data link escape character ZDLE[1].
+
+Link Escape coding permits variable length data packets.  It
+allows the beginning of packets to be detected without
+special timing techniques, facilitating rapid error
+recovery.
+
+Link Escape coding does add some overhead.  The worst case,
+a file consisting entirely of ZDLE characters, would incur a
+50% overhead.  The particular ZDLE character was chosen
+after examining the character distributions of many types of
+files used with personal computers.
+
+The ZDLE character is special.  ZDLE represents a control
+sequence of some sort.  If a ZDLE character appears in the
+data sent within a binary packet, it is prefixed with
+another ZDLE.  An escaped ZDLE is counted once in the CRC.
+-------
+1.  This and other constants are defined in the zmodem.h include file.
+Please note that constants with a leading 0 are octal constants in
+C.
+
+
+ 5.  PACKETIZATION (cont)
+
+5.1  Link Escape Encoding (cont)
+
+
+The current value for ZDLE is exclamation point (!).  Use of
+a printing character as ZDLE allows application programs to
+recognize HEX Header Packets.  This particular character was
+chosen because it does not appear often in many types of
+files likely to be transferred with this protocol.  In
+addition, no known timesharing system uses it for editing.
+
+5.2  Header Packet Information
+
+All ZMODEM frames begin with a header packet which may be
+sent in binary or HEX form.  ZMODEM uses a single routine to
+recognize binary and hex header packets.  Either form of the
+header packet contains the same raw information:
+
++  A type byte[1] Future extensions to ZMODEM may use the
+high order bits of the type byte to indicate thread
+selection.
+
++  Four bytes of data indicating flags and/or numeric
+quantities depending on the packet type
+
+Order of Bytes in Header Packet
+
+T:  packet Type
+F0: Flags least significant byte
+P0: file Position least significant
+P3: file Position most significant
+
+        T  F3 F2 F1 F0
+        --------------
+        T  P0 P1 P2 P3
+-------
+1.  The packet types are cardinal numbers beginning with 0 to minimize
+state transition table memory requirements.
+
+
+ 5.  PACKETIZATION (cont)
+
+5.3  Binary Header Packet
+
+A binary header packet is only sent by the sending program
+to the receiving program.
+
+A binary header packet begins with the sequence ZPAD, ZDLE,
+ZBIN.
+
+The frame type byte is ZDLE encoded.
+
+The four position/flags bytes are ZDLE encoded.
+
+A two byte CRC of the frame type and position/flag bytes is
+ZDLE encoded.
+
+0 or more binary data packets will follow depending on the
+frame type.
+
+The function zsbhdr transmits a binary header packet.  The
+function zgethdr receives a binary or hex header packet.
+
+
+5.4  HEX Header Packet
+
+The receiver sends responses in hex header packets.
+
+Hex encoding is required to support XON/XOFF flow control.
+Use of Kermit style encoding for control and paritied
+characters was considered and rejected because of increased
+possibility of interacting with some timesharing systems's
+line edit functions.  Use of HEX packets from the receiving
+program allows control characters to be used to interrupt
+the sender when errors are detected.  Except for header
+packet types that imply data packets to follow, a HEX header
+packet may be used in place of a binary header packet.
+
+A hex header packet begins with the sequence ZPAD, ZPAD,
+ZDLE, ZHEX.  The zgethdr routine synchronizes in the
+ZPAD-ZDELE sequence.  The extra ZPAD allows other parts of
+the program to detect a ZMODEM packet and then call
+_#zgethdr to receive the packet.
+
+The type byte, the four position/flag bytes, and the CRC
+thereof are sent in hex using the character set
+01234567890abcdef.  Upper case hex digits are not allowed;
+they would false trigger X/YMODEM programs.
+
+
+ 5.  PACKETIZATION (cont)
+
+5.4  HEX Header Packet (cont)
+
+A carriage return, line feed, and XON are appended to the
+HEX header packet but are not considered to be part of it.
+The CR/LF aids debugging from printouts.  The XON releases
+the sender from spurious XOFF flow control characters
+generated by line noise, a common occurrence.
+
+0 or more HEX data packets will follow depending on the
+frame type.
+
+The function zshhdr sends a hex header packet.
+
+5.5  Binary Data Packets
+
+Binary data packets immediately follow the associated binary
+header packet.  A binary data packet contains 0 to 1024
+bytes of data.  Recommended length values are 256 bytes
+below 4800 bps, 1024 above 4800 bps or when the data link is
+known to be relatively error free.
+
+No padding is used with binary data packets.  The data bytes
+are ZDLE encoded and transmitted.  A ZDLE and frameend are
+then sent, followed by two ZDLE encoded CRC bytes.  The CRC
+accumulates the data bytes and frameend.
+
+The function zsbdata sends a binary data packet.  The
+function zrbdata receives a binary data packet.
+
+5.6  HEX Data Packet
+
+The format of HEX data packets is not currently specified.
+These would be used for server commands, etc.
+
+
+ 6.  PROTOCOL TRANSACTION OVERVIEW
+
+As with the XMODEM recommendation, ZMODEM timing is receiver
+driven.  The transmitter should not time out at all, except to
+abort the program if no packets are received for an extended
+period of time, say one minute.
+
+To start a ZMODEM file transfer session, the sending program is
+called with the names of the desired file(s).
+
+The sending program sends the string "rz\r" and a single HEX
+ZRQRINIT packet with data = 0.  The "rz" followed by carriage
+return activates a ZMODEM receive program or command if it were
+not already active.  If the receiving program receives the
+ZRQRINIT packet, it totally ignores it as the sending program
+will be responding to the RINIT packet sent by the receiver.  The
+sending program should also ignore this packet type, which would
+be an echo of its own packet.
+
+
+ 6.  PROTOCOL TRANSACTION OVERVIEW (cont)
+
+Since the ZRQRINIT sequence contains no exotic control
+characters, it can be accepted by the application program as a
+command to begin ZMODEM receive.  The sequence prints as:
+
+      "rz^M**!B00000000000000^M^J"
+
+where ^M represents CR and ^J represents LF.
+
+The sending program awaits a command from the receiving program
+to start file transfers.  If a "C" or NAK is received, an XMODEM
+or YMODEM file transfer is indicated, and file transfer(s) use
+the X/YMODEM protocol.
+
+Note: With ZMODEM and YMODEM Batch, the sending program provides
+the file name, but not with XMODEM.
+
+When the ZMODEM receive program starts, it immediately sends a
+ZRINIT packet to initiate ZMODEM file transfers.  The receive
+program resends the ZRINIT packet at repsonse time intervals for
+a suitable period of time (40 seconds typical) before falling
+back to X/YMODEM protocol.  If the receiving program receives a
+ZRINIT packet, it is an echo indicating that the sending program
+is not operational.
+
+If the receiving program receives a ZRQRINIT packet, it ignores
+it.
+
+Eventually the sending program correctly receives the ZRINIT
+packet.
+
+The sender may respond with an optional ZCRYPT packet, which
+the receiver acknowledges with a suitable frame.  (Details
+to be worked out later)
+
+The sender may respond with an optional ZSINIT frame to set the
+receiving program's Attention string.  The receiver sends a ZACK
+packet in response.
+
+The sender then sends a ZFILE packet containing the file name,
+file length, modification date, and other information identical
+to that used by YMODEM Batch.
+
+The receiver may respond to this with a ZGETCRC packet,
+which requires the sender to permorm a CRC on the file and
+transmit same with a ZCRC packet.  The receiver may use this
+information to determine whether to accept the file or skip
+it.
+
+The receiver may respond with a ZSKIP packet, which causes the
+file to be passed over.
+
+
+ 6.  PROTOCOL TRANSACTION OVERVIEW (cont)
+
+A ZRPOS packet from the receiver initiates transmission of the
+file data starting at the offset in the file specified in the
+ZRPOS packet.  Normally the receiver specifies the data transfer
+begin begin at offset 0 in the file.
+
+The receiver may start the transfer further down in the
+file.  This allows a file transfer interrupted by a loss or
+carrier or system crash to be completed on the next
+connection without requiring the entire file to be
+retransmitted.  If downloading a file from a timesharing
+system that becomes sluggish, the transfer can be
+interrupted and resumed later with no loss of data.
+
+The sender sends a ZDATA header packet (with file position)
+followed by one or more data packets.
+
+The receiver compares the file position in the ZDATA header with
+the number of characters successfully received to the file.  If
+they do not agree, a ZRPOS error response is generated to force
+the sender to the right position within the file.
+
+A data packet terminated by ZCRCGO and CRC does not elicit a
+response unless an error is detected; more data packet(s) follow
+immediately.
+
+ZCRCQ data packets expect a ZACK response (with the file
+offset) if no error, otherwise a ZRPOS response (with the
+last good file offset).  Another data packet continues
+immediately.  ZCRCQ packets are not used if the receiver
+does not indicate FDX ability with the CANFDX bit.
+
+ZCRCW data packets expect a response before the next frame is
+sent.  If the receiver does not indicate overlapped I/O
+capability with the CANOVIO bit, the sender uses the ZCRCW to
+allow the receiver to write its buffer before sending more data.
+
+A zero length data packet may also be used as a sending idle
+packet to prevent the receiver from timing out in case data
+is not immediately available to the sender.
+
+In the absence of fatal error, the sender encounters end of file.
+If the end of file is encountered within a frame, the frame is
+closed with a ZCRCE data packet which does not elicit a response
+except in case of error.
+
+The sender sends a ZEOF packet with the file ending offset equal
+to the number of characters in the file. The receiver compares
+this number with the number of characters received.  If the
+receiver has received all of the file, it closes the file and
+responds with ZRINIT.  Otherwise the receiver sends ZRPOS with
+the current file offset, forcing the sender to send the missing
+data.
+
+
+ 6.  PROTOCOL TRANSACTION OVERVIEW (cont)
+
+After all files are processed, any further protocol errors should
+not prevent the sending program from returning with a success
+status.
+
+The sender closes the session with a ZEXIT header packet.  The
+receiver acknowledges this with its own ZEXIT packet.
+
+When the sender receives the acknowledging packet, it sends two
+characters, "OO" (Over and Out) and exits to the operating system
+or application that invoked it.  The receiver waits briefly for
+the "O" characters, then exits whether they were received or not.
+
+
+ 7.  STREAMING TECHNIQUE
+
+ZMODEM allows a choice of data streaming methodmethods selected
+according to the limitations of the sending program operating
+environment, receiving program operating environment, and the
+transmission channel(s).
+
+If the computers can overlap serial I/O with disk I/O, the sender
+begins data transmission with a ZDATA header and continuous ZCRCG
+data packets.  When the receiver detects an error, it sends the
+Attn sequence and a ZRPOS packet to force the sender back to the
+correct position within the file.
+
+At the end of each transmitted packet, the sender checks for the
+presence of a error packet from the receiver.  To do this, the
+sender may sample the reverse data stream for the presence of a
+ZPAD character.
+
+If the reverse data stream cannot be sampled without entering an
+I/O wait, the receiver can interrupt the sender with a control
+character, break, or combinations thereof, as specified in the
+ZSINIT frame sent by the sending program.
+
+If the receiver cannot overlap serial and disk I/O, it uses the
+ZRINIT frame to specify a buffer length which the sender will not
+overfill before sending a ZCRCW packet.
+
+
+ 8.  ATTENTION SEQUENCE
+
+The receiving program sends the Attn sequence whenever it detects
+an error and needs to interrupt the sending program.
+
+The default Attn string value is empty (no Attn sequence).  The
+characters in the Attn string are terminated with a null.  Two
+characters perform special functions:
+
++ \335 Sends a break signal
+
++ \336 Pauses one second
+
+
+ 9.  PACKET/FRAME TYPES
+
+The numeric values for the values shown in boldface are given in
+zmodem.h.
+
+9.1   ZRQRINIT
+
+Sent by the sending program to call up the receiving
+program.
+
+P0...P3 are zero.
+
+9.2   ZRINIT
+
+Sent by the receiving program.
+
+ZF0 and ZF1 contain receiver capability flags:
+
+#define CANFDX  1 /* Rx can send and receive FDX */
+#define CANOVIO 2 /* Rx can receive during disk I/O */
+#define CANBRK  4 /* Rx can send a break signal */
+#define CANCRY  8 /* Receiver can decrypt */
+
+ZP0 and ZP1 contain the size of the receiver's buffer in
+bytes, or 0 if overlapped I/O is allowed.
+
+9.3   ZSINIT
+
+Sender sends capability flags (none currently defined)
+followed by a binary data packet terminated with ZCRCW.
+Data contains the Attn string, maximum length 32 bytes. The
+ZSINIT is only sent to programs that indicate the ability
+to overlap serial data and disk I/O (CANOVIO).
+
+9.4   ZACK
+
+Acknowedgement to ZSINIT header packet or ZCRCW data
+packet.
+
+ZP0 to ZP3 contain file offset.
+
+9.5   ZFILE
+
+This packet indicates the beginning of a file transmission
+attempt.
+
+ZF0 and ZF1 contain special file processing flags:
+
++  ZBIN This is a binary file
+
+   A ZCRCW data packet follows with file name, file length,
+modification date, and other information described in a
+later chapter.
+
+
+ 9.  PACKET/FRAME TYPES (cont)
+
+9.6   ZSKIP
+
+Sent by the receiver in response to ZFILE, makes the sender
+skip to the next file.
+
+9.7   ZNAK
+
+Indicates last packet header was garbled.  (See also
+ZRPOS).
+
+9.8   ZABORT
+
+Sent by receiver to terminate batch file transfers when
+requested by the user.
+
+Sender initiates a ZFIN sequence[1].
+
+9.9   ZFIN
+
+Sent by sending program to terminate ZMODEM.  Receiver
+responds with ZFIN.
+
+9.10  ZRPOS
+
+Sent by receiver to force file transfer to resume at file
+offset given in ZP0...ZP3.
+
+9.11  ZDATA
+
+ZP0...ZP3 contain file offset.  One or more data packets
+follow.
+
+9.12  ZEOF
+
+ZP0...ZP3 contain file offset.  Sender reports End of File.
+
+9.13  ZFERR
+
+Error in reading or writing file, equivalent to ZABORT.
+
+9.14  ZCRC
+
+Request (receiver) and response (sender) for file CRC.
+
+ZP0 and ZP1 contain 16 bit file CRC.
+
+9.15  ZCRYPT
+
+Negotiation for encryption.
+-------
+1.  Or ZCOMPL in case of server mode.
+
+
+ 9.  PACKET/FRAME TYPES (cont)
+
+9.16  ZCOMPL
+
+Server request now completed.
+
+
+10.  Transaction
+
+A simple transaction, one file, no errors, overlapped I/O:
+
+Sender          Receiver
+
+                ZRINIT
+ZFILE
+                ZRPOS
+ZDATA data ...
+ZEOF
+                ZRINIT
+ZFIN
+                ZFIN
+OO
+
+
+11.  PERFORMANCE
+
+Some tests of ZMODEM protocol performance have been made.  A
+PC-AT with SCO SYS V Xenix or DOS 3.1 was connected to a PC with
+DOS 2.1 either directly at 9600 bps or with dial-up 1200 bps
+modems.  The ZMODEM software was configured to use 1024 byte
+packet lengths above 2400 bps, 256 otherwise.
+
+Because no time delays are necessary in normal file transfers,
+per file negotiations are much faster than with YMODEM, the only
+observed impidiment being the time required by the program(s) to
+update logging files.
+
+During a file transfer, a short line hit seen by the receiver
+usually induces a CRC error.  The interrupt packet is usually
+seen by the sender before the next packet is sent, and the
+resultant loss of data throughput averages about half a packet.
+At 1200 bps this is would be about .75 second lost per hit.  At
+10-5 error rate, this would degrade throughput by about 9 per
+cent.  The throughput degradation increases with the channel
+delay, as the packets in transit through the channel are
+discarded on error.
+
+A longer noise burst that affects both the receiver and the
+sender's reception of the interrupt packet usually causes the
+sender to remain silent until the receiver times out in 10
+seconds.  If the round trip channel delay exceeds the receiver's
+10 second timeout, recovery from this type of error may become
+difficult.
+
+
+11.  PERFORMANCE (cont)
+
+Noise affecting only the sender is usually ignored, with one
+common exception.  Spurious XOFF characters generated by noise
+stop the sender until the receiver times out and sends an
+interrupt packet which concludes with an XON.
+
+In summation, ZMODEM performance in the presence of errors
+resembles that of X.PC and SuperKermit.  Short bursts cause
+minimuml data loss.  Long bursts (such as pulse dialing noises)
+often require a timeout error to restore the flow of data.
+
+
+12.  TABLES
+
+Figures are calculated for round trip delay times of 40
+milliseconds and 5 seconds.  A 102400 byte randomly distributed
+binary file is sent at 1200 bps 8 data bits, 1 stop bit.  The
+calculations assume no transmission errors.  For each of the
+protocols, only the per file functions are considered.  Processor
+and I/O overhead are not included.  YM-k refers to YMODEM with
+1024 byte packets.  YM-g refers to the YMODEM "g" option.  ZMODEM
+uses 256 byte packets for this example.  SuperKermit uses amximum
+packet size, 8 bit transparent transmission, no run length
+compression.
+
+Figure 1.  Protocol Overhead Information
+
+ Protocol    dump XMODEM YM-k  YM-G ZMODEM S-Kermit
+------------ ---- ------ ----- ---- ------ --------
+Round-Trips    -    803   103    5      5        5?
+Time@40ms      -     32s    4s   -      -        -
+Time@5s        -   4015s  515s  25s    25s      25
+Chars-Ovhd     -   4803   603  503   2000     7460
+Time@0s      853s   893s  858s 857s   870s    1135s
+Time@40ms    853s   925s  862s 857s   870s    1135s
+Time@5s      853s  5761s 1373s 882s   905s    1160s
+
+Figure 2.  Transmission Time Comparision
+           (5 second delay)
+
+**********************************************************
+XMODEM
+**************
+YMODEM-K
+************
+Kermit Sliding Windows
+*********
+YMODEM-G
+*********
+ZMODEM
+
+
+12.  TABLES (cont)
+
+Figure 3.  Y/ZMODEM Header Information usage
+
+ Program   Batch  Length Date  Mode  S/N  YMODEM-g  ZMODEM
+---------- ----- ------- ---- ------ ---- -------- -------
+Unix rb/sb  yes   yes    yes    yes   no   sb only      no
+Unix rz/sz  yes   yes    yes    yes   no   sb only     yes
+VMS rb/sb   yes   yes     no     no   no        no      no
+Pro-YAM     yes   yes    yes     no  yes       yes     yes
+CP/M YAM    yes    no     no     no   no        no      no
+KMD/IMP     yes    no|#-  no     no   no        no      no
+MEX          no    no     no     no   no        no      no
+
+
+13.  ZFILE FRAME FILE INFORMATION
+
+Only the pathname (file name) part is required for batch
+transfers.
+
+Pathname The pathname (conventionally, the file name) is sent as
+a null terminated ASCII string.  This is the filename
+format used by the handle oriented MSDOS(TM) functions
+and C library fopen functions.  An assembly language
+example follows:
+
+                   DB        'foo.bar',0
+
+         No spaces are included in the pathname.  Normally only
+the file name stem (no directory prefix) is transmitted
+unless the sender has selected YAM's f option to send
+the full pathname.  The source drive (A:, B:, etc.) is
+never sent.
+
+Filename Considerations:
+
++  File names should be translated to lower case unless the
+sending system supports upper/lower case file names.  This is
+a convenience for users of systems (such as Unix) which store
+filenames in upper and lower case.
+
++  The receiver should accommodate file names in lower and upper
+case.
+
++  The rb(1) program on Unix systems normally translates the
+filename to lower case unless one or more letters in the
+filename are already in lower case.
+
++  When transmitting files between different operating systems,
+file names must be acceptable to both the sender and receiving
+operating systems.
+
+   If directories are included, they are delimited by /; i.e.,
+"subdir/foo" is acceptable, "subdir\foo" is not.
+
+
+13.  ZFILE FRAME FILE INFORMATION (cont)
+
+Length The file length and each of the succeeding fields are
+optional[1]. The length field is stored as a decimal
+string counting the number of data bytes in the file.
+
+       With ZMODEM, the receiver uses the file length only for
+display (progress reporting) purposes; the actual length
+is determined by the data transfer.
+
+Modification Date - A single space separates the modification
+date from the file length.
+
+                    The mod date is optional, and the filename
+and length may be sent without requiring the
+mod date to be sent.
+
+                    The mod date is sent as an octal number
+giving the time the contents of the file were
+last changed measured in seconds from Jan 1
+1970 Universal Coordinated Time (GMT).  A
+date of 0 implies the modification date is
+unknown and should be left as the date the
+file is received.
+
+                    This standard format was chosen to eliminate
+ambiguities arising from transfers between
+different time zones.
+
+                    Two Microsoft blunders complicate the use of
+modification dates in file transfers with
+MSDOS(TM) systems.  The first is the lack of
+timezone standardization in MS-DOS.  A file's
+creation time can not be known unless the
+timezone of the system that wrote the file[2]
+is known.  Unix solved this problem (for
+planet Earth, anyway) by stamping files with
+Universal Time (GMT).  Microsoft would have
+to include the timezone of origin in the
+directory entries, but does not.
+Professional-YAM gets around this problem by
+using the z parameter which is set to the
+number of minutes local time lags GMT.  For
+files known to originate from a different
+timezone, the -zT option may be used to
+specify T as the timezone for an individual
+file transfer.
+-------
+ 1. Fields may not be skipped.
+ 2. Not necessarily that of the transmitting system!
+
+
+13.  ZFILE FRAME FILE INFORMATION (cont)
+
+                    The second problem is the lack of a separate
+file creation date in DOS.  Since some backup
+schemes used with DOS rely on the file
+creation date to select files to be copied to
+the archive, back-dating the file
+modification date could interfere with the
+safety of the transferred files.  For this
+reason, Professional-YAM does not modify the
+date of received files with the header
+information unless the d parameter is non
+zero.
+
+Mode - A single space separates the file mode from the
+modification date.  The file mode is stored as an octal
+string.  Unless the file originated from a Unix system,
+the file mode is set to 0.  rb(1) checks the file mode for
+the 0x8000 bit which indicates a Unix type regular file.
+Files with the 0x8000 bit set are assumed to have been
+sent from another Unix (or similar) system which uses the
+same file conventions.  Such files are not translated in
+any way.
+
+Serial Number - A single space separates the serial number from
+the file mode.  The serial number of the
+transmitting program is stored as an octal
+string.  Programs which do not have a serial
+number should omit this field, or set it to 0.
+The receiver's use of this field is optional.
+
+The file information is terminated by a null.  If only the
+pathname is sent, the pathname will be terminated by two nulls.
+The length of the file information packet, including the trailing
+null, must not exceed 1024 bytes; a typical length is less than
+64 bytes.
+
+
+14.  MORE INFORMATION
+
+More information may be obtained by calling Telegodzilla at
+503-621-3746.
+
+UUCP sites can obtain the nroff/troff source to this file with
+
+       uucp omen!/usr/caf/public/zmodem.mm /tmp
+
+A continually updated list of available files is stored in
+/usr/spool/uucppublic/FILES.
+
+The following L.sys line calls Telegodzilla (Pro-YAM in host
+operation).  Telegodzilla waits for carriage returns to determine
+the incoming speed.  If none is detected, 1200 bps is assumed and
+a greeting is displayed.
+
+
+14.  MORE INFORMATION (cont)
+
+In response to "Name Please:" uucico gives the Pro-YAM "link"
+command as a user name.  The password (Giznoid) controls access
+to the Xenix system connected to the IBM PC's other serial port.
+Communications between Pro-YAM and Xenix use 9600 bps; YAM
+converts this to the caller's speed.
+
+Finally, the calling uucico logs in as uucp.
+
+omen Any ACU 1200 1-503-621-3746 se:--se: link ord: Giznoid
+in:--in: uucp
+
+
+15.  ZMODEM Programs
+
+A demonstration version of Professional-YAM is available as
+YAMDEMO.LQR (A SQueezed Novosielski library).  This may be used
+to test ZMODEM and YMODEM implementations.
+
+Unix programs supporting the YMODEM protocol are available on
+Telegodzilla in the "upgrade" subdirectory as RBSB.SHQ (a
+SQueezed shell archive).  Most Unix like systems are supported,
+including V7, Sys III, 4.2 BSD, SYS V, Idris, Coherent, and
+Regulus.
+
+A version for VAX-VMS is available in VRBSB.SHQ, in the same
+directory.
+
+A CP/M assembly version is available as MODEM76.AQM and
+MODEM7.LIB.
+
+Irv Hoff has added YMODEM 1k packets and basic YMODEM batch
+transfers to the KMD and IMP series programs, which replace the
+XMODEM and MODEM7/MDM7xx series respectively.  Overlays are
+available for a wide variety of CP/M systems.
+
+MEX and MEX-PC also support some of the YMODEM extensions.
+
+Questions about YMODEM, the Professional-YAM communications
+program, and requests for evaluation copies may be directed to:
+
+Chuck Forsberg
+Omen Technology Inc
+17505-V Sauvie Island Road
+Portland Oregon 97231
+Voice: 503-621-3406
+Modem: 503-621-3746 Speed: 1200,300
+Usenet: ...!tektronix!reed!omen!caf
+Compuserve: 70715,131
+Source: TCE022

@@ -1,0 +1,392 @@
+FIDO/FIDONET ROUTING, TOPOLOGY, HISTORY AND RECENT CHANGES
+Tom Jennings, 1:125/111
+
+Fido/FidoNet, like all other FidoNet mailers and BBSs, generatesç
+messages, and puts them into packets that are later delivered toç
+some appropriate destination by the mailer itself. All of theç
+different mailers use different approaches as to just how you theç
+sysop control where, how and when packets (and the messages theyç
+contain) get delivered.
+
+In light of all the mailer systems out there today, I don't thinkç
+many are aware of just how Fido/FidoNet does it's routing. With aç
+few recent changes (more to follow) you might find the design hasç
+become interesting.
+
+
+FIDO
+
+Fido was originally just a bulletin board; the first FidoNet wasç
+a separate program that was run from a batch file with a fewç
+small hooks into the BBS. (The origin of the Fido version 9 - 11ç
+MAIL.SYS file.) Fido (the BBS) only let users generate messages;ç
+FidoNet (the mailer) put messages into packets and deliveredç
+them.
+
+At this point, five years later, Fido and FidoNet are pretty wellç
+integrated, and this latest revision completes the weld.ç
+Logically, to the user and sysop, the two remain quite separate,ç
+and many (non-FidoNet) Fido systems are BBS only. (Most of myç
+commercial customers are BBS only.) It is just as easy to runç
+FidoNet without Fido.
+
+Fido's packeting/mailing system works in four discrete phases.ç
+First, the destination node addresses for all the existingç
+messages is determined. This is done by the "router", more onç
+which follows. Second, the messages are put into packets by theç
+"packeter" (I never was very good at names). Third, the phaseç
+that is most obvious to sysops watching the screen, is when theç
+packets are delivered; Fido makes outgoing phone calls and sendsç
+the packets. Packets can also be received inbetween outgoingç
+calls. The last phase deletes un-sent packets, and marks theç
+original messages that went into the packets as "(SENT)" asç
+appropriate. This ends the FidoNet session.
+
+Note that unlike Opus and other similar mailers, Fido only puts aç
+copy of the message into a packet; during the fourth phase Fidoç
+again processes each message, and marks it or deletes it asç
+determined by the success of that packet delivery.
+
+This is a fairly large amount of processing to do when looked atç
+on a per-message basis, and is why Fido's FidoNet has always beenç
+slower to packet than other systems. In return there are manyç
+advantages, that will become more obvious later.
+
+
+FIDO AND FIDONET
+
+Originally, as was stated before, Fido and FidoNet were twoç
+separate programs. Even when integrated into one package,ç
+starting with Fido version 9 or 10, FidoNet was only usable whenç
+a FidoNet scheduled event was actually running; "continuous mail"ç
+is (relative to Fido) a new concept. Version 12 (Aug. 1987) couldç
+accept incoming continuous mail, but not send mail unless aç
+FidoNet event was running. Version 12M supports Wazoo and fileç
+requests.
+
+Starting with version 12N, the FidoNet portion of Fido can beç
+accessed at any time; packet creation and routing is underç
+complete control, and can be altered, automatically using theç
+routing language on a event by event basis throughout the day, orç
+manually as the sysop sees fit, up to the point when the specificç
+message has been delivered. Events themselves can be turned onç
+and off from within Fido, allowing very high-level control overç
+packet routing.
+
+You can have Fido create packets available for pickup, with anyç
+arbitrary routing, at any time of day. For example, you can haveç
+HOLD packets of long-distance systems waiting for pickup fromç
+9:00AM til 6:00PM, while enabling outgoing calls on local-dialç
+systems, in between human callers, or any other construct allowedç
+by the routing language, without restriction. There is aç
+"penalty" of 30 - 60 seconds to prepare for a new schedule; onceç
+started, access is in the under 100 mS range. 
+
+On my 8MHz "turbo" junk-pclone, 80mS 20 meg drive, Fido takes 20ç
+seconds to load, create outgoing packets and be ready for anç
+incoming call (human or otherwise). On this crappy hardware,ç
+incoming echomail is received, unpacketed, tossed, the echo areasç
+then scanned and outgoing packets made and delivered in 60 - 90ç
+seconds, in between human callers, using DCM and barefootç
+Fido/FidoNet 12N.
+
+The largest network Fido/FidoNet can (mathematically!) handle isç
+(32767 * 32767 * 32767) or 3.5 x 10(13) nodes; version 12'sç
+implementation 65,000. A recompile (change a table index from 16ç
+to 32 bits) will make Fido handle about 4 billion nodes with someç
+performance loss and increased (disk) overhead, about 2ç
+bytes/node. Performance with 65,000 nodes would still be betterç
+than Fido 12M's.
+
+Current nodelist overhead (NODELIST.132) is: NODELIST.BBS 304,532ç
+(physical data); NODELIST.NMP 53,920 (nodemap; see below);ç
+NODELIST.IDX 53920 (main index); NODELIST.NDX 2900 (host index).ç
+NODELIST.SYS is no longer used.
+
+
+FIDONET TOPOLOGY
+
+The router design mimics exactly the FidoNet network topology.ç
+The network went through three (so far...) stages: a "flat"ç
+system, ie. point to point; addresses were a simple number 1 -ç
+32767. The second formalized the concept of "nets", incorporatingç
+the routing optimization formerly done with Fido's primitiveç
+router. Third, the current scheme, includes zones, which areç
+similar mathematically to nets, but in real life act quiteç
+differently, with "zone gates" concentrating mail between zonesç
+(generally continents) because of real-life issues of telephoneç
+connect costs and equipment compatibility.
+
+
+OOPS BACKTRACK A LITTLE:
+
+A small aside on nets and regions: "regions" originally were onlyç
+a way for nodes not in a net (ie. not inside a local callingç
+area) to be syntactically compatible with the "net/node"ç
+addressing scheme; since most nodes were in the most heavilyç
+populated areas, cities, where nets naturally form, "regions"ç
+would be where nodes not in cities would be found. Nodes inç
+regions (marked REGION in the nodelist) act as any other node,ç
+but the mailers do not do the automatic routing to the "host" forç
+the region -- mail is sent direct, or point to point.ç
+Additionally, the function of region hosts as another layer ofç
+organizational heirarchy is a recent addition, and not part ofç
+the topology itself. Still further, there is nothing magic aboutç
+the numbers themselves -- regions being numbered 1 - 99, nets 100ç
+- 999 etc is a totally arbitrary decision on the part of theç
+keepers-of-the-lists. The only magic numbers are 0's -- theseç
+indicate the host for the entity, ie. zone, net or region.
+
+
+ROUTER DESIGN
+
+Back to the router design. While the heirarchical model ofç
+net/node is extremely useful (if not indispensible) there areç
+still thousands of exceptions, usually on a system by systemç
+basis; you forward mail for one system that is local but is aç
+toll call for other net members. Your net has a sugar daddy thatç
+can make long distance outgoing calls. One system calls in toç
+pickup their mail. Commonly called systems are more efficientlyç
+handled in some special way.
+
+Fido's router design can handle any topology based on our addressç
+syntax: zone:net/node, plus any arbitrary number of exceptions.ç
+To do this, the router is very simple -- not complex. 
+
+Logically, the router is an N x N crossbar switch, where N is theç
+number of nodes in the nodelist. You can imagine a crossbarç
+switch by drawing on paper a grid:
+
+IN
+  --> 1 ----O---O---O---O---O
+	    |   |   |   |   |
+      2	----O---O---O---O---O
+	    |   |   |   |   |
+      3	----O---X---O---O---O
+	    |   |   |   |   |
+      4	----O---O---O---O---O
+	    |   |   |   |   |
+      5	----O---O---O---O---O
+	    |   |   |   |   |
+            1   2   3   4   5
+		   OUT
+
+Shown is a 5 x 5 crossbar switch. The O's represent an OFF (butç
+potential) connection; X's represent a ON connection. Theç
+connection (3,2) is ON, all others closed. If a signal wereç
+applied to Input 3, it would appear also on Output 2. (ASCIIç
+graphics are terrible, sorry!) You will notice that by placingç
+X's and O's appropriately, any input can be connected to anyç
+output.
+
+A "real" crossbar switch can route one signal to manyç
+destinations; just place X's along the same horizontal row in theç
+example above. Any node can route to any node; times (N) nodes isç
+(N * N) possible states. Not pleasant to think about in realç
+terms -- a 5000 node nodelist would mean 25,000,000 states toç
+represent on your disk! This is not a very useful side effect forç
+us; our messages have a single destination address.
+
+Fido's router places one limitation upon the crossbar design:ç
+there can be only one possible destination per node. It can stillç
+be any possible node, but only one at a time. This means theç
+router can consist of (2 * N) entries -- the originating node andç
+the destination node.
+
+You can imagine Fido's router as the crossbar switch above, or asç
+I do, a simple two column table:
+
+	----+----
+	1   |	_
+	2   |	_
+	3   |	2
+	4   |	_
+	5   |	_
+
+The _'s represent potential, but OFF connections. #3 has beenç
+routed to #2 by merely filling in that table entry. This table isç
+called the NodeMap.
+
+(Fido's nodemap also contains a third column, where attributesç
+like HOLD, SEND-TO, PICKUP and other things are stored. Theseç
+atributes are built into the nodemap for programming convenienceç
+only, they are not really part of the router per se.)
+
+
+HOW THE ROUTER WORKS
+
+At FidoNet mail time, Fido prepares the router files beforeç
+making packets and outgoing phone calls. The basic net hostç
+routing is performed, then any routing specified by the sysop inç
+route language files. 
+
+Before any routing, the table looks like this:
+
+	ADDRESS		ROUTE-TO	ATTRIBUTES
+	1:1/1		1:1/1		  (none)
+	1:1/2		1:1/2		  ...
+	...		...		  ...
+	1:125/0		1:125/0
+	1:125/20	1:125/20
+	1:125/111	1:125/111
+	...		...
+	2:500/0		2:500/0
+	2:500/2		2:500/2
+	...		...		  ...
+
+Basic default routing is applied, which does the FidoNet-as-we-
+know-it net and zonegate routing (see the Appendix A: DEFAULTç
+ROUTING section):
+
+	ADDRESS		ROUTE-TO	ATTRIBUTES
+	1:1/1		1:1/1		  ...
+	1:1/2		1:1/2
+	...		...
+	1:125/0		1:125/0
+	1:125/20	1:125/0
+	1:125/111	1:125/0
+	...		...
+	2:500/0		1:1/2
+	2:500/2		1:1/2
+	...		...
+
+At this point Fido performs any additional routing you may haveç
+specified, such as overriding the routing, HOLD packets, enablingç
+only certain nodes or groups of nodes per schedule, etc. Thingsç
+like HOLD, PICKUP, SEND-TO and other basic concepts are asç
+attributes within the nodemap.
+
+The nodemap is built on disk, and can be saved between schedulesç
+so that it an be used over and over; this is called a "QUICK"ç
+FidoNet event. It takes my Fido system mentioned aboveç
+approximately 90 seconds to completely build the nodemap (aboutç
+100 route language statements); subsequent "QUICK" events take aç
+fraction of a second.
+
+
+PACKET CREATION
+
+Fido creates packets when a FidoNet schedule starts (which isç
+controlled by Fido's scheduler and is outside this discussion).ç
+For every message in the netmail message area, Fido consults theç
+nodemap, in two steps:
+
+First, the actual destination (for example: 1:125/111) is lookedç
+up in the ADDRESS column of the nodemap. The ROUTE-TO columnç
+determines where this message goes, ie. into which packet. If theç
+destination node is not found, the message is marked (ORPHAN).
+
+Secondly, Fido looks up the packet (ROUTE-TO) address (1:125/0)ç
+itself, in the ADDRESS column. This is done to locate theç
+ATTRIBUTE bits for the destination node. If the bits indicate itç
+is OK to packet this message (SEND-TO set, etc) then the packeterç
+creates the packet.
+
+This is done for all messages in the netmail area; once all theç
+packets are built then FidoNet can dial out, allow incomingç
+pickups, etc.
+
+Messages put into packets are not modified in any way; packetsç
+contain a copy of the original message. The post-FidoNet processç
+takes care of messages that have been sent.
+
+
+FIDONET SESSION COMPLETION
+
+When a FidoNet schedule is over, Fido processes packets that wereç
+received from other mailers and cleans up any packets it hadç
+created earlier. 
+
+Packets that are un-sent are merely killed; the messages thatç
+these packet(s) were created from still exist in the netmailç
+area; when a FidoNet session start again, Fido may put theç
+messages into a packet to the same destination node or possiblyç
+another; since packeting is done only before actual mailing theç
+routing can be altered at any point up to actual sucessfulç
+transmission.
+
+Packets that are sent, or picked up, are handled slightlyç
+differently. The packets themselves are deleted, but Fido onceç
+again refers to the router to mark the messages that comprisedç
+the packet as (SENT), or kills them if they were indicatedç
+(KILL/SENT) by the originator.
+
+
+
+
+
+Appendix A: DEFAULT ROUTING
+
+Fido/FidoNet's routing is not "built-in" nor hard-coded; if itç
+were not told otherwise, Fido would send messages to theç
+destinations in the message itself. The routing needed to make aç
+practical mailer are added as layers upon this base; the tradeoffç
+is speed vs. flexibility and accuracy. (Speed is, um, somewhatç
+improved over older implementations...)
+
+What the real-life Fido does at FidoNet mail time is make a passç
+through the table, and fill in the "default" routing that definesç
+the FidoNet tolopogy, which is our zone:net/node with routing toç
+HOSTs for nets, which goes like this:
+
+       -For nodes in our own net, send direct (point to 
+        point)
+
+       -For nodes in a net in our zone, outside our net, 
+        send to it's host (net/0)
+
+       -For nodes in a region in our zone, sent direct
+
+       -For nodes in another zone, send to it's zone 
+        host (zone:0/0)
+
+The first three make sense in the network as we know it; theç
+fourth requires some background.
+
+FidoNet's topology is based upon a gimmick: the address of theç
+logical host for any net or zone is composed ot the number of theç
+net or zone, with the magic zero added as the least signifigantç
+address field. A net or region host is net/0 or region/0; a zoneç
+host is zone:0/0. FidoNet sysops use net/0 routinely; no one usesç
+zone:0/0 routinely, if at all.
+
+The difference is that the addressing scheme, the topology, is aç
+mathematical construct, and has nothing to do with the realç
+world, ie. overseas phone calls, governmental regulations,ç
+manufacturer incompatibilies, etc. The addressing scheme needs toç
+be rigorous and provide a solid design base for allç
+implementations. 
+
+If we didn't have real-life complications like the above, neverç
+mind how overloaded the poor zone host computer would be, theç
+mathematical model might fit the real world. Obviously itç
+doesn't, and never did.
+
+The solution in Fido's scheme is to merely modify the defaultç
+routing. There exists a keyword in Fido's routing languageç
+(called, not surprisingly, "ZoneGate") that does exactly what itç
+sounds like: it routes all mail destined for another zone to anyç
+arbitrary node designated "zone gate". 
+
+Zone Gates were thunk up at the now notorious "New Hampshireç
+meeting" in '86 or so. The idea was to make it so that net/nodeç
+mailers, ie. not zone-aware, could route messages destined forç
+other zones. The thing was called the "IFNA Kludge", and consistsç
+of two parts: (1) an addressing kludge to trick the mailer toç
+route the interzone message to a node in it's own zone, and (2)ç
+to have the full zone:net/node origination and destinationç
+addresses buried in the message body itself, hidden behind a lineç
+that began with Control-A, so that message editors could learn toç
+ignore it. (For your curiosity: full address consists of the veryç
+first line in the message, that looks like: "^AINTL z:n/f z:n/f",ç
+where the first address is the destination node address, theç
+second the originator.)
+
+The addressing trick is: "Address the message for zone (N) toç
+node 1/(N) in my zone". Node 1/(N) is designated the zone gate;ç
+for example, the zonegate for Europe, Zone 2, node 1/2, in theç
+North American zone 1. And so on.
+
+Fido is a registered trademark of Tom Jennings
+FidoNet is a registered trademark of Tom Jennings
+(Sorry, I gotta say this!)

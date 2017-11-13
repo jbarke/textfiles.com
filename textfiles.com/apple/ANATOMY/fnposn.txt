@@ -1,0 +1,157 @@
+*================================================================*
+*                                                                *
+*                   Position Function handler                    *
+*                                                                *
+*================================================================*
+*                                                                *
+*      The position function handler (FNPOSN, $AD12) is simply   *
+* used to adjust the filepointer.  This function is used         *
+* sparingly by DOS.  As a matter of fact, FNPOSN is only called  *
+* by READ (CMDREAD, $A510) and WRITE (CMDWRITE,$A51B) commands   *
+* that are accompanied by R(ecord number) and/or  B(yte)         *
+* parameters.  (Even the POSITION command does not use the       *
+* position function.)  In an earlier version of DOS 3.3, FNPOSN  *
+* was used to back the file pointer up when a end-of-file marker *
+* was detected via the APPEND command.  However, APPEND now      *
+* adjusts the filepointer manually.                              *
+*                                                                *
+*----------------------------------------------------------------*
+
+
+(AD12)
+FNPOSN   JSR CALCFPTR ;Using R-, L-, & B-parameters, calculate
+                      ;the position of the file pointer.
+
+                      * Calculate the exact position of the three-byte file pointer:
+                      *        FILPTSEC = sector offset (low/hi format) into entire file (2 bytes).
+                      *        FILPTBYT = byte offset into current sector (1 byte).
+                      * All three bytes define the exact position of the file pointer
+                      * via the following formula:
+                      *        (record number * record length) + byte offset into record
+                      *        where:  RECNMBFM = record number from R-parameter (set
+                      *                           by user when using random access files
+                      *                           or simply incremented when using other
+                      *                           file types).
+                      *                RECLENWA = record length parsed from L-parameter
+                      *                           and assigned with open command (else
+                      *                           defaulted to a size of 1).
+                      *                BYTOFFFM = offset into the current record (set by
+                      *                           user when using open command or
+                      *                           occassionally used with sequential files
+                      *                           as a B-parameter).
+                      * Note that you can actually directly access any byte in any
+                      * file by bypassing the command interpreter and setting the
+                      * L-, B- & R-parameters however you want.
+
+                      (B300)
+                      CALCFPTR LDA RECNMBFM ;Put record # in multiplier and
+                               STA FILPTBYT ;also save it in the work area.
+                               STA RECNMBWA
+                               LDA RECNMBFM+1
+                               STA FILPTSEC
+                               STA RECNMBWA+1
+                               LDA #0       ;Zero out the hi order byte of the sector
+                      (B314)   STA FILPTSEC+1 ;offset into the file.
+
+                      * Calculate:  Record number *  record length.
+                      * This routine simply multiplies two 16-bit
+                      * numbers together.  It may at first seem
+                      * confusing because FILPTSEC & FILPTBYT
+                      * are both used for holding the multiplier
+                      * (record #) and part of the product result.
+                      * However, the bits of the product don't get mixed
+                      * up with the bits of the multiplier because rolling
+                      * in a product bit also rolls out the last-used
+                      * multiplier bit (ie. there is no bit overlap).
+                      (B317)   LDY #16      ;16 bits / one 2-byte number.
+                      NMBXLEN  TAX          ;Save part of running product.
+                                            ;(On first entry, set (x) = 0.)
+                               LDA FILPTBYT ;Set (a) = multiplier.
+                               LSR          ;Put multiplier bit in carry.
+                               BCS NMBXLEN1 ;If (c)=1, go add multiplicand to running product.
+                               TXA          ;(a) = part of running product.
+                               BCC NMBXLEN2 ;Always branch.  No use adding multiplicand cause
+                                            ;bit of multiplier is 0.  Therefore, just go shift
+                                            ;running product.
+                      NMBXLEN1 CLC          ;Add multiplicand to running version of shifted product.
+                               LDA FILPTSEC+1
+                               ADC RECLENWA
+                               STA FILPTSEC+1
+                               TXA          ;Set (a) = low byte of running product.
+                               ADC RECLENWA+1
+                      NMBXLEN2 ROR          ;Shift the running product (as a unit) 1 bit
+                               ROR FILPTSEC+1 ;position right for next time around.
+                               ROR FILPTSEC ;Shift lower 2 bytes of running product and
+                               ROR FILPTBYT ;at the same time throw out the last-used
+                                            ;multiplier bit.
+                               DEY          ;Reduce bit counter.
+                      (B33C)   BNE NMBXLEN  ;Branch if haven't done all 16 bits yet.
+
+                      * Copy byte offset into record from
+                      * the FM parameter list to the work area.
+                      (B33E)   CLC
+                               LDA BYTOFFFM
+                      (B342)   STA BYTOFFWA
+
+                      * Calculate lowest order byte of file pointer.
+                      * BYTOFFWA =  offset into current record.
+                      *          = byte offset into record
+                      *            + (record length *  record  number).
+                      (B345)   ADC FILPTBYT
+                               STA FILPTBYT
+                               LDA BYTOFFFM+1
+                               STA BYTPFFWA+1
+                               ADC FILPTSEC
+                               STA FILPTSEC
+                               BCC CALCRTS
+                               INC FILPTSEC+1
+                      CALCRTS  RTS
+                      (B35C)
+
+(AD15)   JMP GOODFMXT ;Go exit the file manager.
+         ------------
+
+(B37F)
+GOODFMXT LDA RTNCODFM
+         CLC          ;(c) = 0 to signal good operation.
+         BCC FMEXIT
+BADFMXIT SEC          ;(c) = 1 to signal unsuccessful.
+FMEXIT   PHP          ;Save status on stack.
+         STA RTNCODFM ;Store return code in FM parameter list.
+         LDA #0       ;Avoid that infamous $48 bug.
+         STA STATUS
+(B38E)   JSR CPYFMWA  ;Copy work area to the work buffer.
+
+                      * Copy the FM work area buffer (non-chain)
+                      * to the FM work buffer (in DOS chain).
+                      (AE7E)
+                      CPYFMWA  JSR SELWKBUF ;Select the FM work buffer (in DOS chain).
+
+                                            * Point the A4L/H pointer at the FM work buffer.
+                                            (AF08)
+                                            SELWKBUF LDX #0       ;Set index to select FM work buffer.
+                                            (AF0A)   BEQ PT2FMBUF ;ALWAYS.
+
+                                            (AF12)
+                                            PT2FMBUF LDA WRKBUFFM,X ;Get address of selected buffer from the
+                                                     STA A4L      ;FM parameter list and put it in the pointer.
+                                                     LDA WRKBUFFM+1,X
+                                                     STA A4L+1
+                                            (AF1C)   RTS
+
+                      (AE81)   LDY #0       ;Initialize index.
+                      STORWRK  LDA FMWKAREA,Y ;Get byte from the FM work area.
+                               STA (A4L),Y  ;Put it in the work buffer.
+                               INY
+                               CPY #45      ;45 bytes to copy (0 to 44).
+                               BNE STORWRK
+                      (AE8D)   RTS
+
+(B391)   PLP          ;Retrieve status of success of operation
+                      ;back from the stack.
+(B392)   LDX STKSAV   ;Adjust the stack  pointer to force exit
+         TXS          ;to the caller of the function even if we
+(B396)   RTS          ;are presently several subroutines deeper
+         ============ ;than the original entry point.  (Returns
+                      ;to AFTRFUNC ($A6AB) in the FMDRIVER routine
+                      ;($A6A8).)

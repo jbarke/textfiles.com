@@ -1,0 +1,254 @@
+
+subset would be a different volume number. For example, "n ACOS config program.
+
+To change drives within ACOS, you can always prefix the filename with the drive specifier. Whenever you access a drive, the default drive is set to the last drive used. Also, to set the default drive without doing any real disk access, the LOG statement can be used. For example, the syntax for LOG is LOG "drive spec" or LOG "B:".
+-------------------------
+
+DISK FILES
+
+The last part of this introduction deals with using disk files. This is one of the most important features of ACOS. You can OPEN a file, manipulate the data within, and then CLOSE the file. If you wish to use a new file, the CREATE statement can be used. If you wish to delete an old file, the KILL statement can be used. The following is a list of disk commands:
+
+         APPEND    CLOSE     CREATE    INPUT
+         KILL      LOG       MARK      OPEN
+         POSITION  PRINT     READ      WRITE
+
+The first thing to do is open the file. You use the OPEN#channel,filename statement. There are 2 disk channels that may be used. The two channels are 1 and 2. Only one file per disk channel may be open at any one time. Thus, there are a maximum of two files open at any one time. The filename format differs from operating system to operating system. ex: OPEN #1,"USERS" would open the file USERS on disk channel 1.
+
+Once you have opened a disk file, all further access is done with reference to the disk channel you opened the file under. At this point, the following commands can be used to access the file.
+
+APPEND #channel - This will set the file so that all new data written to the file will be appended onto the end of the file.
+
+INPUT #channel,expression - This is just like the normal INPUT statement except that input will be taken from the open disk file instead of the console/modem.
+
+MARK (channel) = current byte location within the file. With the MARK statement, you can select the actual byte number from the beginning of the file. This is generally not used.
+
+current location within file= MARK (channel)- In this form, the MARK function will return the current pointer location within a disk file.
+
+POSITION #channel,record size, record number, offset. - The POSITION statement is used in conjunction with random access files. If you wantedd to use a file as random access with record lengths of 64 bytes, you can use: POSITION #1,64, record number. The offset argument is optional and defaults to 0 if not used.
+
+PRINT #channel,expression - The PRINT statement can be used in the normal way except that the output will be directed to the disk file instead of the modem/console.
+
+READ #channel,memory location,number of bytes to read - This is a direct disk to memory transfer method. A maximum of 255 bytes can be read at a time.
+
+WRITE #channel, memory location, number of bytes to write - This is a direct memory to disk transfer method. A maximum of 255 bytes can be written at a time.
+
+After you are finished with the file you are using, you must issue a CLOSE command to tell ACOS you are finished with the file. If you add a #channel after the CLOSE statement, only that channel will be closed. If you just issue a CLOSE without an argument, all the open files will be closed. If you are only using one file at a time, it is generally a good practice to issue just a CLOSE command with no channel number.
+-------------------------
+
+ACOS ERROR MESSAGES
+
+starting module not found
+
+ACOS was not able to locate the starting program module. By default, this file is named "LOGON.SEG", but may be changed via the ACOS loader program.
+-------------------------
+
+module too large
+
+the comiled segment was too large to be loaded into memory. If this error occurs, you may want to break the program into several segments.
+-------------------------
+
+label not found
+
+The ACOS compiler could not find a label that was referenced in the program.
+-------------------------
+
+symbol table full
+
+There are too many labels in the symbol table. ACOS will only allow a maximum of 255 labels within a segment.
+-------------------------
+
+syntax error
+
+Missing parenthesis in line, misspelling of a keyword, misuse of punctuation, etc....
+-------------------------
+
+missing symbol
+
+There is no label following a GOTO, GOSUB or a PUSH.
+-------------------------
+
+undefined label
+
+Execution phrase label. This occurs when a segment is being executed and cannot find a label. During the compiling phase, you will also be informed that the label was not found.
+-------------------------
+
+missing data
+
+Occurs when a program statement has no valid argument. For example, X=CLOCK() is missing data because there is no valid number between the parenthesis.
+-------------------------
+
+type mismatch
+
+The left hand side of an assignment statement was a numeric variable and the right hand side was a string, or vice versa, or a function which expected a string argument was given a numeric one or vice versa.
+-------------------------
+
+overflow > 32767
+
+ACOS cannot handle numbers which exceed 32767.
+-------------------------
+
+division by zero
+
+dividing by zero is always an error.
+-------------------------
+
+string too long
+
+An attempt was made to create a string larger than 255 characters.
+-------------------------
+
+gosub stack full
+
+ACOS will not allow you to nest more than 16 GOSUB or PUSH statements.
+-------------------------
+
+return without gosub
+
+A RETURN or POP statement was encountered without a corresponding GOSUB or PUSH being executed.
+-------------------------
+
+bad device number
+
+You have accessed a device that is not OPEN or READY, or you have accessed a device that does not exist.
+-------------------------
+
+illegal filename
+
+The syntax of the filename is illegal or an attempt is made to use a disk channel that is already open.
+-------------------------
+
+for stack full
+
+ACOS will not allow you to nest more than 16 FOR statements.
+-------------------------
+
+next without for
+
+A NEXT statement was encountered without a corresponding FOR statement being executed.
+-------------------------
+
+link label not found
+
+you attempted to LINK into a segment at a label that is either PUBLIC or does not exist.
+-------------------------
+
+message file not found
+
+You tried to READY a message file that doesn't exist.
+-------------------------
+
+end of program
+
+An END statement has been encountered or ACOS has reached the end of a shell.
+-------------------------
+
+bad drive specifier
+
+An attempt was made to access a drive or pathname that does not exist.
+-------------------------
+
+unable to load external
+
+ACOS was unable to find and execute an external module.
+-------------------------
+
+unclosed quote at EOF
+
+You didn't end a PRINT statement with a quotation mark.
+-------------------------
+
+ACOS MEMORY MAP
+
+
+$C000    ----------------
+         |  PRODOS MLI  |
+$BF00    ----------------
+         |              |
+$BE00    ----------------
+         |              |
+$BD00    ----------------
+         |              |
+$BC00    ----------------
+         |              |
+$BB00    ----------------
+         |              |
+$BA00    ----------------
+         |              |
+         |              |
+         | PROGRAM      |
+         |    BUFFER    |
+         |              |
+$6000    ----------------
+         | MODEM BIOS   |
+$5E00    ----------------
+         | CLOCK BIOS   |
+$5D00    ----------------
+         | PRINTER BIOS |
+$5C00    ----------------
+         | CONSOLE BIOS |
+$5900    ----------------
+         | CONFIG DATA  |
+$5800    ----------------
+         |              |
+         |    ACOS      |
+         |              |
+$2000    ----------------
+         |FILE BUFFER #1|
+$1C00    ----------------
+         |FILE BUFFER #2|
+$1800    ----------------
+         |              |
+         |EDITOR BUFFER |
+         |              |
+$0800    ----------------
+         |TEXT PAGE #1  |
+$0400    ----------------
+         |PRODOS DATA   |
+$03D0    ----------------
+         |SCRATCH RAM   |
+$0300    ----------------
+         |INPUT LINE    |
+$0200    ----------------
+         | 6502 STACK   |
+$0100    ----------------
+         | ZERO PAGE    |
+$0000    ----------------  
+
+
+         16K CARD BANK 1                         16K CARD BANK 2
+ $DFFF   ---------------               $FFFF     ---------------
+         |             |                         |             |
+         |             |                         |             |
+         |  ACOS DATA  |                         | PRODOS      |
+         |             |                         |    KERNAL   |
+         |             |                         |             |
+ $D600   ---------------               $E000     ---------------
+         |             |                         |             |
+         | PRODOS QUIT |                         | PRODOS I/O  |
+         |             |                         |             |
+ $D000   ---------------               $D000     ---------------
+
+
+
+                   SCRATCH RAM
+
+         $03D0     ---------------------------------------
+                   |                                     |
+                   | CURRENTLY UNUSED BY ACOS OR SHELL   |
+                   |                                     |
+         $0380     ---------------------------------------
+                   |                                     |
+                   |   64 BYTE BUFFER  [RAM2]            |
+                   |                                     |
+         $0340     ---------------------------------------
+                   |                                     |
+                   |   64 BYTE BUFFER [RAM]              |
+         $0300     ---------------------------------------
+
+
+
+* end of file
+ le
+
+
+[Ripco] Which 1-241 ?=menu,<CR>=abort:

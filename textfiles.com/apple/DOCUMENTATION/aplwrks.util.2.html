@@ -1,0 +1,297 @@
+
+
+
+     APPLEWORKS UTILITY TECH NOTE    CECIL FRETWELL     6-MAY-87    PAGE 1
+
+
+                             AN APPLEWORKS UTILITY
+                                       by
+                                 Cecil Fretwell
+                               2605 Highview Ave.
+                              Waterloo, Iowa 50702
+                                 (319) 236-0961
+
+                                    6-May-87
+
+
+                              --------------------
+                              TECHNICAL DISCUSSION
+                              --------------------
+
+     Several technical aspects can be learned by studying the logic of this
+     program.  Lines 240 to 300 install a special ampersand function  which
+     allows one to delete an array  after it has been dimensioned and  used
+     to the extent of its  useful life.  As  the discussion to follow  will
+     show, the entries in  a subdirectory are  collected in an  appropriate
+     array, sorted, and then  displayed or printed.   By deleting an  array
+     after it has been used,  valuable variable storage and its  associated
+     strings are  recovered.   Also,  using this  technique allows  one  to
+     redimension an array in a program.   The power of this technique  will
+     become more evident as this discussion progresses.
+
+     The logic of  the ampersand  function is  reasonably simple.   In  the
+     listing given below, Lines  37 to 42 insure  no syntax errors,  verify
+     the specified array exists,  and sets up pointers  to the array  name.
+     Lines 43 to 65 set up the  process to remove the specified array  from
+     the array variable table.   Once these are  set up, the routine  exits
+     through the  monitor routine  MOVE at  $FE2C with  the end  result  of
+     having the array removed.
+
+                     1    ***********************************
+                     2    * AMPERSAND FUNCTION TO DELETE AN *
+                     3    * ARRAY VARIABLE.  MODIFIED CODE  *
+                     4    * OBTAINED FROM CALL A.P.P.L.E.   *
+                     5    * ALL ABOUT APPLESOFT.            *
+                     6    * SYNTAX IS                       *
+                     7    *        & FRE XX$                *
+                     8    ***********************************
+                     9
+                     10   *****************************
+                     11   * PREPARED USING MERLIN PRO *
+                     12   *****************************
+                     13
+                     14            ORG   $2F0
+                     15
+                     16   A1L      =     $3C        ;BOTTOM OF MOVE POINTER
+                     17   A2L      =     $3E        ;TOP OF MOVE POINTER
+                     18   A4L      =     $42        ;DESTINATION POINTER
+                     19   STREND   =     $6D        ;END OF VAR POINTER
+                     20   LOWTR    =     $9B        ;ARRAY ADDRESS POINTER
+                     21   CHRGET   =     $B1        ;GET NEXT TOKEN
+
+
+
+     APPLEWORKS UTILITY TECH NOTE    CECIL FRETWELL     6-MAY-87    PAGE 2
+
+
+                     22   CHRGOT   =     $B7        ;GET CURRENT TOKEN
+                     23   AMPERV   =     $3F5       ;AMPERSAND VECTOR
+                     24   SYNERR   =     $DEC9      ;REPORT SYNTAX ERROR
+                     25   GETARYPT =     $F7D9      ;GET ARRAY POINTER
+                     26   MOVE     =     $FE2C      ;MOVE SUBROUTINE
+                     27
+     02F0: A2 02     28   INIT     LDX   #2         ;SET UP '&' VECTOR
+     02F2: BD FD 02  29   :1       LDA   AMPJ,X
+     02F5: 9D F5 03  30            STA   AMPERV,X
+     02F8: CA        31            DEX
+     02F9: 10 F7     32            BPL   :1
+     02FB: 18        33            CLC
+     02FC: 60        34            RTS
+     02FD: 4C 00 03  35   AMPJ     JMP   FUNCS      ;'&' JMP INSTRUCTION
+                     36
+     0300: 20 B7 00  37   FUNCS    JSR   CHRGOT     ;GET CURRENT TOKEN
+     0303: C9 D6     38            CMP   #$D6       ;FRE?
+     0305: F0 03     39            BEQ   :1         ;IF YES, BRANCH
+     0307: 4C C9 DE  40            JMP   SYNERR     ;ELSE SYNTAX ERROR
+     030A: 20 B1 00  41   :1       JSR   CHRGET     ;GET NEXT TOKEN
+     030D: 20 D9 F7  42            JSR   GETARYPT   ;FIND THE ARRAY
+     0310: A0 02     43            LDY   #2         ;SET UP BOTTOM OF MOVE,
+     0312: 18        44            CLC              ;TOP OF MOVE, AND THE
+     0313: A5 9B     45            LDA   LOWTR      ;DEST ADDRESS FOR
+     0315: 85 42     46            STA   A4L        ;USE BY MONITOR MOVE
+     0317: 71 9B     47            ADC   (LOWTR),Y  ;ROUTINE
+     0319: 85 3C     48            STA   A1L
+     031B: A5 9C     49            LDA   LOWTR+1
+     031D: 85 43     50            STA   A4L+1
+     031F: C8        51            INY
+     0320: 71 9B     52            ADC   (LOWTR),Y
+     0322: 85 3D     53            STA   A1L+1
+     0324: 38        54            SEC
+     0325: A5 6D     55            LDA   STREND     ;ALSO CORRECT THE END
+     0327: 85 3E     56            STA   A2L        ;OF VARIABLES POINTER
+     0329: 88        57            DEY
+     032A: F1 9B     58            SBC   (LOWTR),Y
+     032C: 85 6D     59            STA   STREND
+     032E: A5 6E     60            LDA   STREND+1
+     0330: 85 3F     61            STA   A2L+1
+     0332: C8        62            INY
+     0333: F1 9B     63            SBC   (LOWTR),Y
+     0335: 85 6E     64            STA   STREND+1
+     0337: A0 00     65            LDY   #0
+     0339: 4C 2C FE  66            JMP   MOVE       ;GO MOVE AND RETURN
+
+     Lines 310 to 580 represent the code to provide the main menu  control.
+     Once a function is performed, control always returns to Line 360.
+
+     Lines 590 to 4120 provide  the logic to display  a catalog or print  a
+     catalog.  Using a simple  flag in PF$, the same  code can be used  for
+     both functions.  The  logic starts with the  necessary code to  prompt
+     for a volume or subdirectory name and initialize the display or  print
+     process.  This is performed in Lines 590 to 810.
+
+
+
+     APPLEWORKS UTILITY TECH NOTE    CECIL FRETWELL     6-MAY-87    PAGE 3
+
+
+
+     The logic in Lines 840 and 850 causes the DIM statement in Line 860 to
+     reserve exactly  enough  space  for  the entries  in  the  first  root
+     directory or sub  directory.   Line 840 uses  HIMEM to  locate the  1K
+     buffer established for the OPENed directory file.  Based on  technical
+     knowledge of file handling techniques used by BASIC.SYSTEM, the  logic
+     of Line 850 then picks up the number of entries as stored in the first
+     block describing the entires in the directory.
+
+     The actual display or print of the desired catalog starts in Line 820.
+     Notice the OPEN with the TDIR parameter in Line 820.  Under ProDOS,  a
+     directory file may  be opened and  read just like  a sequential  file.
+     What is returned by each INPUT statement is the same as that displayed
+     by a  CATALOG command  with things  like file  name, file  type,  etc.
+     returned in a fixed  format.  With  this in mind,  Line 870 reads  the
+     volume or subdirectory name, ignores the following blank line, and the
+     CATALOG header line.
+
+     Lines 880 to 940 input and  collect each line in the CATALOG  display.
+     This logic  uses the  BLOCKS FREE...  line as  an end  of file  marker
+     instead of using ONERR processing to trap a true end of file.
+
+     After a  line for  a  file is  read, the  input  is processed  by  the
+     subroutine in Lines 1540  to 1780.  This  subroutine returns a  string
+     whose contents are as follows:
+
+          Position    Contents
+          --------    --------
+              1       File status.  "*" = locked.  " " = unlocked
+            2-16      File name
+           17-31      File type, e.g., SYSTEM PROGRAM
+           32-41      Modification date dd-mmm-yy
+           42-49      Right justified file length in terms of K
+           50-...     Left justified file length in terms of K
+
+     This string is then added to the array for the volume or  subdirectory
+     entries.
+
+     Lines 990  to 1100  sort the  array in  ascending order  by file  name
+     and/or directory  name.   This  code is  a  modification of  the  code
+     presented by Garry G. Kiziak in "The Compact Sorter", NIBBLE  Vol4/No.
+     1.  It is a very fast  sort routine worthy repeating here in its  more
+     general form.
+
+          10 Z = 1
+          20 Z = 3 * Z + 1 : IF Z < NUM THEN 20
+          30 Z = (Z - 1)/3 : IF Z < 1 THEN RETURN
+          40 FOR I = Z + L TO H : J = I - Z
+          50 K = J + Z : IF A = (MID$(NA$(J),M,N)>
+             MID$(NA$(K),M,N)) THEN TEMP$ = NA$(J):
+             NA$(J) = NA$(K) : NA$(K) = TEMP$ :
+             J = J - Z : IF J >= L THEN 50
+          60 NEXT I : GOTO 30
+
+     In this subroutine,
+
+
+
+     APPLEWORKS UTILITY TECH NOTE    CECIL FRETWELL     6-MAY-87    PAGE 4
+
+
+          NA$ = the array to be sorted.
+            L = the starting subscript for the sort.
+            H = the ending subscript for the sort.
+            M = the column at which the sort begins.
+            N = the number of columns to be sorted.
+            A = the value 1 if an ascending sort is
+                required, or the value 0 if a descending
+                sort is required.
+
+     To quote  Garry, "this  routine is  supposed to  be a  modified  SHELL
+     METZNER sort.  It might be called  the SHELL SHUTTLE sort since it  is
+     also a modified version of the SHUTTLE INTERCHANGE sort".  Based on my
+     extensive use  of the  algorithm, I  have found  it to  be very  fast.
+     Garry also presents a machine language form which really makes a  sort
+     in BASIC fly.
+
+     With the array sorted, Lines 1840 to 1950 display the contents of  the
+     array.  Each line of the display starts at the left margin.  When  the
+     array is completely displayed,  Lines 1960 to  2170 display the  final
+     line showing space free,  space used, and total  space on the  volume.
+     Control is then passed  back to the main  menu logic starting at  Line
+     360.
+
+     Going back to the display of the  array process, if Line 1940 finds  a
+     directory entry in the  array, control passes to  Lines 2230 to  2680.
+     Basically, this logic  reads the entries  for the subdirectory,  sorts
+     them, and displays them.
+
+     First note Lines 2230 and 2240.  The program could have been  designed
+     to dimension  the subdirectory  arrays once  at the  beginning of  the
+     program.  This has a couple of problems.  First, there is the  problem
+     of how big to make the arrays.   Subdirectories are not limited to  51
+     entries, therefore, too small a dimension might make the program  bomb
+     with a subscript out of range error.  Too large a dimension might make
+     the program  bomb with  an out  of  memory error.   To  minimize  this
+     problem, Line 2230 results  in a D1 which  is the number of  directory
+     blocks in  the subdirectory.   Each  block can  hold a  maximum of  13
+     entries, therefore, Line 2240 dimensions  an array with a proper  size
+     to accommodate the subdirectory entries.
+
+     The second problem involves garbage  collection.  Even though I  force
+     garbage collection at appropriate points in the logic, after an  array
+     is used, its strings still exist in string storage.  When the array is
+     used again, new strings  are built and,  based on experience,  without
+     deleting the  array after  it has  been used,  the garbage  collection
+     logic is invoked more often.
+
+     To minimize  problems  with potential  out  of memory  conditions  and
+     garbage collection, the array is deleted after it has been used.
+
+     With this in mind, let's continue with the discussion of processing  a
+     subdirectory under the root  of the volume.   Lines 2290 to 2380  read
+     the subdirectory  entries  into  an  array  in  a  manner  exactly  as
+     described for the root entries.  In Line 2410, if there are no entries
+
+
+
+     APPLEWORKS UTILITY TECH NOTE    CECIL FRETWELL     6-MAY-87    PAGE 5
+
+
+     in the subdirectory, control is passed  to Line 2660 in which the  D1$
+     array is  deleted then  control is  passed to  Line 1950  to  continue
+     processing of the root entries.
+
+     If the subdirectory is  not empty, Lines 2420  to 2540 sort the  array
+     using the  sort  algorithm described  earlier.   Lines  2550  to  2650
+     display the entries in the  subdirectory with each line indented  over
+     three spaces.   The final result  of the display  or print provides  a
+     layout in which subdirectories can be quickly located.
+
+     Once the subdirectory has been completely processed, Line 2660 deletes
+     the array, garbage collection is forced, and control is passed to Line
+     1950 to continue processing of the root entries.
+
+     A subdirectory under  the root  can also contain  subdirectories.   If
+     Line 2640 detects a  subdirectory, control is passed  to the logic  in
+     Lines 2780 to 3220.  This logic is an exact duplicate of the logic  in
+     Lines 2230 to 2680 with D1 replaced  by D2, R$ replaced with D1$,  and
+     L1 replaced by L2.   Each displayed or  printed line is indented  over
+     five  spaces  from  the  left  margin.    When  this  subdirectory  is
+     completely processed, Line 3200 deletes the array, garbage  collection
+     is forced, and control is passed  to Line 2650 to continue  processing
+     in the first level subdirectory.
+
+     A subdirectory under a  subdirectory can also contain  subdirectories.
+     If Line 3180 detects a subdirectory, control is passed to the logic in
+     Lines 3320 to 3750.   Again, logic is  duplicated with D2 replaced  by
+     D3,  D1$ replaced by D2$, and L2 replaced by L3.
+
+     The logic described here assumes  only three levels of  subdirectories
+     under the  root.   Modifying the  logic to  include another  level  is
+     relatively easy.   Add a Line  3715 to look  for a subdirectory  entry
+     using say Line 3180 as a model.  Duplicate Lines 3320 to 3750 starting
+     after the end of the program at Line 4870.  Now change each D2 to  D3,
+     each D3 to D4, each D3$  to D4$, and each L3 to  L4.  Add a couple  of
+     spaces to the copied Line 3640 and delete a couple of periods from the
+     copied Line 3690.   Finally replace the GOTO  3190 in the copied  Line
+     3750 to GOTO 3720.
+
+     Lines 4180 to 4370 handle the LOCK  A FILE logic.  Lines 4430 to  4620
+     handle the UNLOCK A FILE logic.   Lines 4680 to 4870 handle the  START
+     UP APPLEWORKS logic.  The logic of these three functions is reasonably
+     straightforward and require no technical discussion.
+
+     This program should  be a  very useful addition  to any  library -  it
+     certainly has  been  to mine.    It has  been  tested by  several  non
+     technical types like  my wife  who rarely  work outside  the world  of
+     Appleworks.
+
+

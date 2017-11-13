@@ -1,0 +1,552 @@
+Newsgroups: rec.games.video
+From: galt%peruvian.cs.utah.edu@cs.utah.edu (Greg Alt)
+Subject: Programming the 2600 (Long) 
+Date: 7 Dec 92 00:44:07 MST
+Message-ID: <1992Dec7.004407.7401@hellgate.utah.edu>
+Organization: University of Utah, CS Dept., Salt Lake City
+Lines: 547
+
+Here is the info on the 2600:
+
+------------------------------------------------------------------------
+
+Specifications for the Atari 2600/7800
+ 
+                2600                            7800
+ 
+CPU:            6507                            6502C (custom, NOT 65C02)
+RAM:            128 Bytes, in VLSI              4K, high speed
+ROM:            6K max                          52K max
+Cpu Clock:      1.19 MHz                        1.79 MHz
+Graphics Clock: 3.58 MHz                        7.16 MHz
+Slot Config:    Rom access only                 Most CPU lines + video/audio
+CPU Avail:      less than 50%                   over 90%
+ 
+ 
+Notes:
+1. ROM specs are based on a non-bank select scheme.
+2. Graphics Clock is the master clock used to drive the video chips.
+ 
+Programming the 2600 in a nutshell.
+        The Atari 2600 consists of 3 important ICs: the CPU (6507),
+the Television Interface Adapter (TIA or Stella), and the RIOT (6532).
+The 7800 has a CPU (6502C or Sally) instead of the 6507 and a GCC1702 
+(Maria) chip in addition to the Stella chip.
+ 
+The CPU:
+        The 6507 CPU is a 6502 with 2 important exceptions: it only has
+external address lines for 8K of memory and there are NO interrupt lines
+connected.  This is not as limiting as it seems if you examine some of
+the games for the machine.
+ 
+The Stella chip:
+        This chip makes all the video displays and sounds for the 2600 VCS.
+It also has 6 registers which are used as A/D converters and for the trigger
+buttons on the joysticks.  The chip also controls the RDY line of the CPU
+to initiate horizontal syncronization control.  The chip is NOT a DMA chip.
+The CPU must write each line of data into the chip registers AS it draws
+the screen.  This accounts for the low CPU availability. The Chip is addresed
+through 44 write only registers, and 13 read only registers mapped to
+the low end of page 0.  For those familiar with the Atari 800, this chip
+is about 1/2 of a TIA/Pokey in all respects.  But, there is no ANTIC chip to
+drive it; the CPU must do all the work that the ANTIC does in the 800.
+ 
+The RIOT
+        This chip reads all the console switches (excluding power), the
+joysticks, and other controllers.  It also contains the only RAM in the
+system and a general purpose timer.  The RAM is mapped to the high end of both 
+page 0 and page 1.  This means that it acts as both page 0 fast access memory
+and the 6502 stack.  The timer and I/O ports are mapped to Page 2 and 3.
+ 
+ 
+        In order to produce a video display, a program must do the following:
+1. Start the vertical blanking interval
+2. Start the vertical sync interval immediately
+        there is time for about 80 instructions after this
+3. End vertical sync
+        the game computations must be done now as there won't be time later
+4. End vertical blanking
+5. Set up each line of the video display as it is drawn
+        there is time for about 6 instructions to the video chip before
+        the current line starts being displayed.  Atari recommends changing
+        the display every other line to gain processing time.
+6. Loop back to step 1
+ 
+The Cartridge:
+        A standard cartridge contains the equivalent of a 2716 or 2732/2532
+with one notable exception: the chip select line is active high, not low.
+The high order address line of the 6507 (A12) is used as the chip enable.
+There was at least one company that used EPROMs with a 74LS04 inverter to
+compensate for this.
+ 
+The Pinouts:
+Note:   numbers indicate left to right numbering
+ 
+        Top Row                 Bottom Row
+Slot    2716    CPU             2716    CPU
+ 
+1       13      D3              1       A7
+2       14      D4              2       A6
+3       15      D5              3       A5
+4       16      D6              4       A4
+5       17      D7              5       A3
+6       *       A12             6       A2
+7       19      A10             7       A1
+8       NC      A11             8       A0
+9       22      A9              9       D0
+10      23      A8              10      D1
+11      24      +5V             11      D2
+12      12      Shield Ground   NC      Ground
+    * to inverter and back to 18 for chip select
+ 
+Major differences between 2600 and 7800 mode:
+        2600 mode is default in the 7800.  If it finds 128 bytes at the high
+end of memory to match its encryption scheme, it will enable 7800 mode. There 
+is a small ROM inside the unit which displays the Atari pattern on screen as
+it does this.
+        The 7800 mode is DMA driven, so the processor is free most of the time
+to do other things, as the graphics chip runs 4 times faster than the CPU.
+        The 7800 cartridge slot includes 8 more lines: A13, A14, A15, R/W,
+phase 2 clock, audio, video, and HALT (unique to Atari 6502).
+        The 2600 video has foreground/background, 2 player/missles, and one
+ball. The 7800 can display as many objects as the DMA can read in one line.
+        The sound is exactly the same as it still uses the Stella chip
+ (except Ballblazer which has its own sound chip in the cartridge).
+
+--- graphics.txt ---
+Wsync   Wait for sync
+This address halts microprocessor by clearing RDY latch to zero.  RDY is
+set true again by the leading edge of horizontal blank.
+        Data bits not used.
+---
+Rsync   Reset Sync
+This address resets the horizontal sync counter to define the begining of
+horizontal blank time, and is used in chip testing.
+        Data bits not used.
+---
+Vsync
+This address controls vertical sync time by writing D1 into the Vsync latch.
+        D1 -    1: start vertical sync
+                0: stop vertical sync
+---
+Vblank
+This address controls vertical blank and the latches and dumping transistors
+on the input ports by writing into bits D7,D6, and D1 of the Vblank register.
+        D1 -    1: start vertical blank
+                0: stop vertical blank
+        D6 -    1: enable I4 and I5 latches
+                0: disable latches - also resets latches to logic true
+        D7 -    1: Dump I0,I1,I2,I3 ports to ground
+                0: Remove dump path to ground
+---
+Pf0, Pf1, Pf2
+These addresses are used to write into the playfield registers.
+ 
+                        horizontal scan line map
+                      (160 clocks, each bit =4 clocks)
+                                                                Ctrlpf bit 0
+bits            4-7     7-0     0-7  |  4-7     7-0     0-7
+register        Pf0     Pf1     Pf2     Pf0     Pf1     Pf2     0
+ 
+bits            4-7     7-0     0-7  |  7-0     0-7     7-4
+register        Pf0     Pf1     Pf2     Pf2     Pf1     Pf0     1
+---
+Ctrlpf
+This address is used to write into the playfield control register.
+if bit is 1 then:
+        D0 -    (REF)   reflect playfield, see above
+        D1 -    (SCORE) left half of playfield gets color of player 0
+                        right half gets color of player 1
+        D2 -    (PFP)   playfield gets priority over players so they move
+                        behind playfield
+        D5,D4 - Ball Size       if 00,  1 clock wide
+                                if 01,  2 clocks wide
+                                if 10,  4 clocks wide
+                                if 11,  8 clocks wide
+---
+Nusiz0, Nusiz1
+These addresses control the number and size of players and missles.
+        D5,D4 -         Missle Size     see Ball Size above
+        D2,D1,D0 -      Player number/size
+                        if 000,         X               one copy
+                        if 001,         X X             two copies, close
+                        if 010,         X   X           two copies, medium
+                        if 011,         X X X           three copies, close
+                        if 100,         X       X       Two copies, far
+                        if 101,         XX              one copy, double width
+                        if 110,         X   X   X       3 copies, medium
+                        if 111,         XXXX            one copy, quad width
+---
+Resp0, Resp1, Resm0, Resm1, Resbl
+These addresses are used to reset players, missles and the ball.  The object
+will begin its serial graphics at that time of a horizontal line at which the
+reset address occurs.
+        Data bits not used.
+---
+Resmp0, Resmp1
+These addresses are used to reset the horizontal location of a missle to
+the center of its corresponding player.  As long as this control bit is
+true (1), the misslw will remain locked to the center of its player and the mis
+sle graphics will be disabled.  When a zero is written into this location,
+the missle is enabled, and can be moved independently from the player.
+        D1 -    0: allow missle to move
+                1: lock missle to player
+---
+Hmove
+This address causes the horizontal motion register values to be acted upon
+during the horizontal blank time in which it occurs.  It must occur at the
+beginning of horizontal blanking in order to allow time for generation of
+extra clock pulses into the horizontal position counters.  If motion is
+desired, this command must immediately follow a Wsync command in the program.
+        Data bits not used.
+---
+Hmclr
+This address clears all horizontal motion registers to zero (no motion).
+        Data bits not used.
+---
+Hmp0, Hmp1, Hmm0, Hmm1, Hmbl
+These addresses write data (horizontal motion values) into the horizontal
+motion registers.  These registers cause horizontal motion only when commanded
+to do so by the horizontal movement command Hmove.  The motion values use the
+upper 4 bits of the byte. They are signed numbers with a +7 to -8 range. The
+positive numbers indicate left movement, the negative indicate right.
+Warning: These registers should not be modified during the 24 computer cycles
+following an Hmove command.  Unpredictable motion values may result.
+---
+Enam0, Enam1, Enabl
+These addresses write into the single bit missle or ball graphics registers.
+        D1 -    0: disables object
+                1: enables object
+---
+Grp0, Grp1
+These addresses write data into the player graphics registers
+ 
+                        horizontal scan line map
+                          (each bit =1 clock)
+ 
+bits 7-0        if Refp0 (Refp1) is 0
+bits 0-7        if Refp0 (Refp1) is 1 (reflected)
+---
+Refp0, Refp1
+These addresses write data into the the single bit player reflect registers.
+see above.
+        D3 -    0: normal
+                1: reflected
+---
+Vdelp0, Vdelp1, Vdelbl
+These addresses write data into the single bit vertical delay registers, to
+delay players or the ball by one vertical line.
+        D0 -    0: no delay
+                1: delayed
+---
+Cxclr
+This address clears all collision latches to zero (no collision)
+        Data bits not used.
+---
+Colupb, Colup1, Colupf, Colubk
+These addresses write data into the player, playfield, and background
+color-luminance registers.
+        D3, D2, D1 -    Luminance values 000 is dark, 111 is bright.
+        D7,D6,D5,D4 -   Colors  0000    Grey
+                                0001    Gold
+                                0010    Orange
+                                0011    Red orange
+                                0100    Pink
+                                0101    Purple
+                                0110    Blue purple
+                                0111    Blue
+                                1000    Blue
+                                1001    Light blue
+                                1010    Turquoise
+                                1011    Green blue
+                                1100    Green
+                                1101    Yellow green
+                                1110    Orange green
+                                1111    Light orange
+---
+Audf0, Audf1
+These addresses write data into the audio frequency divider registers.
+        D4,D3,D2,D1,D0 -        00000   30KHz divided by 1
+                                00001   "              " 2
+                                .....
+                                11111   "              " 32
+---
+Audc0, Audc1
+These addresses write data into the audio control registers which control
+the noise content and additional division of the audio output.
+ 
+                bits            value           noise type      division
+        D3, D2, D1, D0 -        0000                            set to 1
+                                0001            4 bit poly
+                                0010                /15 into 4 bit poly
+                                0011                5 bit poly into 4 bit poly
+                                0100                            divide by 2
+                                0101                            divide by 2
+                                0110                            divide by 31
+                                0111                5 bit poly into /2
+                                1000            9 bit poly
+                                1001            5 bit poly
+                                1010                            divide by 31
+                                1011                set last 4 bits to 1
+                                1100                            divide by 6
+                                1101                            divide by 6
+                                1110                            divide by 93
+                                1111                5 bit poly divided by 6
+---
+Audv0, Audv1
+These addresses write data into the audio volume registers which set the pull
+down impedance driving the audio output pads.
+        D3, D2, D1, D0 -        0000    no output
+                                ....
+                                1111    loudest output
+---
+End
+
+--- stella.txt ---
+Atari 2600      Stella Memory Map
+ 
+Write Address Registers
+Addr    Assy Name       Bits Used       Function
+ 
+00      Vsync           0000 00x0       Vertical Sync Set-Clear
+01      Vblank          xx00 00x0       Vertical Blank Set-Clear
+02      Wsync           ---- ----       Wait for Horizontal Blank
+03      Rsync           ---- ----       Reset Horizontal Sync Counter
+04      Nusiz0          00xx 0xxx       Number-Size player/missle 0
+05      Nusiz1          00xx 0xxx       Number-Size player/missle 1
+06      Colup0          xxxx xxx0       Color-Luminance Player 0
+07      Colup1          xxxx xxx0       Color-Luminance Player 1
+08      Colupf          xxxx xxx0       Color-Luminance Playfield
+09      Colubk          xxxx xxx0       Color-Luminance Background
+0A      Ctrlpf          00xx 0xxx       Control Playfield, Ball, Collisions
+0B      Refp0           0000 x000       Reflection Player 0
+0C      Refp1           0000 x000       Reflection Player 1
+0D      Pf0             xxxx 0000       Playfield Register Byte 0
+0E      Pf1             xxxx xxxx       Playfield Register Byte 1
+0F      Pf2             xxxx xxxx       Playfield Register Byte 2
+10      Resp0           ---- ----       Reset Player 0
+11      Resp1           ---- ----       Reset Player 1
+12      Resm0           ---- ----       Reset Missle 0
+13      Resm1           ---- ----       Reset Missle 1
+14      Resbl           ---- ----       Reset Ball
+15      Audc0           0000 xxxx       Audio Control 0
+16      Audc1           0000 xxxx       Audio Control 1
+17      Audf0           000x xxxx       Audio Frequency 0
+18      Audf1           000x xxxx       Audio Frequency 1
+19      Audv0           0000 xxxx       Audio Volume 0
+1A      Audv1           0000 xxxx       Audio Volume 1
+1B      Grp0            xxxx xxxx       Graphics Register Player 0
+1C      Grp1            xxxx xxxx       Graphics Register Player 1
+1D      Enam0           0000 00x0       Graphics Enable Missle 0
+1E      Enam1           0000 00x0       Graphics Enable Missle 1
+1F      Enabl           0000 00x0       Graphics Enable Ball
+20      Hmp0            xxxx 0000       Horizontal Motion Player 0
+21      Hmp1            xxxx 0000       Horizontal Motion Player 1
+22      Hmm0            xxxx 0000       Horizontal Motion Missle 0
+23      Hmm1            xxxx 0000       Horizontal Motion Missle 1
+24      Hmbl            xxxx 0000       Horizontal Motion Ball
+25      Vdelp0          0000 000x       Vertical Delay Player 0
+26      Vdelp1          0000 000x       Vertical Delay Player 1
+27      Vdelbl          0000 000x       Vertical Delay Ball
+28      Resmp0          0000 00x0       Reset Missle 0 to Player 0
+29      Resmp1          0000 00x0       Reset Missle 1 to Player 1
+2A      Hmove           ---- ----       Apply Horizontal Motion
+2B      Hmclr           ---- ----       Clear Horizontal Move Registers
+2C      Cxclr           ---- ----       Clear Collision Latches
+ 
+Read Address Registers
+                                                        bit 6   bit 7
+0       Cxm0p           xx00 0000       Read Collision  M0-P1   M0-P0
+1       Cxm1p           xx00 0000                       M1-P0   M1-P1
+2       Cxp0fb          xx00 0000                       P0-PF   P0-BL
+3       Cxp1fb          xx00 0000                       P1-PF   P1-BL
+4       Cxm0fb          xx00 0000                       M0-PF   M0-BL
+5       Cxm1fb          xx00 0000                       M1-PF   M1-BL
+6       Cxblpf          x000 0000                       BL-PF   -----
+7       Cxppmm          xx00 0000                       P0-P1   M0-M1
+8       Inpt0           x000 0000       Read Pot Port 0
+9       Inpt1           x000 0000       Read Pot Port 1
+A       Inpt2           x000 0000       Read Pot Port 2
+B       Inpt3           x000 0000       Read Pot Port 3
+C       Inpt4           x000 0000       Read Input (Trigger) 0
+D       Inpt5           x000 0000       Read Input (Trigger) 1
+ 
+Atari 2600      RIOT Memory Map
+ 
+80-FF                                   Ram     also at 180-1FF
+ 
+280     Swcha                           Port A data register (joysticks...)
+281     Swacnt                          Port A data direction register (DDR)
+282     Swchb                           Port B data (console switches)
+283     Swbcnt                          Port B DDR
+284     Intim                           Timer output
+ 
+294     Tim1t                           set 1 clock interval
+295     Tim8t                           set 8 clock interval
+296     Tim64t                          set 64 clock interval
+297     T1024t                          set 1024 clock interval
+                                                these are also at 380-397
+ 
+Atari 2600      ROM Memory Map
+ 
+E000-FFFF                               Rom     also 1000-1FFF
+                                                     3000-3FFF ....
+--- colrdemo.asm ---
+;       Color Demo
+;       Taken from the Magicard Manual
+;       shows almost all the colors on the left side
+;       of the screen and cycles slowly on the right
+;
+Start   LDA     $81 ;   get contents of memory
+        STA     $0F ;   save into a pattern control register
+        LDA     #$03
+        STA     $0A ;   set background control register
+        LDA     #$55
+        STA     $07 ;   set right side color
+        LDY     #$00
+        DEY
+        STA     $02 ;   wait for horizontal sync
+        STA     $01 ;   start vertical blanking
+        STA     $00 ;   start vertical retrace
+        LDA     #$2A
+        STA     $0295 ; set timer for appropriate length
+Loop1   LDY     $0284
+        BNE     Loop1 ; waste time
+        STY     $02 ;   wait for horizontal sync
+        STY     $00 ;   end vertical retrace period
+        LDA     #$24
+        STA     $0296 ; set timer for next wait
+        LDA     $0282
+        AND     #$01 ;  check for reset switch
+        BNE     NReset
+        BRK ;           only interrupt available - must have vector set
+NReset  INC     $80 ;   increment right side color cycle counter
+        BNE     Loop2
+        LDA     #$E0
+        STA     $80 ;   reset counter
+        INC     $81
+        LDA     $81 ;   increment right side color
+        STA     $06 ;   store it in color register
+Loop2   LDY     $0284
+        BNE     Loop2 ; waste time
+        STY     $02 ;   wait for horizontal sync
+        STY     $01 ;   end vertical blanking
+        LDX     #$E4 ;  number of line to draw on screen
+Loop3   STY     $02 ;   wait for horizontal sync
+        STX     $0E ;   change a background pattern with each line
+        STX     $07 ;   change right side color with each line
+        DEX
+        BNE     loop3
+        JMP     Start ; do next screen (every 1/60th second)
+        .END
+
+--- bilboard.asm ---
+;       Billboard Demo
+;       displays sonething close to, but not quite like
+;       the colored billboard used in "Close Encounters..."
+;       just a small demo to see what could be done
+;
+Start   LDX     #$FF
+        TXS
+        JSR     Sub0
+        LDA     #$06
+        STA     $09
+        LDA     #$02
+        STA     $0A
+        LDA     #$35
+        STA     $B1
+        STA     $B4
+        LDA     $1B
+        STA     $B2
+        STA     $B3
+        LDA     #$00
+        STA     $B6
+        LDA     #$AA
+        STA     $B5
+Main    JSR     Sub1
+        LDA     #$50
+        STA     $06
+        LDA     #$80
+        STA     $07
+        LDA     #$08
+        STA     $19
+        JSR     Sub2
+        LDA     $0282
+        AND     #$02
+        BEQ     Start
+        JSR     Sub3
+        LDX     #$10
+Loop1   NOP
+        STY     $02
+        DEX
+        BNE     Loop1
+        LDY     #$06
+        LDX     #$04
+Loop2   STY     #$02
+        LDA     $B1
+        STA     $0D
+        LDA     $B2
+        STA     $0E
+        LDA     $B3
+        STA     $0F
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        NOP
+        LDA     $B4
+        STA     $0D
+        LDA     $B5
+        STA     $0E
+        LDA     $B6
+        STA     $0F
+        DEX
+        BNE     Loop2
+        LDA     #$06
+        STA     $06
+        STA     $07
+        LDX     #$A6
+Loop3   NOP
+        STY     $02
+        DEX
+        BNE     Loop3
+        JMP     Main
+Sub0    CLD
+        SEI
+        LDX     #$00
+        STX     $0281
+        STX     $0283
+        LDY     #$04
+Loc0    STX     $00,Y
+        INY
+        CPY     #$20
+        BNE     Loc0
+        STX     $2B
+        RTS
+Sub1    LDY     #$FF
+        STY     $02
+        STY     $01
+        STY     $00
+        LDA     #$2A
+        STA     $0295
+        LDA     $0282
+        AND     #$01
+        BNE     Loc1
+        BRK
+Loc1    RTS
+Sub2    LDY     $0284
+        BNE     Sub2
+        STY     $02
+        STY     $00
+        LDA     #$19
+        STA     $0296
+        RTS
+Sub3    LDY     $0284
+        BNE     Sub3
+        STY     $02
+        STY     $01
+        STY     $2A
+        RTS
+        .END

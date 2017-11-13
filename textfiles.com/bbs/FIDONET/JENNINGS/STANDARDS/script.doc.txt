@@ -1,0 +1,700 @@
+.he Fido/FidoNet/FidoTerm Script Language Copyright Tom Jennings   #
+
+Tom Jennings
+Fido Software
+164 Shipley
+San Francisco CA 94107
+
+
+               SCRIPT LANGUAGE MACHINE MODEL
+
+Fido/FidoNet's script language is a machine language, and like allç
+machine languages, there is an underlying "model" machine thatç
+the script instructions manipulate. The buckets and Beetles, thatç
+is.
+
+The script machine model has the following components at yourç
+disposal:
+
+NAME		DESCRIPTION
+
+&A		The numeric "accumulator", values 0 - 65535
+&C		The "clock", counts up, in seconds
+&T		The "trap register", 0 or 1 - 65535 seconds
+&E		The "error register", either 0 or 1
+
+&R		The general purpose Recognizer
+&S		The "shift register", 20 characters,
+&1 - &8		General purpose registers
+stack		10 levels of data stack
+
+
+&A:	The "accumulator" (such a quaint word) is a simpleç
+register for storing or manipulating numbers. It can be set toç
+any value from 0 to 65535. It can be stored into any otherç
+register. There are instructions to test when the accumulator isç
+zero. 
+
+&T:	The "trap register" is part of a mechanism to breakç
+endless loops; the "TRAP" instruction is used to set a failsafeç
+if a script or part of a script takes too long to execute.
+
+&E:	The "error register" can be either 0 or 1, with 1ç
+generally indicating an error condition. There are instructionsç
+to set and test the error register.
+
+&R:	The Recognizer can be used to store text or numbers.
+
+&1 - &8: These are general purpose registers, and can holdç
+numbers or text. They are used to pass parameters to subroutines.ç
+Each subroutine level has it's own set of these registers. When aç
+subroutine is called, the initial values are those of the callingç
+routine.
+
+&S:	The "shift register" is a special register that containsç
+the last 20 characters received from the modem, and is whatç
+patterns are matched against. Characters are shifted in from theç
+right, and the left most character "falls off" the end. You canç
+also store text in &S and use the "IF" instruction to do stringç
+comparisons.
+
+&1 through &8 are "local variables"; they are not shared amongstç
+all subroutine levels. When a CALL is executed, the called scriptç
+"inherits" the calling scripts initial values for theseç
+registers, but any changes made are lost upon RETURN. 
+
+
+The stack is a general purpose "push down" stack; you PUSH itemsç
+onto the stack, and POP them off. Items can only be accessed fromç
+the top of the stack. There is room for up to ten items on theç
+stack. If there are (for instance) five items on the stack, toç
+get at the first one pushed (the "bottom" of the stack) you mustç
+first pop off the four on "top" of it.
+.pa
+
+                        INSTRUCTION SYNTAX
+
+All instructions are of the form:
+
+
+INSTRUCTION	OPERAND	OPERAND
+
+Blank lines or lines beginning with a semicolon are ignored.ç
+Lines beginning with a colon (label statements) are ignored whenç
+processing instructions.
+
+Operands are usually text strings, and all strings should beç
+quoted. 
+
+
+                    INSTRUCTION PROCESSING
+
+The script processor is basically a text processor. The macroç
+language applies to all commands at all times. Anything to theç
+right of the instruction itself is expanded by the macroç
+processor. 
+
+Macros are expanded from left to right, once. There are twoç
+special tokens the macro processor understands:
+
+	&(one letter register name)
+	\(special text character)
+
+The language chosen allows just about every disgusting trickç
+possible with machine language; self-modifying code, computerç
+GOTOs, etc. I'll dispense with the formality, and show someç
+generalized examples and leave it at that:
+
+	Message "This is a string"
+
+The MESSAGE command merely displays what it's given on theç
+command status line. It makes for a simple example. In this case,ç
+centered in the status line you'd see:
+
+		This is a string
+
+If the recognizer (&R) contained the string "HELLO DUDE" theç
+instruction:
+
+	Message "The recognizer contains &R"
+
+Would display:
+
+	The recognizer contains HELLO DUDE
+
+To display the same thing, but with quotes surrounding theç
+contents of the recognizer, you would use:
+
+
+	Message "The recognizer contains \"&R\""
+
+Displayed as:
+
+	The recognizer contains "HELLO DUDE"
+
+
+Note the \ before the quote character merely quotes what follows.ç
+There are some convenient exceptions:
+
+	\r		carriage return, 13 decimal
+	\n		line feed, 10 decimal
+	\e		escape, 27 decimal
+	\b		backspace, 8 decimal
+	\c		etx (Control-C), 3 decimal
+	\1		SOH character, decimal 1
+	\127		DEL character, decimal 127
+	...		...
+
+If you don't like that, ("C" programmers will like it though) youç
+can enter control characters like so:
+
+	^A		1 decimal, ASCII SOH
+	^M		carriage return, 13 decimal
+	^J		linefeed, 10 decimal
+	...		...
+
+
+The ADD instruction adds a value to the accumulator. For example:
+
+	ADD 27
+
+Would add 27 to the accumulator; if it had contained 3, it wouldç
+now contain 30. If the &2 register contained "34", the following:
+
+	ADD &2
+
+Would add the numeric value 34 to &A. If &2 contained "ABRACADAB"ç
+then it would add zero to &A.
+
+Here are some further examples. Assume first:
+
+&A contains 20
+&R contains "Text"
+&1 contains "764-1629"
+&2 contains 300
+
+INSTRUCTION 			OPERAND EXPANDED
+message "sample text"		sample text
+message &R			20
+message "pattern is &r, OK?"	pattern is 20, OK?
+message "&A&R&A"		20Text20
+message "Dialing &1 at &2 baud"	Dialing 764-1629 at 300 baud
+
+
+You can take this to absurd extremes. The instruction JMP <label>ç
+passes execution to the line following the line containingç
+:<label>. You can take advantage of this by using a "computedç
+goto". The command:
+
+	jmp "&R"
+
+Would attempt to jump to a line:
+
+:TEXT
+.pa
+.sh Pattern Matching
+                      PATTERN MATCHING
+
+The main purpose of Fido/FidoNet's script language is patternç
+matching; looking for particular strings of characters receivedç
+from the modem. All of the script language instructions areç
+intended to work together to do this.
+
+The single most important component of the script machine is theç
+Shift Register. The shift register contains the last 20ç
+characters received from the modem, and works like this:
+
+Assume that with your modem and Fido/FidoNet, you just called intoç
+and connected with some bulletin board system, and are about toç
+be asked to log in. 
+
+As characters are received they are put into the right hand endç
+of the shift register; the character on the left edge of theç
+shift register is lost. For example, if the bulletin board signonç
+message you'd see on your screen was:
+
+WELCOME TO THE ACME HOG THROWERS BBS
+
+AT THE PROMPT ENTER YOUR NAME AND PASSWORD:
+
+
+Lots of times a simple "wait until the word XYZ" will do exactlyç
+what you want. This sort of thing is easy to write scripts for,ç
+and even in complex scripts is a very useful function. 
+
+The problems start when you need to base different actions on aç
+number of possible patterns, not just one. A simple "MATCH"ç
+instruction just won't do it, and brute force techniques ofç
+searching through a screenful of text ("rummaging") has seriousç
+limitations.
+
+
+In Fido/FidoNet the technique used involves a 20 character arrayç
+called the "shift register", referred to as "&S" in the scriptç
+language.
+
+The shift register changes after each character received from theç
+modem; in the example above, W, E, L, C, O, M, E, etc. Part wayç
+through the above message being displayed, the shift registerç
+would look like:
+
+	....
+&S	"                 WEL"
+&S	"                WELC"
+&S	"               WELCO"
+&S	"              WELCOM"
+	....
+&S	"LCOME TO THE HOG THRO"
+	....
+
+Fido/FidoNet compares patterns you specify against the right hand endç
+of the shift register; this means that for each characterç
+received (therefore a new string each time) you can look for anyç
+reasonable number of possible patterns. ("Reasonable" will beç
+discussed later ...)
+
+
+
+In this example, to do an automatic login, once we see the wordç
+"PASSWORD:", we can output thename and password. This is a commonç
+and simple case. The instruction "MATCH" will do the job.
+
+"MATCH" compares text you specify against the contents of theç
+shift register. For this example we'd use "WORD:". A string matchç
+is used, so you only need to use enough characters to make itç
+unique; the string "WORD:" does not appear anywhere else in theç
+initial signon message. (Actually, ":" will work fine here, butç
+it's a good idea to use at least a couple of characters; "RD:"ç
+would be even better.)
+
+	MATCH "WORD:"
+
+To continue the example above, as characters come in from theç
+modem they shift through the shift register. Fido/FidoNet isç
+executing the "MATCH" instruction above, and the shift registerç
+looks like:
+
+	....
+match	                WORD:
+&S=	"OUR NAME AND PASSWOR"
+
+match                   WORD:
+&S=	"UR NAME AND PASSWORD"
+
+match	                WORD:
+&S=	"R NAME AND PASSWORD:"
+
+For each character received, the "MATCH" instruction is comparingç
+it's pattern ("WORD:") against the contents of the shiftç
+register. When the patterns match, the next line of the scriptç
+file is executed, which in this case could be an instruction toç
+output your name and password.
+.pa
+                COMPLEX PATTERN MATCHING
+
+You don't need to understand the how and whys of the shiftç
+register to use the "MATCH" command, and for most casual scriptç
+writers that will be all you need.
+
+A good example of the limitations of such a simple system is aç
+script that dials phone numbers with a Hayes modem using "AT"ç
+commands, and responding to the many possible "result codes".ç
+(This example assumes a basic understanding of Hayes modemç
+commands.)
+
+The dialing part is easy; you just issue the ATDT command and theç
+phone number. The problem arises when you try to interpret theç
+results of that command, such as busy, no answer, connecting atç
+various baud rates, errors, etc. A simple "MATCH" instructionç
+just won't work.
+
+For example the US Robotics Courier HST has about a dozenç
+possible responses to a simple dial command; any script you writeç
+must be able to handle them all. That's what we'll do here.
+
+Dialing a US Robotics Courier HST
+
+The command we'll use, for simplicity, is:
+
+	"AT DT 764 1629\r"
+
+("\r" means "carriage return, CR, decimal 13)
+
+The modem can respond with any of the following result words:
+
+	CONNECT			(300 baud)
+	RING			(incoming call)
+	NO CARRIER		(failed to connect)
+	ERROR			(bad command given)
+	CONNECT 1200
+	NO DIAL TONE
+	BUSY
+	NO ANSWER
+	CONNECT 2400
+	RINGING
+	VOICE
+	CONNECT 9600
+
+This is where you take advantage of the shift register. Theç
+script fragment below handles the problem at hand and isç
+explained below. You will be using this SAMPLE ... IF ... GOTOç
+loop to do most complex string compares.
+
+
+	&T= 60
+	&C= 0
+	TRAP dial-failed
+	output "ATDT 764-1629\r"
+:get-result
+	sample
+	if "NO" dial-failed
+	if "ERR" dial-failed
+	if "12" conn-1200
+	if "24" conn-2400
+	if "96" conn-9600
+	if "ECT\r" conn-300
+	if "BU" redial
+	if "VO" dial-failed
+	if "RING\r" dial-failed
+	goto getresult
+
+:dial-failed
+	&A= 0
+	return 1
+
+:conn-300
+	&A= 300
+	goto connect
+
+:conn-1200
+	&A= 1200
+	goto connect
+
+:conn-2400
+	&A= 2400
+	goto connect
+
+:conn-9600
+	&A= 9600
+:connect
+	$$ "b &A\r"
+	message "connected at &a baud"
+	return 0
+
+
+"SAMPLE" is a special instruction for use in SAMPLE/IF/JMP loops,ç
+and causes one character to shift into the shift register. (Theç
+"MATCH" instruction and most others do this automatically, butç
+"IF" doesn't.) You should have one, and only one, "SAMPLE"ç
+instruction before each set of "IF" instructions; if you haveç
+none, the shift register will not ever change, and if you haveç
+more than one you will miss patterns.
+
+"IF" compares the given pattern against the current contents ofç
+the shift register, and branches to the specified label if aç
+match is made.
+
+The patterns searched for by the "IF" instructions need to beç
+mentioned. You could search for the entire modem responseç
+("CONNECT 1200" instead of just "12") but the script will runç
+faster is short strings are used. Use as few as possible is theç
+general rule. The "NO" pattern will match any of the following,ç
+which all mean no connection: NO CARRIER, NO DIAL TONE, NOç
+ANSWER. The 300 baud connection result code is "CONNECT", hard toç
+distinguish from "CONNECT 1200" because the "IF" will matchç
+"CONNECT" without waiting for the "1200" or whatever follows. Theç
+"ECT\r" means that it will only match that word at the end of aç
+line, that is, followed by a CR character.
+
+A loop of this length will run pretty slowly. It really shouldç
+have a "timeout" check, using the &C clock, to limit the dialingç
+attempt to a minute or so, and this will slow it further.
+
+To accomodate this, Fido/FidoNet has rather huge buffers, and usingç
+the explicit "SAMPLE" instruction means that characters won'tç
+speed through the shift register faster than you can test them. 
+
+With a loop of approximately this size, it would take a fewç
+thousand characters at continuous 9600 baud to cause characterç
+loss. In the example above, speed is not a problem; the modemç
+issues very little text.
+
+SAMPLE/IF/JMP loops should be as tight as possible. This isç
+interpreted, so keep that in mind; keep comments out of loops,ç
+keep labels and operands short. Use as few "IF"s as possible.
+
+If you need to do such a series of compares through a largeç
+amount of text at high speed, it is best to cut down the search,ç
+for example by issuing commands to reach some intermediate pointç
+from which you can do your multiple compares.
+.pa
+               FURTHER NOTES ON PATTERN MATCHING
+
+The strings you provide to the "MATCH" and "IF" instructions haveç
+some characteristics that make for easier comparisons.
+
+All searches are case IN-sensitive. "ANC" matches "anc", etc. Youç
+can specify it in your script in either way.
+
+"?" is a wildcard character; it mean match any character.ç
+"CONNECT ??00" will match "CONNECT 1200", "CONNECT 2400", etc.
+
+Control characters are treated just as any other character. "Endç
+of line" characters will vary with the bulletin board program orç
+whatever it is you call; Fido for instance is like most BBSs, andç
+uses a CR/LF sequence (decimal 13, decimal 10). You can searchç
+for "\r" or "\13" or for "\r\n" or "\13\10", but keep in mindç
+that other systems could use LF/CR, or other combination.
+
+HINT: You can store strings directly in to the Shift Register andç
+then test it with the "IF" command. For instance, user input fromç
+the "INPUT" command copied into &S could be tested for aç
+particular value.
+
+.pa
+.sh Register and Arithmetic Instructions
+
+These are the most basic instructions to change the contents ofç
+the various registers. Please note that the space after the "="ç
+is signifigant.
+
+&S= text
+&1= text or number
+&2= text or number
+&3= text or number
+...
+&8= text or number
+	Set the specified register. Numbers are really textç
+strings, but you can treat them either way. The string must beç
+under 20 characters.
+
+&A= value
+	Set the accumulator to the specified value. Theç
+accumulator is numeric only.
+
+&B= value
+	Set the baud rate register to the specified value; if theç
+value is not a valid baud rate then the &B register will notç
+change. 
+
+&C= value
+	Set the free-running clock to an initial value. The clockç
+counts up continuously every second. 
+
+&T= value
+	Set the trap register to the specified value. Setting itç
+to zero disables the trap.
+
+ADD value
+SUB value
+	Add or subtract the value to the accumulator.
+
+PUSH text
+	Puts the text onto the top of data stack. There are onlyç
+10 levels so watch out. Anything can be pushed onto the stack.
+
+POP register
+	Take the top item off the stack and place it in theç
+specified register. If you try to put non-numeric text into aç
+numeric register it becomes "0". You cannot POP items not PUSHed.
+
+.pa
+.sh Flow Control Instructions
+
+TRAP label
+	This instruction is used to set a time limit on scriptç
+execution, usually loops searching for a pattern. The trap usesç
+the &C clock. 
+
+The &T trap register is set to the specified number of seconds,ç
+and the &C clock is reset. Before each script instruction isç
+executed, the clock is compared against the trap time; if theç
+time limit is exceeded, the script branches to the specifiedç
+label in the script file that initially set the trap; thereforeç
+the trap can even abort scripts running many subroutine callsç
+deep. Setting the &T trap register to zero disables the trap. 
+
+	&T= 0
+	&C= 0
+	TRAP label
+	....
+
+	If at any time during script execution the &C clockç
+reaches or exceeds the &T trap register, script executionç
+proceeds from the specified label in the current script file.
+
+
+JMP label
+	Branch to the specified label unconditionally.
+
+JZ label
+JNZ label
+	Branch to the specified label in the current script fileç
+if the accumulator is zero (JZ) or not zero (JNZ). This is usedç
+to test previous arithmetic instructions.
+
+DJNZ label
+	A basic looping instruction: "Decrement and Jump if Notç
+Zero". Subtracts 1 from &A, and if the result is not zero,ç
+branches to the specified label.
+
+JERROR label
+	Branches if the &E error register is not zero. &E isç
+generally set by the MATCH instruction failing, the RETURN (fromç
+subroutine) instruction.
+
+CALL scriptfile parameters ...
+	Execute the script file as a subroutine. The filename isç
+"scriptfile.SCR". The called script file can in turn call otherç
+scripts, and each executes until the end of the script file or aç
+RETURN instruction is executed.
+
+Each subroutine has it's own set of registers, &1 to &8.ç
+Parameters can be passed to the called routine, which set theç
+initial value of the local registers. The contents of the localç
+registers are lost when the subroutine returns.
+
+
+RETURN value
+	Return to the calling subroutine (if any) and optionallyç
+set the error register to the specified value.
+.pa
+.sh String Comparison Instructions
+
+MATCH pattern limit
+	Wait until the pattern is found in the incoming characterç
+stream before executing the next instruction in the script. Theç
+pattern can contain "?" wildcard characters. There is an implicitç
+limit of 60 seconds; if a match is not found with the time limitç
+the error register is set and the next instruction executed.ç
+(Presumably a JERROR ... instruction.) Optionally a time limit,ç
+in seconds can be specified.
+
+SAMPLE
+	Shifts one character into the shift register; to be usedç
+in SAMPLE/IF/GOTO loops.
+
+IF pattern label
+	Compares the pattern against the contents of the shift register, and branches to the specified label if it matches. The pattern can contain "?" wildcard characters.
+.pa
+.sh Character Output Instructions
+
+OUTPUT string
+	Queue the string for output to the modem, simulatingç
+manual keyboard entry. The speed with which characters are output 
+is determined by the THROTTLE setting.
+
+COPY string
+	Output the string directly to the modem at maximum speed.
+
+THROTTLE n (0 - 500)
+	This controls the maximum speed that Fido/FidoNet will outputç
+characters queued up by the OUTPUT command. The speed isç
+specified in a minimum wait between characters, in milliseconds.ç
+The default is 20 milliseconds.
+.pa
+.sh File I/O Instructions
+
+Fido/FidoNet's file system is very simple; there can only be one fileç
+open at a time. It is not a cooincidence that the file format isç
+compatible with most BASICs; each record in a Fido/FidoNet fileç
+contains 8 fields, each field is a quoted string seperated byç
+commas. Each record is delimited with a CR/LF. There is noç
+Control-Z or other end of file terminator.
+
+FOPEN filename
+	Opens a file for reading or writing. The script isç
+aborted if the file cannot be found, or if "UNATTENDED" is set,ç
+then the error register &E is set. The file must be FCLOSEd whenç
+not needed.
+
+FNEW filename
+	Creates a new file of the specified name. The script isç
+aborted if the file cannot be created. The file will be emptyç
+after creation.
+
+FREAD
+	Reads one record from the file, and deposits the contentsç
+of the record into the eight registers &1 to &8. Each record canç
+contain any number of items, but only the first 8 will be used.ç
+Each should be an argument as described elsewhere, preferablyç
+quoted. 
+
+	Lines are read from the file one per FREAD instruction,ç
+starting with the first line in the file, until the last line isç
+read; all FREADs after the last line will leave all registersç
+empty and set the error register &E.
+
+FWRITE
+	A new record is added to the end of the open file, thatç
+contains the contents of the eight registers &1 to &8. Each isç
+"quoted". The script is aborted if the disk becomes full, or ifç
+"UNATTENDED" is set, then the error register &E is set. 
+th
+
+FCLOSE
+	This closes the current file and allows the FOPENing ofç
+another file. If any FWRITEs were done, they are written out toç
+disk at this time.
+
+.pa
+.sh User Input Instructions
+KEYBD char
+	Temporarily suspend script file operation until the userç
+types the specified key; CR if none specified. All characters theç
+user types, including the terminating one, are outout to theç
+modem. This allows the user to manually enter something such asç
+password.
+
+INPUT prompt
+	The prompt is displayed and the user enters a line ofç
+text, which is parsed into variables &1 through &8. Any extraç
+text is ignored.
+
+ASK question 
+	The question is displayed and Y or N is input as aç
+response, with &E set true if the answer is Y.
+
+PAUSE prompt
+	The prompt is displayed and the user must hit any key toç
+continue.
+
+MESSAGE message
+	Output the message to the command status line.
+
+.pa
+.sh Special Instructions
+
+These instructions generally take one operand and perform someç
+hopefully useful instruction. They are generally high levelç
+functions to perform common functions.
+
+
+IOPORT n (1 - 2)
+	Select the serial port to do business with; the defaultç
+is the first port, on a pclone COM1. 
+
+CD-BIT (1,2,4,8,16,32,64,128)
+	Set the Carrier Detect (CD) mask bit for proper operationç
+of the on-screen "ONLINE/OFFLINE" display.
+
+TIME hh:mm (00:00 - 23:59)
+	Wait until the specified time of day before executing theç
+next line in the script file.
+
+FILES filespec
+	Sets &A to the number of files matching the fileç
+specification.
+
+DELAY milliseconds (1 - 65000)
+	Delay execution of the script until time elapsed. 
+
+QUIET milliseconds (1 - 65000)
+	Wait for no input from the modem for the specified time.
+
+DTR
+	Lowers the modem control line Data Terminal Ready (DTR)ç
+for 1/2 second.
+
+BREAK
+	Causes a 1/2 second line break.

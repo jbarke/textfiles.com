@@ -1,0 +1,611 @@
+America Online
+APPLE II DEVELOPMENT FORUM CONFERENCE LOG
+Tuesday, March 19, 1991  10:00 p.m. Eastern Time
+Topic:  Assembly Language Programming
+Forum Leader:  Dave Sugar (AFL Dyfet)
+
+
+AFL Dyfet  What seems to be the problem?
+QMil Eric  Only problem I'm having is figureing out 50/60hz.
+AFA Gary J Eric wants to detect the video hz.
+AFL Dyfet  OIC...50hz euro vs 60hz american...
+QMil Eric  <--- "Knight Ow1"
+AFL Dyfet  I can think of a few possibilities...
+AFA Gary J Yes...  That question has come up in here before, (I think in
+           connection with
+AFA Gary J viewing 3200 pics)
+AFL Dyfet  My suggestion would have been to trap any verticle scan line irq,
+           and count occurances over the system
+AFL Dyfet  clock :)
+AFL Dyfet  (real time clock)
+AFL Dyfet  Okay, Knight, I guess you have the first question
+AFL Dyfet  for tonight :)
+Knight Ow1 I was curious to if there was an easier way then by watching the
+           verical
+Knight Ow1 counter to see which range it's using.
+AFL Dyfet  You just want to verify if you are running at 50hz or 60hz,
+           correct?
+Knight Ow1 Want to know which it is so the PIF knows how to handle the
+           counter range.
+AFL Dyfet  Well, my first thought is a bit crude...trap a
+AFL Dyfet  scan line interrupt, and count how many you get
+AFL Dyfet  over a second (measured by the real time clock)...
+Knight Ow1 (So it can calculate the difference between two numbers)
+AFL Dyfet  A simpler possibility would be to retreive the
+AFL Dyfet  settings from the battery backup ram (using the
+AFL Dyfet  misc toolset) assuming the bit involved is 
+AFL Dyfet  documented.
+AFL Dyfet  Well, my clock says 10p and we already have two
+AFL Dyfet  questions in the queue :)...Does anyone else have
+AFL Dyfet  a suggestion for detecting vertical retrace rate?
+ShanoJ     I'm sure one of the bits in the back of the Firmware ref has it
+           (assuming this
+ShanoJ     is on a GS...).
+AFL Dyfet  I assume Owl means a IIgs....
+Knight Ow1 Yes GS, but I don't have the ref book and a friend couldn't locate
+           the page.
+AFA Gary J Parameter $1D in the battery RAM is supposed to contain the 50/60
+           hz setting.
+AFA Gary J (Just looking....)
+AFA Gary J I'm not sure what value is supposed to be stored there.
+AFL Dyfet  I don't have my books out here in 'Joisie', but I
+AFL Dyfet  thought it was in there :)...ReadBParm will let you retrieve
+           it...
+AFA Gary J _ReadBParam
+Knight Ow1 It's easy to check after I figure out the call.
+JWankerl   Of course you should use the ReadBParm to get that value.
+JWankerl   The reference number for 50/60 Hz is $1D as mentioned before.
+Knight Ow1 What I was really interested in is an I/O location that can be
+           read to get
+Knight Ow1 the status or to find out there isn't one, like the volumne.
+AFL Dyfet  Hmm...do not recall off-hand...if someone has the IIgs tech ref.
+           handy, they may be able to help
+AFL Dyfet  you Knight...
+AFA Gary J I don't remember seeing a softswitch/register that covers the
+           video Hz setting.
+Knight Ow1 (I did write down the bramread call, $1d, for reference)
+WinkieJim  Um, the only thing I can find is a NTSC/PAL softswitch
+WinkieJim  Bit 4 or $E0C02B   0=NTSC PAL
+WinkieJim  1=PAL...
+ShanoJ     Anyone have NiftyList and wanna try the call? I tried, but AOL
+           didn't like 
+ShanoJ     that... :(
+Matt DTS   (What's the question?)
+ShanoJ     (Hiya Matt, Jim!)
+AFA Gary J How to determine the video Hz setting, Matt.
+AFA Gary J (50/60 Hz)
+AFL Dyfet  Knight wanted to determine if the refresh rate was 60 or
+           50hz....in some manner other than using
+AFL Dyfet  readbparam...
+Knight Ow1 Hi Matt, reading the status of 50/60hz setting.  Possible i/o
+           location?
+A2GS       Why would you want too?
+JWankerl   The correct way to do it is _ReadBParm with a value of $1D - it
+           will *always*
+JWankerl   work.
+WinkieJim  A2GS, you've seen the Star Trek GS game? The author toggled that
+           to simulate
+WinkieJim  a "HIT" on your ship 
+A2GS       sounds exciting
+AFA Gary J :)
+ShanoJ     (and that toggling makes my monitor VERY unhappy... :( )
+Knight Ow1 A2GS, I'm using the counter for timing and need to know which
+           range of values
+Knight Ow1 to expect.
+AFL Dyfet  You only need to determine what it is once, Knight (or should only
+           need to do it once :), so you could
+AFL Dyfet  do it at the start of your program before getting into your
+           critical timing areas...
+Knight Ow1 (I'd like our friends accross the seas to be able to use my PIF)
+A2GS       PIF?
+AFA Gary J (PIF = permanant init file)
+A2GS       How about writing code which is timed by cycle counts rather then
+           using a HZ
+A2GS       timer...now there's a challenge  :-)
+A2GS       ah....haven't worked on one of those in quite awhile
+JWankerl   Like instruction cycles?  Not good - what about accelerators?
+AFA Gary J Doesn't work if you've got a Transwarp or Zip chip, A2GS :)
+A2GS       sure...just check write 3 versions of your code  :-)
+A2GS       kill the "check"
+JWankerl   A2GS - why didn't I think of that?  Take the easy way out!  (uh
+           huh...)
+A2GS       :-)
+Knight Ow1 The cycles are different for differently GS's (zipchip,
+           transwarp)
+Knight Ow1 and allowing interupts (the whole purpose of this PIF) messes up
+           cycle timing.
+Matt DTS   Why do you need to know this?
+WinkieJim  Couldn't you use the tick counter?
+Knight Ow1 ticks are to slow only 60 per second, I need >= 1000.
+AFL Dyfet  GA Matt!  You have the floor...
+Matt DTS   Why do we need to know 50 Hz vs. 60 Hz?
+A2GS       use scan line interrupts..will those do??
+BillP      good idea.   :)
+Knight Ow1 The values the vertical counter gives is different for 50 and
+           60hz.  I use
+Knight Ow1 them for timing between speaker clicks to form a bell that allows
+           interupts.
+Matt DTS   Different how?
+A2GS       why not just digitize the bell?
+AFA Gary J A2GS :)  
+Knight Ow1 The DOC may be inuse by an application and I'm not allowed to
+           touch it.
+A2GS       I give you premission  :_)
+Knight Ow1 not good enough. :)
+AFA Gary J (not on my machine!)
+BillP      I don't like anyone touching my doc
+WinkieJim  A2GS is herebye sentenced to life in the bad-programming jail
+A2GS       Yay....after all these years someone finally recognizes my work 
+           :-)
+DangardAce If there's a bad programming jail, I know a lot of MS-DOSers on
+           Death Row :)
+AFL Dyfet  So you are using the vertical scan line counter as
+AFL Dyfet  a millisecond timer?
+Matt DTS   How are the vertical counters "different" in 50 Hz mode?
+Knight Ow1 As a timer yes, cause interupts can take an unkown amoun t of
+           time.
+Knight Ow1 The values range from $64-$FF in 50hz and from $7D-$FF in 60hz.
+Knight Ow1 When the value "wraps" I need to know how much to add/subtract.
+Matt DTS   Oh, so you're using hard-coded value counters to know where the
+           retrace beam is on the screen.  
+Knight Ow1 No, I remember the last value when I made a click and when I'm 8+
+           values higher
+Knight Ow1 (counting wrap) I click again.
+Knight Ow1 Plus the values server to calculate duration.
+James S WI Wouldn't you know it's 50hz if you get a value from $64-$7C ?
+Matt DTS   I was about to point that out but got busy looking for a manual.
+A2GS       good point...
+AFA Gary J Yeah, adjust on the fly :)
+Knight Ow1 I can't garentee(sp) that I'll read the value $64-$7C when in
+           50hz.
+AFL Dyfet  I think this is a case of overdesign to 'adapt on the fly'...it
+           would seem logical to me to retrieve
+AFL Dyfet  the PAL/NTSC bram param at program startup, and if somebody really
+           changes it on the fly, just have a
+AFL Dyfet  warning in the docs that they need to restart...
+Knight Ow1 An interupt can cause me to miss them.  BackgroundSound is a long
+           interupt.
+WinkieJim  I came in late, why don't you want to use the value stored in
+           Battery RAM?
+Matt DTS   The value stored in battery RAM should do the trick for you,
+           actually, but I can't find any reference
+Matt DTS   on other ways to determine the refresh rate.  GA.
+Matt DTS   (By the way, the only Apple-supplied way to change that value is
+           with Ctrl-OA-Opt-Reset, which isn't
+Matt DTS   likely to happen without rebooting.  :)
+JWankerl   Matt - WriteBParm and WriteBRAM will change it as well.
+WinkieJim  The only program I know of that changes it is Star Trek Classic
+AFL Dyfet  The bparm change will not take effect till reboot, though,
+           Wankerl...
+JWankerl   Hmmm... would the ToBRAM vector make it take effect immediately?
+Knight Ow1 I wouldn't go to that extreame.
+Knight Ow1 Thank you all for the ideas!
+AFL Dyfet  I think this question has ran a little long, and Randy has been
+           waiting for awhile now :)...We may
+AFL Dyfet  get back to this a little later....GA Randy...
+RandyT2    I have ORCA/M but I've never programmed in assembly. Any
+           suggestions on 
+RandyT2    books for beginners, etc.
+AFL Dyfet  GA Winkie
+WinkieJim  Apple IIgs Assembly Language Programming by Leo Scanlon, Batnum
+           books
+WinkieJim  That's what i used, although I knew 6502 first, but it covers the
+           whole set
+AFL Dyfet  Jonah...ga...
+ShanoJ     I vote for Programming the Apple IIgs in Assembly Language, by
+           Lichty and Eyes,
+ShanoJ     and the companion Programming the 65816 including the 6502, 65C02,
+           and 65802. I
+ShanoJ     thought the Scanlon book was a little simplistic and didn't cover
+           much info.:(
+RandyT2    will it assume -> no <-  prior knowlegde of assembly ?
+DYA Jim1   Yes, Randy.
+JWankerl   Yah, the scanlong book was simplistic - I mostly use it for the
+           opcode
+JWankerl   reference in the back.  :-)
+AFL Dyfet  GA Matt
+RandyT2    I had the Lichty and Eyes (borrowed) and it lost me...oh well.
+BillP      What about Rogers book?
+RandyT2    Rogers book?
+BillP      Wagner...  didn't he do a assembler book for the IIGS?
+JWankerl   Assembly Lines?  Was awesome for just the normal II.
+AFA Gary J Yes, but his (Roger Wagner's) is oriented toward Merlin.
+AFA Gary J (Which is fine, if you use Merlin)
+DYA Jim1   (I started with NO ASM experience with Lichty and Eyes, and it
+           tought me :)
+Matt DTS   (sorry)  I also vote for the Lichty and Eyes books...
+Matt DTS   I've *heard* (but can't personally vouch) that the Scanlon book
+           uses unsupported things in its samples
+Matt DTS   (GA)
+ShanoJ     Also, make sure you get all of the TB Refs and the GS/OS ref.
+WinkieJim  Really Matt, maybe that's what screwed me up :) :)
+A2GS       I started on the ORIGINAL Wagner book....NOW there was a GREAT
+           book.
+A2GS       The 8-bit book.
+RandyT2    I spent alot of time changing Macro names with the Eyes book (it
+           was geared  
+RandyT2    for apw) and I was so involved in that that I got lost.
+ShanoJ     OH, also the Programmers Introduction to the Apple IIgs from Apple
+           is a good
+ShanoJ     starting point for getting the CONCEPTS down before delving into
+           the details.
+Matt DTS   The Programmer's Intro is *not* an assembly tutorial, and it
+           doesn't take advantage of any of
+Matt DTS   the current ways to program the IIgs (extended controls,
+           resources, etc.).  GA.
+ShanoJ     Matt: true, but as I said it's a good place to get a handle on the
+           CONCEPTS.
+AFL Scott  (NewHandle?)
+JWankerl   I heard that Morgan Davis did a GS assembly book, but from what I
+           gather
+JWankerl   it wasn't so hot.
+AFA Gary J (I'll vote for the Lichty and Eyes book too)
+ShanoJ     Ya, I've got the Davis one, too.... It's so-so.
+AFL Dyfet  GA Jay
+JJennings  The Davis/Gookin books are quite helpful for total GS beginners, I
+           think.
+RandyT2    ShanoJ   what was that about CONCEPTS, I think thats where I need
+           help?
+A2GS       One problem...recently I was looking for info on how to make SANE
+           calls
+A2GS       (not that I use them) and couldn't find ANY books (with the
+           exception of
+A2GS       Apple's own SANE book) which described making the calls,
+           clearly.
+JWankerl   SANE calls?  Now there's some sketchy documentation - as bad as
+           AppleTalk docs!
+ShanoJ     Randy: I'm suggesting Apple's Programmer's Intro to the IIgs. It
+           is an old book
+ShanoJ     and doesn't handle a lot of the newer things, but it'll help you
+           understand
+ShanoJ     what the toolbox is and how to use it, and simple concepts like
+           handles versus
+ShanoJ     pointers, etc.
+RandyT2    Basic is the only real experience that I've had and the structure
+           seem
+RandyT2    very different
+WinkieJim  Have we confused you enough Randy?
+RandyT2    I think so, yes..
+A2GS       Men: we've succeeded, at last.
+AFL Dyfet  Eventually the fog of confusion clears...:)
+WinkieJim  It takes me a day to get over this conference :)
+RandyT2    I don't want to take all your time (time is money on AO) 
+RandyT2    Thanks for all the help!
+AFL Dyfet  Okay, let us go to Winkie's question then..GA Jim, you have the
+           floor now...
+AFL Dyfet  (good luck Randy)
+WinkieJim  ok, CDEV question(s)
+WinkieJim  First, if you want to draw something while you CDEV is active,
+           when do you do 
+WinkieJim  it? In the Run message or do you use the Event messgae and look
+           for
+WinkieJim  uppdate events?
+WinkieJim  (spelling doesn't count) ga
+AFL Dyfet  GA Matt
+Matt DTS   A CDev is supposed to be entirely a list of extended controls -
+           you're not supposed to "draw"
+Matt DTS   anything else.  GA.
+WinkieJim  Well, rats... :)
+WinkieJim  2nd part:
+WinkieJim  what is the difference between the INIT messgae and the create
+           message?
+AFL Dyfet  GA Wankerl
+JWankerl   If you create someting in the INIT message, it will not be offset
+           correctly -
+JWankerl   it will overlay the icon list control.  ICK!
+JWankerl   You're just supposed to set values for things you created in INIT.
+            GA.
+WinkieJim  Ok.
+Matt DTS   Yeah, create them in CreateCDEV, set them up in InitCDEV.  (GA)
+AFL Dyfet  Okay, do we have any other questions for tonight?
+WinkieJim  Still bummed about not being able to draw in the window.
+AFL Dyfet  GA James....
+James S WI Could someone give show me an example of declaring a function in
+           Orca/C ?
+JWankerl   Winkie- use lots of picture controls.  :-)
+AFL Dyfet  Do you mean a prototype or a function?
+James S WI Declaring a FUNCTION
+AFL Dyfet  I suppose the simples example might be the 'null'
+AFL Dyfet  program, which could be done as:
+AFL Dyfet  main(int argc, char **argv)  {};  :)
+James S WI is   int my_func(int, int);   correct?
+AFL Dyfet  That is a prototype, not a function.  The prototype
+AFL Dyfet  is used to 'model' the function.  You would then use something
+           like:
+AFL Dyfet  int my_func(int parm1, int parm2)  { stuff }; later
+AFL Dyfet  on to actually show what it does...
+ShanoJ     (Uhh... Isn't this kinda covered in the _manual_?)
+James S WI I don't under stand the book.  I think I know the difference
+           between 
+James S WI define and declare and can define but not declare
+AFL Dyfet  Scott, go ahead....
+AFL Scott  Isn't defining a function done only when it used after main?  I
+           mean if you
+AFL Scott  follow pascal style, you'll reduce the need for declaring (whoops
+           on the 
+AFL Scott  earlier "defining" bit, I meant declaring)... I usually only
+           define macros
+AFL Scott  when I code.  GA.
+AFL Dyfet  Sometimes 'forward' references to functions are unavoidable. 
+           Prototypes are also needed when you
+AFL Dyfet  have external functions...
+AFL Dyfet  GA Bill...
+BillP      When you talk about "define" in C,  you're talking about a
+           compiler directive...
+BillP      to define as Scott said,  a macro or constant.
+BillP      ie...
+BillP      #define  NULL   0
+BillP      talking about a declare usually refers to what everyone is talking
+           about with prototyping.
+BillP      which is always a good idea and will save you alot of hassles.
+BillP      Most compliers don't require prototyping but...
+BillP      it will save you from having to re cast variables that you're
+           passing.
+BillP      I usually have a  .h file for every  .c file...
+BillP      and the .h file contains function prototypes for each funtion in
+           the C,
+BillP      ga
+James S WI OK.  I think I have it.  Thanks!
+BillP      helps you clean up alot of warnings when you compile.
+BillP      ga again.  :)
+James S WI return;             (GA)
+AFL Dyfet  In C++ prototyping is mandatory....exit(0);
+AFL Dyfet  GA Bill...(seems we have a signal exception :)
+BillP      one last note...    with a #define..      you don't end the
+           statement with a   ;
+BillP      ga
+AFL Dyfet  Okay, do we have any more questions for tonight?
+AFL Dyfet  GA A2...
+A2GS       This is completely offbeat and really doesn't even belong in this
+           conference
+A2GS       room, But.....
+A2GS       What types of games interest people....in other words what would
+           you like
+A2GS       to see on the GS?
+A2GS       GA
+AFL Dyfet  Galactic Empire (he asked....:)
+DYA Jim1   fast arcade action. :)
+JWankerl   Dragon's Lair.  :-)
+A2GS       That's being worked on by READYSoft.
+AFL Marty  Dragon's Lair?
+BillP      Readysoft is doing IIGS????
+A2GS       yez
+A2GS       They did Space Ace
+JWankerl   Well Space Ace wasn't my idea of a fun game.
+A2GS       Not the way they wrote it....I agree.
+BillP      Would you believe, my favorite IIGS game is online as shareware?
+A2GS       Darts?
+A2GS       :-)
+AFA Gary J :)
+James S WI YES
+AFL Scott  No, Bill, I refuse to accept that! :) LOL!:)
+BillP      :P
+AFL Scott  What's the game, dude?
+BillP      I was wondering anyone was going to ask..  Milstone (Mil Bourne)
+BillP      action card game with great use of graphics and digitized sounds
+JWankerl   What about puzzle from the Desktop on System Disk 1.0, eh?  :-)
+DYA Jim1   You mean MouseDesk, Joe. :)
+DYA Jim1   or whatever the name was.. some funny name.. DHR!  (puke!)
+A2GS       I'm surprised that people don't have a wider range of interests
+           other then
+A2GS       "something which is action packed"
+AFL Dyfet  Galactic Empire is NOT an arcade game :)
+A2GS       Excuuuuuuse me :-)
+AFA Gary J (Galactic Empire was a good one)
+JWankerl   Well, Sword of Sodan would be nice, too.
+DYA Jim1   RISK!!!
+DYA Jim1   I've been playing it at school during study hall for a week now
+           and I'm
+DYA Jim1   addicted. :)  Risk GS
+A2GS       That's already available for the 8-bit II
+A2GS       RISK that is
+DYA Jim1   I want a mac version, in color on my GS. :) maybe I'll do it
+           eventually. :)
+A2GS       Good luck.
+BillP      I agree,  I only have the mac version.  It was done real well.
+DYA Jim1   It's real fun. :)
+A2GS       Nothing else?  3-D type game....Sierra type adventure?
+AFL Marty  Does it have to be a game?
+James S WI I would like a game that has opponents with some level of AI.
+DYA Jim1   Sure, go for 3-d as well! :)  if it's done WELL
+JWankerl   A good GS flight simulator like SkyFox would be awesome.
+AFL Dyfet  You mean a "Leasure user Lenny" style adventure game?? :)
+BillP      Lemmings
+A2GS       Yes....since that seems to be the GS' weakest spot (next to
+           Apple,
+A2GS       not including the II Team at Apple, of course)
+AFL Dyfet  Or, Bolo...\
+James S WI Action is nice but not to fun when it's U agents 1,000 and U
+           win.
+JWankerl   Or Bilestoad.
+JWankerl   Remakes of the old classics... ahhh...
+AFL Scott  I'd like to see a good war strategy game on the GS. 
+A2GS       SSI type game, you mean?
+AFL Scott  Yeah, but something that can have scenarios/terrain programmed and
+           something
+AFL Scott  that uses realistic odds.
+AFL Dyfet  I'd like to see something like user expandable games....
+A2GS       you want terrain....I got about a thousand golf games for the
+           GS.
+AFL Dyfet  OIC, Scott is along the same thought pattern :)
+A2GS       :-)
+AFL Scott  m|m
+ShanoJ     What's thay saying? Demented minds think alike?
+AFL Marty  I'm curious why you asked.
+A2GS       Well....let's just say for now...I'm planning with a few of my
+           colleagues for
+A2GS       the future.
+JWankerl   2 player games over the modem or AppleTalk would be great - head
+           to head stuff.
+James S WI If the game is head to head there is a chance that your opponent
+           will have AI
+AFL Marty  Some kind of simulation would be nice.
+AFL Scott  NetTrek!
+AFL Dyfet  Why stop at 2 players with Appletalk :)
+A2GS       Yes...but what the potential market for those type of games?
+AFA Gary J (I've got one of those in the works, but the speed seems to be a
+           problem)
+AFA Gary J (modem speed, that is)
+Matt DTS   I'd *love* to see some multi-player AppleTalk games.  We might
+           never finish new system software.
+Matt DTS   :)
+AFL Dyfet  X-Trek, as revised at Berkeley, is cool!
+AFL Scott  I wonder how hard it would be to port some Xwindows network games
+           to use
+AFL Scott  AppleTalk? Hmm...
+AFL Dyfet  Some parts of BSD unix came out of X-Trek development, Matt :)
+AFL Dyfet  Okay, I guess we can get to Gary's q then...
+AFA Gary J This question was posed by JJennings in our message boards, but
+           I've been
+AFA Gary J wondering about it too (since I have been reviewing all the
+           uploads here).
+AFA Gary J Recently we've seem to have a ton of "custom toolsets" uploaded
+AFA Gary J , and each one seems to be picking their own number for their
+           use. (i.e.
+AFA Gary J Tool069, Tool208, etc.)  Some seem to conflict with others that
+           have been
+AFA Gary J released.  Is there an Apple defined way of obtaining a toolset
+           number, or is
+AFA Gary J it a free-for-all?  What's the correct thing to do?  (I would say
+           NEVER use a
+AFA Gary J user toolset, if it were up to me) GA
+ShanoJ     DON"T STEAL SYSTEM TOOLSET NUMBERS!! I HATE THAT!!!!!!
+ShanoJ     Gary: Use a user toolset...
+AFL Dyfet  GA Matt....
+Matt DTS   Some people are obviously having trouble understanding this, so
+           I'll use capital letters:
+Matt DTS   ALL SYSTEM TOOL SET NUMBERS ARE RESERVED FOR APPLE; NONE ARE
+           AVAILABLE FOR THIRD PARTIES TO USE.
+JWankerl   YEA MATT!  APPLAUSE, APPLAUSE!!!  I wish people would learn.
+Matt DTS   If you find a programmer who can't understand this, get him a copy
+           of Toolbox Reference Volume 3 and
+Matt DTS   HIT HIM OVER THE HEAD WITH IT.  (I'd say IIgs TN #73, too, but
+           that wouldn't hurt.)  GA.
+AFA Gary J :)
+AFA Gary J I agree with that.  
+A2GS       :-)
+AFL Dyfet  Hit him hard! :)
+AFA Gary J I'd say, use the entire reference set across his head :)
+AFA Gary J (except he might not recover from that)
+A2GS       Then why was the info for creating these toolsets provided in the
+           first place?
+Matt DTS   We never provided info for creating system toolsets.  It just so
+           happens that they're identical
+Matt DTS   to user tool sets except in how they're installed.  Some smart
+           people figured this out.  GA.
+JWankerl   System and User toolsets are programmed the same way-just
+           installed differently
+A2GS       oh....ok
+AFL Marty  (elaborate a little, please)
+Matt DTS   Marty:  You'll have to ask a more specific question to get more
+           specific information.
+A2GS       What's the difference in installation?
+AFL Marty  What is the difference between a system and a user toolset?
+A2GS       Is that what you meant, Marty?
+AFL Marty  (i.e. in what way are they installed differently)?
+Matt DTS   System tools go in the *:System:Tools folder and are installed
+           with LoadOneTool.  User tools can go
+Matt DTS   anywhere and are installed with InitialLoad2 and SetTSPtr.
+Matt DTS   System tools are called through $E10000 or $E10004, user tools are
+           called through $E10008 or $E1000C.
+Matt DTS   End of differences.  GA.
+AFL Marty  Thank you.
+James S WI Why can't we make system tools or is there just no reason?
+JWankerl   Because you can make user tools instead.  :-)
+Matt DTS   System tool numbers are reserved for Apple.
+Matt DTS   We keep them so we can use them for new tools.  The user tool set
+           mechanism was created for this
+Matt DTS   reason.
+Matt DTS   Why?
+A2GS       There's always the possibility that a Users toolset # will be the
+           same as
+A2GS       a future release of Apple's Toolset#.
+Matt DTS   Because there's only 255 tool numbers possible, and that's not
+           enough for Apple to have lots and still
+Matt DTS   assign a tool number to every one who wants one.
+Matt DTS   A2GS:  User tools are parallel but separate to system tools - the
+           numbers don't collide.
+AFL Dyfet  There are also only 255 possible system tools...there isn't enough
+           territory there to avoid
+AFL Dyfet  conflicts between Apple and different users with toolset
+           needs...or as Matt just said :)
+AFA Gary J :)
+Matt DTS   For example, if you install FakeModalDialog as user tool #1, it
+           doesn't interfere with the Tool
+Matt DTS   Locator.  <GA>
+A2GS       I know....I was just pointing out, what could happen if the User
+           created
+A2GS       a toolset as a SYSTEM toolset and then gave it his own random
+           toolset #.
+JWankerl   It would work until Apple made a toolset of the same number.
+AFL Dyfet  Or until someone else also used that number...:)
+A2GS       The question is.....will the GS last long enough for Apple to
+           reach toolset #
+JWankerl   (Although I don't know why you'd do that - the user toolset way
+           is
+JWankerl   *much* more flexible!)
+A2GS       255?
+JWankerl   A2GS - 255 is already taken - by GSBug.  :-)
+A2GS       ok....254  :-)
+AFL Dyfet  It's lasted long enough for the few people who have made use of
+           system tools to conflict with each
+AFL Dyfet  other already! :)
+A2GS       That's no big feat -)
+A2GS       oops forgot the eyes  :
+AFA Gary J (with popular numbers)
+AFL Dyfet  :)
+Matt DTS   Yeah...what are the chances two people would both pick the same
+           obscure number...69?
+Matt DTS   :)
+AFA Gary J LOL! :)
+AFL Dyfet  It's happened already :)
+AFA Gary J Well, that was exactly the point of my question.  I thought
+           people were 
+AFA Gary J supposed to know better than that, but apparently not :)
+JWankerl   Apparently not.
+AFA Gary J (I just copy the tool to my system folder long enough to test the
+           upload, then
+AFA Gary J delete the thing :)
+JWankerl   (I'd tell 'em to rewrite it before you release it :-)
+Matt DTS   You could be bold and refuse uploads that do such stupid things.
+AFA Gary J :)
+AFA Gary J That would certainly be a way of getting the "word" out of not
+           using the tool
+AFA Gary J numbers.
+AFL Dyfet  I am not a proponent of censorship, except in the most extreme of
+           cases...however, one can make an
+AFL Dyfet  argument against releasing 'defective' software that may cause
+           damage, and could consider software
+AFL Dyfet  that abuses system tools in a similar manner...
+AFA Gary J Perhaps a warning (to the downloader) in the file description
+           would be 
+AFA Gary J appropriate :)
+AFA Gary J WARNING:  THIS PIECE OF SOFTWARE DOES NOT CONFORM TO APPLE
+           STANDARDS.  USE AT
+AFA Gary J YOUR OWN RISK!! :)
+AFL Dyfet  Well, a broad-minded warning such as that would have to be
+           attached to more than just tool abusers
+AFL Dyfet  :)
+Matt DTS   You could put them all in a "Software that breaks the rules"
+           library.  :)
+AFA Gary J Yep :)
+AFA Gary J Well, I agree with you Dave, I have never been one to censor
+           anything (unless
+AFA Gary J of course it violates AO Terms of Service :)
+James S WI I wunder if that folder would be bigger than all the others. :(
+AFL Dyfet  The question there becomes what constitutes 'breaking the
+           rules'....what about lesser misdeeds,
+AFL Dyfet  such as simple filetype misuse....:)
+AFL Dyfet  Where do you draw the line.....
+Matt DTS   File type misuse:  Death by hanging.  Simple.
+AFL Dyfet  And let's not forget 'illegal memory location' users, 'call
+           patchers' (a practice common to
+AFL Dyfet  Byteworks/APW/ORCA/M for shell calls through GS/OS :)
+AFA Gary J Hmmm... I think the software libraries on AO would become VERY
+           sparce :)
+Matt DTS   Patching calls isn't illegal, just not always very smart.
+Matt DTS   In a shell's case, it's the defined and accepted way to do it. 
+           APW does it (Apple-labeled).
+AFL Dyfet  Some feel the same way about filetype misuse, Matt :)
+AFL Dyfet  But it is a good point you raised Matt....goodnight...
+AFL Dyfet  Goodnight all...

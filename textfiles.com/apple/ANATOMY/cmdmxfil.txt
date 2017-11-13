@@ -1,0 +1,706 @@
+******************************************************************
+*                                                                *
+*                    MAXFILES Command Handler                    *
+*                                                                *
+*----------------------------------------------------------------*
+*                                                                *
+*      The MAXFILES command is used to define the maximum number *
+* of files that can be opened at one time (1 - 16).  A default   *
+* value of 3 is used for cold starts (i.e. when the disk is      *
+* booted) or when the FP or INT commands are issued.  This value *
+* can be changed by altering the contents of MAXDFLT ($AAB1).    *
+*      A diagram representing the structure of the DOS buffers   *
+* is given at the end of this listing.  Note that 595 bytes are  *
+* reserved for each file and that a DOS buffer is composed of a  *
+* number of smaller buffers:  data sector buffer, track/sector   *
+* list buffer, file name buffer and chain pointers buffer.  The  *
+* first six bytes of the chain pointers buffer point to the      *
+* different sections of a given file buffer.  The last two bytes *
+* in the chain pointers buffer provide a link to the name buffer *
+* of the next active file.  If there are no more buffers in the  *
+* DOS buffer chain, the last two bytes of the last chain pointer *
+* buffer are zeroed out.  Similarly, if A DOS buffer is not      *
+* being used, the first byte in its filename buffer is $00.      *
+*      Note that the addr of the 1rst DOS buffer at its filename *
+* field (ADOSFNB1) is a constant because DOS buffers are built   *
+* from higher memory downward.  (I.e. DOS buffer 1 is built 1rst *
+* and occupies the highest memory location  whereas DOS buffer   *
+* 16 is built last & occupies the lowest memory location.)  The  *
+* highest numbered DOS buffer (i.e. the lowest in memory) is     *
+* always assigned first.                                         *
+*      MAXFILES cannot normally be used successfully from an exec*
+* file.  Although the command is indeed executed, the computer   *
+* is inflicted with a terminal case of amnesia.  Disorientation  *
+* occurs because MAXFILES shuts off the exec flag & CLOSEALL     *
+* subsequently releases the exec buffer.  However, both          *
+* debilitating events can be prevented simply by NOPing out the  *
+* STA EXECFLAG instruction at $A253.  The MAXFILES command       *
+* destroys Integer programs and messes up Applesoft strings.     *
+* This occurs because MEMSIZ & FRETOP (Applesoft) or HIMEM &     *
+* INTPGMST (Integer) are reset.  Under special circumstances,    *
+* you can prevent some of these problems by placing a premature  *
+* "RTS" instruction in the ZLNK2NXT ($A82D) routine.  You can    *
+* also issue a MAXFILES command from a running Applesoft program *
+* if it is executed before any strings are defined or other files*
+* are opened.                                                    *
+*      Programmers are often hard pressed to find a safe place   *
+* where basic won't write over their custom machine language     *
+* routines.  Short routines are commonly put in page 3 or in the *
+* tail end of the input buffer if little input is expected.  A   *
+* few programmers even take great pains to write relocatable     *
+* routines that can be moved around at will or hidden in an      *
+* Applesoft program.  However, the area between DOS & its buffers*
+* represents a sanctuary for machine language programs.  Although*
+* this region is normally only seven bytes long, it can be       *
+* enlarged by fooling DOS into building its buffers at a lower   *
+* location.  The procedure is as follows:                        *
+*      1) load ADOSFNBF1 with a value equal to:                  *
+*         ADOSFNB1 - (L$ + $26) (where ADOSFNB1 = $9D00,         *
+*         and L$ = hex length of program to be BLOADed.          *
+*         $26 (dec 38) represents the bytes that normally        *
+*         occur between the start of a DOS buffer & the 1rst     *
+*         byte of its filename field or, in decimal notation:    *
+*         POKE 40192, 40192 - (L# + #38).                        *
+*      2) BLOAD your program at:   A$ = ADOSFNB1 - L$, or in     *
+*         decimal notation:  A = 40192 - L#.                     *
+*      3) call the cold start routine ($3D2), MAXFILES, FP       *
+*         or INT to rebuild the DOS buffers.                     *
+*      Greeting programs designed to accommodate Applesoft       *
+* editing programs often use this technique to install the       *
+* editor program between DOS and its buffers.  (If you are       *
+* writing commercial (nonturnkey) assembly language programs     *
+* that are designed to run on different-sized machines or        *
+* accommadate an altered version of DOS, note the last two       *
+* paragraphs at the end of this disassembly.  These describe how *
+* to find moved DOS buffers from an assembly language program    *
+* that only accesses DOS via indirect addressing.)               *
+*      Inspection of the raw data in a DOS buffer can often      *
+* reveal protection techniques embedded in a program or its file *
+* description (ex. non-listable programs, programs with file     *
+* names containing back spaces or other illegal control          *
+* characters, driver programs made "user unloadable" through the *
+* use of illegal T/S list sector values, etc.).  (See the        *
+* preamble given with the disassembly of the catalog command for *
+* an alternate method of inspecting file descriptions.           *
+*                                                                *
+******************************************************************
+
+
+* Execution pattern:
+*        - Make sure that the EXEC mode is turned off.
+*        - Close all files.
+*        - Save the MAXFILES argument in the main variables table
+*          (MXFILVAL, $A7D4).
+*        - Build the indicated number of DOS buffers.
+*        - Check which basic is active and reset the Applesoft
+*          (MEMSIZ, $73-$74 & FRETOP, $6F-$70) or Integer (HIMEM,
+*          $4C-$4B & INTPGMST, $CA-$CB) zero-page pointers.
+
+
+* On entry:
+*        - A5L ($44) contains the numeric argument that was issued
+*          with the MAXFILES command.  The argument was previously
+*          screened to insure that it was between 1 and 16.
+*          Screening was done via a section ($A0AA - $A0C7) in the
+*          command parsing and processing routines.
+  
+
+(A251)
+CMDMXFIL LDA #0       ;Shut off the exec flag.
+         STA EXECFLAG
+         LDA A5L      ;Get argument issued with MAXFILES
+(A258)   PHA          ;cmd and save it on the stk.
+
+(A259)   JSR CLOSEALL
+
+                      * Close all files.
+                      (A316)
+                      CLOSEALL JSR GETNBF1
+
+                                             * Put address of the 1rst DOS name buffer
+                                             * (chain) in the A3L/H pointer.
+                                             (A792)
+                                             GETFNBF1 LDA ADOSFNB1 ;First link to chain of DOS buffers
+                                                      LDA ADOSFNB1+1 ;(ie. pt to 1rst filename buffer in chain).
+                                             (A798)   BNE SETNXPTR ;ALWAYS.
+
+                                             (A7A4)
+                                             SETNXPTR STX A3L+1    ;Put addr of 1rst filename buffer in ptr
+                                                      STA A3L      ;(ie. highest name buffer in chain).
+                                                      TXA          ;Get hi-byte of addr back in (a).
+                                             GETNXRTN RTS
+                                             (A7A9)
+
+                      (A319)    BNE CKIFEXEC ;ALWAYS.
+
+                      (A31B)
+                      CHKNXBUF  JSR GETNXBUF
+
+                                             * Get addr of next filename buffer in chain
+                                             * from chain pointers buffer offset 37 & 36
+                                             * bytes from 1rst char of present filename
+                                             * buffer.
+                                             (A79A)
+                                             GETNXBUF LDY #37      ;Point the pointer at chain buffer.
+                                                      LDA (A3L),Y
+                                                      BEQ GETNXRTN ;If hi byte is 0, the link zeroed out.
+                                                      TAX          ;Save hi byte in (x).
+                                                      DEY          ;Pick up low byte.
+                                                      LDA (A3L),Y
+                                             SETNXPTR STX A3L+1    ;Stick addr of filename buffer in ptr.
+                                                      STA A3L
+                                                      TXA          ;Condition z-flag in relation to hi byte.
+                                             GETNXRTN RTS
+                                             (A7A9)
+
+                      (A31E)   BEQ CLOSERTS  ;Link zeroed out, so now all files closed.
+                      (A320)                 ;Exit CLOSEALL via this route.
+                      CKIFEXEC JSR CKEXCBUF
+
+                                             * Check if current filename buffer
+                                             * belongs to an exec file.
+                                             (A7AF)
+                                             CKEXCBUF LDA EXECFLAG ;Check to see if EXECing.
+                                                      BEQ NOTEXCBF ;No sweat - not running exec file.
+                                                      LDA EXECBUFF ;We are EXECing, there4 chk if addr of
+                                                      CMP A3L      ;current filename buffer same as that
+                                                      BNE CKEXCRTN ;for buffer belonging to EXEC.
+                                                      LDA EXECBUFF+1 ;Maybe - low bytes matched, now chk hi bytes.
+                                                      CMP A3L+1
+                                                      BEQ CKEXCRTN ;Exec buffer = current buffer.
+                                             NOTEXCBF DEX          ;Not EXECing, there4 reduce (x) to make sure z-flag off.
+                                             (A7C2)                ;(P.S.  (x) was orig conditioned to a large non-zero
+                                                                   ;value on entry to GETFNBF1.  There4, if now DEX then
+                                             (A7C3)                ;can be sure z-flag will be off.)
+                                             CKEXCRTN RTS          ;If execing, return with z-flag on.
+
+                      (A323)   BEQ CHKNXBUF ;EXEC WAS ACTIVE SO DON'T CLOSE ITS BUFFER
+                                            ;OUT OR WILL END UP IN NEVER-NEVER-LAND.
+                                            ;After all, don't want to close buffer
+                                            ;if we are using it to exec (ie. would
+                                            ;be like burying ourselves alive)!!!
+                      (A325)    JSR GETFNBY1 ;Get the first byte in the DOS name buffer.
+
+                                             * Get first byte from DOS name buffer.
+                                             (A7AA)
+                                             GETFNBY1 LDY #0       ;Buffer is free if 1rst byte = $00.
+                                                      LDA (A3L),Y  ;If buf occuppied, the 1rst byte = 1rst
+                                             (A7AE)   RTS          ;char of filename which owns buffer.
+
+                      (A328)   BEQ CHKNXBUF ;This one is already closed, so go back
+                                            ;to close rest of files.
+                      (A32A)    JSR CLOSEONE ;Close the open file.
+
+                                             (A2FC)
+                                             CLOSEONE JSR CKEXCBUF
+
+                                                                  * Check if current filename buffer
+                                                                  * belongs to an exec file.
+                                                                  (A7AF)
+                                                                  CKEXCBUF LDA EXECFLAG ;Check to see if EXECing.
+                                                                           BEQ NOTEXCBF ;No sweat - not running exec file.
+                                                                           LDA EXECBUFF ;We are EXECing, there4 chk if addr of
+                                                                           CMP A3L      ;current filename buffer same as that
+                                                                           BNE CKEXCRTN ;for buffer belonging to EXEC.
+                                                                           LDA EXECBUFF+1 ;Maybe - low bytes matched,
+                                                                           CMP A3L+1    ;so now check hi bytes.
+                                                                           BEQ CKEXCRTN ;Exec buffer = current buffer.
+                                                                  NOTEXCBF DEX          ;Not EXECing, so DEX to make sure z-flag
+                                                                  (A7C2)                ;is off.  (P.S.  (x) was orig conditioned
+                                                                                        ;to a large non-zero val on entry to
+                                                                                        ;GETFNBF1.  There4, if now DEX then
+                                                                  (A7C3)                ;can be sure z-flag will be off.)
+                                                                  CKEXCRTN RTS          ;If execing, return with z-flag on.
+
+                                             (A2FF)   BNE FREEBUFF ;ALWAYS BRANCH IF CLOSEONE IS
+                                                                   ;ACCESSED VIA CLOSEALL.
+                                             (A301)   LDA #0       ;Shut the exec flag off.
+                                             (A303)   STA EXECFLAG ;NOTE:  THIS INSTRUCTION IS NEVER CARRIED
+                                                                   ;OUT IF ACCESSED VIA CLOSEALL.  (An active exec file
+                                                                   ;was already detected and skipped by the "BEQ CHKNXBUF"
+                                             (A306)                ;instruction at $A323.)
+                                             FREEBUFF LDY #0
+                                                      TYA          ;Free up the DOS buffer by poking a $00 in the
+                                                      STA (A3L),Y  ;first byte of the filename field.
+                                             (A30B)   JSR BUFS2PRM
+
+                                                                  * Get addresses of the DOS buffers from chain
+                                                                  * buffer and put then in the FM parameter list.
+                                                                  (A74E)
+                                                                  BUFS2PRM LDY #30      ;Get addresses of FM Work buffer,
+                                                                  ADRINPRM LDA (A3L),Y  ;T/S list buffer, Data sec buffer and
+                                                                           STA WRKBUFFM-30,Y ;NEXT name buf from the chain pointer
+                                                                           INY          ;buffer & put them in the FM parameter list.
+                                                                           CPY #38      ;(P.S. Addr of NEXT filename buffer is
+                                                                           BNE ADRINPRM ;NOT used by DOS.)
+                                                                  (A75A)   RTS
+
+                                             (A30E)   LDA #2       ;Stick opcode for CLOSE function
+                                                      STA OPCODEFM ;in the FM parameter list.
+                                             (A313)   JMP FMDRIVER ;Get ready to do the function.
+                                                      ------------
+
+                                             (A6A8)
+                                             FMDRIVER JSR FILEMGR  ;Call the file manager
+                                                                   ;to execute the close function.
+
+                                                                  (AB06)
+                                                                  FILEMGR  TSX          ;Save stk pointer so we can rtn to caller.
+                                                                           STX STKSAV   ;Save stk pointer.
+                                                                  (AB0A)   JSR RSTRFMWA ;Copy contents of FM work buf (in DOS chain)
+                                                                                        ;to FM work area (not in buffer chain).
+
+                                                                                        (AE6A)
+                                                                                        RSTRFMWA JSR SELWKBUF ;Find FM work buf.
+
+                                                                                                           * Get the addr of
+                                                                                                           * the FM work buffer
+                                                                                                           * from the FM parm
+                                                                                                           * list & stick it
+                                                                                                           * it in the A4L/H
+                                                                                                           * pointer.
+                                                                                                           (AF08)
+                                                                                                           SELWKBUF LDA #0
+                                                                                                           (AF0A)   BEQ PT2FMBUF
+
+                                                                                                           (AF12)
+                                                                                                           PT2FMBUF LDA WRKBUFFM,X
+                                                                                                                    STA A4L
+                                                                                                                    LDA WRKBUFFM+1,X
+                                                                                                                    STA A4L+1
+                                                                                                           (AF1C)   RTS
+
+                                                                                        (AE6D)   LDY #0        ;Zero out rtn code
+                                                                                        (AE6F)   STY RTNCODFM ;in FM parm list
+                                                                                        (AE72)                 ;to signal no errs.
+                                                                                        STORFMWK LDA (A4L),Y  ;Copy FM work buffer
+                                                                                                 STA FMWKAREA,Y ;(in chain) to FM
+                                                                                                 INY           ;wrk area (nonchain).
+                                                                                                 CPY #45
+                                                                                                 BNE STORFMWK
+                                                                                                 CLC          ;Why?????
+                                                                                        (AE7D)   RTS
+
+                                                                  (AB0D)   LDA OPCODEFM ;Check if opcode is legal.
+                                                                           CMP #13      ;(Must be less than 13.)
+                                                                           BCS TOERROP  ;Opcode too large, got range error.
+                                                                           ASL          ;Double val of opcode & get addr of
+                                                                           TAX          ;appropriate function handler from tbl.
+                                                                           LDA FMFUNCTB+1,X ;Stick addr on stack (hi byte first)
+                                                                           PHA          ;& then do a "stack jump" to the appropriate
+                                                                           LDA FMFUNCTB,X ;function handler.
+                                                                           PHA
+                                                                  (AB1E)   RTS
+
+                                                                           .
+                                                                           .
+                                                                  (AC06)   .
+                                                                  FNCLOSE  .
+                                                                           .
+                                                                           .
+                                                                  (See dis'mbly of CLOSE function.)
+                                                                           .
+                                                                           .
+                                                                  - if necessary, free up any sectors that
+                                                                    were previously allocated to the file
+                                                                    but not needed.
+                                                                  - also updates the file size, fixes up
+                                                                    links & updates data, VTOC, T/S list
+                                                                    & directory sectors if necessary.
+                                                                           .
+                                                                           .
+                                                                           (RTS)
+                                                                           ============
+   
+                                                                  TOERROP  JMP RNGERROP ;To $B363 - see dis'mbly of errors.
+                                                                  (AB1F)   ------------
+
+                                             * Return here afterr doing the CLOSE function.
+                                             * (Cause after @ function is done, use stack
+                                             * to get back to the original caller.)
+                                             (A6AB)
+                                             AFTRFUNC BCC FMDRVRTN ;(c) = 0 = no errors.
+                                                      LDA RTNCODFM ;Get error code from FM parameter list.
+                                                      CMP #5       ;End-of-data error?
+                                             (A6B2)   BEQ TOAPPTCH ;Yes.  Got a zeroed-out T/S link or a
+                                                                   ;zeroed-out data pair in T/S list.
+                                                                   ;(Not applicable to the close function.)
+                                             (A6B4)   JMP OTHRERR  ;(See dis'mbly of errors.)
+                                                      ------------
+
+                                             (A6C3)
+                                             FMDRVRTN RTS          ;Return to caller of FMDRIVER.
+
+                      (A32D)    JMP CLOSEALL ;Go to CLOSERTS via CLOSEALL.
+                                ------------
+     
+                      CLOSERTS RTS
+                      (A330)    ============
+  
+(A25C)   PLA          ;Get argument issued with maxfiles command
+         STA MXFILVAL ;and save it in the main variable table.
+(A260)   JMP BILDBUFS ;Go build maxfiles # of buffers.
+         ------------
+
+* Build the DOS buffers
+
+* Point A3L/H at FIRST DOS FILENAME BUFFER.                                Example calcs for FIRST set of DOS
+* (Note:  First DOS name buffer is lowest                                  buffers on a 48K machine
+* numbered but highest in memory.)                                         ----------------------------------
+(A7D4)
+BILDBUFS SEC          ;Wasted byte, might as well be a "NOP".
+         LDA ADOSFNB1 ;Get addr of 1rst filename field
+         STA A3L      ;and put it in A3L/H.
+         LDA ADOSFNB1+1
+(A7DD)   STA A3L+1                                                         (A3L/+1) = ($9CD3)
+
+* Get # of maxfiles wanted & store it
+* in the temporary counter (TEMPBYT).
+(A7DF)   LDA MXFILVAL
+(A7E2)   STA TEMPBYT
+
+* Free buffer by zeroing out the
+* 1rst byte of the filename field.
+(A7E5)
+ZDOSBUFN LDY #0                                                            (y) = 0
+         TYA                                                               (a) = 0
+(A7E8)   STA (A3L),Y                                                       (9CD3),0: 00  -->  9CD3:00
+
+* Point link in chain pointers buffers
+* at the FM WORK BUFFER.
+(A7EA)   LDY #30      ;Set (y) to index 1rst link                          (y) = 1E
+                      ;in chain pointers buffer.
+(A7EC)   SEC
+         LDA A3L      ;Subtract 45 from low byte of addr                   (a) = D3
+         SBC #45      ;of filename buf to calc low byte                    (a) = D3 - 2D = A6
+         STA (A3L),Y  ;of addr of FM work buf & put it in                  9CD3,1E: A6  -->  9CF1: A6
+         PHA          ;the chain pointer & on the stk.                     (a) = A6
+         LDA A3L+1    ;Subtract carry from hi byte of addr of              (a) = 9C
+         SBC #0       ;filename buf to get hi byte of FM wrk buf.          (a) = 9C - 0 = 9C
+(A7F8)   INY          ;Kick up (y) to index addr of hi byte of             (y) = 1F
+                      ;link in chain pointers.
+(A7F9)   STA (A3L),Y  ;Store hi byte of addr of FM wrk buf                 9CD3,1F: 9C  -->  9CF2: 9C
+                      ;in the link.
+                      ;(Note: Above calculations affect (a)
+                      ;but not A3L/H.)
+
+* Point link in chain pointers buffer
+* at the T/S LIST SECTOR BUFFER.
+(A7FB)   TAX          ;Put hi byte of addr of FM wrk buf in                (x) = 9C
+(A7FC)   DEX          ;(x) & kick it down so it indexes hi byte            (x) = 9B
+                      ;of T/S list buf.  (T/S list buf is $100 
+                      ;bytes long.)
+(A7FD)   PLA          ;Get low byte of addr of FM wrk buf back             (a) = A6
+         PHA          ;from stack.
+         INY          ;Kick index up to link in chain pointers.            (y) = 20
+(A800)   STA (A3L),Y  ;Put low byte of addr of FM wrk buf in               9CD3,20: A6  --->  9CF3: A6
+                      ;link buffer's pointer.
+(A802)   TXA          ;Get hi byte of T/S list buf in (a).                 (a) = 9B
+         INY          ;Kick up index in chain pointers buf.                (y) = 21
+(A804)   STA (A3L),Y  ;Set hi byte of link in chain pointers.              9CD3,21: 9B  -->  9CF4: 9B
+
+* Point the link in the chain pointers
+* buffer at the DATA SECTOR BUFFER.
+(A806)   TAX          ;Put hi byte of addr of T/S list buf                 (a) = 9B
+(A807)   DEX          ;in (x) & kick it down to correspond to              (x) = 9A
+                      ;hi byte of addr of data sec buf.
+(A808)   PLA          ;Get low byte of T/S list buf from                   (a) = A6
+(A809)   PHA          ;stack & use it for low byte of data                 Saved (a) = A6
+                      ;sec buf (cause they are exactly 1 page
+                      ;apart).
+(A80A)   INY          ;Kick up index to chain pointers buf.                (y) = 22
+(A80B)   STA (A3L),Y  ;Put low byte of addr of data sec buf in             9CD3,22: A6  -->  9CF5: A6
+                      ;the link buf.
+(A80E)   INY          ;Kick up index to chain pointers buf.                (y) = 23
+         TXA          ;Get hi byte of adr of T/S list buf &                (a) = 9A
+(A80F)   STA (A3L),Y  ;designate it as hi byte of link.                    9CD3,23: 9A  -->  9CF6: 9A
+
+* Reduce counter for number
+* of buffers built so far.
+(A811)   DEC TEMPBYT  ;If counter goes to zero, then just
+(A814)   BEQ ZLNK2NXT ;did last buffer & should zero out link.
+
+* Not done all bufs yet so point
+* link in chain pointers at NEXT
+* FILENAME BUFFER.
+(A816)   TAX          ;Set (x) = low byte of addr of data                  (a) = 9A
+                      ;sector buffer.
+(A817)   PLA          ;Get low byte of addr of data sec buf                (a) = A6
+                      ;back off of stack.
+(A818)   SEC          ;Subtract 38 from low byte of data sec
+         SBC #38      ;to index NEXT filename field buf.                   (a) = A6-26 = 80
+         INY          ;Kick up index to chain pointers buf.                (y) = 24
+         STA (A3L),Y  ;Store low byte of next filename buf                 9CD3,24: 80  -->  9CF7: 80
+         PHA          ;in link & then save it on stk.                      Saved (a) = 80
+         TXA          ;Get hi byte of data sec buf from (x)                (a) = 9A
+(A820)   SBC #0       ;& subtract carry (in case cross                     (a) = 9A
+                      ;page boundary) to get (a) = hi byte
+                      ;of NEXT filename field buffer.
+(A822)   INY          ;Kick index up to chain pointers buf                 (y) = 25
+(A823)   STA (A3L),Y  ;& store hi byte of NEXT filename field              9CD3,25: 9A  -->  9CF8: 9A
+                      ;in link.
+
+* Set A3L/H to point to NEXT
+* filename field buffer.
+(A825)   STA A3L+1                                                         A3L+1 = 9A
+         PLA                                                               (a) = 80
+         STA A3L                                                           A3L = 80 therefore, (A3L/+1) --> ($9A80)
+(A82A)   JMP ZDOSBUFN ;Go back to free NEXT DOS filename
+         ------------ ;buffer & build more DOS bufs.
+
+* No more buffers to build so zero out 
+* the link that would normally point to 
+* the next filename field buffer.
+(A82D)
+ZLNK2NXT PHA          ;Save low byte of addr of data buf on stk.
+         LDA #0       ;Zero out link to next filename field buf.
+         INY
+         STA (A3L),Y
+         INY
+(A834)   STA (A3L),Y
+
+* Check which basic is active.
+(A836)   LDA ACTBSFLG ;Check if active basic is FP or Integer.
+(A839)   BEQ SETINTPT ;Branch if Integer.
+
+* Using Applesoft so initialize
+* MEMSIZ & FRETOP (string storage) 
+* to a value 1 byte greater than
+* highest memory location available
+* to basic program.
+(A83B)   PLA
+         STA MEMSIZ+1
+         STA FRETOP+1
+         PLA
+         STA MEMSIZ
+         STA FRETOP
+(A845)   RTS          ;Exit to caller of maxfiles cmd.
+         ============ ;Normally exits to AFTRCMD ($A17D) in the
+                      ;command parsing and processing routines.
+
+* Using Integer, so set HIMEM
+* & program pointer (INTPGMST).
+(A846)
+SETINTPT PLA
+         STA HIMEM+1
+         STA INTPGMST+1
+         PLA
+         STA HIMEM
+         STA INTPGMST
+(A850)   RTS          ;Exit to caller of maxfiles cmd.
+         ============ ;Normally exits to AFTRCMD ($A17D) in the
+                      ;command parsing and processing routines.
+
+
+
+
+                                     DOS BUFFER DEFAULT LOCATIONS ON A 48K MACHINE
+
+
+                            l              Memory available to Applesoft program             l
+                            l                                                                l
+       Addrs on 48 K system l                                                                l  Offset from
+       (when MXFILVAL = 3)  l                                                                l  start of DOS buffer
+                            l================================================================l
+    >>>>>>>>>>>>>>> $9600   l                                                                l  $00
+    ^                       l                                                                l
+    ^                       l                                                                l
+    ^                       l                                                                l
+    ^                       l                                                                l
+    ^                       l                                                                l
+    ^                       l                       Data Sector Buffer                       l
+    ^                       l                         (DOS Buffer 3)                         l
+    ^                       l                           (256 bytes)                          l
+    ^                       l                                                                l
+    ^                       l                                                                l
+    ^                       l                                                                l
+    ^                       l                                                                l
+    ^                       l                                                                l
+    ^                       l                                                                l
+    ^                       l                                                                l
+    ^                       l                                                                l
+    ^               $96FF   l                                                                l  $0FF
+    ^                       l----------------------------------------------------------------l
+    ^     >>>>>>>>> $9700   l                                                                l  $100
+    ^     ^                 l                                                                l
+    ^     ^                 l                                                                l
+    ^     ^                 l                                                                l                 ^
+    ^     ^                 l                                                                l                 ^
+    ^     ^                 l                                                                l                 ^
+    ^     ^                 l                     T/S List Sector Buffer                     l                 ^
+    ^     ^                 l                         (DOS Buffer 3)                         l                 Z
+    ^     ^                 l                           (256 bytes)                          l                 E
+    ^     ^                 l                                                                l                 R
+    ^     ^                 l                                                                l                 O
+    ^     ^                 l                                                                l                 S
+    ^     ^                 l                                                                l
+    ^     ^                 l                                                                l                 O
+    ^     ^                 l                                                                l                 U
+    ^     ^                 l                                                                l                 T
+    ^     ^                 l                                                                l                 ^
+    ^     ^         $97FF   l                                                                l  $1FF           ^
+    ^     ^                 l----------------------------------------------------------------l                 ^
+    ^     ^     >>> $9800   l                                                                l  $200           ^
+    ^     ^     ^           l                                                                l                 ^
+    ^     ^     ^           l                                                                l                 ^
+    ^     ^     ^           l                       FM Work Area Buffer                      l                 ^
+    ^     ^     ^           l                         (DOS Buffer 3)                         l                 ^
+    ^     ^     ^           l                           (45 bytes)                           l                 ^
+    ^     ^     ^           l                                                                l                 ^
+    ^     ^     ^           l                                                                l                 ^
+    ^     ^     ^   $982C   l                                                                l  $22C           ^
+    ^     ^     ^           l----------------------------------------------------------------l                 ^
+    ^     ^     ^   $982D   l                                                                l  $22D <<<<      ^
+    ^     ^     ^           l                                                                l          ^      ^
+    ^     ^     ^           l                      Filename Field Buffer                     l          ^      ^
+    ^     ^     ^           l                         (DOS Buffer 3)                         l          ^      ^
+    ^     ^     ^           l                           (30 bytes)                           l          ^      ^
+    ^     ^     ^   $984A   l                                                                l  $24A    ^      ^
+    ^     ^     ^           l----------------------------------------------------------------l          ^      ^
+    ^     ^     ^...$984B   l                                                                l  $24B    ^      ^
+    ^     ^.................l                       Chain Pointers Buffer                    l          ^      ^
+    ^.......................l                         (DOS Buffer 3)                         l          ^      ^
+                    $9852   l                           (8 bytes)                    ($0000) l  $252...........^
+                            l=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-l          ^
+    >>>>>>>>>>>>>>> $9853   l                                                                l  $00     ^
+    ^                       l                                                                l          ^
+    ^                       l                                                                l          ^
+    ^                       l                                                                l          ^
+    ^                       l                                                                l          ^
+    ^                       l                                                                l          ^
+    ^                       l                       Data Sector Buffer                       l          ^
+    ^                       l                         (DOS Buffer 2)                         l          ^
+    ^                       l                           (256 bytes)                          l          ^
+    ^                       l                                                                l          ^
+    ^                       l                                                                l          ^
+    ^                       l                                                                l          ^
+    ^                       l                                                                l          ^
+    ^                       l                                                                l          ^
+    ^                       l                                                                l          ^
+    ^                       l                                                                l          ^
+    ^                       l                                                                l          ^
+    ^               $9952   l                                                                l  $0FF    ^
+    ^                       l----------------------------------------------------------------l          ^
+    ^     >>>>>>>>> $9953   l                                                                l  $100    ^
+    ^     ^                 l                                                                l          ^
+    ^     ^                 l                                                                l          ^
+    ^     ^                 l                                                                l          ^
+    ^     ^                 l                                                                l          ^
+    ^     ^                 l                                                                l          ^
+    ^     ^                 l                     T/S List Sector Buffer                     l          ^
+    ^     ^                 l                         (DOS Buffer 2)                         l          ^
+    ^     ^                 l                           (256 bytes)                          l          ^
+    ^     ^                 l                                                                l          ^
+    ^     ^                 l                                                                l          ^
+    ^     ^                 l                                                                l          ^
+    ^     ^                 l                                                                l          ^
+    ^     ^                 l                                                                l          ^
+    ^     ^                 l                                                                l          ^
+    ^     ^                 l                                                                l          ^
+    ^     ^                 l                                                                l          ^
+    ^     ^         $9A52   l                                                                l  $1FF    ^
+    ^     ^                 l----------------------------------------------------------------l          ^
+    ^     ^     >>> $9A53   l                                                                l  $200    ^
+    ^     ^     ^           l                                                                l          ^
+    ^     ^     ^           l                                                                l          ^
+    ^     ^     ^           l                       FM Work Area Buffer                      l          ^
+    ^     ^     ^           l                         (DOS Buffer 2)                         l          ^
+    ^     ^     ^           l                           (45 bytes)                           l          ^
+    ^     ^     ^           l                                                                l          ^
+    ^     ^     ^           l                                                                l          ^
+    ^     ^     ^   $9A7F   l                                                                l  $22C    ^
+    ^     ^     ^           l----------------------------------------------------------------l          ^
+    ^     ^     ^   $9A80   l                                                                l  $22D <<<<<<<<<<<
+    ^     ^     ^           l                                                                l          ^      ^
+    ^     ^     ^           l                      Filename Field Buffer                     l          ^      ^
+    ^     ^     ^           l                         (DOS Buffer 2)                         l          ^      ^
+    ^     ^     ^           l                           (30 bytes)                           l          ^      ^
+    ^     ^     ^   $9A9C   l                                                                l  $24A    ^      ^
+    ^     ^     ^           l----------------------------------------------------------------l          ^      ^
+    ^     ^     ^...$9A9D   l                                                                l  $24B    ^      ^
+    ^     ^.................l                       Chain Pointers Buffer                    l          ^      ^
+    ^.......................l                         (DOS Buffer 2)                         l          ^      ^
+                    $9AA5   l                           (8 bytes)                            l  $252 ...^      ^
+                            l=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-l                 ^
+    >>>>>>>>>>>>>>> $9AA6   l                                                                l  $00            ^
+    ^                       l                                                                l                 ^
+    ^                       l                                                                l                 ^
+    ^                       l                                                                l                 ^
+    ^                       l                                                                l                 ^
+    ^                       l                                                                l                 ^
+    ^                       l                       Data Sector Buffer                       l                 ^
+    ^                       l                         (DOS Buffer 1)                         l                 ^
+    ^                       l                           (256 bytes)                          l                 ^
+    ^                       l                                                                l                 ^
+    ^                       l                                                                l                 ^
+    ^                       l                                                                l                 ^
+    ^                       l                                                                l                 ^
+    ^                       l                                                                l                 ^
+    ^                       l                                                                l                 ^
+    ^                       l                                                                l                 ^
+    ^                       l                                                                l                 ^
+    ^               $9BA5   l                                                                l  $0FF           ^
+    ^                       l----------------------------------------------------------------l                 ^
+    ^     >>>>>>>>> $9BA6   l                                                                l  $100           ^
+    ^     ^                 l                                                                l                 ^
+    ^     ^                 l                                                                l                 ^
+    ^     ^                 l                                                                l                 ^
+    ^     ^                 l                                                                l                 ^
+    ^     ^                 l                                                                l                 ^
+    ^     ^                 l                     T/S List Sector Buffer                     l                 ^
+    ^     ^                 l                         (DOS Buffer 1)                         l                 ^
+    ^     ^                 l                           (256 bytes)                          l                 ^
+    ^     ^                 l                                                                l                 ^
+    ^     ^                 l                                                                l                 ^
+    ^     ^                 l                                                                l                 ^
+    ^     ^                 l                                                                l                 ^
+    ^     ^                 l                                                                l                 ^
+    ^     ^                 l                                                                l                 ^
+    ^     ^                 l                                                                l                 ^
+    ^     ^                 l                                                                l                 ^
+    ^     ^         $9CA5   l                                                                l  $1FF           ^
+    ^     ^                 l----------------------------------------------------------------l                 ^
+    ^     ^     >>> $9CA6   l                                                                l  $200           ^
+    ^     ^     ^           l                                                                l                 ^
+    ^     ^     ^           l                                                                l                 ^
+    ^     ^     ^           l                       FM Work Area Buffer                      l                 ^
+    ^     ^     ^           l                         (DOS Buffer 1)                         l                 ^
+    ^     ^     ^           l                           (45 bytes)                           l                 ^
+    ^     ^     ^           l                                                                l                 ^
+    ^     ^     ^           l                                                                l                 ^
+    ^     ^     ^   $9CD2   l                                                                l  $22C           ^
+    ^     ^     ^           l----------------------------------------------------------------l                 ^
+    ^     ^     ^   $9CD3   l                                                                l  $22D <<<<      ^
+    ^     ^     ^           l                                                                l          ^      ^
+    ^     ^     ^           l                      Filename Field Buffer                     l          ^      ^
+    ^     ^     ^           l                         (DOS Buffer 1)                         l          ^      ^
+    ^     ^     ^           l                           (30 bytes)                           l          ^      ^
+    ^     ^     ^   $9CF0   l                                                                l  $24A    ^      ^
+    ^     ^     ^           l----------------------------------------------------------------l          ^      ^
+    ^     ^     ^...$9CF1   l  ex. A6, 9C                                                    l  $24B    ^      ^
+    ^     ^.................l  ex. A6, 9B           Chain Pointers Buffer                    l          ^      ^
+    ^.......................l  ex. A6, 9A             (DOS Buffer 1)                         l          ^      ^
+                    $9CF8   l                           (8 bytes)               ex. 80, 9A   l  $252...........^
+                            l=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-l          ^
+                    $9CF9   l                        (7 unused bytes)                        l  $253    ^
+                    $9CFF   l                                                                l  $259    ^
+                            l================================================================l          ^
+                    $9D00   l                                              (ADOSFNB1/+1)---> l..........^
+                            l                               DOS                              l
+                            l                                                                l
+                              (Normally, the byte at $3D2 corresponds to the page 
+                              number of the start of DOS.  This byte can there4 be used 
+                              to determine if DOS is at its "normal" location.  
+                              If $3D2 contains a value less than #$9D then the computer
+                              has less than 48K of RAM.  A value equal to #$9D means that 
+                              DOS is at its normal 48K location whereas a larger value 
+                              describes a machine with at least 48K of memory. In the 
+                              later instance, DOS may reside on the language card.)
+
+                              Note that the first two bytes of DOS point to the first
+                              DOS buffer at its filename field.  Therefore, once you
+                              find the start of DOS (via the high byte of the warm-
+                              start vector), you can use the first two bytes of DOS to
+                              locate the DOS buffer chain even if an editor program is
+                              installed between DOS and its buffers.
+                                                                                                                                                                                                                            

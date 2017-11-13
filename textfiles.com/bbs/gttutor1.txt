@@ -1,0 +1,530 @@
+*****************************************************************
+
+The following text file was captured by me as a result of my call
+to Jim Davis' Retreat (713 497-2306) in Houston, Texas.  I went
+to his board to download GTCTL and GTLOG - two utilities used
+with GT PowerComm.  Jim came on the line to assist as I
+experienced transmission problems.  I took the opportunity to ask
+questions about GT PowerComm and PC communications.  Jim's
+response is being presented here as an aid to other `Neophytes"
+to PC communications.
+
+                       << Raymond Wood >>
+ 
+... In the vernacular of the communications industry, there are a few
+concepts that need to be understood before understanding 'HOW' is
+accomplished.  For example, the word BAUD.  This essentially
+means 'bits per second'.  In fact, it means something a little
+different than that, but for openers, let's say that's what it
+means. 
+ 
+Now, whenever two machines are going to try to communicate with
+each other a couple of things have to be done by both.  They must
+both be set to send and receive at the same frequencies, for
+example.  The most often used frequency, today, is 1200 baud. 
+That means 1200 bits per second, as I said before.  Well, most
+users have no idea what bits are involved in a file transfer or a
+message transfer.  Let's look at another standard word: BYTE. 
+There are 8 bits of information contained in a byte.  That is, a
+byte is merely a set of 8 bits.  Within a set of 8 bits there are
+256 permutations available.  From all zeroes to all ones.  Each
+letter in the alphabet and each digit and each other special
+character is represented by a predetermined set pattern of
+those 8 bits.  A capital 'J' has a different pattern than a lower
+case 'j', for example.  Given that that is true, it is easy to see
+that no more than 128 of the total possible patterns would be
+necessary to represent any text.  Thus, we have another 128 that
+may be used for 'special purposes'.  What, for example?  I'll get
+to that. 
+ 
+The sending of bits (on or off, high or low, in other words
+binary information) is, by definition, a binary process.  That is,
+the computers need only recognize one of two states.  The
+telephone, on the other hand, carries information that is other
+than binary.  It can faithfully represent different tones, pitch,
+and volume.  This is called analog rather than binary.  The
+almost sole purpose of a modem is to translate binary signals
+into analog and vice versa.  When you  are going to send a set of
+bits across a telephone you will have to convert those binary
+'states' into some form of sound (which is, after all, what the
+telphone is designed to best carry).  Modulating a signal from
+binary to analog is the 'Mo' in Modem. 
+Demodulating an analog signal back into binary is the reverse and
+is the 'Dem" in Modem. 
+ 
+If we want the transmission to be highly reliable then we must do
+more than simply send the binary information (modulated).  We have
+all heard 'noise' on a telephone line and without doing more than
+demodulating into bits, the receiver will no doubt have a
+virtually impossible time of being able to tell what sounds are
+bits or just plain noise.  In some applications, we don't really
+care all that much.  Examples include the transmission of plain
+text files.  Recall that all that was necessary to send any
+letter, many special symbols and any digit was a capability that
+required no more than 128 different combinations of bits.  7 bits
+are sufficient to represent 128 permutations of those bits.  That
+is, if a byte were only 7 bits long then it could contain as many
+as 128 different sets of bits being on or off).  However, a byte
+is 8 bits long by definition.  So, in what is called ASCII
+(American Standard Code for Information Interchange)
+transmissions we can use the first 7 of those bits to represent
+data and the 8th bit to represent some form of insurance or
+integrity check that the first 7 were received as they were sent.
+
+This is called using 'PARITY'.  You can establish a convention
+between the sender and the receiver that every byte WILL have an
+even number of bits (or odd) and use the 8th bit to do so at the
+sending end.  If the receiving end ever gets a byte that has odd
+parity then it knows that it received the byte in error (some bit
+or bits were either added or lost).  That is all there is to
+parity checking in an ASCII transmission.  Not at all very good,
+but sufficient for most text. 
+ 
+Program files or data files or even text files that have been
+compressed (ARChived) in some way use all 8 bits in every byte to
+represent information.  So, we have lost the ability to use
+parity as an integrity check vehicle.  Instead, in every protocol
+other than ASCII we add either one or two full bytes to the end
+of a 'block' of bytes.  The block is a fixed length (usually 128
+bytes).  The purpose of those one or two bytes is to contain what
+is called a Cyclic Redundance Check (CRC) character or word. 
+Like parity, the CRC is constructed at the sending end to create
+a pattern of bits that demonstrates that the preceeding entire
+block of bytes has been received with integrity.  The Receiving
+end dynamically creates its own CRC from the information received
+and compares it to the byte or bytes received at the end of a
+block.  If it doesn't match then the block must be rebroadcast (requested
+by sending to the sender a signal that says: "Negative Acknowledge" -
+NAK.  If it was ok then it sends an ACK - meaning "Acknowledge", and the
+next block is sent. 
+ 
+Now, let's go back to the idea of baud.  At 1200 baud, the modems
+are able to send and receive 1,200 bits per second.  How many bits
+per byte? Yes, 8, but not on a telephone line if you are using
+modems!  Instead, we bracket a byte by sending what is called a
+start bit before the 8 bits of data and ending with what we call
+a stop bit (sometimes 2 - at 300 baud).  So, every byte requires
+10 bits, not 8.  Thus, at 1200 baud your maximum possible data
+transfer rate is 120 characters (bytes) per second! 
+ 
+OK.  Now we know what we have to send and how many bits are
+required and that there is something called a response from the
+receiver called either an ACK or NAK.  So why don't we get 120
+bytes per second transfers using 1200 baud modems?  Well, we
+already saw that for every 128 bytes of data, in most protocols,
+we send an additional one or two bytes of CRC.  We DO NOT count
+the CRC byte(s) as data!  Yet it takes time to transmit.  Also,
+it takes time for most protocols to turnaround and react to the
+ACK or NAK.  For example, assuming all is well, the sender  has a
+few hundred blocks to upload to the receiver.  After the first
+block is sent he, by convention, must wait for the receiver to
+analyse the CRC and decide if it is going to respond with the ACK
+or a NAK.  Then it takes a moment to send that to the sender who,
+in turn, has to receive it, verify that it got here properly (was
+not just noise) and decide whether to send the next block or to
+resend to last one that was improperly received by the receiver. 
+That takes time.  All time used as described above is called
+'overhead'.  Overhead does not include the transmission of DATA,
+only control bits and time.  Thus, it is impossible to get to an
+effective DATA transmission rate of even 118 characters per
+second let alone 120 (CRC, etc).  But, we know that the telephone
+is capable of carrying sound in both directions simultaneously. 
+So, why should the sender have to wait for the receivers ACK or
+NAK?  This mode of operation is often called 1/2 duplex, by the
+way. 
+ 
+The answer, of course, is that it does so only by convention. 
+Newer protocols do not wait.  They assume that a transmission
+will be successful and will result in getting an ACK.  So they go
+immediately to the task of sending the next block.  Always
+listening, of course, for that ACK or NAK.  When it is received
+as an ACK all is well and we have gained performance.  If not,
+the software has to decide which block or blocks have to be
+rebroadcast.  In order to do that it should be obvious that the
+ACK or NAK is not simply a single byte.  Rather, it includes a
+byte that is called the packet number (0 to 255), and possibly
+more information.  If an ACK is received the recipient knows
+which of a series of blocks(packets) it is referring to. 
+Similarly it would know with an NAK.  Yep, more bits and more
+overhead! 
+ 
+Well, then let's see if I can get to a few more contemporary
+terms and information more practical to know at this time. 
+ 
+For example, almost nobody uses ASCII transfers any more.  Why
+should they when they are so poorly controlled and when you
+realize that ONLY un-compressed raw text can be sent with it? 
+Still, a great many first time communications users try to do so.
+
+And, while the transmissions will appear to work, the resulting
+files will be garbage, of course.  Only 7 oF the 8 bits are being
+transmitted in each byte!  Many comm programs will allow you to
+use ASCII even when they should know that the result will be
+unsatisfactory.  For example, if a filename ends with COM or EXE
+then, again by convention, that file is an executable program. 
+ALL such programs use 8 bits in every byte and could not,
+therefore, be transmitted via ASCII.  Some comm programs will not
+let you try to do something that stupid (only, of course, to a
+knowledgeable user). 
+ 
+What are the protocols that currently exist in wide spread usage
+across the country?  The most frequently seen is called XMODEM. 
+This protocol is quite reliable (about 96%) and uses blocks of
+128 bytes plus one CRC character at the end of every block.  It
+is because it uses only one CRC character that the reliability is
+only 96%. 
+ 
+Another is called XMODEM/CRC.  This is exactly the same as XMODEM
+but it uses two CRC characters.  The result is that the effective
+performance is reduced insignificantly (1/130th), but the
+reliability is increased to about 99.6%.  In any case where you
+have a choice between the two you would, of course, opt for
+XMODEM/CRC. 
+ 
+Then, and this is particulary true in environments where one of
+the computers being involved is either a mini or a mainframe,
+there is a protocol which is called Kermit.  I believe it uses
+128 byte blocks and other overhead such as a 'header block -
+block zero' that provides control information.  It is also very
+reliable (99.6% I believe) but it is SLOW!!!  It is used only if
+that is the only protocol available. 
+ 
+Then there is what is called YMODEM.  This protocol differs from
+the earlier ones in that it sends 8 - 128 byte blocks together as
+a 'super block' before it sends the two byte CRC word.  As a
+result it is the fastest protocol that I have ever seen for micro
+computers that use 'dumb' modems (ie, non self correcting ones). 
+There are two times when one should not use this protocol if
+there is a choice: 1) when the line noise is great on the
+telephone (for a retransmission of a 'block' that failed involves
+1024+2 bytes even if only one bit was gained or lost).  That is a
+lot of overhead!  And 2), in an environment like PC-PURSUIT that
+involves long duration hand shaking turnaround delays. 
+ 
+Another protocol is called Telink.  Telink uses 128 byte blocks
+but has an advantage over the other ones.  It results in a file
+that is exactly the same size and has the same date and time
+stamp on it as the one being sent.  Ymodem, for example, adds to
+(pads) a block until it is exactly 1024 bytes (the last record)
+even if that record only contains a few bytes of data. 
+ 
+GT PowerComm has a unique protocol called 1kTelink.  It is the
+same as Telink except it uses 1024 byte blocks and is therefore
+more efficient.  Like YMODEM, 1kTelink should only be used on
+clean phone lines for performance, but unlike YMODEM it can be
+used on even a short file with efficiency. 
+ 
+In the case of GT, and then only if communicating GT to GT, if
+either YMODEM or 1kTelink experience a set of 6 errors during the
+transmission of a single file then it will automatically fallback
+to 128 byte blocks to greatly increase the odds that the
+transmission can be completed and to greatly increase the
+efficiency on what is presumed to be a noisy line!!!  Neat!!! 
+ 
+The BEST protocol at this time for use in a PC-PURSUIT environment
+is called Wxmodem which stands for 'Windowing Xmodem'.  This uses 128
+byte blocks but it does not wait between blocks for a response.  It is
+always listening for those ACKs and NAKs, of course.  Extremely high
+performance is the result, relative to Xmodem or the other 1/2 duplex
+protocols.  Wxmodem tries to stay 4 blocks ahead of the receiver at all
+times while the receiver tries to get 'caught up'.  The difference
+between the block being sent and the most currently received ACK or NAK
+is called the window (a number between 1 and 4).
+
+Then there are two more odd protocols that have become relatively
+visible of late.  These are called ZMODEM and Batch-YAM.  ZMODEM
+was designed for use in a PC-PURSUIT like environment.  Like
+WXMODEM, the best protocol for use in that environment, ZMODEM
+does not wait for ACKs and NAKs.  Unlike WXMODEM, ZMODEM is
+relatively slow.  For one reason, it uses no buffering.  Thus
+every 512 bytes of data it must make another disk access. 
+Batch-YAM is much like YMODEM except that it allows you to specify a
+set of file names (a 'batch' of them).  It is slower than YMODEM
+except, possibly on PC-PURSUIT. 
+ 
+What must a user know to do a file transfer?  What protocol is
+available on BOTH ends of the transmission, the file name of the
+file on his end and the file name on the other end.  That is, if
+the receiveing end of a transmission already has a file with the
+name of the file you want to send to it, naturally you will call
+the new file something else.  Thus, every comm program allows the
+specification of the file name on your end and then the name on
+the other end.  (It is not just an irritant that you 'already'
+typed that in, it is necessary).  Having said that I must make an 
+exception  - Telink  and 1kTelink.   These protocols allow batch
+names,  like Batch-YAM,  but the receiving end and transmitting end
+file names are the same.
+
+That's it for now. 
+
+Wood: I have a few questions. ok? 
+
+Davis: Sure. 
+ 
+Wood: Four to be exact.  
+
+1- You mention date/time stamp on one of your protocol
+descriptions but did not define its use prior to that.  What is
+this and what is it used for?
+ 
+PC-DOS or MS-DOS marks every file with the date and time that
+file was created or last modified.  So, let's say I want to send
+you a copy of my transmission log that was dated 12/31/86 (by
+DOS).  If I use any protocol other that Telink the resulting file
+on your end will be dated with the date and time it was created
+(ON YOUR SYSTEM!)  Today, now.  Telink creates that file and
+leaves it on your system with my date and time stamp still
+intact. 
+ 
+When I receive an ARCed file this time/date stamp is in the EXE
+module somewhere? 
+ 
+Davis: It is several places in that example.  In the directory record on
+your disk is the formal residence of the stamp.  So, in the case
+of an ARC file, it has a date and time stamp.  Additionally,
+within the ARC file each record, which is merely another way of
+saying 'each file within the ARC file', has the date and time
+that THAT file had in its directory record BEFORE it had been
+ARCed into the ARC file.  When you unARC, the resulting file will
+not have todays date and time as a stamp but the one recorded
+within the ARC file for it. 
+
+
+Wood: Good, I understand perfectly.  I can relate it to what we
+sometimes do on the mainframe. 
+
+ 
+2-You mentioned padding with YMODEM.  What is this?  Does the
+receiving end recognize the padding and discard it automatically?
+ 
+Davis: Let's say the file you want to send is exactly 1025 bytes long. 
+Each block transmitted by YMODEM contains 1024 bytes of date plus
+2 bytes of CRC.  It will, therefore, take two blocks to send that
+file.  The second block will contain only 1 byte of data plus
+1023 padded "blanks" - actually End Of File marks.  YMODEM sends
+1024 bytes every time!.  The receiver does not automatically
+strip those padded bytes.  Indeed, it passes them to the
+resulting file so that it will always be an even multiple of the
+1024.  Thus, you sent a 1025 byte file and it becomes a 2048 byte
+file!! 
+ 
+
+Wood: Ok--3...You came to a conclusion without what I thought was the
+necessary support when you said "...thus 512 bytes result in a
+disk access with ZMODEM..."  I did not follow the conclusion.
+Help! 
+ 
+Davis: Sure.  As we discussed before the tutorial when we talked about
+buffers, a buffer is a fixed length (amount) of memory,
+sufficient to contain some number of blocks of data.  In the case
+of ZMODEM, a block is 256 bytes, by the way.  If the protocol
+used buffers there could be some large multiple of 'blocks' in
+memory awaiting transmission.  Instead,  ZMODEM does not use a
+buffer.  Thus, it must have in memory only one sector of data at
+a time.  In the PC world, a sector is 512 bytes, or two blocks of
+data as far as ZMODEM is concerned.  Again, since that is the
+case, after two blocks (512 bytes), ZMODEM must go back to the
+disk to get more data to transmit. 
+ 
+Wood: One of the first things we learned in programming school 20+
+years ago was that you could do things a lot faster with more
+than one buffer.  WE typically (or the system) use at least two.
+
+Why would ZMODEM not use any?  Is there a memory problem? 
+ 
+Davis: I can't speak for the authors of ZMODEM but I will say that it is
+typically not a protocol that is written into a program like GT
+PowerComm (As is Xmodem or Wxmodem, etc.).  Instead, it comes
+rather conveniently in the form of an EXE program that can be run
+independantly of the comm package or by a simple shell out of the
+comm package to it.  In the latter case, there is no way to know
+how much memory might be available in the majority of systems. 
+The program itself, could, of course, simply find out.  But you
+will recall that BOTH ends of a transmission are highly dependant
+upon compatible software.  It might be that the author of ZMODEM
+simply took the easy way out.  I don't know. 
+
+ 
+Wood: This leads nicely into my final question which deals with today's
+comm packages.  When I first bought my PC I did the necessary
+research by reading reviews and magazines like Software Digest. 
+I rejected XTALK and settled on HYPERACCESS.  After I started
+using it I discovered Shareware.  I have come to the conclusion
+that there are two classes of products in the Micro world today. 
+Commercially developed and other.  My company uses XTALK.  In the
+corporate environment you order a comm package and you get what
+the corporate gurus decide is best for you.   
+I like ProCommm.  I do not like to feel that I was ripped off by
+buying HyperAccess.  I just feel that I was uninformed at the
+time.  In this area ProComm seems to reign as King with the
+majority of PC users.  
+
+4- What are the advantages of GT over ProComm? 
+ 
+Davis: Excellent question.  Let me try to deal with it professionally
+instead of from the bias I would naturally have for GT PowerComm.
+
+(When I wrote the documentation for GT I twice called it ProComm
+- how embarrassing it would have been if I had released it
+without an edit). 
+ 
+Let's go back a little in time.  Before the era of the PC
+virtually all micro computers were 8 bit in design rather than
+16.  At that time the undisputed King in the area of comm
+packages was Crosstalk.  It enjoyed an excellent reputation and
+was well supported.  Further, it was not terribly expensive and
+it was one of the only comm packages that supported what was to
+become a whole set of protocol transfer methods (it was an XMODEM
+protocol).  Well, in those days if your comm package didn't work
+reliably and you were not sure if it was a hardware problem or a
+software problem you simply put up Crosstalk.  If it worked the
+conclusion was that the problem was software.  It was THAT
+reliable. 
+ 
+Along came the PC's.  Crosstalk was ported to the 16 bit world,
+but in a way that made very little progress in terms of adapting
+to the capabilities of the PC's.  To this very day, I believe it
+is impossible to change directories in Crosstalk, though I could
+be wrong.  In essence, Crosstalk continues to be available and
+though it runs reliably in a 16 bit environment it runs like it
+was in a CP/M environment, not a DOS one. 
+ 
+Then there was a leading contender from the shareware world
+called QMODEM.  It enjoyed an excellent following and was
+remarkably efficient by comparison to Crosstalk - MUCH faster, in
+fact.  And, it had a couple of contemporary protocols not
+available in Crosstalk.  It took off and has been a very
+successful product ever since.  In my opinion it would still be a
+champion product save only for a few 'author' problems.
+It is a great program, nonetheless.
+
+About the same time the Hayes Modem manufacturers
+introduced SmartComm II as a commercial product and it was being
+shipped with many of their modems.  By brand identification it
+was accepted.  This, despite that it is the clumsiest of all the comm
+packages I have ever seen.  It was, furthermore, not very
+efficient by comparison to QMODEM.  It has essentially been
+unchanged since its introduction (Sound like Crosstalk all over
+again?) 
+ 
+A new comm package hit the scene called ProComm.  In this program
+the author spent a great deal of attention to 'image'.  He used
+imaginative ideas like a whistle that announced opening and
+closing of windows, the windows themselves were innovative, etc. 
+It was no where near as efficient as QMODEM, but it captured the
+imagination of the users.  And, like QMODEM, the price was right
+- $0 to try it out, and then if you decided to, you sent them a
+small check - but that's shareware. 
+ 
+Procomm has advanced far faster than QMODEM in terms of
+incorporating different protocols and the incorporation of what
+is called a Host mode, or unattended mode of operation
+(autoanswer of modem, etc.)  It became King as you call it by
+being both innovative and current - but not by being efficient,
+though it is quite respectable. 
+ 
+GT PowerComm was only formally announced to the shareware world
+on the 21st of last month!!!(2/21/87).  It includes 8 protocols, not
+including the also present ASCII, of course.  At 2400 baud, I
+routinely establish DATA transfer rates of 235.5 characters per
+second with it, while the best I ever got with Qmodem was about
+220 and with Procomm about 218.  Actually, I did get a 225 once
+with Qmodem, but only once. 
+ 
+So, in terms of performance, nothing has come close to being as
+fast as GT PowerComm.  But that, as we saw with Procomm, is not
+all that the user is looking for.  We have incorporated an
+extremely rich function called the LOG.  Into that log is
+recorded all connects, disconnects, messges to the host,
+passwords used to gain access, bad passwords tried, and even more
+interesting, the names and time to trasmit every file that goes
+from the GT to or from another computer, and along with that is
+the total byes involved and the name of the protocol used in the
+transmission and, finally, manually created notes and messages. 
+So what, you might ask.  I would answer that if you were the Sysop
+of a board, or of a Corporate system, you MUST be able to
+determine who sent you a file or a messgage and when.  (Yes, date
+and time stamps are included in all entries in the log).  For
+example, what would be your reaction if you found that  a program
+on your disk was a trojan horse if you could not determine where
+it came from?  Or, say you created a proforma for your department
+and it has been downloaded by 18 different executives before you
+discover a major error in it.  Wouldn't you want to be able to
+determine who has received that file?  All those kinds of
+questions are automaticlly answered via GT's log and GTLOG.  The
+main reason for feeling that there is a substantial difference
+between GT and Procomm for the user is in the area of SUPPORT.  I
+take it that it has occurred to you that I have been talking to
+you for more than three hours already?  And I don't even know if
+you are a registered user of GT.  Well, I am only one of two of
+us that do exactly the same thing.  The author of GT PowerComm, Paul
+Meiners, provides 24 hour a day access to his system as I do (as the
+author of the companion software).  We have provided many new
+versions of GT powerComm over the past year and are about to
+provide release 12.10 only two weeks after announcing 12.00 on
+the 21st!  Why, because we are constantly enhancing the products
+and our users want us to do so.  We have several major clients
+already including one of the major Oil companies, one of the
+major airlines and one of the countries largest school
+districts!!!  Finally, nobody has a better Host mode than GT
+PowerComm!!!  I run a BBS using nothing else.  That is power and
+function!  Try it, you'll love it!! 
+ 
+Wood: I can't wait to put the system together!  Rest assured that I
+will register the program.  As an ex-programmer I know what is
+involved.  I wish the product much luck.   Did you say 3 hours? 
+ 
+Davis: I believe so.  I don't remember, but I reset the 1 hour time
+limit I gave you twice now, possibly three times.  By the way, as
+a favor to me in exchange for the time, would you mind terribly
+ARCing your capture file and sending me a copy.  I can make it
+available as a tutorial to others.  And if you will make it
+available to others as well, it is possible that they will come
+to know GT PowerComm as well. 
+ 
+Wood: No problem.  I will not be able to do this for a couple of days
+however.  My modem is on the blink and I am waiting for a
+replacement.  I will upload GT and the Log and CTL files to all
+of the bulletin boards that I normally deal with.  I have already
+uploaded it to the corporate BBS.  I do expect to get some
+healthy ribbing from the ProComm lovers which is why I asked the
+question that I did.  For now though I would like to get the Log
+file.
+
+ 
+Davis: Thanks for the opportunity to be of help.  I too  must get to
+work.  So, I'll take you out of chat mode.  Don't forget to
+'close' your capture file. 
+
+
+You have 48 minutes left. 
+ 
+ 
+                         Jim Davis' Retreat    Voice 713 558-5015
+                                               Data  713 497-2306
+
+
+
+
+
+
+X-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-X
+
+ Another file downloaded from:                               NIRVANAnet(tm)
+
+ & the Temple of the Screaming Electron   Jeff Hunter          510-935-5845
+ Rat Head                                 Ratsnatcher          510-524-3649
+ Burn This Flag                           Zardoz               408-363-9766
+ realitycheck                             Poindexter Fortran   415-567-7043
+ Lies Unlimited                           Mick Freen           415-583-4102
+
+   Specializing in conversations, obscure information, high explosives,
+       arcane knowledge, political extremism, diversive sexuality,
+       insane speculation, and wild rumours. ALL-TEXT BBS SYSTEMS.
+
+  Full access for first-time callers.  We don't want to know who you are,
+   where you live, or what your phone number is. We are not Big Brother.
+
+                          "Raw Data for Raw Nerves"
+
+X-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-X

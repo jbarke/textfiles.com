@@ -1,0 +1,529 @@
+                         
+                         BugByter Documentation
+
+BUGBYTER IS A RELOCATABLE 6502 DEBUGGER.  IT INCLUDES: 
+
+1. USER DEFINALBLE DISPLAY
+
+2. LITERAL/TRANSPARENT BREAKPOINTS
+
+3. RESIDENT ASSEMBLER/DISASSEMBLER
+
+4. COMPATABILITY WITH 3.3 DOS
+
+
+OPERATION
+
+BUGBYTER IS A 7.6K ($1A00 BYTE) BINARY FILE.  TO EXECUTE IT, TYPE
+
+          BRUN BUGBYTER <CR>
+
+
+OR, YOU CAN MAKE IT RUN WHERE YOU LIKE, FOR INSTANCE: 
+
+          BRUN BUGBYTER,A$1234 <CR>
+
+TO PUT BUGBYTER IN THE LANGUAGE CARD,
+
+ CALL -151 <CR>
+ C081 C081 F800<F800.FFFFM C083 C083<CR>
+ BRUN BUGBYTER,A$D000 <CR>
+
+DEFAULT RUN IS AT $7C00. 
+
+BUGBYTER  IS  SELF-MODIFYING.  THEREFORE, ONCE YOU RUN IT A PARTICULAR
+SPOT, YOU CAN NOT SAVE THAT VERSION AND RERUN IT AT A DIFFERENT SPOT. 
+
+
+MASTER DISPLAY
+
+THE BUGBYTER MASTER DISPLAY IS DIVIDED INTO 6 DIVISIONS: 
+               
+               -----------------
+               !               !
+               !       1       !
+               !               !
+               --------!-------!
+               !       !       !
+               !   2   !   3   !
+               !       !       !
+               !-------!-------!
+               !   4   !   5   !
+               !-------!-------!
+               !               !
+               !       6       !
+               !               !
+               -----------------
+
+
+1. REGISTERS:  6502 AND BUG BYTER
+
+2. 6502 STACK WITH STACK POINTER HIGHLIGHTED
+
+3. CODE DISASSEMBLY AND TRACE/SINGLE STEP OPTIONS
+
+4. USER SELECTED MEMORY CELLS
+
+5. USER SELECTED BREAK POINTS
+
+6. BUG BUYER COMMAND LINE
+
+            
+                       ---TYPICAL SCREEN---
+            
+            
+            C    R  B  PC   A  X  Y  S  P  NV-BDIZC
+            0014 00 0  030D FF 20 01 FF 30 00110000
+            
+            
+             1F9:C6
+             1FA:42
+             1FB:17
+             1FC:FB    0300: LDX #$20   E:      (2)
+            =1FD:FD=   0302: STX $01    E:      (3)
+             1FE:FB    0304: LDY #$00   E:      (2)
+             1FF:FD    0306: STY $00    E:      (3)
+             100:B3    0308: LDA #$FF   E:      (2)
+             101:FB    030A: STA($00),Y E:2000  (6)
+             102:17    030C: INY        E:      (2)
+             103:26   =030D: BNE $030             =
+             104:17    030F: INC $01
+             105:6B    0311: DEX
+            
+            
+            0000:2000   BP  POINT COUNT TRIG  BROKE
+            2000:FF     1   030F  0000  0001  0000
+            0000:00 @   2   0000  0000  0000  0000
+            0000:00 @   3   0000  0000  0000  0000
+            0000:00 @   4   0000  0000  0000  0000
+            
+
+NOTE: =...= MEANS HIGHLIGHTING
+
+
+DISPLAY #1
+
+IN THE EXAMPLE ABOVE, BUG BYTER IS DISPLAYING THE 6 6502 REGISTERS  AT
+THE TOP OF THE SCREEN. 
+               
+                         EXAMPLE
+                         -------
+               
+               PC  PROGRAM COUNTER         030D
+               A   A-REGISTER               FF
+               X   X-REGISTER               20
+               Y   Y-REGISTER               01
+               S   STACK POINTER            FF
+               P   PROCESSOR STATUS         30
+
+
+IN  THE UPPER RIGHT OF THE SCREEN, THE PROCESSOR STATUS (P) IS DIVIDED
+INFO INDIVIDUAL BITS:  NV-BDIZC
+
+                                         EXAMPLE
+                                         -------
+               
+               N   NEGATIVE BIT             0
+               V   OVERFLOW BIT             0
+               -   UNUSED                   1
+               B   BREAK BIT                1
+               D   DECIMAL BIT              0
+               I   INTERRUPT BIT            0
+               Z   ZERO BIT                 0
+               C   CARRY BIT                0
+
+
+DISPLAY #2
+----------
+
+THE HIGHLIGHTED ROW (=..= IN THE EXAMPLE HERE)  IS  THE  CURRENT  ONE.
+NOTICE THE FF IN THE STACK REGISTER IN DISPLAY #1. 
+
+SETTING THE STACK POINTS: 
+
+    S=E0 <CR>
+
+THIS CAUSES 2 CHANGES: 
+
+1. THE COMMAND LINE WILL DISPLAY "S=E0" AND THEN CLEAR
+   AFTER <CR> IS PRESSED.
+
+2. THE STACK POINTER IN DISPLAY #1 WOULD CHANGE TO E0. (UNDER "S")
+
+3. THE STACK WINDOW WILL SHOW NEW POSITION.
+
+THE  STACK  POINTER IN DISPLAY 1 WOULD SHOW E0, WHILE THE WINDOW WOULD
+SHOW $1E0.  THE 6502 STACK IS IN PAGE 1 THEREFORE,  SETTING  STACK  TO
+$1E0 IS THE SAME AS $E0. 
+
+
+DISPLAY #3
+
+TO  THE RIGHT OF THE STACK WINDOW, BUG BYTER DISPLAYS THE PROGRAM CODE
+IN THIS FORM: 
+
+ADDRESS:OPCODE OPERAND OPTION
+
+TYPE:  FCA8L <CR>
+
+THE DISPLAY #3 WILL NOW SHOW A LIST FROM FCA8 UP. 
+
+EXAMPLE:  FCAC:  BNE $FCAAA D0 FC
+
+   FCAC:  HEX ADDRESS
+   BNE:  6502 OPCODE
+   $FCAA: OPERAND
+   D0 FC: ACTUAL BYTES IN MEMORY
+
+
+
+DISPLAY #4
+
+CONTIANS USER-SELECTED BYES OR BYTE PAIRS
+
+
+DISPLAYS #5 AND #6
+
+#5: USER DEFINED BREAKPOINTS
+
+#6: BUG BYTER COMMAND LINE
+
+
+SET
+
+DISPLAYS #1 AND #6 ARE FIXED.  THE "SET" COMMAND ALLOW  YOU  TO  ALTER
+THE SPACE ALLOCATED TO THE OTHER DISPLAYS. 
+
+TYPE:  SET <CR>
+
+1. USE <- AND -> TO INCREASE/DECREASE NUMBER OF BREAKPOINTS.
+   HIT <CR> WHEN DONE.
+
+2. USE ARROWS TO MODE THE NEXT-INSTRUCTION-TO-BE-EXECUTED INVERSE BAR.
+   PRESS <CR> WHEN DONE.
+
+3. USE ARROWS TO ADJUST THE LINES AVAILABLE FOR THE STACK.
+
+4. USE THE ARROWS TO POSITION THE STACK POINTER.  <CR> EXITS
+
+SET COMMAND DOES NOT AFFECT MEMORY LOCATIONS. 
+
+
+COMMANDS
+               
+               <CR>        ACCEPT USER INPUT
+               
+               <-          MOVE CURSOR LEFT
+               
+               ->          MOVE CURSOR RIGHT
+               
+               ^X          DELETE COMMAND LINE
+               
+               ^B          CURSOR TO BEGINNING OF LINE
+               
+               ^N          CURSOR TO END OF LINE
+               
+               ^D          DELETE ONE CHARACTER
+               
+               ^I          INSERT MODE
+               
+               ^C          ACCEPT NEXT KEY VERBATIM
+               
+               <SPACE>     IF <SPACE> IS FIRST COMMAND ON A LINE, BUG
+                           BYTER WILL NEXT (??) AVAILABLE MEMORY ADDRESS.
+
+COMMAND: ASM
+------------
+
+TYPE:         ASM <CR>
+
+BUG BYTER WILL CLEAR DISASSEMBLY LINE AND OUT YOU IN ASM MODE.
+
+TYPE:         300:LDA C000 <CR>
+              <SPACE> BPL <CR>
+
+COMMAND: L (DISASSEMBLY)
+------------------------
+
+L WILL JUST LIST FROM A LOCATION UP.
+
+TYPE:      FAC8L
+
+COMMAND: M (MONITOR)
+--------------------
+
+ENTERS APPLE MONITOR
+
+^Y RETURN TO BUG BYTER
+
+COMMAND: DOS
+------------
+
+ENTER A PERIOD FIRST.
+
+TYPE:    .CATALOG
+         ^
+
+DOS ERROR->BASIC  (CALL 1016 RETURNS TO BUG BYTER)
+
+
+
+COMMAND: REGISTER REFERENCE
+---------------------------
+
+TO ASSIGN A REGISTER, JUST
+
+TYPE:        A=8D <CR>
+
+
+COMMAMD: SCREEN DISPLAY
+-----------------------
+
+OFF:  TURN OFF DISPLAY #1-#5
+
+ON:   TURNS ON WHEN OFF TURNED OFF
+
+
+BASE CONVERSION
+---------------
+
+HEX->DEC         $C3=  <CR>
+                    OR
+                 78D=  <CR>
+
+DEC->HEX         +43=  <CR>
+                    OR
+              -15119=  <CR>
+
+
+
+QUITTING
+--------
+
+    Q <CR>  WILL QUIT TO BASIC+DOS
+
+
+MEMORY REFERENCE
+----------------
+
+1. USE MEM DISPLAY TO DISPLAY 184 BYTES
+
+2. USE MEM COMMAND TO EDIT DISPLAY #4
+
+
+MEM COMMAND
+-----------
+
+TYPE:       MEM <CR>
+
+-ARROWS MOVE TO NEXT/PREVIOUS ADDRESS
+-USE "H" TO DISPLAY CONTENTS OF ADDRESS AND ADDRESS+1 IN HEX/ASCII
+-USE "P" TO DISPLAY CONTENTS OF ADDRESS AND ADDRESS+1 AS A POINTER
+
+<ESC> QUITS
+
+
+MEMORY DISPLAY PAGE
+-------------------
+
+TO DISPLAY A SCREEN WORTH OF HEX/ASCII
+TYPE:        AA60: <CR>
+
+THIS CAUSES BUG BYTER TO SWITCH TO A MEMORY DISPLAY WITH $AA60
+AS ADDRESS IN UPPER LEFT CORNER.
+
+APPLE ASCII:
+
+    00-3F   INVERSE
+    40-7F   FLASHING
+    80-FF   NORMAL
+
+<ESC> QUITS
+
+
+
+TRACE/SINGLE STEP MODE
+----------------------
+
+DURING THE SINGLE STEP/TRACE MODE, ONE MAY SELECT ONE OF THE FOLLOWING
+TO BE DISPLAYED ON THE RIGHT HAND SIDE OF THE SCREEN:
+
+    COMMAND              DISPLAY
+    ---------------------------------
+    O=A                  6502 ACCUM
+    O=X                  6502 X-REG
+    O=Y                  6502 Y-REG
+    O=S                  STACK-PNTR
+    O=P                  PROCESSOR STAT
+    O=B                  INSTRUCTION
+                           BYTES
+    O=E                  EFFECTIVE
+                          ADRS, BRANCH-
+                          ES, CYCLES
+
+
+O=E  IS  THE  MOST  POWERFUL  OF  THE  ABOVE COMMANDS.  USING THE FOUR
+METHODS  OF  ADDRESSING,  INDEXED,  INDIRECT,  INDEXED  INDIRECT,  AND
+INDIRECT   INDEXED,   THE   DISPLAY   WILL  SHOW  THE  BYTES  ACTUALLY
+REFERENCED. 
+
+HERE ARE SOME ADDITIONAL COMMANDS USABLE IN THIS MODE: 
+
+COMMAND          RESULT
+---------------------------------------
+<SPACE>          STEP ONE OPCODE
+<CR>             CONTINUOUS TRACE
+<ESC>            RETURN TO NORMAL BB
+
+R                TRACE UNTIL RTS
+
+->               SKIP NEXT INSTRUCTION
+
+C                CLEAR CYCLE COUNTER
+
+P                USE PADDLE (0) TO ADJUST THE TRACE RATE
+K                USE KEYBOARD TO ADJUST
+
+Q                SOUND OFF
+S                SOUND ON
+
+1                DISPLAY PAGE 1
+2                DISPLAY PAGE 2
+
+T                DISPLAY TEXT
+L                DISPLAY LO-RES
+H                DISPLAY HI-RES
+
+F                FULL SCREEN GRAPHICS
+M                MIXED GRAPHICS
+
+
+
+RATE ADJUSTMENT:
+
+1. USE "R=#" FOR RATE
+
+2. PRESS "P" OR "K" TO ADJUST MODE
+
+3. TO SPEED UP TRACING, TYPE "OFF" TO TURN OFF MASTER DISPLAY
+
+
+BREAKPOINTS
+-----------
+
+POINT- USER DEFINED BREAK POINT
+
+COUNT- # OF TIMES POINT HAS BEEN FOUND
+
+TRIG- USER DEFINED COUNT BEFORE BREAKING
+
+BROKE- # OF TIMES "TRIGGED"
+
+TO ENTER BREAKPOINT:
+
+TYPE "BP" FOLLOWED BY BREAKPOINT ROW ADDRESS
+
+     BP1  <CR>
+
+BUG BYTER WILL MOCE CURSOR TO FIRST 0 IN POINT  FIELD.   ENTER  A  HEX
+NUMBER  FOR ADDRESS OF BREAK POINT.  USE THE ARROWS TO MOVE FROM FIELD
+TO FIELD.  IF TRIG=0, THE BREAKPOINT IS IGNORED.  WHEN COUNT=TRIG, BUG
+BYTER WILL STOP.  TYPING "T" OR "S"  WILL  RETURN  TO  TRACE.   TYPING
+"CLR" WILL CLEAR BREAKPOINT. 
+
+TRANSPARENT BREAKPOINTS
+-----------------------
+
+THE   USUAL   BUG   BYTER  METHOD  OF  BREAKPOINTING  IS  TRANSPARENT,
+INTERPRATIVE.  TYPING "OUT" WILL FORCE BUG BYTER  TO  THE  TRANSPARENT
+MODE.  THIS WILL MEAN THAT 6502 BREAKS (00) WILL HAVE NO EFFECT. 
+
+REAL BREAKPOINTS
+----------------
+
+TYPE "IN" TO GET TO REAL BREAKPOINTS.  YOU CAN NOT EDIT BREAKPOINTS IN
+THIS MODE. 
+
+SOFT SWITCHES
+-------------
+
+LOC    ABSOLUTE  LOC  FUNCTION
+----------------------------- (S=START)
+S+3    7C03      EXECUTE UNDEFINED OPS
+S+4    7C04      USE PAD(0) FOR TRACE
+S+5    7C05      USE PAD(0) FOR RATE
+S+6    7C06      TRACE KEYBOARD POLLING
+S+7    7C07      SOUND
+S+8,9  7C08-9    CYCLE COUNTER
+
+
+
+COMMAND LINE EDITOR
+-------------------
+<CR>     ENTER LINE
+<SPACE>  DISPLAY NEXT ADDRESS
+<-       CURSOR LEFT
+->       CURSOR RIGHT
+^B       CURSOR TO BEGINNING OF LINE
+^C       ACCEPT NEXT KEY VERBATIM
+^D       DELETE CHARACTER
+^I       INSERT CHARACTER MODE
+^N       CURSOR TO END OF COMMAND LINE
+^X       DELETE COMMAND LINE
+
+COMMANDS (GENERAL)
+------------------
+
+ASM      ASSEMBLE
+ADR L    DISASSEMBLE STARTING AT "L"
+M        ENTER MONITOR (^Y RETURNS)
+
+SET      CUSTOMIZE MASTER DISPLAY:
+            ->  WINDOW DOWN
+            <-  WINDOW UP
+            <CR>FIXES WINDOW
+
+ON       MASTER DISPLAY ON
+OFF      MASTER DISPLAY OFF
++DEC=    CONVERT POSITIVE DEC->HEX
+-DEC=    CONVERT NEGATIVE DEC->HEX
+
+VALUE=   HEX->DEC
+$VALUE=  HEX->DEC
+
+V        DISPLAY COPYRIGHT
+
+Q        QUIT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

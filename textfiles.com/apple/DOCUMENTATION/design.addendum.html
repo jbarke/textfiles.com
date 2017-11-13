@@ -1,0 +1,261 @@
+Eamon Dungeon Designer 6.0 Differences
+
+The Newest version of the Eamon Dungeon Design System has the following new
+features:
+
+        1. New types of artifacts are available. The old versions had only
+treasures (of fixed value and variable value) and weapons. (Standard and odd.)
+The new version allows all sorts of new types of artifacts with the code
+already installed to handle them. In addition, you may create your own types of
+artifacts.
+
+        2. The Dungeon Edit program has been completely re-written to allow
+easier entry of data. The new program now allows default data for all fields
+for rooms, artifacts and monsters. This makes it faster to key in data when you
+want most fields to be the default. You can also change the defaults within the
+program. A list of improvements is given here:
+
+        a. Defaults for fields
+        b. Defaults can be changed
+        c. Field labels may be changed
+        d. New fields may be added to rooms, artifacts or monster definitions.
+        e. Fields definitions may be saved to and reloaded from disk
+        f. New types of artifacts may be added dynamically
+        g. Artifact formats may be defined or redefined
+
+        3. The dungeon list program has been modified to accept version 6.0
+data and describe it during the list process.
+
+        4. The base program has been enhanced to allow the new artifact types
+including the commands to activate the new artifacts. Some previous bugs have
+been corrected.
+
+        5. The base program has had a read effects routine added that can be
+performed by the designer to read and print effects.
+
+        6. Embedded artifacts have been installed. Embedded artifacts are those
+that are not listed as being in the room, although they can be acted upon by
+the adventurer. For example you could code the description of a room to
+describe a large statue in the room and then create an artifact for the statue.
+The description of the statue will not be listed when the adventurer enters the
+room. This makes it easier to hide things from the adventurer.
+
+        7. Locked doors and gates may be set up with no special programming.
+Simply put the door or gate in the room and set up the data for it. The gates
+or doors will automatically block the way until they are unlocked or broken
+down. (yes, they can be attacked and broken with sufficient power.)
+
+        8. Bound monsters can be simulated automatically. The programming
+required is already set up. Simply code the data required.
+
+        9. Secret Passages are handled automatically.
+
+On the following pages are some additional details regarding these new features
+and how to use them.
+
+ARTIFACTS
+
+The new types of artifacts that have been added are listed below:
+
+        Old                     New                     Format Ptr
+
+        0       Gold            0       Gold                    0
+
+        1       Treasure        1       Treasure                0
+
+        2       Weapon          2       Weapon                  1
+
+        3       Odd Weapon      3       Magic Weapon            1
+
+                                4       Container               2
+
+                                5       Light                   3
+
+                                6       Healing                 4
+
+                                7       Readable                5
+
+                                8       Door/Gate               6
+
+                                9       Key                     7
+
+                               10       Bound Monster           8
+
+
+Because these new artifact types must supply the base program with additional
+information, the designer will have to code this additional information when
+setting up the adventure. To assis the designer in this task, there have been
+groups of labels and default data set up for each general purpose. These are
+called formats. There are eight different formats available as the standard
+ones. In addition, the designer may set up his own formats using functions in
+the dungeon edit program. Each artifact type has a format pointer that tells
+the program which format will be used for fields 5 thru 8. The format pointers
+for a particular artifact type may also be changed by the designer, although
+this is probably not ever necessary. The formats available are:
+
+Format 1                Format 2                Format 3
+
+Fld 5 = Weap. Type      Fld 5 = Key #           Fld 5 = Counter
+Fld 6 = Compl.          Fld 6 = Strength
+Fld 7 = Dice
+Fld 8 = Sides
+
+
+Format 4                Format 5                Format 6
+
+Fld 5 = Chances         Fld 5 = 1st Eff.        Fld 5 = Room#
+Fld 6 = Heal Amt        Fld 6 = #Eff.           Fld 6 = Key#
+Fld 7 = Nbr Uses        Fld 7 = Read Flag       Fld 7 = Strength
+
+
+Format 7                Format 8
+
+none                    Fld 5 = Monster#
+                        Fld 6 = Key#
+                        Fld 7 = Guard#
+                        Fld 8 = Att.Flag
+
+The new artifacts are explained in some detail below:
+
+Magic Weapons - These weapons are locally magical. That is, they are magic
+weapons within the scope of the current adventure. If they are taken out of the
+adventure, they will revert to standard weapons. While they are magic, they
+cannot break except by magical means. This is the extent of their natural magic
+power. If you want other magic effects, you will have to program them.
+
+Container - This type of artifact can contain other artifacts. The artifact may
+be opened at which time, the program searches the artifact table looking for
+any artifact having a room number of 100 plus the number of the arifact being
+opened. Any artifact meeting this criteria is moved into the room by the
+program and the message YOU FOUND SOMETHING. is printed.
+
+Light - When rooms are coded in version 6.0, a code for light is included. If
+the room is too dark to see in without artificial light, you code a 0. If there
+is a normal amount of light, a 1 is coded. A light artifact is lit using the
+LIGHT command. This will activate the light so that all rooms entered are lit
+up. A light will expire after awhile. There is a field coded to indicate how
+long a light will last. When this number is exceeded, the light will go out
+never to work again. (There is currently no way to reactivate a light without
+special programming.)
+
+Healing - This type of artifact will heal the user by the amount specified at
+the time the artifact was set up. It may be used only a limited number of times
+before being exhausted.
+
+Readable - This type of artifact will allow the user to read it. The program
+will automatically read the effects from the effects portion of the EAMON.DESC
+file. These effects must be added by the designer and the pointers established
+according to the prompts given by the readable artifact format.
+
+Door - A door has a 'room into' and a strength factor. The 'room into' code is
+very important, since it takes the place of a room connect code where the door
+is located. The strength factor is how strong the door is. Doors may be broken
+down by beating on them.
+
+Key - A key artifact is used for opening containers, doors or freeing bound
+monsters. The artifacts they are used on will indicate which key works on it,
+so no additional data is needed currently. Keys point to format 7 which
+contains no useful prompts. This may be changed if you wish, however.
+
+Bound Monster - This type of artifact is used to simulate a bound monster. The
+key number needed to free the bound person, the monster guarding the bound
+monster and a pointer to the monster being bound makes up the data fields of
+this artifact type.
+
+Location of Artifacts
+
+Version 6.0 also allows artifacts to be in special places. Artifacts are
+normally coded with room numbers ranging from 1 to the number of rooms in a
+dungeon. There are now additional codes recognized by the program.
+
+        +100 .... Inside a container artifact
+        +200 .... Embedded in a room description
+        +300 .... Hidden in a room
+
+For example, if you want to place an artifact inside artifact #9, code it's
+room code as 109. If you want an artifact to be in room number 17, but not be
+listed as a separate artifact, code it's room code as 217. If you want an
+artifact to be hidden in room number 25 (so you have to look to find it), code
+it's room code as 325.
+
+The dungeon edit program will also allow you to build your own artifact types,
+or modify existing artifact types, formats, or even monster or room data. This
+was done to prevent the need for a custom edit program when special fields are
+needed by an adventure.
+
+ROOMS
+
+The Eamon.Rooms file contains the rooms that you can move into. This file now
+has the ability to contain new codes that permit the ability to have automatic
+secret passages, and locked doors. Before this was installed, you had to
+program these manually for every adventure you wrote.
+
+Room numbers from 1 to 99 are normal.
+
+Room number -99 means exit to the Main Hall.
+
+Room numbers less than 0 and greater than -99 are secret passages. The absolute
+value of the number is used for the pointer to the room when the passage is
+discovered. Passages are discovered by using the LOOK command. If you want them
+discovered by other means, you will still have to program it.
+
+Room numbers greater than 100 are locked doors. The difference between 100 and
+the room code is used to point to an artifact. This artifact must then be a
+door or gate. The artifact will specify the room to be moved into, the key
+number, the strength of the door necessary to enter the room.
+
+MONSTERS
+
+Monsters have not changed from previous versions of Eamon, but the ability to
+add fields or modify field labels has been added. This allows you to more
+easily put special programming into your base program when this programming may
+require additional data to be on the Monsters file.
+
+ADDITIONAL ARTIFACT TYPES
+
+Additional artifact types may be added, using the functions in the dungeon
+edit, but these additional artifacts will have to be supported via changes you
+must make to the base program.
+
+Customized fields added or changed from the standard may be difficult to
+remember and duplicate when you go back to edit a dungeon a second or third
+time. For this reason, the ability to be able to save and restore these
+parameters to disk has been installed. The data that is saved off for
+parameters is listed below.
+
+You should decide before starting your adventure what changes will be made (if
+any) to the standard layouts, since these changes must be made before any
+fields are defined. If this is not done, you will end up with monsters or
+artifacts with the incorrect layyout. If you are not adding any fields, it will
+not make any difference, but if you are the program could bomb while trying to
+read data from the disk that does not exist.
+
+The file that stores the parameters is sequential and contains the following
+data.
+
+AF - # fields in an artifact (not counting last 4 variable fields)
+Field Name 1
+Field Name 2
+    ...    af
+
+Default 1
+Default 2
+  ...   af
+
+NF - # of Formats
+Format Label $ (F,1)
+Format Label $ (F,2)
+Format Label $ (F,3)
+Format Label $ (F,4)
+Default (F,1)
+Default (F,2)
+...
+
+MF - #monster fields
+Monster Label 1
+...           mf
+
+Default Monster 1
+...             mf
+
+---End of Parameters File---

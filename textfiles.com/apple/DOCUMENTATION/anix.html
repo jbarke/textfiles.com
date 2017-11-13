@@ -1,0 +1,265 @@
+             _______________________________
+            |                               |
+            |         ANIX v2.2a            |
+            |  (c) 1985-87  Randall Hyde    |
+            |  all rights reserved          |
+            |_______________________________|
+ 
+ 
+ This program is offered free of charge.  It is not, however, public
+ domain.  There is a distinction!
+ 
+ Following are some VERY brief notes on the ANIX operating system.  This
+ version of ANIX is a shell for ProDOS/8 (or ProDOS 1.x.1 etc), and runs
+ on a II+, //e or IIgs.  A nicely printed manual with a disk is available
+ for $25.00 (printing and mailing costs) from
+ 
+          HAL Labs
+          18942 Dallas
+          Perris, CA 92370
+ 
+ The manual is 200 pages+, and the disk has source code for many of the
+ extrinsics.  If attention warrants it, I can post the manual; however, it
+ would take hours to download, and cost you lots.  Hobbe's choice.  If you
+ want to print your own manual, it is available on disk for $7.50 (one
+ disk with ANIX, extrinsics and manual).
+ 
+ 
+ Now, on to the good stuff!
+ 
+ ----------------------------------------------------------------------
+ 
+ A Brief History:
+ 
+ The original ANIX (version 1.0) was a shell for DOS 3.3, written by
+ Randall Hyde to support his Lazer Pascal and other projects.  The name
+ is derived from
+                      Apple  uNIX
+ which is not to say that it is UNIX.  It supported I/O redirection, EXEC
+ files with parameters, user-written extrinsics (utilities) etc.
+ 
+ The current ANIX v2.2 is a shell for ProDOS/8, also written by Randall
+ Hyde (and modified by yours truly) mainly to provide an environment for
+ the LISA v3.1 assembler.  It also supports I/O redirection
+ 
+      =PRINT FILE >OUTFILE
+      =PRINT FILE >.P                 {printer}
+      =PRINT <.C  >FILE               {from COM to a file}
+ 
+ (PRINT is an extrinsic used to print text files).
+ 
+ ANIX v2.x has replaceable console drivers, so it works the same with
+       Apple 40 column
+       Apple 80 column
+       Videx and Ultraterm  80x24, 80x48, 128x24
+       Wizard 80 column
+ It has a fairly complete cursor editing package (insert/delete char,
+ insert/delete line, clear EOLN/EOP, etc) that is consistent across any
+ video device that has a console driver written for it
+ 
+ -----------------------------------------------------------------------
+ 
+ To use ANIX:
+ 
+ Make a disk with
+ 
+          PRODOS                       {your version of ProDOS}
+          ANIX.SYSTEM                  {the ANIX system}
+          EXTRINSICS                   {make a directory for extrinsics}
+              PRINT                        {put extrinsics in here}
+              COPY
+              INIT
+              etc etc
+ 
+ ANIX is a command-line processor, so anything you type will first be
+ processed internally; if it is an intrinsic (internal command) like
+        CATALOG      {or CAT}
+        PREFIX
+        DELETE
+        ONLINE
+        SAVE
+ etc, then ANIX will execute the command and return to the prompt.
+ Otherwise, it will look for an extrinsic (external command) on the disk.
+ It first looks in the current directory, then it looks in the directory
+ called EXTRINSICS on the root of the current volume.
+ 
+ 
+ -----------------------------------------------------------------------
+ 
+ Intrinsic commands
+ 
+   Notes:  all char output is to standard out (may be redirected)
+           all char input is from standard in (may be redirected)
+           all numbers (addresses, etc) are in HEX
+ 
+ BRK
+    transfer control to Apple monitor
+       note: on IIgs, do a "3<ctrlP>" to reset video hooks
+       to return to ANIX, do A003G (in bank 00!)
+ 
+ CATALOG <pathname>
+ 
+    do catalog of directory <pathname>, or (if <pathname> is omitted),
+    of current prefixed directory
+ 
+ CLOSE
+ 
+    will close any open files (if an error left some open)
+ 
+ DATE
+ 
+    prints the current date
+ 
+ DELETE <pathname>
+ 
+    delete <pathname>.  Currently, will not delete a non-empty directory
+ 
+ EXEC <pathname>
+ 
+    execute text commands from the text file <pathname>.  Continues until
+    error or end of file
+ 
+ LOAD <pathanme> <addr>
+ 
+    loads <pathname> at <addr>.  If <addr> is omitted, will load file at
+    address in AUXTYPE (usually the save address).
+ 
+ LOCK <switches> <pathname>
+ 
+    sets various lock attributes for <pathname>
+       =LOCK -rw MYFILE                    {lock read and write access}
+       =LOCK MYFILE                        {lock all except read access}
+ 
+ ONLINE
+ 
+    lists all volumes online, and slots where they are located
+ 
+ PREFIX <pathanme>
+ 
+    sets system prefix to <pathname> or (if blank) shows current prefix
+ 
+ RENAME <oldpath> <newpath>
+ 
+    rename <oldpath> to be <newpath>.  Will not move file between
+    subdirectories.
+ 
+ RUN <addr>
+ 
+    will do a JSR to the given address.
+ 
+ SAVE <pathname> <addr> <len>
+ 
+    save file on disk from memory, starting with <addr>, and file length
+    <len>.
+ 
+ SYSSAVE <pathname> <addr> <len>
+ 
+    similar, except that instead of making a BIN file, it makes a SYS
+    file
+ 
+ TIME
+ 
+    prints the current time
+ 
+ UNLOCK
+ 
+    unlock the specified file attributes.  See LOCK.
+ 
+ 
+ -----------------------------------------------------------------------
+ 
+ ANIX supports the idea of logical devices.  All disk devices are named
+ 
+             .dN
+ 
+ By default
+ 
+     .d1    disk in slot 6, drive 1
+     .d2      "   " slot 6, drive 2
+     .d3            slot 5, drive 1
+     .d4            slot 5, drive 2
+     .d5            slot 7, drive 1
+     .d6            slot 7, drive 2
+     .d7            slot 2, drive 1
+     .d8            slot 2, drive 2
+ 
+ If you didn't know (or care to know) the name of a disk, you could
+ just say
+ 
+       =CATALOG .d1
+ 
+ to get a catalog of the disk in drive .d1.  The drive convention is
+ supported in all ANIX intrinsics, and extrinsics can use it by calling
+ the routine PARSENAM (which also does all checking for valid ProDOS
+ naming etc).
+ 
+ The printer device is .P
+ The communication device is .C
+ 
+ 
+ -----------------------------------------------------------------------
+ 
+ Extrinsics
+ 
+ 
+ PRINT <switches> <file1> <switches> <file2> ...
+ 
+    will print any number of files to standard out, with many options
+        -P  issue page feed
+        -#  number each line
+        -(n1:n2)  print lines from n1 to n2
+        -[c1:c2]  print columns from c1 to c2
+    refer to ANIX manual (or type in bad input and PRINT will prompt you)
+ 
+ COPY <pathname> <pathname>
+ 
+    will copy a file (or files with wildcard specification)
+    The "=" wildcard will copy all files that match without prompting
+    The "?" wildcard will prompt before each file
+ 
+ INIT drive
+ 
+    Will format a disk in drive specified.
+ 
+ ED
+ 
+     A simple line editor for text files.  Has
+        Insert
+        Delete
+        List
+        Modify
+        LOad
+        SAve
+     Press <ctrl-2> to exit insert mode
+ 
+ PROMF <file>
+ 
+    print contents of OMF file, giving headers, record info, etc
+    very crude so far
+ 
+ FREESPC <drive>
+ 
+    give free space info about a drive
+ 
+ SETUP.ANIX
+ 
+    allow you to edit default ANIX parameters
+ 
+ MAKDIR
+ 
+    create a sub-directory
+ 
+ ADU
+ 
+    a disk block editor
+ 
+ CHANGETYPE <file> <type>
+ 
+    change a file's type.  Specify the type in hex
+ 
+ 
+ ----------------------------------------------------------------------
+ 
+ Any questions may be cheerfully answered.  Send them to HAL.LABS on
+ GEnie, or (better) in an appropriate topic (like the LISA816 topic)
+ in the A2PRO section on GEnie.

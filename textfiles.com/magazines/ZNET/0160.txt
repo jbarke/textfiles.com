@@ -1,0 +1,1130 @@
+          |  ROVAC ZMAGAZINE  |
+          |    Issue  #161    |
+          |   June 13, 1989   |
+          |Copyright 1989, RII|
+          
+                 
+                
+               
+                           
+                            
+                             
+ 
+ 
+ 
+        
+        |This week in ZMagazine|
+        
+ 
+
+
+            Quick DIR 
+                Mat*Rat
+
+   CompuServe New 8-bit Uploads 
+
+   Innovative Concepts Release 
+
+     GEnie New 8-bit Uploads 
+
+   Z*Net Newswire 8-bit Edition 
+               Harold Brewer
+
+                    
+
+
+              
+              |QUICK DIR|
+              
+              
+              |by Mat*Rat|
+              
+
+            Ratware Softworks
+                (c) 1989
+
+
+  
+  |System Requirements:  Atari 8-bit |
+  |computer, 32K memory, 1 disk drive|
+  
+
+How many times have you been in the
+middle of writing a BASIC program and
+needed a directory listing?  One, maybe
+two million?  You could put the file
+away, go to DOS, list a directory, go
+back to BASIC, reload the file, try to
+remember why you left BASIC in the
+first place, and eventually pick up
+where you left off--even more confused
+than before.  Another solution is to
+type the following in immediate mode
+(i.e. type this is one long line of
+BASIC code, without a line number, and
+it will execute immediately):
+
+Figure 1:
+
+CLR:DIM B$(20):O. #1,6,0,-D2:*.*-:FOR
+I=1 TO 64:I. #1,B$:?
+B$:I=I+64*(B$(2,2)>-/- AND
+B$(2,2)<-:-):N. I:END
+
+Now, any time you wish to see a disk
+directory without leaving BASIC, or
+affecting the program you have in
+memory, simply type this line and press
+RETURN, right?  That would be tedious.
+Well, maybe we could make it a BASIC
+line of code in our program.  Then any
+time we need a disk directory, simply
+list it to the screen, edit out the
+line number, and smack RETURN.  Right?
+Well, it isn't quite so simple.
+
+A single logical line of BASIC code,
+when entered, cannot be longer than 3
+screen lines.  Notice that OPEN was
+abbreviated as O., INPUT as I., and
+NEXT as N., in figure 1 above.  Atari
+BASIC's support of abbreviated
+commands is rare among programming
+languages--a very nice feature.  If you
+were to enter this line of code with a
+line number in front of it, then LIST
+the line to display, you would see that
+it comes out to be MORE THAN 3 screen
+lines!  The line, WHEN INPUT FROM THE
+KEYBOARD, must be 3 screen lines or
+less.  Once the abbreviations are
+expanded, it doesn't matter.  With the
+line number 10000, the above line is
+expanded by BASIC as follows:
+
+Figure 2:
+
+10000 CLR :DIM B$(20):OPEN #1,6,0,-D1:
+*.*-:FOR I=1 TO 64:INPUT #1,B$:? B$:I=
+I+64*(B$(2,2)>-/- AND B$(2,2)<-:-):NEX
+T I:END
+
+If we move the cursor up to the 1 in
+10000 and press CONTROL-DELETE, it will
+gobble up the 1, and move everything up
+one position up to and including the
+-X- in the NEXT statement.  However,
+since the rest of the program
+statement, -T I:END- is beyond the
+third logical line, it doesn't get
+moved up.  So, this isn't such a simple
+fix either. However, there IS a better
+way!
+
+Take a look at the program listing
+below, QUICKDIR.BAS.  This program
+creates that cryptic looking segment of
+code shown in figure 1, but on a DISK
+file.  Any time you want a disk
+directory, simply ENTER that file into
+BASIC.  Atari BASIC will treat it as if
+you had typed it from the keyboard,
+and, viola, you have a directory
+listing on the screen.  It won't
+interfere with the BASIC program in
+memory.  It does clear (CLR) any
+DIMensioned strings, and potentially
+will add two new variables to your
+program, I and B$.  These can be
+cleaned up by LISTing your program to
+disk, using NEW, and then ENTERing it
+again.  This is advisable occasionally
+to clean out other variables that may
+have sneaked into the VTOC (variable
+table of contents) due to typographical
+errors, while programming.  If you
+didn't follow that last part, don't
+worry--Quick DIR will have no adverse
+affects on any of your BASIC programs.
+
+When run, the program prompts you for a
+drive number that you would like to
+make a directory command file for.
+Type a number 1 through 8, and press
+RETURN.  Next, a prompt requests that
+you get a disk in drive one ready and
+press RETURN.  If you selected drive 2,
+then file D1:DIR2 will be created.  The
+contents of the file will be identical
+to that displayed in figure 1.  Any
+time you want to see a directory
+listing for drive D2:, simply type:
+
+E.-D:DIR2
+
+and press RETURN, while in BASIC.  You
+may run Quick DIR to create files DIR1
+through DIR8 if you wish, which will
+provide complete access to a directory
+listing of any floppy disk, hard disk,
+or RAMdisk you might use.
+
+                                
+    Quick Dir Program Listing   
+
+
+0 REM SAVE-D:QUICKDIR.BAS-
+10 GRAPHICS 0:DIM FL$(20),DRV$(20),A$(20)
+20 ? -Quick Directory by Mat*Rat-
+30 ? -What drive number shall I-
+40 ? -create a DIR command file-
+50 ? -for -;:TRAP 20:INPUT DR
+60 IF DR<1 OR DR>8 THEN ? -1-8 ONLY-:GOTO 20
+70 FL$=-D1:*.*-:FL$(2,2)=STR$(DR)
+80 DRV$=-D1:DIR1-:DRV$(7,7)=STR$(DR)
+90 ? -Get disk in drive 1 ready-
+100 ? -for new file -;DRV$:? -Press RETURN -;:INPUT A$
+110 TRAP 120:OPEN #1,8,0,DRV$:GOTO 130
+120 ? -Cannot open -;DRV$:? -Error -;PEEK(195):END 
+130 ? #1;-CLR:DIM B$(20):O. #1,6,0,-;
+140 ? #1;CHR$(34);FL$;CHR$(34);
+150 ? #1;-:FOR I=1 TO 64:I. #1,B$:? B$:-;
+160 ? #1;-I=I+64*(B$(2,2)>-;CHR$(34);
+170 ? #1;-/-;CHR$(34);- AND B$(2,2)-;
+180 ? #1;-<-;CHR$(34);-:-;CHR$(34);-):N. I:END-
+190 CLOSE #1
+200 ? :? -Now try this:E.-;CHR$(34);DRV$
+210 ? -to get a complete directory-
+220 ? -listing without affecting-
+230 ? -the program in memory!-
+240 END 
+
+                    
+
+
+     
+     |COMPUSERVE NEW 8-BIT UPLOADS|
+     
+
+Courtesy of CompuServe's Atari8 Library
+
+
+ 
+ Uploader address
+ Filename/type
+          Date    Size    Downloads
+ 
+
+[72377,2045]
+BOBTRM.ARC/binary
+         12-Jun-89 58880 Accesses: 25
+
+    BobTerm version 1.10!  Now supports
+    most ALL modems, including SX,
+    1030, XM301, and MPP, as well as
+    the 850/PR/MIO RS232 interfaces.
+
+
+[73217,2321]
+BBKCP.ARC/binary
+         12-Jun-89 3200   Accesses: 4
+    
+    BBKCP.ARC is a modification to
+    Atari DOS 2.5 which gives you an
+    MS-DOS style Command Processor for
+    most functions.
+
+
+[76004,1764]
+FLASH.TXT
+         12-Jun-89 1610   Accesses: 8
+
+    NEWS FLASH! This text file
+    describes the upcoming - World of
+    Atari Show, to be held in Michigan,
+    June 24 & 25, at the Dearborn Hyatt
+    Regency!
+
+
+[76703,4061]
+WHATIS.ARC/binary
+         08-Jun-89 7808  Accesses: 22
+
+    WHATIS 2.2 recognizes 7 file
+    compression techniques (AlfCrunch,
+    ARC, DiskCom, etc.) and many other
+    file types for various computers -
+    28 types in all!
+
+
+[71777,2140]
+Z160.ARC/binary
+         07-Jun-89 16128 Accesses: 34
+    
+    ZMagazine #160 for 6 June 1989.
+
+
+[71777,430]
+BINDTA.ARC/binary
+         05-Jun-89 2304  Accesses: 14
+
+    BINDTA.ARC (BINDTA.BAS) will
+    convert any binary file to data
+    statements. 
+
+
+[71777,2140]
+Z159.ARC/binary
+         05-Jun-89 11392 Accesses: 26
+    
+    ZMagazine #159 for the week of 30
+    May, 1989.
+
+
+[72750,373]
+PLANE1.DCM/binary
+         05-Jun-89 73088 Accesses: 11
+
+    This is SIDE 1 of the Paper Planes
+    disk.
+
+
+[72750,373]
+PLANE2.DCM/binary
+         05-Jun-89 46720  Accesses: 9
+
+    This is SIDE 2 of the Paper Planes
+    disk.
+
+
+[76004,1764]
+XSALE.ASC
+         05-Jun-89 2304  Accesses: 14
+
+    Now until June 30 1989, with every
+    purchase of our Xormer Cable, we
+    will include the ST Xformer
+    software, FREE!
+
+
+[71777,2140]
+ZBRK5.TXT
+         03-Jun-89 2874  Accesses: 79
+    
+    Exclusive report from CES a new
+    product released from Atari Corp.
+
+
+[72750,2237]
+VBIC.LST/binary
+         03-Jun-89 15232  Accesses: 9
+
+    Assembly listing of VBIC.COM, in
+    text format.
+
+
+[70505,455]
+MAYADA.BAS/binary
+         02-Jun-89 15232  Accesses: 5
+
+    This program performs computations
+    dealing with the calendar system of
+    the ancient Maya.
+
+
+[72377,2045]
+MEMCHK.OBJ/binary
+         02-Jun-89 3584  Accesses: 46
+
+    This is Craig Hamlin's MEMCHECK
+    program.  Tests ALL memory,
+    including OS RAM, and any XE memory
+    banking sequences.
+
+
+[76004,1764]
+ICNEW.TXT
+         02-Jun-89 2304  Accesses: 46
+
+    FLASH! Two new products from I.C.!
+
+
+[76702,375]
+DL10DS.ARC/binary
+        31-May-89 23552  Accesses: 27
+
+    This ARChive contains an
+    alphabetical listing of all files
+    in Library 10 as of May 29, 1989.
+
+
+[76702,375]
+DL14DS.ARC/binary
+        31-May-89 14592  Accesses: 17
+
+    This ARChive contains an
+    alphabetical listing of all files
+    in Library 14 as of May 29, 1989.
+
+
+[76702,375]
+DL17DS.ARC/binary
+        31-May-89 7936   Accesses: 10
+
+    This ARChive contains an
+    alphabetical list of all the files
+    in Library 17 as of May 29, 1989.
+
+
+[76702,375]
+DL2DES.ARC/binary
+        31-May-89 13184  Accesses: 22
+
+    This ARChive contains an
+    alphabetical listing of all files
+    in Library 2 as of May 29, 1989.
+
+
+[76702,375]
+DL3DES.ARC/binary
+        31-May-89 34304  Accesses: 23
+
+    This ARChive contains an
+    alphabetical listing of all files
+    in Library 3 as of May 29, 1989.
+
+
+[76702,375]
+DL4DES.ARC/binary
+        31-May-89 31104  Accesses: 12
+
+    This ARChive contains an
+    alphabetical listing of all files
+    in Library 4 as of May 29, 1989.
+
+
+[76702,375]
+DL5DES.ARC/binary
+        31-May-89 17536  Accesses: 18
+
+    This ARChive contains an
+    alphabetical listing of all files
+    in Library 5 as of May 29,1989.
+
+
+[76702,375]
+DL6DES.ARC/binary
+        31-May-89 18432  Accesses: 12
+
+    This ARChive contains an
+    alphabetical listing of all files
+    in Library 6 as of May 29, 1989.
+
+
+[76702,375]
+DL7DES.ARC/binary
+        31-May-89 8192   Accesses: 11
+
+    This ARChive contains an
+    alphabetical listing of all files
+    in Library 7 as of May 29, 1989.
+
+
+[76702,375]
+DL9DES.ARC/binary
+        31-May-89 8320   Accesses: 15
+
+    This ARChive contains an
+    alphabetical listing of all files
+    in Library 9 as of May 29,1989.
+
+
+[70505,455]
+MEMMAT.BAS/binary
+        29-May-89 10368  Accesses: 20
+
+    Memory Match is my old APX (Atari
+    Program Exchange) game.
+
+
+[71511,415]
+MPPC.COM/binary
+        29-May-89 2518    Accesses: 8
+
+    A revised handler for Mpp modems.
+
+
+[71511,415]
+SXL.COM/binary
+        29-May-89 1664   Accesses: 22
+
+    A revised handler for the SX212
+    modem.
+
+
+[71511,415]
+XMC.COM/binary
+        29-May-89 2746   Accesses: 29
+
+    A revised handler for the
+    XM301/1030 modems.
+
+
+[72460,646]
+LPGRID.ARC/binary
+        29-May-89 4447    Accesses: 6
+
+    LPGRID will print out grids to help
+    you solve logic puzzles.
+
+
+[72750,373]
+CROSTI.ARC/binary 
+        29-May-89 22016  Accesses: 12
+
+    A computerized version of
+    Double-Crostics that eliminates all
+    that erasing!
+
+
+[72750,373]
+SHUTTL.OBJ/binary
+        29-May-89 28800  Accesses: 48
+
+    Binary game challenges you to
+    orbit a star, while protecting the
+    mother ship from asteroids.
+
+
+[74746,3316]
+SUPRLO.BAS/binary
+        29-May-89 2816    Accesses: 3
+
+    THIS IS A SIMULATION OF THE
+    CANADIAN LOTTO 5/40 GAME.
+
+
+[74730,1141]
+DETOKB.COM/binary
+        28-May-89 8192   Accesses: 34
+
+    Detokenizes Atari Basic, Basic XE,
+    and Basic XL saved programs.
+
+
+[72437,1275]
+TALIS.ARC/binary
+        25-May-89 37083 Accesses: 105
+
+    Talisman of the Ancients, a
+    D&D-type role-playing game for the
+    Atari 8-bit, a large and complex
+    commercial-quality game, 100%
+    assembler.
+
+
+[72750,1014]
+ATARIC.ARC/binary
+        24-May-89 20182  Accesses: 19
+
+    THIS IS NOT AN ATARI FILE These are
+    Matt Ratcliff's routines for null
+    modem transfers between the Atari
+    8 - bit and your IBM.
+
+
+[71777,2140]
+Z158.ARC/binary
+        23-May-89 16384  Accesses: 30
+
+    ZMagazine #158 for 23 May, 1989.
+
+
+[73437,1613]
+JACKPO.BAS/binary
+        23-May-89 9345   Accesses: 13
+
+    JACKPOT by David Grossman
+    #73437,1613 JACKPOT is an
+    arcade-type game requiring quick
+    thinking and a little luck.
+
+
+[73437,1613]
+JACKPO.DOC/binary
+        23-May-89 4104   Accesses: 12
+
+    This program contains the
+    instructions on how to play JACKPOT
+    (JACKPO.BAS).
+
+
+[76703,4363]
+POLICY.TXT
+        23-May-89 1207   Accesses: 54
+
+    This file is a copy of the Library
+    announcement which outlines our new
+    Forum policy concerning new file
+    submissions and this NEW UPLOADS
+    Library.
+
+                    
+
+
+  
+  |INNOVATIVE CONCEPTS PRESS RELEASE|
+  
+
+       Innovative Concepts (I.C.)
+            31172 Shawn Drive
+          Warren, MI 48093 USA
+          Phone: (313) 293-0730
+         CompuServe: 76004,1764
+
+
+New Products!
+
+
+We at I.C. are proud to announce the
+availability of 2 NEW products.  They
+both are available NOW.  If you have
+any questions reguarding these, or any
+of our other fine products, please
+contact us.
+
+
+Ramdrive + XL to XE
+
+Finally, a low cost memory upgrade for
+the Atari 800XL computer!  This upgrade
+brings the total RAM to 128K, AND gives
+you 100 percent compatibility with the
+130XE, including the Extended Antic
+Modes!  This allows you to run programs
+like:  AtariWriter+, Basic XE,
+Typesetter, Synfile+, and many others.
+Or you can use the extra 64K of memory
+to set-up a RAMdisk (a FAST simulated
+disk drive) which is EXCELLENT for disk
+maintenance.  Coming soon:  A 128K
+upgrade for the 600XL (yes!).
+
+Installation is required by an
+experienced kit builder (requires some
+soldering).
+
+Price: $59.95 (+ S&H - see below)
+
+
+Happy Doubler
+
+Now, Happy 1050 Drive owners (and
+clones) can program their drive to be
+fully compatible with ICD's U.S.
+Doubler!  This includes formatting
+disks in the U.S. Sector Skew--making
+reads and writes MUCH faster!  Also,
+the software allows you to re-program
+the drive numbers to be D1: thru D8:
+without having to use the drive's
+dip-switches.  This allows you to to
+have up to 8 drives online!
+
+Best of all, since the Happy Doubler is
+completely disk based--no installation
+is required!  And, unlike hardware
+mods, you only have to buy the software
+ONCE, no matter how many Happy 1050s
+you have!
+
+Price: $19.95 (+ S&H - see below)
+
+
+U.S.:  Be sure to include $3.50
+Shipping and Handling with your order.
+COD is available (U.S. only) at $3.00
+extra.
+
+APO/FPO: Include $3.50 with order.
+
+Canada/Mexico: Include $7.00 with
+order.
+
+ALL other countries: Include $10.00
+with order.
+
+
+For more information on our MANY other
+fine products, you can download our
+catalog from our Data Library (15) on
+CompuServe.  Just BROwse for the
+keyword -CATALOG-.
+
+                  
+
+
+       
+       |GENIE NEW 8-BIT UPLOADS|
+       
+
+Courtesy of GEnie's 8-bit Atari Library
+
+
+ 
+ No.  File Name
+      YYMMDD   Bytes   Access Lib
+ 
+
+ 4407 ATARIDOS.ARC
+      890608    3780     51  22
+      Desc: Updated 4.21 ATARIDOS.SYS
+      for SDX
+
+ 1406 Z160.ARC
+      890608   17640     65  13
+      Desc: ZMagazine #160 for 6 June
+      1989
+
+ 4405 PRCONN.TXT
+      890607    1260     10  11
+      Desc: P:R: CONNECTION FOR SALE!
+
+ 4404 ZMAG159.ARC
+      890605   12600     75  13
+      Desc: ZMagazine #159 for May 30,
+      1989
+
+ 4403 BOWL3SRC.ARC
+      890604   86940     16   9
+      Desc: BOWLING ASSISTANT VERS. 3
+      PROGRAMS
+
+ 4402 BOWL3DOC.ARC
+      890604   15120     12   9
+      Desc: BOWLING ASSISTANT VERS.
+      3.01 DOCS
+
+ 4401 ZBREAK5.TXT
+      890603    3780     63  13
+      Desc: Zbreak from CES
+
+ 4400 DOS2ORGANIZER.ARC
+      890603   32760      4   2
+      Desc: FILE ORGANIZR NOW 4 NON DOS
+      3 USERS
+
+ 4399 SUFFERINGFLESH.BAS
+      890603    2520     53   4
+      Desc: A graphics demo, and gag
+
+ 4396 MACHOMAN.GR9
+      890601    8820     12   6
+      Desc: A GRAPHIC 9 PICTURE OF
+      RANDY MACHO M
+
+ 4395 CRAZY5.TXT
+      890531    6300     20  12
+      Desc: CRAZY-EIGHTS #5: The Cat
+      Interface
+
+ 4394 MNPAMS.ARC
+      890530   11340     15   5
+      Desc: Collection of Mamas and
+      Papas AMS
+
+ 4393 WTRSHADE.AMS
+      890529    7560     22   5
+      Desc: -Whiter Shade Of Pale- on
+      AMS II
+
+ 4392 MONDAY.AMS
+      890529    6300     15   5
+      Desc: -Monday Monday- on AMS II
+
+ 4391 ISAWHER.AMS
+      890529    7560     15   5
+      Desc: -I Saw Her Again- on AMS II
+
+ 4390 TWELVE30.AMS
+      890529    8820      8   5
+      Desc: Top 20 hit for The Mamas &
+      The Papas
+
+ 4389 YOURNAME.AMS
+      890529    5040     12   5
+      Desc: -I Call Your Name- on AMS
+      II
+
+ 4388 WEDDING.AMS
+      890529    7560     26   5
+      Desc: -There Is Love- by P.
+      Stookey on AMS
+
+ 4387 WEDGE_12.ARC
+      890529   10080     51  22
+      Desc: v1.2 wedge,3.2 sparta only
+      see desc.
+
+ 4386 AEXCHANG.TXT
+      890528    1260     61  12
+      Desc: Press Release The A
+      Exchange N/L
+
+ 4385 MIO256KTO1MEG.ARC
+      890527    7560     27  11
+      Desc: QUARTER MEG MIO TO 1 MEG
+
+ 4384 RAMXE.ARC
+      890527    5040     49   2
+      Desc: XE-XL BANK SWITCHING
+      UTILITY
+
+ 4383 BBC.ARC
+      890524   31500     13  14
+      Desc: C package for Express! Pro
+
+ 4382 Z158.ARC
+      890524   17640    105  13
+      Desc: ZMagazine #158 for 23 May,
+      1989
+
+ 4380 TURBO816ORDER.TXT
+      890523    3780     73  12
+      Desc: Order Form For 1.1/1.2
+      Turbo-816
+
+ 4379 NEWBB.HLP
+      890522    6300     52   1
+      Desc: New Commands in the
+      Bulletin Board!
+
+ 4378 JMSTWO.ARC
+      890521   26460     28  12
+      Desc: COLLECTION TWO OF 8-BIT
+      ARTICLES
+
+ 4377 JMSONE.ARC
+      890521   25200     27  12
+      Desc: COLLECTION ONE OF 8-BIT
+      ARTICLES
+
+ 4376 ATEBITEBITTERS.APP
+      890521    2520     20  12
+      Desc: File form of AteE Bitters
+      Application
+
+ 4375 ATTEBITERS.TXT
+      890521    2520     25  12
+      Desc: Membership Application
+      under the A
+
+ 4374 EXP8501TO3.ARC
+      890521    3780     11  24
+      Desc: Convert phone lists on 850
+      Express!
+
+ 4373 MESSAGECALC.ARC
+      890521    3780      3  24
+      Desc: New msg base tool for BBS
+      Express!
+
+ 4372 ATARINEWS.ARC
+      890521    5040     11  12
+      Desc: Article on lack of support
+      -reupload
+
+ 4371 GOLFSCORE.ARC
+      890521   25200     15  11
+      Desc: Do golf handicaps on your
+      Atari!
+
+ 4370 VIRTRTC.ARC
+      890521    8820      3  20
+      Desc: RTC of 04/28/88
+      <re-upload>
+
+ 4369 TURBOFM.ARC
+      890521   15120     12  15
+      Desc: Print out GEnie Directories
+
+ 4368 FASTEXT.ARC
+      890521   10080      8  15
+      Desc: Printer Driver for FASTEXT
+      80 prntr
+
+ 4367 DONKEY.ARC
+      890521    5040      3   7
+      Desc: A RamBrandt picture of a
+      Donkey!
+
+ 4366 FMTOSYN.ARC
+      890521    5040      8   9
+      Desc: File Manager 800 -->
+      SynFile
+
+ 4365 COPY.ARC
+      890521    1260     16   2
+      Desc: Copy from disk->printer in
+      BASIC
+
+ 4364 WEREWOLF.ARC
+      890521   11340     24  10
+      Desc: Text Adventure!
+      <re-upload>
+
+ 4363 STREKMOD.ARC
+      890521    1260      3  10
+      Desc: Adds char. set to ST game.
+      reupload
+
+ 4362 FALLOUT.ARC
+      890521    3780     22  10
+      Desc: Catch the Diamonds!
+      <re-upload>
+
+ 4361 BLUEBERRIES.ARC
+      890521    6300     21  10
+      Desc: Two player Maze Game!
+      <re-upload>
+
+ 4360 ZMAGARCF.ARC
+      890521   57960      7  13
+      Desc: A collection of older Zmag
+      issues.
+
+ 4359 ZMAGARCE.ARC
+      890521   36540      6  13
+      Desc: A collection of older Zmag
+      issues.
+
+ 4358 ZMAGARCD.ARC
+      890521   51660      4  13
+      Desc: A collection of older Zmag
+      issues
+
+ 4357 TRIALBYFIRE.OBJ
+      890520    8820     53  23
+      Desc: Arcade game from Feb '89
+      Analog
+
+ 4356 DOS4.ARC
+      890518   66780     45   2
+      Desc: Atari DOS 4.0!!
+
+ 4355 TABLE74.TXT
+      890517    2520     39  23
+      Desc: ANALOG, July '89 Preview
+
+ 4354 ZMAG157.ARC
+      890517   17640    125  13
+      Desc: ZMagazine #157 for 16 May,
+      1989
+
+ 4353 ILBMRD13.ARC
+      890514   11340     44   4
+      Desc: Version 1.3 of ILBM file
+      loader
+
+ 4352 AMATEUR.PIC
+      890514    8820     12   6
+      Desc: AMATEUR RADIO CARTOON
+
+ 4351 ARCITYREV.TXT
+      890514   22680     11  10
+      Desc: Jan/Feb'89 Review/Guide for
+      AR:City
+
+ 4350 ARCITYREV.ARC
+      890514   11340     21  10
+      Desc: Jan/Feb Rev/Guide for AR
+      Players'89
+
+ 4343 T816SURVEY.ASC
+      890513   10080     56  12
+      Desc: Results of Turbo-816 Survey
+
+ 4340 BOBTERM.ARC
+      890512   45360    276   8
+      Desc: * BobTerm 1.02 - Great new
+      Term! *
+
+ 4339 WHATIS.ARC
+      890511    8820     67   2
+      Desc: WHATIS identifies 27 file
+      types
+
+ 4338 CRAZY4.TXT
+      890511    5040     34  12
+      Desc: Crazy-Eights #4: Nursey!
+      Nursey!
+
+ 4336 XL512K.ALF
+      890511   10080     56  11
+      Desc: A 512K RAMdisk for 800XL
+      computers
+
+ 4334 ZMAG156.ARC
+      890509   17640    107  13
+      Desc: ZMagazine #156 for 9 May,
+      1989
+
+ 4333 APACMORE.ARC
+      890507   17640     43   4
+      Desc: Four more APAC mode
+      pictures
+
+ 4332 WAYITIS.AMP
+      890506    7560     23   4
+      Desc: -The Way It Is- in AMP
+      format.
+
+ 4330 TRACKSTACK2.ARC
+      890504   15120     28   2
+      Desc: Load ML programs easily.
+
+ 4329 LINKBBS143H.ARC
+      890503   80640     44  14
+      Desc: Version 1.43H of the
+      AtariLink BBS
+
+ 4328 ZMAG155.ARC
+      890502   20160    125  13
+      Desc: ZMagazine #155 for 2 May,
+      1989
+
+ 4327 FFINDER.ARC
+      890502   66780     10  14
+      Desc: Keyword file search for
+      Express Pro!
+
+ 4326 REPAIRAD.TXT
+      890502    2520     31  11
+      Desc: 8-bit repair ad! new perm.
+      phone #!
+
+ 4325 LINKDOC.ARC
+      890502   39060     47  14
+      Desc: SysOp's Manual for
+      LINK143H.ARC
+
+ 4323 FEBAIM.ARC
+      890501   39060     35  12
+      Desc: Archive of the Feb. issue
+      of AIM
+
+                    
+
+
+     
+     |Z*NET NEWSWIRE 8-BIT EDITION|
+     
+           
+           |by Harold Brewer|
+           
+
+
+  The following was captured from
+     the Repair Shop BBS (801-967-8738)
+     and is an adjunct to a message
+     posted on GEnie's 8-bit bulletin
+     board:
+
+-  
+   |      OLD ITEM NEW FACE!       |
+   |                               |
+   |    K-P Hard Disk Interface    |
+   |                               |
+   |       Price $110.00           |
+   |                               |
+   |    K-Products                 |
+   |    4267 W. Midway Dr.         |
+   |    Salt Lake City, Utah 84120 |
+   |    801-966-1697               |
+   |                               |
+   |    Mastercard/Visa Accepted   |
+   
+
+-May 25, 1989 I bought the rights from
+Supra Corp. to their 8-bit hard disk
+drive interface and will be producing
+them under the name of K-P Hard Disk
+Interface.  I have opened a Base here
+for information relating to them.  It
+is on base 20 and the file sig for it
+is 13. 
+
+-I have the boards being made now--they
+should have been finsihed today but due
+to minor problems the company couldn't
+get them done until Monday...
+
+-There will be two places the interface
+will be available from:  here and the
+Stormbringer BBS in Bangor, Washington.
+Other than these, the interface will not be available through any catalog or
+distributer.
+
+     I haven't been able to contact
+     Supra to confirm this message, but
+     have included it here in the hopes
+     that some ZMagazine readers can
+     help out.
+
+
+
+  Roy Goldman, author of Daisy Dot
+     series, says he continues to work
+     on DDIII.  However, Roy asks for
+     the loan of a Prowriter and Atari
+     XMM801 printer.  These are,
+     apparently, slightly different
+     from the Epson-compatible
+     standard, and Roy needs their loan
+     to make sure Daisy Dot III will
+     consistantly work with these
+     printers.
+
+
+  The exceptional piece of shareware
+     terminal programming called
+     BobTerm has had another version
+     released.  BobTerm v1.10 fixes a
+     problem or two, and incorporates
+     several more features.  One of
+     these is BobTerm's ability, like
+     DeTerm, to load external modules
+     which BobTerm uses in its
+     function.  As of this writing, 
+     two modules are included:  one for
+     the XEP-80, and one for a command
+     line processor when using
+     SpartaDOS 3.2d or X.  I am extatic
+     about the latter.  Those who know
+     me know how I carry on about
+     Amodem.  With this latest BobTerm
+     version, my Amodem may have been
+     overwhelmed.  Thanks, Mr. Puff,
+     for all your efforts.
+
+                    
+
+
+ 
+ |   Rovac Industries, Incorporated  |
+ | P.O. Box 74, Middlesex, NJ 08846  |
+ |          (201) 968-8148           |
+ |Copyright 1989  All Rights Reserved|
+ 
+
+        CompuServe: 71777,2140
+             GEnie: ZMAGAZINE
+            Source: BDG793
+
+     ZMagazine Headquarters BBSes:     
+      Centurian BBS--(314)621-5046
+                     (618)451-0165
+          Chaos BBS--(517)371-1106
+       Shadow Haven--(916)962-2566
+ Stairway to Heaven--(216)784-0574
+            The Pub--(716)826-5733

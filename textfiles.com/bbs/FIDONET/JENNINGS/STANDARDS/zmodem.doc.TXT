@@ -1,0 +1,245 @@
+Tom Jennings
+11 Oct 88
+
+This is how the Zmodem implementation in Fido/FidoNet 12i andç
+FidoTerm version 2 works. 
+
+This is a fully compatible, standard Zmodem implementation, withç
+a few fancy features added. You can, and probably should adjustç
+Zmodems behaviour with the two controls in FIDO.INI (detailsç
+follow), because Zmodem can potentially accept data faster thanç
+your computer can handle. The default settings are quiteç
+conservative, and should work on all machines. 
+
+
+Zmodem Features
+
+This Zmodem implementation has the following basicç
+characteristics: (Skip this if you don't care)
+
+Block sizes:	1024 bytes 	above 2400 baud
+		 512		2400 baud
+		 256		1200 baud and below
+
+Upon four consecutive errors on the same block, the block size isç
+halved; minimum block size is 64 bytes.
+
+Upon forty consecutive blocks with no errors and no line noiseç
+junk characters, block size is doubled; maximum block size isç
+1024 bytes.
+
+
+Zmodem Controls
+
+Zmodem Receive controls allow either full streaming, or fullyç
+acknowledged blocks.
+
+Zmodem Transmit controls allow full streaming, or a slidingç
+window, the window size stated in either Kbytes or number ofç
+blocks.
+
+
+Zmodem Installation
+
+PLEASE: You have to very thoroughly TEST, TEST, TEST after youç
+change Zmodem settings, particularly if you enable full≠
+streaming. Especially at 9600 baud and above, wrong settings canç
+make the difference between breathtaking 1100 byte per secondç
+transfers, and performance worse than the slowest XMODEM. Makeç
+sure your computer can actually handle what you tell Zmodem toç
+do.
+
+Keep in mind the whole point of having high speed modems andç
+protocols was so that you can run as fast as your machine allows;ç
+a modem capable of 1500 characters per second doesn't make yourç
+computer any faster, all it guarentees is that it won't hold youç
+back.
+
+Computers and Modems
+
+I don't have enough experience with Zmodem at this point to makeç
+hard reccomendations. Zmodem performance is limited by the modemç
+and computer (processor and disks) combination you have, plusç
+other factors like multitaskers and LANs. I'll just list someç
+anecdotal stuff:
+
+If you have a very fast modem (US Robotics HST, Telebitç
+Trailblazer, Hayes V-series, etc) and an ordinary pclone low orç
+medium performance computer, you will have to be very carefulç
+with your installation; it is extremely easy to make Zmodemç
+accept data faster than your computer can write it to disk! 
+
+If you have a 300/1200 modem, use full streaming for receive, andç
+a sliding window of 4 to 8 blocks; start with 6. At 1200 baud,ç
+you'd be hard pressed to have Zmodem deliver data to yourç
+computer faster than it could write it to disk. 
+
+If you have funny background software like LANs, multitaskersç
+like DoubleDOS, DESQview, TOPView, etc, certain popup utilities,ç
+funny device drivers, you may find that they slow your computerç
+down, when they are active, and make full streaming failç
+miserably.
+
+High performance machines like fast 286's or 386 boxes canç
+probably run full streaming, probably even with multitaskers.
+
+If you've got a "turbo" pclone with the usual slow as molassesç
+disk drive, and a fast modem, you can probably make fullç
+streaming work if you don't have any funny software running. 
+
+For example, the Fido Software BBS is a cheap "turbo" pcloneç
+running at 8MHz, with an 80 mS disk drive, and a US Robotics HSTç
+locked at 9600 baud (modem type 16). This seems to work justç
+fine, it accepts uploads from a PS/2 and HST locked at 19,200ç
+baud at full speed without a hitch.
+
+But, with Fido set for modem-type 17 (locked at 19,200) insteadç
+of modem-type 16 (locked at 9600) it fails miserably. Take thisç
+as a hint as to what you're getting into.
+
+HINT: Always use a sliding window, even if it's huge, and huge isç
+not better than small. Start with a tiny window, make it slightlyç
+larger, and when an increase in window size doesn't affectç
+performance, use the next size smaller.
+
+All that a large window size will do for you is make for TERRIBLEç
+ERROR RECOVERY!!! Don't overdo it!
+
+HINT: Don't look at the Senders modem activity lights whenç
+adjusting window size; look only at the Receivers lights. Theç
+senders activity can be misleading; for example, the US Roboticsç
+HST has a 32K byte internal buffer, so Zmodem fills it quicklyç
+then sits and waits for window synchronization; don't let thisç
+fool you into thinking you could make it faster, you can't. Dataç
+can only flow out of the modem into the phone line as fast as itç
+goes, all that increasing the window size will do is make errorç
+recovery slower, and will slow down the transfer incredibly.
+
+
+Modem Installation
+
+Zmodem makes modem installation critical if you have a "9600ç
+baud" modem. Most of these modems use a "locked baud rate"ç
+between the modem and computer; what this means is thatç
+regardless of the speed that your BBS modem connects to a callerç
+or other BBS, the computer and modem communicate at a fixed baudç
+rate, usually 9600 or 19,200 baud. This is done for performanceç
+reasons, plus the related fact that "9600 baud" modems don't workç
+exactly the same as 2400 and below modems, and there is thisç
+"hardware handshake" junk that goes on between the modem andç
+computer so that they can avoid losing data due to the high dataç
+rate.
+
+9600 baud is quick stuff; about 960 characters a second, and atç
+one interrupt per character the poor processor is hard pressed toç
+keep up with the data flow. Slow machines lose data and get lotsç
+of errors; fast ones make it.
+
+If you've got a machine less than 8MHz, especially if it's anç
+8088, use the variable rate modem type or locked at 9600. Lockedç
+at 19,200 worked OK with Xmodem, because the blocks were soç
+small, just as the computer was about to lose it the data stoppedç
+coming in and it caught up; with Zmodem it won't get the chance.
+
+
+Zmodem Controls
+
+The receive controls affect only how your Fido/FidoNet or FTç
+program receives files; if someone else calls in to downloadç
+files, Zmodem will go as fast as their Zmodem tells Fido or FT toç
+go. (They may have done something like this on their end asç
+well.)
+
+---------------- RECEIVE: FULL STREAMING ----------------
+
+FT:		0/D
+Fido: 		zm-rx-type 0
+
+When receiving file(s), tells the sending program that it canç
+accept data at maximum possible data rate, ie. full streaming.ç
+This is meant for reasonably high performance machines that canç
+accept data at "high speed", whatever that means to you. It willç
+probably get lots of errors if you have a multitasker running, orç
+have really noisy phone lines, or a slow machine, etc. 
+
+
+---------------- RECEIVE: FULLY ACK'ED ----------------
+
+FT:		1/D
+Fido:		zm-rx-type 1
+
+When receiving files, every block will be acknowledged. Forç
+sending, Fido/FT will do whatever the receiver says, of course.ç
+If for instance your 4.77MHz pclone with an 80 mS drive Fido isç
+running under DoubleDOS, and a caller calls in with a 20MHz 386,ç
+and downloads a file to a RAMdisk, Fido will only send the dataç
+as fast as it possibly can; if that same hardware hog were toç
+upload however, Fido would still insist on ACKing every block.
+
+Note that regardless of the senders hardware, you would be hardç
+pressed to overrun even a lowly 4.77MHz Fido at 2400 baud orç
+below. (Well, maybe at 2400 ... you'll have to try it.) Noç
+processor in the world can push more data through a slow modem.
+
+
+
+------------ TRANSMIT: VARIABLE SLIDING WINDOW ------------
+
+FT:		<blocks>/U		1 - 64
+Fido:		zm-tx-type <blocks>	1 - 64
+
+This is the preferred method of defining a sliding window. Whenç
+sending files, and the receiver says it can accept full streamingç
+Fido/FT will send data in full streaming mode, as long as itç
+receives acknowledges from the receiver every so many <blocks>.ç
+The receiver sends occasional acknowledges, and the sender checksç
+for them, without pausing the data flow. If the sender doesn'tç
+see an acknowledge it will stop and wait for one.
+
+In most cases, this has all the speed of full streaming, withç
+much improved error recovery. The slight penalty is the reverseç
+channel does get used, which could slow some > 2400 modems down.ç
+Certainly at 2400 and under there seems to be no penalty at all.ç
+This will be the default mode for Fido and FT, I think.
+
+Since the window size is stated in blocks, the size of the windowç
+depends on the baud rate and error rate; if many errors occur,ç
+Zmodem shrinks the block size, and hence the window shrinks too;ç
+if the error rate is exceptionally good, the block size increasesç
+as Zmodem increases block size. Higher baud rates start withç
+larger blocks.
+
+Window size is:
+
+	window size = <blocks> * block size
+
+
+I'd recommend starting with <blocks> at 6, which works out to beç
+a 1.5K byte window at 300 and 1200 baud, 3K at 2400, and 6K atç
+9600 and beyond.
+
+HINT: Don't look at the Senders modem activity lights whenç
+adjusting window size; look only at the Receivers lights. Theç
+senders activity can be misleading; for example, the US Roboticsç
+HST has a 32K byte internal buffer, so Zmodem fills it quicklyç
+then sits and waits for window synchronization; don't let thisç
+fool you into thinking you could make it faster, you can't. Dataç
+can only flow out of the modem into the phone line as fast as itç
+goes, all that increasing the window size will do is make errorç
+recovery slower, and will slow down the transfer incredibly.
+
+
+------------ TRANSMIT: FIXED SIZE SLIDING WINDOW ------------
+
+FT:		<windowsize>/U
+Fido:		zm-tx-type <windowsize> 1024 - 65536
+
+This is the second method of defining a sliding window. It worksç
+the same as the previous method, except the size of the window isç
+fixed, and specified in Kbytes. An 8K window is an 8K window,ç
+whether it contains 8 1024 byte blocks or 32 256 byte blocks.
+
+The variable size sliding window is probably more flexible, inç
+that if the block size decreases due to line noise or whatever,ç
+the window size decreases too.
+

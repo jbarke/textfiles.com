@@ -1,0 +1,419 @@
+ÜÛÛÛÛÛÛÛİÄÜÜÜÜÜÜÜÜÜÜÄÄÄÄÄÄÜÛÛÛÜÄŞÛÛÛÛÛÛ Orange Cats Are Pretty.
+Û ÄÄÄÄÄÛÛÄÛÛÄÄÄÄÄÄÄÄßÜÄÄÜÛÛÄÄÄÛ ÛİÄÄÄÄŞÛİÄÄ Author:Ghost
+ÛİÄÄÄÄÄÛÛÄŞÛÄÄÄÄÄÄÄÄÄÄÄÜÛÛÄÄÄÄÛİŞÛÄÄÄÄÄÛÄÄÄÄÄÄÄÄÄDate Of Release:08/13/93
+ÛİÄÄÄÄÄŞÛÄÄÛİÄÄÄÄÄÄÄÄÜÛÛÛÜÜÄÄÄŞİŞÛÜÜÜßßÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄTime Of Release:4:00:am
+ÛÛÄÄÄÄÄŞÛÄÄŞÛÄÄÄÄÄÄÜÛÛÛßÄÜÄßßÜÛÄŞÛİÄÄÄÄÄÄÄÄÄÄÄÂÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+ÛÛÄÄÄÄÄÄÛÄÄÄÛÜÄÄÄÜÛÛÛÛÄÄÛİÄÄÄÄŞÛŞÛÛÄÄÄÄÄÄIssue´25³OfÄOCAPÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+ŞÛÛÛÛÛÛÛßÄÄÄŞÛÜÜÛÛÛÛÛÜÜÜÛÄÄÄÄÄÄÛİÛÛÄÄÄÄÄÄÄÄÄÄÄÁÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÜÛÛÛÛİÄÄÄÄİÄÄÄÄÄŞÛŞÛ 
+ùDedicatedù  ßßßßß İ          ÛŞÛİIf you are offended by the topic
+To Freedome of speech,        İ ßİlisted below,delete this file.
+Freedom Of Press, And any                       
+other civil liberty we can exploit.
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ®The Ghost Loader¯ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+        
+        Okay I just wanted to do a little article about my loader... Just want
+to show you what you can do in assembly... (in case you haven't noticed yet, a 
+this is a programming issue not a funny one...  so if you want laughs look at
+another issue of ocap...) Okay so now that I got that over with I'll begin. To
+start I'll say that my loader uses routines from 'The Draw 4.01' because I saw
+the routines and that they don't need to use ANSI.SYS to display the pictures.
+I didn't want to develop my own routines because this was a ONE HOUR only type
+of thing that I like doing to was time... Anyway at the end of the file there
+should be a debug script to make the two extra object files that we need to
+assemble this program... The source code is below and commented... you should
+be able to understand this... By the way you'll need TASM and TLINK 1.0 or
+later to assemble this...
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄ Code Start ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+    
+    DOSSEG           
+    .MODEL SMALL     ;Small model
+    .STACK 256h      ;Declare Stack Size
+    .386             ;386 CODE
+
+DATASEG
+;ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+;Data Segment Start
+;ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+EXTRN _GHOSTDATA1:BYTE         ; Ä¿
+EXTRN _GHOSTDATA1_LENGTH:WORD  ;  ³ Set-up for external object files
+EXTRN _GHOSTDATA2:BYTE         ;  ³ (The Pictures)
+EXTRN _GHOSTDATA2_LENGTH:WORD  ; ÄÙ
+
+R DB ?                                                ; Variable [R]
+CREDITS DB "-GHoST LoaDeR- Coded by GHoST",10,13,24h  ; Credits Message
+
+CODESEG
+;ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+;Code Segment Start
+;ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+UnCrunch Proc Near
+;THE DRAW's UnCrunch Routine
+
+Push Si   ; Ä¿
+Push Di   ;  ³
+Push Ax   ;  ³ Save registers
+Push Bx   ;  ³
+Push Cx   ;  ³
+Push Dx   ; ÄÙ
+Jcxz Done
+Mov Dx,Di
+Xor Ax,Ax
+Cld
+Loopa: 
+Lodsb
+Cmp Al,32
+Jc ForeGround
+Stosw
+Next:  
+Loop Loopa
+Jmp Short Done
+ForeGround:
+Cmp Al,16
+Jnc BackGround
+And Ah,0F0h
+Or Ah,Al
+Jmp Next
+BackGround:
+Cmp Al,24
+Jz NextLine
+Jnc FlashBitToggle
+Sub Al,16
+Add Al,Al
+Add Al,Al
+Add Al,Al
+Add Al,Al
+And Ah,8Fh
+Or Ah,Al
+Jmp Next
+NextLine:
+Add Dx,160
+Mov Di,Dx
+Jmp Next
+FlashBitToggle:
+Cmp Al,27
+Jc MultiOutput
+Jnz Next
+Xor Ah,128
+Jmp Next
+MultiOutput:
+Cmp Al,25
+Mov Bx,Cx
+Lodsb
+Mov Cl,Al
+Mov Al,32
+Jz StartOutput
+Lodsb
+Dec Bx
+StartOutput:
+Xor Ch,Ch
+Inc Cx
+Rep Stosw
+Mov Cx,Bx
+Dec Cx
+Loopnz Loopa
+Done:  
+Pop Dx ; Ä¿
+Pop Cx ;  ³
+Pop Bx ;  ³ Restore registers
+Pop Ax ;  ³ 
+Pop Di ;  ³
+Pop Si ; ÄÙ
+Ret    ; Return to calling procedure/code
+
+UnCrunch Endp
+
+ScanKeys    Proc Near
+Mov     ah,11h     ; Dos function check for key press
+Int     16h        ; Do It!
+Jnz     GetTheKey  ; If the key was pressed then Check what key
+                   ; was pressed...
+Clc                ; If not then clear flag Z...
+Ret                ; and return to place where this
+                   ; routine was called from.
+GetTheKey:
+Mov  ah,10h        ; Dos function check key
+Int  16h           ; Do It!
+Cmp  al,27         ; Check Key Against Escape...
+Jne  KeepGoing     ; If so then jump keepgoing...
+Call EndProg       ; If not call end program
+Ret                ; Return to calling procedure/code
+
+KeepGoing:
+Clc                ; Clear Flags
+Ret                ; Return to calling procedure/code
+
+ScanKeys    EndP
+
+DoCycle Proc Near
+       Mov   Dx,3DAh   ; Ä¿
+Want:  In    Al,Dx     ;  ³
+       Test  Al,08h    ;  ³
+       Jz    Want      ;  ³ Check for graphic re-scan...
+Rent:  In    Al,Dx     ;  ³
+       Test  Al,08h    ;  ³
+       Jnz   Rent      ; ÄÙ
+       Ret             ; Return the calling procedure/code
+DoCycle ENDP           
+
+EndProg Proc Near
+Mov     Ax,@data       ; AX = DATA SEGMENT
+Mov     Ds,Ax          ; DS=AX(DATA SEGMENT)
+
+Mov     Si,offset _GHOSTDATA2 ; Ä¿
+Mov     Ax,0B800h             ;  ³
+Mov     Es,Ax                 ;  ³ Set up data and call
+Mov     Di,0                  ;  ³ procedure UnCrunch
+Mov     Cx,_GHOSTDATA2_LENGTH ;  ³
+Call    UnCrunch              ; ÄÙ
+
+mov     ah,0                  ; Function Wait for Key Press... 
+int     16h                   ; Do It!
+
+mov     ax,0003h              ; Function set mode 80x25x16 (clear screen)
+int     10h                   ; Do It!
+
+Mov     Ah,9                  ; Function display string...
+Mov     Dx,offset Credits     ; Set string address to offset Credits
+Int     21h                   ; Do It!
+
+mov     Ax,4C00h              ; Function Exit to DOS
+int     21h                   ; Int 21h
+EndProg EndP
+
+Start:
+;ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+;Start Actual Code
+;ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+mov     ax,0003h              ; Function set mode 80x25x16 (clear screen)
+int     10h                   ; Do It!
+
+Mov     Ax,@data              ; AX = DATA SEGMENT
+Mov     Ds,Ax                 ; DS=AX(DATA SEGMENT)
+
+Mov     Si,offset _GHOSTDATA1 ; Ä¿
+Mov     Ax,0B800h             ;  ³
+Mov     Es,Ax                 ;  ³ Call UnCrunch
+Mov     Di,0                  ;  ³
+Mov     Cx,_GHOSTDATA1_LENGTH ;  ³
+Call    UnCrunch              ; ÄÙ
+
+Mov     Ax,@data              ; AX = DATA SEGMENT
+Mov     Ds,Ax                 ; DS=AX(DATA SEGMENT)
+
+Mov     Al,2                  ; This activates the color palette on some
+Mov     Dx,3C4h               ; computers... Without this you the loader
+Out     Dx,Al                 ; won't work on some systems...
+
+Mov     Al,7                  ; Set color to change to 7.
+Mov     Dx,3C8h               ; Set address to poke 7.
+Out     Dx,Al                 ; Do It!
+
+Mov     Al,0                  ; Change color red yellow and blue...
+Mov     Dx,3C9h               ; Set address to poke 7...
+Out     Dx,Al                 ; Do It (red)!
+Out     Dx,Al                 ; Do It (yellow)!
+Out     Dx,Al                 ; Do It (blue)!
+Repeat:
+
+Mov     [R], 0
+
+Looper:  
+Mov     Al,7                  ; Set color to change to 7.
+Mov     Dx,3C8h               ; Set address to poke 7.
+Out     Dx,Al                 ; Do It!
+
+Mov     Al,[R]                ; Number  [R]
+Mov     Dx,3C9h               ; Address 3C9h
+
+Out     Dx,Al                 ; Red    = R
+Out     Dx,Al                 ; Yellow = R
+Out     Dx,Al                 ; Blue   = R
+
+Call    DoCycle               ; Call DoCycle
+Inc     [R]                   ; Increase [R]
+Cmp     [R], 63               ; Compare [R] to 63
+Jle     Looper                ; If R not 63 goto looper
+
+Call    ScanKeys              ; call scan keys
+
+Mov     [R], 63
+
+Looper1: 
+
+Mov     Al,7                  ; Set color to change to 7
+Mov     Dx,3C8h               ; Set Address to poke [R] in to...
+Out     Dx,Al                 ; Do It!
+
+Mov     Al,[R]                ; Set color to [R]
+Mov     Dx,3C9h               ; Set Address to poke [R] in to...
+
+Out     Dx,Al                 ; Do It (RED)!
+Out     Dx,Al                 ; Do It (Yellow)!
+Out     Dx,Al                 ; Do It (Blue)!
+
+Call    DoCycle               ; Call Scan Cycle
+Sub     [R],1                 ; Decrease
+Cmp     [R],0                 ; Compare [R] to 0
+
+Jnle    Looper1               ; If R is not less or equal to then jump 
+                              ; to looper1
+
+Call    ScanKeys              ; Call scan keys
+Jmp     Repeat                ; Jump Repeat...
+
+END Start
+ÄÄÄÄÄÄÄÄÄÄÄÄÄ Code End ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+Save the code as GHOST.ASM... You'll need the extra object files to make the
+picture of me... Or it won't work... Type in the script below and save it as
+OBJECTS.SCR for later use...
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄ Debug Script Start ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+n GHOST1.OBJ
+e 0100 80 03 00 01 41 3B 88 15 00 00 00 54 68 65 44 72
+e 0110 61 77 20 4F 42 4A 20 46 69 6C 65 A0 01 78 96 14
+e 0120 00 00 04 44 41 54 41 06 44 47 52 4F 55 50 05 5F
+e 0130 44 41 54 41 E3 98 07 00 48 B6 02 04 02 01 5A 9A
+e 0140 04 00 03 FF 01 5F 90 52 00 00 01 11 5F 47 48 4F
+e 0150 53 54 44 41 54 41 31 5F 57 49 44 54 48 00 00 00
+e 0160 11 5F 47 48 4F 53 54 44 41 54 41 31 5F 44 45 50
+e 0170 54 48 02 00 00 12 5F 47 48 4F 53 54 44 41 54 41
+e 0180 31 5F 4C 45 4E 47 54 48 04 00 00 0B 5F 47 48 4F
+e 0190 53 54 44 41 54 41 31 06 00 00 42 A0 04 02 01 00
+e 01A0 00 50 00 16 00 B0 02 04 10 19 2C 07 DC DB DB 18
+e 01B0 19 26 DC DC 1A 03 DB DC DF 18 19 23 DC DB DB DF
+e 01C0 DB DB DC DF DB DB DC 18 19 22 1A 04 DB DC DF DB
+e 01D0 DB DC DF DB DB 20 DC DC 18 19 21 DB DB DC DF DF
+e 01E0 DB DB DB DC DF DF DF DC DC 1A 05 DB DC DC 18 19
+e 01F0 20 DB DB DF DC DB DB 1A 03 DC 1A 0E DB DC 18 19
+e 0200 1F DB DB 20 DB DB DB DF 20 1A 04 DB 20 DF 1A 0C
+e 0210 DB DC 18 19 1F DB 20 DB DB DB 20 20 1A 05 DB 20
+e 0220 20 1A 0E DB DC 18 19 1E DB 20 DB DB DB 19 02 1A
+e 0230 03 DB DF 19 02 1A 0F DB 18 19 1E DB 20 DB DB 19
+e 0240 04 DB DB 19 05 1A 0E DB 18 19 1E DB 20 DB DB 19
+e 0250 04 DB DB 19 05 1A 0E DB 18 19 1D DB DB 20 DB DB
+e 0260 DB DC 20 20 DC DB DB DC 19 03 1A 0D DB DF DF DC
+e 0270 18 03 49 27 6D 20 61 72 6F 75 6E 64 20 6D 6F 73
+e 0280 74 20 6F 66 20 74 68 65 20 74 69 6D 65 2E 20 07
+e 0290 1A 03 DB 20 1A 14 DB DF DF DB DB DB 20 DB DB 20
+e 02A0 DB 18 0F 1A 31 C4 BF 07 DB DB DB 20 DB DB 1A 03
+e 02B0 DC DB DB DB 20 DB 18 20 20 01 1A 03 DC 20 DC DC
+e 02C0 DC 19 04 DC DC 20 20 1A 06 DC 19 08 1A 0C DC 20
+e 02D0 20 0F B3 07 DB DB DF DC DC DF 1A 07 DB 20 DB DC
+e 02E0 DC 18 20 01 1A 05 DB DC DF DB DB 19 02 1A 03 DB
+e 02F0 DD 20 1A 06 DB DC 20 20 1A 06 DC 20 DF 1A 09 DB
+e 0300 20 0F B3 07 DB 20 1A 03 DB 00 17 DF 07 10 1A 07
+e 0310 DB DC DF DF DF DB DC DC DC 18 01 DB DB DB DF 20
+e 0320 20 DF DB DB 20 DB DD 20 DE 1A 03 DB DD 20 1A 07
+e 0330 DB 20 1A 07 DB DD 20 1A 08 DB DF 20 0F B3 20 07
+e 0340 DB 00 17 DF 07 10 DF 1A 0E DB DC DF DF DB DB DB
+e 0350 DC 18 01 DB DB DB 20 20 1A 03 DC DE 1A 07 DB 20
+e 0360 20 DE DB 20 20 1A 03 DB 20 1A 03 DB DC DC DC 20
+e 0370 20 DF 1A 04 DB DF 19 04 0F B3 20 17 20 20 07 10
+e 0380 DB 00 17 DF 07 10 1A 10 DB DC DC DF DB DB DC 18
+e 0390 20 01 DB DB DC DC DC DB DB DF DE DB DB DF DF 1A
+e 03A0 03 69 A0 BA 00 01 00 02 DB DD 20 20 1A 06 DB 20
+e 03B0 20 DF DF DF 1A 03 DB 20 20 DE 1A 04 DB 19 04 0F
+e 03C0 B3 07 DC DF DF DF 1A 14 DB DC DB DB DC 18 20 20
+e 03D0 01 1A 04 DF 20 DC DB DB DB DD 20 DE 1A 03 DB 20
+e 03E0 20 1A 04 DB DF 20 DC 1A 07 DB 20 20 1A 05 DB 19
+e 03F0 04 0F B3 07 1A 03 DB DC DF DF 1A 03 DB DF DF DF
+e 0400 1A 0E DB 18 19 08 01 DF DF DF 19 02 DF DF DF 20
+e 0410 DC DB DB DB DF DF 20 DC DC 1A 06 DB DF 20 20 DC
+e 0420 1A 04 DB DF 19 04 0F B3 07 1A 05 DB 11 DB 10 1A
+e 0430 03 DC DB DB DB DC DC DC DF DF 1A 08 DB DF 18 08
+e 0440 3C 43 6F 44 65 44 20 42 59 20 47 48 6F 53 54 3E
+e 0450 19 21 0F B3 07 1A 12 DB 20 20 1A 05 DF 18 B1 8A
+e 0460 02 00 00 74
+rcx
+364
+w
+n GHOST2.OBJ
+e 0100  80 03 00 01 41 3B 88 15 00 00 00 54 68 65 44 72
+e 0110  61 77 20 4F 42 4A 20 46 69 6C 65 A0 01 78 96 14
+e 0120  00 00 04 44 41 54 41 06 44 47 52 4F 55 50 05 5F
+e 0130  44 41 54 41 E3 98 07 00 48 B6 02 04 02 01 5A 9A
+e 0140  04 00 03 FF 01 5F 90 52 00 00 01 11 5F 47 48 4F
+e 0150  53 54 44 41 54 41 32 5F 57 49 44 54 48 00 00 00
+e 0160  11 5F 47 48 4F 53 54 44 41 54 41 32 5F 44 45 50
+e 0170  54 48 02 00 00 12 5F 47 48 4F 53 54 44 41 54 41
+e 0180  32 5F 4C 45 4E 47 54 48 04 00 00 0B 5F 47 48 4F
+e 0190  53 54 44 41 54 41 32 06 00 00 3E A0 04 02 01 00
+e 01A0  00 50 00 16 00 B0 02 04 10 19 2C 07 DC DB DB 18
+e 01B0  19 26 DC DC 1A 03 DB DC DF 18 19 23 DC DB DB DF
+e 01C0  DB DB DC DF DB DB DC 18 19 22 1A 04 DB DC DF DB
+e 01D0  DB DC DF DB DB 20 DC DC 18 19 21 DB DB DC DF DF
+e 01E0  DB DB DB DC DF DF DF DC DC 1A 05 DB DC DC 18 19
+e 01F0  20 DB DB DF DC DB DB 1A 03 DC 1A 0E DB DC 18 19
+e 0200  1F DB DB 20 DB DB DB DF 20 1A 04 DB 20 DF 1A 0C
+e 0210  DB DC 18 19 1F DB 20 DB DB DB 20 20 1A 05 DB 20
+e 0220  20 1A 0E DB DC 18 19 1E DB 20 DB DB DB 19 02 1A
+e 0230  03 DB DF 19 02 1A 0F DB 18 19 1E DB 20 DB DB 19
+e 0240  04 DB DB 19 05 1A 0E DB 18 19 1E DB 20 DB DB 19
+e 0250  04 DB DB 19 05 1A 0E DB 18 19 1D DB DB 20 DB DB
+e 0260  DB DC 20 20 DC DB DB DC 19 03 1A 0D DB DF DF DC
+e 0270  18 20 20 0C 5B 20 50 72 65 73 73 20 61 6E 79 20
+e 0280  6B 65 79 20 74 6F 20 45 78 69 74 20 5D 20 20 07
+e 0290  1A 03 DB 20 1A 14 DB DF DF DB DB DB 20 DB DB 20
+e 02A0  DB 18 0F 1A 31 C4 BF 07 DB DB DB 20 DB DB 1A 03
+e 02B0  DC DB DB DB 20 DB 18 20 20 01 1A 03 DC 20 DC DC
+e 02C0  DC 19 04 DC DC 20 20 1A 06 DC 19 08 1A 0C DC 20
+e 02D0  20 0F B3 07 DB DB DF DC DC DF 1A 07 DB 20 DB DC
+e 02E0  DC 18 20 01 1A 05 DB DC DF DB DB 19 02 1A 03 DB
+e 02F0  DD 20 1A 06 DB DC 20 20 1A 06 DC 20 DF 1A 09 DB
+e 0300  20 0F B3 07 DB 20 1A 03 DB 00 17 DF 07 10 1A 07
+e 0310  DB DC DF DF DF DB DC DC DC 18 01 DB DB DB DF 20
+e 0320  20 DF DB DB 20 DB DD 20 DE 1A 03 DB DD 20 1A 07
+e 0330  DB 20 1A 07 DB DD 20 1A 08 DB DF 20 0F B3 20 07
+e 0340  DB 00 17 DF 07 10 DF 1A 0E DB DC DF DF DB DB DB
+e 0350  DC 18 01 DB DB DB 20 20 1A 03 DC DE 1A 07 DB 20
+e 0360  20 DE DB 20 20 1A 03 DB 20 1A 03 DB DC DC DC 20
+e 0370  20 DF 1A 04 DB DF 19 04 0F B3 20 17 20 20 07 10
+e 0380  DB 00 17 DF 07 10 1A 10 DB DC DC DF DB DB DC 18
+e 0390  20 01 DB DB DC DC DC DB DB DF DE DB DB DF DF 1A
+e 03A0  03 29 A0 BA 00 01 00 02 DB DD 20 20 1A 06 DB 20
+e 03B0  20 DF DF DF 1A 03 DB 20 20 DE 1A 04 DB 19 04 0F
+e 03C0  B3 07 DC DF DF DF 1A 14 DB DC DB DB DC 18 20 20
+e 03D0  01 1A 04 DF 20 DC DB DB DB DD 20 DE 1A 03 DB 20
+e 03E0  20 1A 04 DB DF 20 DC 1A 07 DB 20 20 1A 05 DB 19
+e 03F0  04 0F B3 07 1A 03 DB DC DF DF 1A 03 DB DF DF DF
+e 0400  1A 0E DB 18 19 08 01 DF DF DF 19 02 DF DF DF 20
+e 0410  DC DB DB DB DF DF 20 DC DC 1A 06 DB DF 20 20 DC
+e 0420  1A 04 DB DF 19 04 0F B3 07 1A 05 DB 11 DB 10 1A
+e 0430  03 DC DB DB DB DC DC DC DF DF 1A 08 DB DF 18 08
+e 0440  3C 43 6F 44 65 44 20 42 59 20 47 48 6F 53 54 3E
+e 0450  19 21 0F B3 07 1A 12 DB 20 20 1A 05 DF 18 B1 8A
+e 0460  02 00 00 74
+rcx
+364
+w
+q
+ÄÄÄÄÄÄÄÄÄÄÄÄÄ Debug Script End ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+So there's my loader... 2 hours to comment it and 1 hour to make it still I
+was talking to Venom the whole time... (about what I wasn't paying attention-
+I can't program and talk at the same time so I pretty much pretended to listen
+for most of the call...) So now you will need to assemble it... You'll need to
+create the object file first by typing: DEBUG OBJECTS.SCR... That'll make your
+object files GHOST1.OBJ and GHOST2.OBJ. So now you're all set to start making
+the final program... Type TASM GHOST.ASM to make GHOST.OBJ and then type TLINK
+GHOST GHOST1 GHOST2,GHOST... You should now have GHOST.EXE... There it is, The
+GHoST Loader with the fading effect...
+
+GHoST
+
+P.S. I included GHOST.EXE incase you don't have TASM or can't assemble it
+for some reason...
+ 
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³ÄÜßßßßÛŞÛßßßßÜÄÛßßßßÛÄÛßßßßÜÄÄÄÄÄÄÄÄÄÄÄÄÄForÄOCAPÄSupportÄCallÄÄÄÄÄÄÄÄÄÄÄ    ³
+³ÛÍÍÍÍÍÛŞÛÍÍÍÍÍÍÛÄÍÍÍÛ ÛÜÜÜÜßÍÍÍ[WHQ](203)657-8237.........The Forlorn Hope!ÍÄ³
+³ÛÍÍÍÍÍÛŞÛÍÍÍÍÍÍÛßßßßÛÍÛÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÄ³
+³ÛÜÜÜÜßÄŞÛÜÜÜÜßÄÛÄÄÄÄÛÄÛÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ    ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+

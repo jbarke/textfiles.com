@@ -1,0 +1,285 @@
+America Online
+APPLE II DEVELOPMENT FORUM CONFERENCE LOG
+Tuesday, June 12, 1990  10:00 p.m. eastern time
+Topic:  Resource Programming
+Forum Leader:  Dave Sugar  (AFL Dyfet)
+
+AFL Dyfet  I see our banner flying...Good evening and welcome to the Apple II
+           Development
+AFL Dyfet  Forum.  Tonight our topic is Resources.  We will be discussing how
+           to take
+AFL Dyfet  advantage of resources in GS/OS and various products that help in
+           using
+AFL Dyfet  resources.  We will be using protocol tonight starting NOW.  This
+           means that
+AFL Dyfet  if you wish to ask a question, you must enter a '?' on a line by
+           itself, and if
+AFL Dyfet  you wish to comment on what's being discussed, you must enter a
+           '!' on a line
+AFL Dyfet  by itself.  You will each be called in turn.  Okay, the floor is
+           now open for
+AFL Dyfet  questions...
+AFL Dyfet  Okay Lalanovich, you have the first question and the floor
+           now...
+Lalanovich Ok, what the heck are resources really good for?
+Lalanovich I, mean what do they do that is so important?
+AFL Dyfet  Coach, you look ready for this one...GA :)
+Coach101   Well, actually I waited for Dave Lyons, but....
+Coach101   Much of the interface that is presented to a user,
+Coach101   the desktop, messages, etc., involves a lot of code
+Coach101   that is not really instructions (like a=b) but is
+Coach101   really a series of "data" statements that describe
+Coach101   the location and size of window, the appearance of
+Coach101   a control, menu, or whatever.  Resources are a
+Coach101   means of taking this "data" out of the program and
+Coach101   storing it in a "resource fork".  Once this is
+Coach101   done, a programmer can play with (really tune) the
+Coach101   interface using a suite of tools that are a lot
+Coach101   more productive than changing "data" statements
+Coach101   in assembler, pascal, C, etc.  
+Coach101   There are probably a lot more opinions on what
+Coach101   resources are really good for, but thats my basic
+Coach101   usage of them.   Done.  GA
+AFL Dyfet  I was going to add to what Coach had to say, but he has done such
+           a wonderful
+AFL Dyfet  sumnation there, it seems now unnessisary :)
+Coach101   I left you the opening, and you wont take it :)
+AFL Dyfet  The other important point about having a resource fork is that it
+           is integral
+AFL Dyfet  to the file.  When you copy the file, you copy all the resource
+           data with it.
+AFL Dyfet  You do not need to keep a bunch of messy little data files about
+           for static
+AFL Dyfet  data, screen images, etc.
+AFL Dyfet  Okay, I see that Doctor Why has the next question...GA Doctor
+           Why...
+Doctor Why I asked this last week but didn't get an answer as to why it was
+           necessary...
+Doctor Why I had defined a cursor as a resource and when I used it in an
+           ORCA/Pascal
+Doctor Why program it displayed OK until I moved it around. It would
+           periodiccally be
+Doctor Why junked. I found the solution. I had defined the cursor record as a
+           local
+Doctor Why variable. When I made it a global, it worked. Why is it necessary
+           to make
+Doctor Why it a global?
+AFL Dyfet  GA Dave...
+Dave Lyons Local variables in C and Pascal are stored on the stack only
+Dave Lyons as long as you're still in the procedure or function where they're
+           declared.  Many toolbox
+Dave Lyons routines (like, just to choose an example
+Dave Lyons completely at random, SetCursor) require that the
+Dave Lyons data you feed them a pointer to stick around.  When your function
+           exited, the
+Dave Lyons space on the stack was re-used in short order, and the
+           cursor-update routine tried
+Dave Lyons to use the original cursor record again (it has that right).  Does
+           that answer the question?
+Doctor Why Yes. Thanks
+Dave Lyons ga
+AFL Dyfet  In C, if you had specified that it was a static (local) variable,
+           you would
+AFL Dyfet  have not had a problem.  Unfortunately, in Pascal, there is no
+           standard way
+AFL Dyfet  to control storage like that.  Some Pascal implimentations do have
+           extensions
+AFL Dyfet  to allow something like 'static' (fixed, non stack allocated)
+           local variables,
+AFL Dyfet  but I do not recall off-hand if Orca/Pascal has any such unusual
+           support.
+Dave Lyons (Yes, I should have said "locals in Pascal" and "auto variables in
+           C".  Thanks.)
+Doctor Why So to be on the safe side, all record structures should be
+           global.
+AFL Dyfet  Okay, I see that Nuzz has the next question.  GA Nuzz
+Nuzz       I have an NDA that uses Resources.Not its own Resources, but Res's
+           from other
+Nuzz       Apps, selected via Standard File. It works fine, but I anm not
+           "logging" in
+Nuzz       to the Resource Mngr with a startup, Set/get curresourceapp,
+           etc.
+Nuzz       Is this needed in this circumstance.
+AFL Dyfet  GA Dave...
+Dave Lyons Yes.  If you're not starting up the RM yourself, any resource
+           files you open or close
+Dave Lyons are affecting the resource-search-path of whoever
+Dave Lyons the current RM user it (from GetCurResourceApp).  Not a good
+           thing.  You should start it up
+Dave Lyons with your own ID when your window is opened, & shut it down when
+           you're closed.  When the system
+Dave Lyons calls your Action routine or any Run-QUeue routines that belong to
+           you, it will already have set
+Dave Lyons you as the current resource app, so life it nice.  ga
+Nuzz       Ok. I understand that .GA
+AFL Dyfet  Thank you Dave...Okay, I see Windrider has the next question.  GA
+           Wind...
+Windrider5 How do you link the resource and data forks of a program?
+AFL Dyfet  GA Coach...
+Coach101   There are a couple of ways to do it.
+Coach101   The simplist is to just specify the keep file from
+Coach101   the linker as the keep file for REZ when you do
+Coach101   the compile.  REZ will not destroy the material
+Coach101   in the data fork (the output from the linker) but
+Coach101   will place its (REZ's) output in the resource fork.
+Coach101   Done... GA
+AFL Dyfet  It depends, in part, on what kinds of tools you are using to
+           create your
+AFL Dyfet  resource fork data with, too...
+Coach101   Right....  Dumb me...  Overlooked a whole different
+Coach101   area...
+Coach101   You can also use APW's "Duplicate" tool to copy only the resource
+           fork of one file into another
+Coach101   file.  Caution is advised with "Duplicate", it was/is a stopgap
+           tool and it has some anomalies
+Coach101   I would definitely recommend ONLY using the most current version
+           from APW (that is the new stuff
+Coach101   that Tim has alluded to a couple of times)...  DOne again.  GA
+Matt DTS   The new APDA stuff is shipping as of today.  Call and order
+           tomorrow if you like.  :)
+AFL Dyfet  GA Why...
+Doctor Why Also, if you are using the APW or ORCA shell, there is a REZ.TUTOR
+           in the
+Doctor Why software libraries in this forum that has a MAKE exec to show you
+           how it 
+Doctor Why is done.
+AFL Dyfet  Okay, I see the next question is from Lalanovich...GA Lalanovich,
+           you have the
+AFL Dyfet  floor now.
+Lalanovich Thanks for the great answers on my previous question. I've seen
+           descriptions
+Lalanovich of resources elsewhere (latest Nibble, for example) that say
+           something to
+Lalanovich the effect that you only need to move one file instead of a lot of
+           supporting
+Lalanovich files.  Does this mean that the resources are included as part of
+           your main
+Lalanovich program in one big file or am I missing something here?  Also, is
+           it safe to 
+Lalanovich assume that programs such as DesignMaster are using resources in
+           doing what 
+Lalanovich they do?
+AFL Dyfet  In effect yes, the resource fork is attached directly to the
+           program file,
+AFL Dyfet  forming one large file, as far as the external user is concerned. 
+           Internally,
+AFL Dyfet  there are two seperate file streams, however, and the resource
+           file is further
+AFL Dyfet  segmented into individual resource items.  But if you are copying
+           the file, you
+AFL Dyfet  are copying everything all at once, together.
+AFL Dyfet  Are there any other comments??
+ClubBob    The object code is separate or not ...pgm/data
+Coach101   The data and resource forks of a file are two
+Coach101   independent entities from a programming point of view.  When
+           accessing the file via GS/OS you must
+Coach101   always specify which fork (data/resource) that you are using. 
+           Programs like Finder, interpret copy
+Coach101   commands to mean, copy both parts (data/resource) of the file. 
+           ga
+CodeMaster My brain hurts!
+CodeMaster I must have missed something!...
+CodeMaster I guess this is reallly not for raw beginners.
+CodeMaster I use Macs, I understand Desktop...
+CodeMaster I understand 75% of the GS Toolbox...
+CodeMaster But I can't get a handle <grin> on Resources!
+Coach101   Aha, he is looking for a pointer :)
+CodeMaster Is there a conseptual problem here?
+CodeMaster most likely! ;)
+CodeMaster I can't spell to nite either!
+AFA Gary J (use Memory Manager :)
+CodeMaster thanks Gary! ;)
+Coach101   What part gets you confused code?
+CodeMaster I guess, how the 2 mix, and how prgsa use Rez!
+CodeMaster Rez = Resource files.
+CodeMaster GA
+AFL Dyfet  GA Dave...
+Dave Lyons Programs don't use Rez--the Rez compiler is just one way to create
+           a resource fork full of
+Dave Lyons fun stuff.  Once an application is built, it uses resources just
+           by making appropriate toolbox
+Dave Lyons calls (like NewWindow2 with a resource-id-number).  Does that
+           help?
+CodeMaster You mean it is like doing a _SFGetFile call?
+Dave Lyons How?
+Dave Lyons If my program does a NewWindow2 to create a
+Dave Lyons window from a resource template, I just have to provide the
+           resource id number, and the
+Dave Lyons Window Manager takes care of loading the template from my resource
+           fork and calls NewWindow
+Dave Lyons with that template before it returns.
+CodeMaster A tool call that does a Dilaog Box for you.
+CodeMaster So all the resouce files, windows, BS, etc, have numbers...
+CodeMaster unique to them, I use a Tool call with a Resource ID, and add some
+           info...
+Dave Lyons Well, inside
+Dave Lyons the resource fork, there are a bunch of resources.  Each one is
+           identified by a Resource Type (one
+Dave Lyons word) and a resource ID (4 bytes, somewhat limited range).  The
+           IDs only need to be unique within
+Dave Lyons a resource type (I can have a String ID=1 and a Window Template
+           ID=1, no problem).  When you
+Dave Lyons do something like NewWindow2, the toolbox *knows* what type it
+           wants, so you only specify the
+Dave Lyons ID.  For example,
+Dave Lyons NewControl2 *knows* it wants type rControlTemplate, so it feeds
+           that to LoadResource for you.
+Dave Lyons (I decided NewWindow2 was a bad example...you actually do have to
+           pass a resource type
+Dave Lyons there, since there are two different types possible.)
+Dave Lyons (ga)
+AFL Dyfet  Any further comments...
+CodeMaster thanks :)
+CodeMaster ( I think )
+AFL Dyfet  Okay, I guess Windrider has the floor next...GA Wind...
+Windrider5 from what little rez code that I have read, it seems that writing
+           resources for
+Windrider5 menus takes a lot more effort than the old fashion way.  Are there
+           any short-
+Windrider5 cuts 
+AFL Dyfet  GA Dave...
+Dave Lyons Sure--use Genesys, DesignMaster, etc.  ga
+Windrider5 is genesy available?
+Dave Lyons (I think so)
+Coach101   I agree with you Windrider.  Raw REZ code can be as complex, or
+           more complex, than just dropping
+Coach101   the appropriate code in your program.  However, with the advent of
+           DesignMaster and Genesys
+Coach101   (WSYWIG resource editors and/or compilers), the true power of
+           resources will surface...   done ga
+AFL Dyfet  Genesys is particularly nice because it will also generate the
+           interface code
+AFL Dyfet  for using the resource you have created...
+A GibberFC Genesys is Available as we Speak!!! I just got my copy a couple of
+           days ago!
+AFL Dyfet  Genesys has been released since A-fest, actually...
+A GibberFC Put together a full set of menus and about 25 dialog boxes in a 2
+           hour session
+A GibberFC <grin> GA 
+AFL Dyfet  Okay, I see that Doctor Why has the next question.  GA Why...
+Doctor Why What was Matt's announcement about a new product available through
+           APDA?
+Matt DTS   The new version of APW Tools and Interfaces, which is final.
+Matt DTS   You can order it through Developer Tools Express even if you're
+           not an APDA member.
+Matt DTS   It's $50, or a $25 upgrade if you have the beta version.
+Doctor Why Is there a product #?
+Doctor Why (for an upgrad)
+Matt DTS   It started shipping today.  Yes, there is a product number.  I
+           just don't have it.  <sigh>
+Matt DTS   GA
+Doctor Why Okay, thanks.
+Coach101   But, Tim posted the product number here in the
+Coach101   development environments section....   I think 
+Doctor Why (thanks, I'll check it out)
+A GibberFC This is a question for Matt... Is there a window on the release of
+           the 
+A GibberFC Scsi Tape and Scsi Scanner Drivers?
+Matt DTS   I'm sure there is, but I don't know what it is.  It should be
+           available at APDA soon if not currently.
+Matt DTS   GA.
+A GibberFC Great!! thanks :)
+AFL Dyfet  Okay, are there any other questions for tonight?
+Doctor Why (looks like Gib and I are making calls to APDA tomorrow)  :)
+
+

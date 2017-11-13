@@ -1,0 +1,507 @@
+*::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*
+*                                                                *
+*                     CLOSE function handler                     *
+*                                                                *
+*----------------------------------------------------------------*
+*                                                                *
+*      In order to understand the execution pattern of the close *
+* function handler (FNCLOSE, $AC06) you must first be familiar   *
+* with the writing process.  As a file is being written, data    *
+* are transferred from their source memory locations to the DOS  *
+* data sector buffer.  Each time the data sector buffer is       *
+* filled, it is automatically written to the disk.  However, if  *
+* the last segment of data does not completely fill the buffer,  *
+* the write process is exited with bit six of the update flag    *
+* (UPDATFLG, $B5D5) set.  When the file is subsequently closed,  *
+* FNCLOSE tests UPDATFLG and writes the data sector buffer if    *
+* necessary.  A similar situation occurs with the T/S list       *
+* buffer.  FNCLOSE also tests bit seven of UPDATFLG to see if    *
+* the T/S list requires updating.  If the T/S list buffer has    *
+* changed since the last read or write, it is written to the     *
+* disk.                                                          *
+*      After updating the data and T/S list buffers on the disk  *
+* (if necessary), FNCLOSE calls the FIXMAP routine ($B2C3) to    *
+* free up any sectors that were assigned in the VTOC but not     *
+* used.  (This step is necessary because the write process       *
+* allocates an entire track to the file even if only a few       *
+* sectors are required.)                                         *
+*      Once the VTOC is updated on the disk, the new file-size   *
+* bytes are stored in the appropriate file description entry of  *
+* the directory buffer.  Finally the directory buffer is written *
+* to the disk and the close function handler is exited.          *
+*                                                                *
+*      As described above, the FIXMAP routine ($B2C3) frees up   *
+* any sectors that were unnecessarily assigned to a file.        *
+* Therefore, if you happen to hit the reset key or turn the      *
+* computer off before a file is closed, the disk may be left     *
+* with several allocated but unused sectors.  This wasted disk   *
+* space can only be recovered with a disk repair program or by   *
+* manually updating the VTOC as follows:                         *
+*      - Catalog the disk.                                       *
+*      - Enter the monitor (type:  CALL -151 <rtn>).             *
+*      - Correct offending TRKMAP bytes (see description         *
+*        of the VTOC given in the linear disassembly).           *
+*      - Update the VTOC on the disk (type:  AFFBG <rtn>).       *
+*      A file must be at least two sectors long (one T/S list    *
+* sector and one data sector) to be useful.  Therefore, if you   *
+* encounter a catalog which describes a one-sector long file,    *
+* you can be sure that (a) the file-size bytes in the file's     *
+* description entry were zapped, (b) the file is 257 sectors     *
+* long (001 in 256 modulus format) or (c) a new file was opened  *
+* but never closed.                                              *
+*                                                                *
+*::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::*
+
+
+(AC06)
+FNCLOSE  JSR CKDATUP  ;Write data sector buffer if necessary.
+
+                      * Check if the data sector buffer has
+                      * changed since the last read or write.
+                      (AF1D)
+                      CKDATUP  BIT UPDATFLG ;Check bit 6 to see if changed.
+                               BVS WRITDATA ;Take branch if changed.
+                      (AF22)   RTS
+                               ============
+
+                      * Write the present data sector buffer to the disk.
+                      * (Updates the disk so that we can read in the next
+                      * data sector without overwriting, and therefore losing,
+                      * previous data.)
+                      (AF23)
+                      WRITDATA JSR PRPDAIOB ;Prepare to write the data sector buffer.
+
+                                            * Prepare RWTS's IOB to read/write
+                                            * the data sector buffer.
+                                            (AFE4)
+                                            PRPDAIOB LDY DATBUFFM ;Get address of the data sector buffer
+                                                     LDA DATBUFFM+1 ;from the FM parameter list and designate
+                                                     STY IBBUFP   ;it as the I/O buffer for RWTS's IOB.
+                                                     STA IBBUFP+1
+                                                     LDX CURDATRK ;Enter RWTS driver with (x)/(y) = trk/sec
+                                                     LDY CURDATSC ;values for the data sector.
+                                            (AFF6)   RTS
+
+                      (AF26)   LDA #2       ;Write opcode for RWTS.
+                      (AF28)   JSR RWTSDRVR ;Call RWTS driver to write the data sector buffer.
+
+                                            * Read/Write Track/Sector driver.
+                                            (B052)
+                                            RWTSDRVR .
+                                                     .
+                                            (See dis'mbly of RWTS driver using WRITE.)
+                                                     .
+                                                     .
+                                                     (RTS)
+
+                      (AF2B)   LDA #%10111111 ;Shut bit 6 off in the update flag to
+                               AND UPDATFLG ;signal that the data sector buffer is
+                               STA UPDATFLG ;now up to date.
+                      (AF33)   RTS
+                               ============
+
+(AC09)   JSR CKTSUPDT ;Write T/S list sec buf if updating is
+                      ;required.  (If T/S list buf has changed
+                      ;since last read or write, then write it
+                      ;back to the disk so don't overwrite buf
+                      ;and lose information when read the new
+                      ;T/S list sector.)
+
+                      * Check if T/S list requires updating.
+                      * (ie. Has T/S list buf changed since
+                      * the last read or write?)
+                      (AF34)
+                      CKTSUPDT LDA UPDATFLG
+                               BMI WRITETS  ;If bit 7 set, updating is required.
+                      (AF39)   RTS
+                               ============
+
+                      * Write the updated T/S list sector buffer.
+                      (AF3A)
+                      WRITETS  JSR SETTSIOB ;Prepare to write the T/S list.
+
+                                            * Prepare RWTS's IOB for reading
+                                            * or writing the T/S list sector.
+                                            (AF4B)
+                                            SETTSIOB LDA TSBUFFM  ;Get adr of the T/S list buf from the FM
+                                                     STA IBBUFP   ;parameter list & designate T/S list buf
+                                                     LDA TSBUFFM+1 ;as the I/O buffer in RWTS's IOB.
+                                                     STA IBBUFP+1
+                                                     LDX CURTSTRK ;Set (x)/(y) = trk/sec of current T/S list.
+                                                     LDY CURTSSEC
+                                            (AF5D)   RTS
+
+                      (AF3D)   LDA #2       ;Write opcode for RWTS.
+                      (AF3F)   JSR RWTSDRVR ;Call RWTS driver to write the T/S list sector.
+
+                                            * Read/Write Track/Sector driver.
+                                            (B052)
+                                            RWTSDRVR .
+                                                     .
+                                            (See dis'mbly of RWTS driver using WRITE.)
+                                                     .
+                                                     .
+                                                     (RTS)
+
+                      (AF42)   LDA #$7F     ;Clear bit 7 of the update flag to
+                               AND UPDATFLG ;signal that the T/S list sec is up to date.
+                               STA UPDATFLG
+                      (AF4A)   RTS
+                               ============
+
+(AC0C)   JSR FIXMAP
+
+                      * Free up sectors that were assigned but
+                      * not used.  Whenever something is written
+                      * to the disk, the whole trk is allocated in
+                      * the VTOC whether it is needed or not.
+                      * There4, once we are done writing, go back
+                      * and free up the unneeded sectors.
+                      (B2C3)
+                      FIXMAP   LDA SIGNTRK  ;Has a track already been assigned?
+                               BNE FREEXTRA ;Yes - go free up the extra sectors.
+                      (B2C8)   RTS          ;No - go exit.
+                               ============
+
+                      (B2C9)
+                      FREEXTRA PHA          ;Save trk number on the stack.
+                      (B2CA)   JSR READVTOC ;Read in the VTOC.
+
+                                            * Read the Volume Table of Contents (VTOC).
+                                            (AFF7)
+                                            READVTOC LDA #1       ;Read opcode for RWTS.
+                                            (AFF9)   BNE RDWRVTOC ;ALWAYS.
+
+                                            * Code common to read/write VTOC.
+                                            (AFFD)
+                                            RDWRVTOC LDY ADRVTOC  ;Get address of VTOC from the
+                                                     STY IBBUFP   ;FM constants table & designate it
+                                                     LDY ADRVTOC+1 ;as the I/O buffer in RWTS's IOB.
+                                                     STY IBBUFP+1
+                                                     LDX TRKWA    ;Enter RWTS driver with (x)/(y) equal
+                                                     LDY #0       ;to the trk/sec values of the VTOC.
+                                            (B00E)   JMP RWTSDRVR ;Call RWTS driver to read/write the VTOC.
+                                                     ------------
+
+                                            * Read/Write Track/Sector driver.
+                                            (B052)
+                                            RWTSDRVR .
+                                                     .
+                                            (See dism'bly of RWTS driver using READ.)
+                                                     .
+                                                     .
+                                                     (RTS)
+
+                      (B2CD)   LDY ASIGNSEC ;Number of next sec which could
+                                            ;have been written.
+                      (B2D0)   PLA          ;Get assignment track # back from the stack.
+                      (B2D1)   CLC          ;We don't want to free the last sector used,
+                                            ;so clear the carry here so we don't free
+                                            ;that sector up when we begin rotating the
+                                            ;usage maps in the SUB2FREE routine below.
+                      (B2D2)   JSR SUB2FREE ;Adjust assignment map to free up sectors
+                                            ;by setting bit corresponding to the sector
+                                            ;number.  Next, merge ASIGNMAP with the
+                                            ;appropriate trk map in the VTOC.
+
+                                            * Subroutine to free up sectors that were
+                                            * deleted or prematurely assigned but not used.
+                                            *
+                                            * This tricky little routine is easy to
+                                            * understand once you realize that:
+                                            *   1) Unlike the VTOC, ASIGNMAP does not
+                                            *      contain any unnecessarily assigned
+                                            *      sectors.
+                                            * 2) If the disk was just written to,
+                                            *    ASIGNMAP does not house any newly
+                                            *    assigned sectors (even if those sectors
+                                            *    are necessary or not).
+                                            * 3) Sectors are normally assigned in
+                                            *    descending order.
+                                            * 4) The number of ROR's done = number
+                                            *    of sectors that need to be assigned.
+                                            * For example:  If the last track had never
+                                            * been assigned and only sectors $0F and
+                                            * $0E were needed, then on entry to SUB2FREE,
+                                            * the first two bytes would appear as follows:
+                                            *       Sector numbers:  CBA98765 43210FED
+                                            *           Bit values:  11111111 11111...
+                                            * After the first ROR, the status of sector
+                                            * $0D is determined by the entry status of
+                                            * the carry (c):
+                                            *       Sector numbers:  DCBA9876 543210FE
+                                            *           Bit values:  c1111111 111111..
+                                            * On the next ROR, the "CPY SECPERTK"
+                                            * instruction conditions (c) to clear for
+                                            * sector $0E:
+                                            *       Sector numbers:  EDCBA987 6543210F
+                                            *           Bit values:  0c111111 1111111.
+                                            * On the next ROR, the "CPY SECPERTK"
+                                            * instruction conditions (c) to clear for
+                                            * sector $0F:
+                                            *       Sector numbers:  FEDCBA98 76543210
+                                            *           Bit values:  00c11111 11111111
+                                            * When ASIGNMAP is merged with the corresponding
+                                            * TRKMAP in the VTOC, the sectors that were
+                                            * unnecessarily assigned in the VTOC are
+                                            * freed.  (Note:  When used in the DELETE
+                                            * function, SUB2FREE is repeatedly called
+                                            * up by FREESEC to free one sector at a time.)
+                                            (B2DD)
+                                            SUB2FREE LDX #$FC     ;Set index to shift 4 bytes as a unit
+                                            (B2DF)                ;(#$FC --> #$FF).
+                                            STNDARD  ROR ASIGNMAP-$FC,X ;4 bytes = map for 1 track.
+                                                     INX
+                                                     BNE STNDARD
+                                            (B2E5)   INY          ;When (y) = 16, ASIGNMAP is back in 
+                                                                  ;standard position.
+                                            (B2E6)   CPY SECPERTK ;Condition (c) for next shift.
+                                                     BNE SUB2FREE
+                                                     ASL          ;Trk*4 to index TRKMAP.
+                                                     ASL
+                                                     TAY
+                                            (B2EE)   BEQ SUB2RTN  ;Track value of 0 not allowed.
+
+                                            * ASIGNMAP now reflects the true sector assignment
+                                            * and is in standard position.  Therefore, merge it
+                                            * with the appropriate TRKMAP in the VTOC to free up
+                                            * extra sectors.
+                                            (B2F0)   LDX #4
+                                            MERGMAPS LDA ASIGNMAP-1,X
+                                                     ORA TRKMAP0+3,Y ;Do the merge.
+                                                     STA TRKMAP0+3,Y
+                                                     DEY          ;Reduce indices.
+                                                     DEX
+                                                     BNE MERGMAPS
+                                            SUB2RTN  RTS
+                                            (B2FF)
+
+                      (B2D5)   LDA #0       ;No more deallocations needed.
+                               STA ASIGNTRK
+                      (B2DA)   JMP WRITVTOC ;Write the corrected VTOC back to the disk.
+                               ------------
+
+                      * Write the Volume Table of Contents (VTOC).
+                      (AFFB)
+                      WRITVTOC LDA #2       ;Write opcode for RWTS.
+
+                      * Code common to read/write VTOC.
+                      (AFFD)
+                      RDWRVTOC LDY ADRVTOC  ;Get address of VTOC from the
+                               STY IBBUFP   ;FM constants table & designate it
+                               LDY ADRVTOC+1 ;as the I/O buffer in RWTS's IOB.
+                               STY IBBUFP+1
+                               LDX TRKWA    ;Enter RWTS driver with (x)/(y) equal
+                               LDY #0       ;to the trk/sec values of the VTOC.
+                      (B00E)   JMP RWTSDRVR ;Call driver to read/write the VTOC.
+                               ------------
+
+                      * Read/Write Track/Sector driver.
+                      (B052)
+                      RWTSDRVR .
+                               .
+                      (See dism'bly of RWTS driver using WRITE.)
+                               .
+                               .
+                               (RTS)
+
+* Was the last last operation a WRITE?
+(AC0F)   LDA #%00000010 ;If bit 1 is set, then just did a write.
+         AND UPDATFLG
+(AC14)   BEQ TOGDFMXT ;Last operation wasn't a write, so we can
+                      ;just exit because there is no need to
+                      ;update the directory sector.
+
+* The last operation was a write, so
+* we better prepare to fix up the
+* file-size and T/S link bytes in
+* the directory sector.
+(AC16)   JSR READVTOC ;Read the VTOC.
+
+                      * Read the Volume Table of Contents (VTOC).
+                      (AFF7)
+                      READVTOC LDA #1       ;Read opcode for RWTS.
+                      (AFF9)   BNE RDWRVTOC ;ALWAYS.
+
+                      * Code common to read/write VTOC.
+                      (AFFD)
+                      RDWRVTOC LDY ADRVTOC  ;Get address of VTOC from the
+                               STY IBBUFP   ;FM constants table & designate it
+                               LDY ADRVTOC+1 ;as the I/O buffer in RWTS's IOB.
+                               STY IBBUFP+1
+                               LDX TRKWA    ;Enter RWTS driver with (x)/(y) equal
+                               LDY #0       ;to the trk/sec values of the VTOC.
+                      (B00E)   JMP RWTSDRVR ;Call driver to read/write the VTOC.
+                               ------------
+
+                      * Read/Write Track/Sector driver.
+                      (B052)
+                      RWTSDRVR .
+                               .
+                      (See dism'bly of RWTS driver using READ.)
+                               .
+                               .
+                               (RTS)
+
+* Read in all the directory sectors up
+* to the directory sector containing the
+* file description entry corresponding to
+* the file we are closing.
+(AC19)   LDA #0
+(AC1B)   CLC          ;(c) = 0 = signal to read the first
+(AC1C)                ;directory sector.
+PURGEDIR JSR RDDIRECT ;Go read directory sector into buffer.
+
+                      * Read a directory sector.
+                      (B011)
+                      RDDIRECT PHP          ;Save (c) on stack:
+                                            ;  (c) = 0 = read 1rst directory sector.
+                                            ;  (c) = 1 = read next directory sector.
+                      (B012)   JSR PT2DIRBF
+
+                                            * Designate the directory sector buffer
+                                            * as I/O buffer in RWTS's IOB.
+                                            (B045)
+                                            PT2DIRBF LDA ADRDIRBF ;Get addr of direc
+                                                     STA IBBUFP   ;sec buf from the
+                                                     LDA ADRDIRBF+1 ;FM constants tbl
+                                                     STA IBBUFP+1 ;& designate it as
+                                            (B051)   RTS          ;as the I/O buffer.
+
+                      (B015)   PLP          ;Check if 1rst directory sec or not.
+                      (B016)   BCS RDNXTDIR ;Go read next directory sector.
+
+                      * Read the first directory sector.
+                      * (Carry = 0.)
+                      (B018)
+                      RDFIRDIR LDY FIRDIRSC ;(y)/(x) = trk/sec vals of first directory
+                               LDX FIRDIRTK ;sector (from the VTOC buffer).
+                      (B01E)   BNE DODIRRD  ;ALWAYS - go read in directory sector.
+
+                      * Read the next directory sector.
+                      * (Carry = 1.)
+                      (B020)
+                      RDNXTDIR LDX DIRLNKTK ;Get track of next directory sec from the
+                                            ;link in the current directory sector.
+                      (B023)   BNE GETDIRLK ;Link not zeroed out.
+                               SEC          ;Link zeroed out - exit with (c) = 1 to
+                      (B026)   RTS          ;signal there are no more directory secs.
+                               ============
+
+                      (B027)
+                      GETDIRLK LDY DIRLNKSC ;Get sector of next directory sec from the
+                                            ;link in the current directory sector.
+
+                      * Call to read in the directory sector.
+                      (B02A)
+                      DODIRRD  STX CURDIRTK ;Save trk/sec vals of directory sec that
+                      (B02D)   STY CURDIRSC ;we are about to read so they will be
+                                            ;the current directory sec values for the
+                                            ;next time around.
+                      (B030)   LDA #1       ;Read opcode for RWTS.
+                      (B032)   JSR RWTSDRVR ;Call RWTS driver to do the read.
+
+                                            * Read/Write Track/Sector driver.
+                                            (B052)
+                                            RWTSDRVR .
+                                                     .
+                                            (See dis'mbly of RWTS driver using READ.)
+                                                     .
+                                                     .
+                                                     (RTS)
+
+                      (B035)   CLC          ;Link didn't zero out so signal that there
+                      (B036)   RTS          ;are more directory secs to read & exit.
+                               ============
+
+(AC1F)   SEC          ;(c) = 1 = already read first directory sec.
+         DEC SECNXD1R ;Index for # of directory sectors.
+(AC23)   BNE PURGEDIR ;If 0, then just read directory sector
+                      ;corresponding to the file wanted.
+
+* Update the file size and write
+* the directory sector to the disk.
+(AC25)   LDX BYTNXD1R ;(x) = offset of the file description in the
+                      ;directory sector.
+(AC28)   LDA FILENSEC ;Number of secs in file (from FM work area).
+         STA FIL1SIZE,X
+         LDA FILENSEC+1
+         STA FIL1SIZE+1,X
+(AC34)   JSR WRDIRECT ;Write the updated directory sector.
+
+                      * Write the directory buffer.
+                      (B037)
+                      WRDIRECT JSR PT2DIRBF
+
+                                            * Designate the directory sector buffer
+                                            * as the I/O buffer in RWTS's IOB.
+                                            (B045)
+                                            PT2DIRBF LDA ADRDIRBF ;Get the addr of the directory sec buf
+                                                     STA IBBUFP   ;in the FM constants table.
+                                                     LDA ADRDIRBF+1 ;Store it in RWTS's IOB.
+                                                     STA IBBUFP+1
+                                            (B051)   RTS
+
+                      (B03A)   LDX CURDIRTK ;Enter RWTS driver with (x)/(y) = trk/sec vals.
+                               LDY CURDIRSC
+                               LDA #2       ;Write opcode for RWTS.
+                      (B042)   JMP RWTSDRVR ;Call RWTS driver to write the directory sector buffer.
+                               ------------
+
+                      (B052)
+                      RWTSDRVR .
+                               .
+                      (See dis'mbly of RWTS driver using WRITE.)
+                               .
+                               .
+                               (RTS)
+
+(AC37)
+TOGDFMXT JMP GOODFMXT ;Exit file manager cleanly.
+         ------------
+
+
+* Exit the file manager.
+(B37F)
+GOODFMXT LDA RTNCODFM
+         CLC          ;(c) =  0 to signal good operation.
+         BCC FMEXIT
+BADFMXIT SEC          ;(c) = 1 to signal unsuccessful.
+FMEXIT   PHP          ;Save status on stack.
+         STA RTNCODFM ;Store return code in FM parameter list.
+         LDA #0
+         STA STATUS
+(B38E)   JSR CPYFMWA  ;Copy the work area to the work buffer.
+
+                      * Copy the FM work area (non-chain) to
+                      * the FM work buffer (in DOS chain).
+                      (AE7E)
+                      CPYFMWA  JSR SELWKBUF ;Select the FM work buffer (in DOS chain).
+
+                                            *  Point the A4L/H pointer at the FM work buffer.
+                                            (AF08)
+                                            SELWKBUF LDX #0       ;Set index to select work buffer.
+                                            (AF0A)   BEQ PT2FMBUF ;ALWAYS.
+
+                                            (AF12)
+                                            PT2FMBUF LDA WRKBUFFM,X ;Get address of selected buffer from the
+                                                     STA A4L      ;FM parameter list & put it in the pointer.
+                                                     LDA WRKBUFFM+1,X
+                                                     STA A4L+1
+                                            (AF1C)   RTS
+
+                      (AE81)   LDY #0       ;Initialize index.
+                      STORWRK  LDA FMWKAREA,Y ;Get byte from the FM work area.
+                               STA  (A4L),Y ;Put it in the work buffer.
+                               INY
+                               CPY #45      ;45 bytes to copy (0 to 44).
+                               BNE STORWRK
+                      (AE8D)   RTS
+
+(B391)   PLP          ;Retrieve status of success of operation
+                      ;from the stack.
+(B392)   LDX STKSAV   ;Adjust stack pointer to force exit to the
+         TXS          ;caller of the function even if we are
+(B396)   RTS          ;several subroutines deeper than the
+         ============ ;original entry point.  (Returns to AFTRFUNC
+                      ;($A6AB) in the FMDRIVER routine ($A6A8).)

@@ -1,0 +1,171 @@
+/*
+	Fido13 -- main function
+
+	3 Sep 93
+
+	Tom Jennings
+	tomj@wps.com
+	(31 Aug 93)
+
+	copyright 1993
+*/
+
+#include <stdio.h>
+#include "fido.h"
+
+
+/* Global static nonsense. */
+
+
+int output_line = 0;			/* lines output so far (reset at pause
+					and input) */
+int output_col = 0;			/* chars since a newline */
+
+struct _state *current_state;		/* ptr to state we're executing */
+struct _state *bliss;			/* the top of the state-machine */
+
+/* Main state machine execution. */
+
+main() {
+
+char c;
+struct _state *s;
+unsigned menu;				/* current menu (menu) */
+
+char *input();
+unsigned load_machine();
+	
+	bliss= (struct _state *) NULL;			/* flag as unallocated */
+	if (load_machine("fido.dat"))			/* load up Fido */
+		exit(1);				/* ERROR! */
+	current_state= bliss;				/* just so I could say that */
+
+	while (1) {
+		c= *input(); c= tolower(c);		/* get command, */
+		for (s= current_state, menu= s-> menu; s-> menu == menu; ++s) {
+			if (c == tolower(*s-> input)) {	/* (check only first character) */
+				execute(s-> action);	/* it's ours! do it */
+				current_state= s-> next; /* change state (maybe ourself) */
+				c= NULL;		/* mark input as used */
+				break;
+			}
+			if (c) output("\"%s\" is not a command\n",c);
+		}
+	}
+}
+
+/* Execute a state; if there is an action exec it. */
+
+execute(a)
+char *a;
+{
+char buff[200];
+char *args[64];
+
+	parse(a, buff, sizeof(buff), args);		/* break it up, */
+	fork_u(args);					/* execute it. */
+}
+
+
+/* Parse the command string, for example:
+             Set ptr args[n]:   0         1  2                 3              4
+				|         |  |                 |              |
+				v         v  v                 v              v
+				/bin/mail -s "arg with spaces" user@domain.com  
+
+The last arg[] is a NULL ptr. parse() modifies the input string. */
+
+parse(in, buff, len, args)
+char *in;		/* text we're parsing */
+char *buff;		/* processed strings... */
+unsigned len;		/* max. length of string */
+char **args;		/* ... at these pointers */
+{
+unsigned n;
+
+	while (*in && (len > 1)) {
+		*args++= buff;					/* point to where arg will go */
+		n= copyqstr(&in, buff, len);			/* copy one arg */
+		buff += n;					/* where next one goes */
+		len -= n;					/* how much room left */
+	}
+	*args= NULL;						/* terminate w/ null ptr */
+}
+
+/* Execute the command. */
+
+fork_u(args)
+char **args;
+{
+int pid, status;
+
+	if ((pid= fork()) < 0) {				/* oops! */
+		perror("fido: fork:");
+		exit(1);
+	}
+
+	if (pid == 0) {						/* if child... */
+		execv(*args, args);
+		perror(*args);
+		exit(1);
+	}
+	while (wait(&status) != pid);				/* ... parent */
+}
+
+/* Get input from the user, returning a pointer to the next token. If
+none, generate a prompt from the current state table, input a line of
+text. */
+
+char *
+input() {
+
+char *strtok();
+static char linebuff[256] = "";		/* human-input line buffer */
+static char *lp = linebuff;		/* ptr into it */
+
+char *cp;
+struct _state *s;
+
+
+	while (1) {
+		cp= strtok(lp, ", \t;"); 	/* see if there's more */
+		lp= NULL;			/* (for 1 -- Nth calls) */
+		if (cp != NULL) return(cp);	/* yup */
+
+		display_states();		/* generate the prompt */
+
+		output_line= 0;			/* reset page pause */
+		fgets(linebuff, (size_t)sizeof(linebuff), stdin);
+		lp= linebuff;			/* repeat, with new input */
+	}
+}
+
+/* Output text to the console. */
+
+output(s)
+char *s;
+{
+	while (*s) switch (*s) {
+		case '\n': output_col= 0; 
+		default: fputs(s, stdout); ++output_col;
+	}
+	fflush(stdout);
+}
+
+/* Output all the state names, ie. the prompt. current_state points to the first state in
+this menu, output all state names in this menu. */
+
+display_states() {
+
+struct _state *t;
+unsigned menu;
+
+	for (t= current_state, menu= t-> menu;; ) {
+		if (output_col + strlen(t-> name) > 40)	/* narrow prompt */
+			output("\n");
+		output(t-> name);			/* state name */
+		if (++t-> menu != menu) break;		/* if the last one, stop */
+		output(", ");				/* else a comma and space for the next */
+	}
+}
+

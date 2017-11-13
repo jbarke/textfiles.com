@@ -1,0 +1,186 @@
+====================================================================================
+Using debug to disassemble and assemble batch files
+====================================================================================
+
+
+Written by Jakash3
+October 11, 2009
+
+This is a fairly new concept of the 'encryption' of batch files.
+It involves using debug.exe to get a hex dump of the batch file
+and the number of bytes in hex the file is. Then we re-write this
+into another batch file to run debug.exe and assemble those hex
+numbers and write that number of bytes to the output file, rename
+the output file to *.bat and run it. This method prevents most
+human eyes from interpreting the batch code until they run it.
+
+So let's say we have a hello world batch file:
+
+[hello.bat]
+---------------------------------------------
+@echo off
+echo Hello World!
+pause
+exit
+---------------------------------------------
+
+If we open cmd.exe in the same folder and run debug.exe
+to this batch file like this:
+
+---------------------------------------------
+debug hello.bat
+---------------------------------------------
+
+Then we can actually get an unassembly of this file, but
+most importantly: the hexadecimal dump of hello.bat.
+
+After running that command, you should now be in debug mode.
+First we must get a hex dump of the file. To do this, run this
+sub-command:
+
+----------------------------------------------
+d
+----------------------------------------------
+
+d stands for dump
+
+On return, you should get output like this:
+
+==============================================
+1865:0100  40 65 63 68 6F 20 6F 66-66 0D 0A 65 63 68 6F 20   @echo off..echo
+1865:0110  68 65 6C 6C 6F 20 77 6F-72 6C 64 0D 0A 70 61 75   hello world..pau
+1865:0120  73 65 0D 0A 65 78 69 74-00 00 00 00 00 00 00 00   se..exit........
+1865:0130  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00   ................
+1865:0140  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00   ................
+1865:0150  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00   ................
+1865:0160  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00   ................
+1865:0170  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00   ................
+==============================================
+
+So now we have the hex dump of the file, next we will calculate
+how many bytes (in hex) the file is. We do this with this internal
+sub-command:
+
+----------------------------------------------
+r cx
+----------------------------------------------
+
+r stands for read
+and the argument 'cx' means we will be reading the count register
+which, in debug mode, holds the number of bytes a loaded file is.
+
+If your file was exactly the same as this example, this should be
+the output:
+
+==============================================
+CX 0028
+:
+==============================================
+
+It then prompts you to enter a new value for CX.
+Just press enter again to keep the value the same.
+
+Now quit:
+
+----------------------------------------------
+q
+----------------------------------------------
+
+Now your screen should be showing the hex dump of the batch file
+and the number of btyes the file is.
+
+We need to obtain the hex code for this batch file by copying
+the hex dump we obtained, but only include all the two
+digit hex numbers that are not zero and their second ratio address.
+
+So in our case we take this:
+
+
+==============================================
+1865:0100  40 65 63 68 6F 20 6F 66-66 0D 0A 65 63 68 6F 20   @echo off..echo
+1865:0110  68 65 6C 6C 6F 20 77 6F-72 6C 64 0D 0A 70 61 75   hello world..pau
+1865:0120  73 65 0D 0A 65 78 69 74-00 00 00 00 00 00 00 00   se..exit........
+1865:0130  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00   ................
+1865:0140  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00   ................
+1865:0150  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00   ................
+1865:0160  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00   ................
+1865:0170  00 00 00 00 00 00 00 00-00 00 00 00 00 00 00 00   ................
+==============================================
+
+and remove the other useless data to only have this left:
+
+==============================================
+0100 40 65 63 68 6F 20 6F 66 66 0D 0A 65 63 68 6F 20
+0110 68 65 6C 6C 6F 20 56 58 65 72 0D 0A 70 61 75 73
+0120 65 0D 0A 65 78 69 74
+==============================================
+
+Notice I took out the '-''s from the middle and discluded
+all the 0's.
+
+Now we have the code in hex for our batch file!
+
+But to put this into application we our going to make 
+another batch file to tell debug to assemble this hex code
+and run it.
+
+Here's what that looks like:
+
+----------------------------------------------
+@echo off
+echo e 0100 40 65 63 68 6F 20 6F 66 66 0D 0A 65 63 68 6F 20>>"build_hex"
+echo e 0110 68 65 6C 6C 6F 20 77 6F 72 6C 64 0D 0A 70 61 75>>"build_hex"
+echo e 0120 73 65 0D 0A 65 78 69 74>>"build_hex"
+echo r cx>>"build_hex"
+echo 0028>>"build_hex"
+echo n hello>>"build_hex"
+echo w>>"build_hex"
+echo q>>"build_hex"
+debug<"build_hex"
+del /f /q "build_hex"
+ren "hello" "hello.bat"
+cls
+hello.bat
+----------------------------------------------
+
+Step by step this is what this batch file does:
+
+Assuming that we are in debug mode; for the first three
+lines it uses the 'e' command to enter at an address and put
+hex data in it. This is the syntax:
+
+----------------------------------------------
+e [address] [hex_data]
+----------------------------------------------
+
+Then it uses r cx to get to the prompt to enter a new value
+for cx, which on the next line is 0028. (length of file)
+We got this number from before when we used debug on our
+original batch file and used the command: r cx
+to find the number of bytes the file was.
+
+'n hello' means that the new file name for the file we are
+going to assemble is 'hello'
+
+Then we use 'w' command to write 0028h bytes of the hex
+data to the file 'hello'.
+
+and 'q' to quit debug.
+
+All of that was placed in the file 'build_hex'. 'build_hex'
+will automatically be ran as input to debug.exe to re-assemble
+our batch file. After that's accomplished, 'build_hex' will be
+useless and can be deleted. Now the rest of the batch file will
+rename 'hello' to 'hello.bat', clear screen, and run 'hello.bat'.
+
+====================================================================================
+Fabulous, we went from batch to hex to batch again.
+This technique can also be used with images, sounds, VBScript,
+executable (*.exe) and most originally COM files.
+
+Thank you for reading this tutorial and I hoped you liked it.
+
+Contact me: 
+
+http://jakash3.wordpress.com
+http://www.youtube.com/user/jakash3

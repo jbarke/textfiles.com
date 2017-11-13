@@ -1,0 +1,223 @@
+
+
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+         /*                                                       *\
+       /  *                                                       *  \
+     /    *                                                       *    \
+   /      *                                                       *      \
+ /        *              System Vulnerabilities                   *        \
+|         *                                                       *        |
+|         *                                                       *        |
+|         *                                                       *        |
+|         *           Another Modernz Presentation                *        |
+|         *                                                       *        |
+\         *                        by                             *       /
+  \       *                    Multiphage                         *     / 
+    \     *                                                       *   / 
+      \   *            (C)opyright July 5th, 1992           *  /
+        \ *                                                       */
+*********************************************************
+
+
+
+
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+*******************************************************************************
+The Modernz can be contacted at:
+
+                        MATRIX BBS
+                        WOK-NOW!
+                        World of Kaos NOW!
+                        World of Knowledge NOW!
+                        St. Dismis Institute
+                        -  Sysops: Wintermute 
+                                   Digital-demon
+                       (908) 905-6691
+                       (908) WOK-NOW!
+                       (908) 458-xxxx
+                       1200/2400/4800/9600
+                       14400/19200/38400
+                       Home of Modernz Text Philez
+
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
+<*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*>
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+                                                                                                                                                                                                                                                                              
+                       TANSTAAFL
+                       Pheonix Modernz
+                       The Church of Rodney
+                       - Sysop: Tal Meta
+                       (908) 830-TANJ
+                       (908) 830-8265
+                       Home of TANJ Text Philez
+                                 
+<*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*>
+                                                                                                                                                                                                                                                               
+                       CyberChat
+                       Sysop: Hegz
+                       (908)506-6651
+                       (908)506-7637
+                       300/1200/2400/4800/9600
+                       14400/19200/38400
+                       Modernz Site
+                       TLS HQ
+
+<><><><><><><><><><><><><><<><<><><><><><><><><><><><><><><><><><><><><><><><><
+                   
+                      The Global Intelligence Center
+                      World UASI Headquarters!
+                      Pennsylvania SANsite!
+                      (412) 475-4969 300/1200/2400/9600
+                      24 Hours! SysOp: The Road Warrior
+
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
+
+                      The Lost Realm
+                      Western PA UASI site!
+                      Western PA. SANfranchise
+                      (412) 588-5056  300/1200/2400
+                      SysOp: Orion Buster
+
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
+
+                      The Last Outpost
+                      PowerBBS Support Board
+                      UASI ALPHA Division
+                      NorthWestern PA UASI site!
+                      (412) 662-0769 300/1200/2400
+                      24 hours! SysOp: The Almighty Kilroy
+
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><
+
+                      Hellfire BBS
+                      SANctuary World Headquarters!
+                      New Jersey UASI site!
+                      (908) 495-3926  300/1200/2400
+                      24 hours! SysOp: Red
+
+<*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*>
+
+                       BlitzKreig BBS
+                       Home of TAP
+                       (502)499-8933
+
+<*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*><*>
+
+
+
+Information concerning a vulnerability in the crp facility in Hewlett 
+Packard/Apollo Domain/OS.  This vulnerability is present on all
+HP/Apollo Domain/OS SR10 systems up through SR10.3.  Patches that address
+this problem will be available in the SR10.3 patch tape (~Feb 92) and in
+the SR10.4 software release.  Contact your local sales office for
+more information.
+
+---------------------------------------------------------------------------
+
+I.   Description
+
+     There is a security problem with the /usr/apollo/bin/crp facility.
+     A user who is not running crp is not vulnerable to this problem.
+ 
+II.  Impact
+
+     A person at a remote or local site can obtain the privileges of
+     the user who is running crp.
+
+III. Workaround
+
+     The suggested workaround is to disable two system calls that are
+     made by /usr/apollo/bin/crp.  The following steps should be
+     executed by root or another appropriate userid that has the
+     privilege to write in the directories involved.
+
+     1.	Create a file "crplib.c" containing the four-line C program:
+
+	extern void pad_$dm_cmd(void);
+	void pad_$dm_cmd() { }
+	extern void pad_$def_pfk(void);
+	void pad_$def_pfk() { }
+
+     2.	Compile this program using '-pic':
+
+	(AEGIS)  /com/cc crplib.c -pic
+	(UNIX)   /bin/cc -c crplib.c -W0,-pic
+	
+     3.	Copy the result to somewhere accessible to all users (/lib/crplib
+	is recommended).
+	
+	(AEGIS)  /com/cpf crplib.bin /lib/crplib
+	(AEGIS)  /com/edacl -p root prwx -g wheel rx -w rx /lib/crplib
+
+	(UNIX)   /bin/cp crplib.o /lib/crplib
+	(UNIX)   /bin/chmod 755 /lib/crplib
+	
+     4.	a) Ensure that all users do an 'inlib' of that file before running crp.
+	One way to ensure this would be to replace the /usr/apollo/bin/crp
+	command by a shell script that does the inlib.  Doing this step
+	will force crp to use the null functions defined in step 1 above.
+	
+	(AEGIS)  /com/chn /usr/apollo/bin/crp crp.orig
+	(UNIX)   /bin/mv /usr/apollo/bin/crp /usr/apollo/bin/crp.orig
+	
+	b) Create the file /usr/apollo/bin/crp containing the shell script:
+	
+	(AEGIS)	#!/com/sh
+		/com/sh -c inlib /lib/crplib ';' /usr/apollo/bin/crp.orig ^*
+
+	(UNIX)	#!/bin/sh
+		inlib /lib/crplib
+		exec /usr/apollo/bin/crp.orig "$@"
+	
+	c) Make this script executable.
+
+	(AEGIS)	/com/edacl -p root prwx -g wheel rx -w rx /usr/apollo/bin/crp
+	(UNIX)	/bin/chmod 755 /usr/apollo/bin/crp
+
+     ---------------
+
+     NOTE: This workaround will prevent crp from making use of the two
+     system calls; and therefore, it may affect the functionality of various
+     software programs since they will be unable to define programmable
+     function keys, create new windows on the client node, or execute
+     background processes using the Display Manager interface.
+
+
+
+===========================================================================
+                     NeXTstep Configuration Vulnerability
+---------------------------------------------------------------------------
+
+Information concerning a vulnerability in release 2 of NeXTstep's 
+NetInfo default configuration.  This vulnerability will be corrected 
+in future versions of NeXTstep.
+
+---------------------------------------------------------------------------
+
+I.   Description
+
+     By default, a NetInfo server process will provide information to
+     any machine that requests it.
+
+
+II.  Impact
+
+     Remote users can gain unauthorized access to the network's
+     administrative information such as the passwd file.
+
+
+III. Solution
+
+     Ensure that the trusted_networks property of each NetInfo domain's
+     root NetInfo directory is set correctly, so that only those systems
+     which should be obtaining information from NetInfo are granted
+     access. The value for the trusted_networks property should be the
+     network numbers of the networks the server should trust.
+
+     Note that improperly setting trusted_networks can render your
+     network unusable.
+
+     Consult Chapter 16, "Security", of the "NeXT Network and System
+     Administration" manual for release 2 for details on setting the
+     trusted_networks property of the root NetInfo directory.
+

@@ -1,0 +1,1317 @@
+     Volume 5, Number  7                              15 February 1988
+     +---------------------------------------------------------------+
+     |                                                  _            |
+     |                                                 /  \          |
+     |                                                /|oo \         |
+     |        - FidoNews -                           (_|  /_)        |
+     |                                                _`@/_ \    _   |
+     |        International                          |     | \   \\  |
+     |     FidoNet Association                       | (*) |  \   )) |
+     |         Newsletter               ______       |__U__| /  \//  |
+     |                                 / FIDO \       _//|| _\   /   |
+     |                                (________)     (_/(_|(____/    |
+     |                                                     (jm)      |
+     +---------------------------------------------------------------+
+     Editor in Chief                                       Dale Lovell
+     Editor Emeritus:                                   Thom Henderson
+     Chief Procrastinator Emeritus:                       Tom Jennings
+     Contributing Editors:                                   Al Arango
+     
+     FidoNews  is  published  weekly  by  the  International   FidoNet
+     Association  as  its  official newsletter.  You are encouraged to
+     submit articles for publication in FidoNews.  Article  submission
+     standards  are contained in the file ARTSPEC.DOC,  available from
+     node 1:1/1.
+     
+     Copyright 1988 by  the  International  FidoNet  Association.  All
+     rights  reserved.  Duplication  and/or distribution permitted for
+     noncommercial purposes only.  For  use  in  other  circumstances,
+     please contact IFNA at (314) 576-4067. IFNA may also be contacted
+     at PO Box 41143, St. Louis, MO 63141.
+     
+     The  contents  of  the  articles  contained  here  are  not   our
+     responsibility,   nor   do   we   necessarily  agree  with  them.
+     Everything here is  subject  to  debate.  We  publish  EVERYTHING
+     received.
+
+
+
+                             Table of Contents
+
+     1. ARTICLES  .................................................  1
+        Automatic Routing of Gateways  ............................  1
+        Quick BBS - Binkley - And More  ...........................  6
+        The Great Earthquake Hoax  ................................ 17
+     2. WANTED  ................................................... 20
+        Anybody for Chess?  ....................................... 20
+     3. NOTICES  .................................................. 21
+        The Interrupt Stack  ...................................... 21
+        Latest Software Versions  ................................. 21
+     FidoNews 5-07                Page 1                   15 Feb 1988
+
+
+     =================================================================
+                                 ARTICLES
+     =================================================================
+
+
+        Aaron Priven
+        Fidonet (1:125/1154)
+
+                       Automatic Routing of Gateways
+
+        This was originally a message to Doug Thompson that I just
+     kept writing and writing and writing.... eventually i realized
+     it might be better as an article than as a message. So here it
+     is.
+
+        (In this article, "nets" are Fidonet Networks, that is,
+     Fidonet routing units like 125 and 109. "Networks" are separate
+     entities like Usenet and Bitnet. Also, all examples are from
+     Zone 1, and many the San Francisco Bay Area in particular; this
+     is only because I'm familiar with it. Please, no national
+     centrism is implied! -- I just don't know very much about the
+     setup of Europe or Oceania in Fidonet.)
+
+        After thinking it over, these are my ideas to implement
+     gateways from Fidonet to other networks, as far as Fidonet is
+     concerned.
+
+        Basically, what I want to do is this: just as the Echo
+     Backbone has special node numbers, and so has the Software
+     Backbone, gateways to other nets would also have special node
+     numbers. These numbers would be derived from an assigned
+     "network" number plus another number indicating the geographical
+     unit that a to/from node was in.
+
+        The question is: why put special numbers in the nodelist?
+     They're *other* networks, aren't they? Can't they just do it for
+     themselves? The answer to that is complex. Communication *is*
+     any network; without communication, there literally is no
+     network. Increasing communication, by adding people to the list
+     with whom you can communicate, will only widen and improve the
+     basis of what the conversations end up being. It should be a
+     primary goal of any network to improve communications. As such,
+     while gateways with other networks may not seem likely to better
+     any one particular network, by "giving away" the information
+     that that network has, in reality both networks, all gatewayed
+     networks, improve by the gatewaying.
+
+        The reason for the numbers being derived, rather than being
+     selected at random, is twofold. First of all, it's aesthetic; I
+     like numbers that work out that way. Second of all, like net
+     routing to the "xxx/0" node, it allows for automatic routing to
+     that gateway. You simply send to "Usenet", and the computer
+     knows where that is.
+
+        There are many ways to assign automatic numbers. One may do
+     it by net and region, either requiring that the net or region
+     FidoNews 5-07                Page 2                   15 Feb 1988
+
+
+     set aside a particular number for gateways (anything/999 will
+     always be the local Usenet gateway, for example) or by having
+     the NC or RC act as an outbound host for gatewayed mail (just
+     so far as the gateway). The problem with this is getting every
+     NC in Fidonet to do any one thing; I imagine it's hard enough
+     just getting Donald Dodell, Henk Wevers, and Bill Bolton to
+     agree. I believe it must be done netwide, and thus via the
+     nodelist.
+
+        For example, it would be perfectly possible to have one
+     gateway per region with this formula:
+
+     <zone>/<two-digit_network><two-digit_region>
+
+        So if Usenet were assigned a gateway number of 50, the Usenet
+     gateway for Zone 1 Region 10 would be 1/5010. The problem here
+     is that Region 10, and most other regions, are really too big to
+     only have one Usenet gateway. Should someone in Quebec call a
+     Usenet gateway in Indiana when might be available right there in
+     Quebec? I really don't think so.
+
+        Therefore, the units have to be smaller. To my mind, the
+     obvious conclusion is to do it by net. (Independent nodes, of
+     course, would continue to do it by region.) It could be done
+     smaller than that, but most of the time if nets are split, then
+     the split is small enough that it can be plugged in manually.
+
+        The next step, then, is to use this formula:
+
+     <zone>/<one-digit_network><three-digit_region>
+
+     So, if Usenet were assigned the gateway number of 7, the Usenet
+     gateway for Zone 1 Region 10 would be 1/7010, and the Usenet
+     gateway for net 161 would be 1/7161.
+
+        There are quite a few problems here. First of all, it assumes
+     that we'll never have more than nine networks. I don't know if
+     any networks besides Usenet would even consider a gateway (I'll
+     discuss Alternet later); perhaps there will be only one. It is
+     possible that Bitnet or ARPAnet will offer us gateways. Or,
+     perhaps other incompatible microcomputer networks -- the GT-
+     Powercomm network and PunterNet come to mind -- will one day
+     have gateways. It very possible that someday we may reach nine
+     or ten gateways.
+
+        Furthermore, even if there were only one or two gateways, it
+     is still taking away a tremendous number of Zone 1 special
+     nodes. (I mean by that not that it will take the actual numbers,
+     but it will take up all ten-thousand of the 7000 numbers even if
+     there are only a few gateways.) Right now, Zone 1 special nodes
+     are used in four ways: the software backbone, the echomail
+     backbone, Fidonet compatible software help nodes, and various
+     IFNA and Fidonet offices (the IC, the ZoneGates, and also
+     positions like the FTSC chair and the IFNA membership chairman).
+     Yet they have not lived up to their potential. They do not list
+     help nodes for many products that could use them, including
+     FidoNews 5-07                Page 3                   15 Feb 1988
+
+
+     SEAdog (except in Oceania!), Confmail and the rest of Bob
+     Hartman's software, US Robotics and Telebit, and many other
+     products. (This is not a complaint, I'm only pointing-out a
+     possibility.) They do not list the members, or even the chairmen
+     of the various IFNA committees. They do not include even all the
+     members of the IFNA Board of Directors! (Is it any wonder that
+     we have to ask who they are?) When the Zone 1 special nodes are
+     used to the extent that they could and should be, there will be
+     much less room for manipulation.
+
+        It seems, therefore, that we've run out of options. We just
+     can't use Zone 1 (or Zone 2 or Zone 3) special nodes because
+     there simply aren't enough. I think the only reasonable solution
+     left is to grant special units to gateways to other networks.
+
+        Thus, which units should we use? I've already shown that
+     single-digit numbers, and thus zones, are not feasible. I think
+     the ideal solution would be to use special net numbers for
+     gateways, for several reasons. First of all, these special nets
+     would be directly under the zone and not in a separate region,
+     thus listing the gateway nodes right under the 1/x special
+     nodes. Second, there are a lot of network numbers available;
+     only 100 are currently used in Zone 1, and since there is
+     already a precedent for not having nets assigned exactly in
+     numerical sequence (unlike, say, 1/x nodes, where all 1/2xx
+     nodes are Echomail Backbone hubs, and all 1/3xx nodes are
+     Software Backbone hubs) there is little reason why all of them
+     couldn't be used. The problem with using nets is, however,
+     clear: all messages to nets are routed via the network host.
+     That is what nets are for, of course, but for situations like
+     this it's simply not the right thing to do. We'll have to use
+     regions, which do not route.
+
+        There are several drawbacks to using regions, but they simply
+     cannot be helped. The first one is that regions have been
+     assigned starting from 10, and thus will not be listed right
+     after the 1/x nodes; it sounds unimportant but it does ruin the
+     continuity of the nodelist. Second of all, direct representation
+     of one region per gateway would place a large overhead on the
+     region numbers, and ignores the good use that can be made of the
+     fourth digit in each node number.
+
+        I would suggest that other networks be given gateway numbers
+     of two digits, and the following formulae be used: for the
+     region number,
+
+     9 + <tens_digit_gateway_number>
+
+     and for the node number,
+
+     <units_digit_gateway_number> + <geographic_unit_involved>.
+
+     If Usenet were given a gateway number of 11, then the Usenet
+     gateway for Region 10 independents would be 91/1010. If Bitnet
+     were given 0, then the Bitnet gateway for Net 125 would be
+     90/125. (It is perfectly possible with this scheme to have a
+     FidoNews 5-07                Page 4                   15 Feb 1988
+
+
+     gateway number of 0 or of 10; you simply leave out the first
+     digit in the node number). This is really very simple.
+
+        I would suggest that gateway numbers be assigned first not
+     with 0 or 1, but with 89, and go backwards. (This would make
+     Region 10's gateway 98/9010, and so forth.) This would ensure
+     that Region 99 is still available in the event another special
+     region is needed, and that Regions 90 through probably 96 would
+     be available for regular or special use.
+
+        It is true that these numbers would take away some of the
+     possibilities of new regions. Nevertheless, at this writing
+     there are only 16 regions in Zone 2, and less in each of the
+     other zones. While regions will no doubt continue to be added in
+     Europe, Africa, Asia, and Latin America, and it is likely that
+     at some future time some regions elsewhere will be added or
+     split, it is also likely that at such a time as that many
+     regions are needed, a new zone will be needed as well --
+     doubling the number of possible regions.
+
+        (These 90-99 numbers could well be used for other things
+     besides gateways. It would be possible to use special region
+     numbers for other special functions we may develop in the
+     future, should we need new region numbers.)
+
+        The way the messages would be routed is as follows. First,
+     the re-routing program will look in its configuration file for a
+     manual setting of the gateway node. (This is in case one has
+     more than one gateway per net.) Then, the person looks for the
+     node matching the gateway number and the net. For example, Net
+     125 nodes would look for 98/9125 if the gateway number were 89.
+     If there was no node 98/9125, then it would look for 98/9010,
+     since Net 125 is in Region 10. If there were no 98/9010, it
+     would look for 98/9000. Numbers like 98/0001 and 98/0005 are
+     administrative numbers, indicating the persons in charge of
+     running the gateways (this might not be used, but more likely
+     would be those in charge of keeping the standards for gateway
+     software).
+
+                                 *   *   *
+
+        I haven't discussed Alternet in the my article, although the
+     thoughts leading up to this article did include them. I don't
+     think it's much of a secret that I dislike Alternet because it
+     hurts communication; it necessitates things like special
+     gateways and funny 9x/xxxx numbers; barriers to communication,
+     which is exactly what in an ideal situation we do NOT need in a
+     communications network! (I like that word, communication.)
+     Nevertheless, in an apolitical spirit, I have to admit that
+     Alternet (despite its origin) is indeed a separate network than
+     Fidonet and (so long as there are enough nodes in Alternet to
+     justify it) should be treated in the Fido nodelist the same way
+     as any other network.
+
+        That includes, however, the inconvenience of being another
+     network. If they want to be included in the Fido nodelist, then
+     FidoNews 5-07                Page 5                   15 Feb 1988
+
+
+     they must be part of Fidonet. Fido's Zone 4 will be used for
+     Latin America, Asia, or Africa, not for any special-interest
+     group; what's best for the organization of Fidonet is clear
+     organizational lines, and that would be completely destroyed by
+     the actual granting of a zone to Alternet and the inclusion of
+     Alternet in the Fido nodelist. The difference between actual
+     inclusion and the granting of gateways is clear: special
+     treatment. Alternet should be given no special treatment
+     whatsoever.
+
+
+
+     -----------------------------------------------------------------
+
+     FidoNews 5-07                Page 6                   15 Feb 1988
+
+
+     From: Gene Coppola
+     Quick BBS Help Node 1/114
+
+        Quick BBS  by itself  is one heck of a program. Adding Binkley
+     as the mail processor  or front  end if  you will,  turns a great
+     program into  a super program. While this article is designed for
+     the Quick BBS sysop,  anyone  who  desires  to  use  Binkley will
+     profit from reading this.
+
+        The topics  covered are  the ones I receive the most questions
+     about on the Quick BBS Help Node.
+
+        The first question people ask is how do I get Quick BBS to run
+     under Binkley?  There are several ways to doit, but the one I use
+     and find most applicable is the  EXIT method.  This frees  up the
+     most RAM  and allows  me to  run almost  any RBBS or PcBoard door
+     from Quick BBS.
+
+        You have to add the following line to your binkley.cfg file to
+     start this process:
+
+        BBS EXIT
+
+        This tells  Binkley to  exit when  a human  caller is detected
+     with the Errorlevel set to the callers Baud  Rate divided  by 10.
+     An  example  would  be  if  a  caller  comes in at 2400 baud then
+     Binkley will exit with the Errorlevel  set  to  24,  ready  to be
+     trapped by the batch file used to run Binkley.
+
+        Now in  the batch file you use to run Binkley you will need to
+     add the following statements to  trap  the  Errorlevel  and start
+     QuickBBS when a human calls.
+
+        If ErrorLevel  24 Goto Baud2400
+        If ErrorLevel  12 Goto Baud1200
+        If ErrorLevel   3 Goto Baud300
+
+        Those three  lines will  trap 2400,  1200 and 300 baud callers
+     and send them to the appropriate routine in  the batch  file. The
+     three routines these lines call are listed below.
+
+        :Baud2400              ; Procedure Name
+        C:                     ; Change To Drive C
+        Cd\AAAAAAAA            ; Change To Quick BBS Sub
+        QuickBBS -b2400 -E0    ; Call Quick BBS Pass Baud
+        Goto AfterQuick
+
+        :Baud1200
+        C:
+        Cd\AAAAAAAA
+        QuickBBS -B1200 -E0
+        Goto AfterQuick
+
+        :Baud300
+        C:
+        Cd\AAAAAAAA
+     FidoNews 5-07                Page 7                   15 Feb 1988
+
+
+        QuickBBS -B300 -E0
+        Goto Start
+
+        You might  notice that  in the  Baud2400 and Baud1200 routines
+     the last command is  Goto AfterQuick  and in  the Baud300 routine
+     the last command is Goto Start.
+
+        This is because I do not accept 300 Baud callers on my system,
+     so once QuickBBS has informed the caller of this and  logged them
+     off,  I  do  not  have  to worry about processing any messages or
+     netmail and can go right back to start Binkley up again.
+
+        Okay so now Binkley  can  answer  the  phone,  detect  a human
+     caller and  pass control to Quick BBS. Once the caller has logged
+     off, my  batch file  goes the  routine named  AfterQuick which is
+     listed below.
+
+        :AfterQuick   ; Procedure Name
+        C:            ; Make Sure I Am On C Drive
+        cd \AAAAAAAA  ; Change To Quick BBS Sub Directory
+        echoscan      ; Move EchoMail To Message Area
+        mailscan      ; Move NetMail To Message Area
+        D:            ; Change Back To Drive D
+        cd \BINK      ; Change To Binkley Sub Directory
+        Goto Bundle   ; Goto Message Processing Routine
+
+        Okay, so  what is  Bundle? How  does Binkley  or Quick BBS now
+     process the mail? Well, it took  me quite  a while  to completely
+     understand this  with help from experts such as Bob Hartman, Rick
+     Siegel, Doug Boone, Baba  Buhler, Mike  Janke, and  many more, to
+     whom I say THANK YOU!
+
+        OMMM  is  the  program  that  processes  the messages and sets
+     things rolling for delivery.  What  I  could  not  grasp  was the
+     UNIQUE things  that OMMM  allows you  to do. Just like most other
+     Sysops, I was used to the  three tiered  mail schedule  we use in
+     Net 107. Basically, it works like this.
+
+        From  one  hour  before  National Mail to one-half hour before
+     National Mail,  we  send  all  outgoing  mail  (non-echo)  to our
+     local Hubs.
+
+        From one half hour before NMH to NMH our Hubs send the mail to
+     our Outbound gateway.
+
+        During NMH each  node  is  responsible  to  send  EchoMail and
+     messages with Attaches directly to the destination.
+
+        From NMH  to one  half hour after NMH we send and receive from
+     nodes in Net 107, while the Igate processes the mail and sends it
+     to the Hubs.
+
+        From one  half hour  after NMH to one hour after NMH the nodes
+     are usually quite, waiting to receive mail from their Hubs.
+
+        Even though I ran SEAdog as a front end, I never thought about
+     FidoNews 5-07                Page 8                   15 Feb 1988
+
+
+     processing mail any way other than above.
+
+        Now with Binkley as my front end, mail processing has changed.
+     Since my Hub accepts CM and mail outside  of National  Mail Hour,
+     Binkley and  OMMM make  it very easy for me to send outbound mail
+     to my Hub during the day. The Hub is a LOCAL call, so it does not
+     cost anything to make the call during the day.
+
+        So in my Day Time Schedule in OMMM.CTL (Schedule D) I send all
+     non-echo outbound mail to my Hub.  Since there  are several nodes
+     in  the  local  area,  I  send  any  mail  to  them directly thus
+     lightening the load on my Hub somewhat.
+
+        I also HOLD echomail for several Sysops who desire to Poll me,
+     so I  have HOLD statements in this schedule as well. Here is what
+     my OMMM.CTL looks like.
+
+     SCHED D
+
+        UNHOLD ALL          ; Remove Hold From All Packets
+
+        ONEHOLD 129/34      ; -+
+        ONEHOLD 135/68      ;  |
+        ONEHOLD 104/24      ;   +-->  Hold For  People Who  Poll Me
+        ONEHOLD 170/211     ;  |
+        ONEHOLD 135/4       ; -+
+
+        ONECM 107/211   ; -+
+        ONECM 107/233   ; \ - ARC And Send Direct
+        ONECM 107/238   ; / - Bypassing Hub
+        ONECM 107/269   ; -+
+
+
+        ROUTE 107/200 107/ALL ; Route All Remaining 107 Mail
+                              ; To My Hub.
+
+        (Author's Note: It might not be the best but it works!)
+
+        Here  is  what  the  schedule  event looks like in the Binkley
+     configuration file.
+
+     Event All   06:00 23:59 L C B   E1=10 E2=30 E3=50 A=180
+     Event All   00:00 02:59 L C B   E1=10 E2=30 E3=50 A=180
+
+        Okay, now my day time mail is being  handled. Note  that there
+     are  2  events  above.  This  is because Binkley cannot handle an
+     event that crosses the midnight hour. So one  event is  from 6:00
+     am to 11:59 pm and the next is from midnight until 2:59 am.
+
+        The three  flags I  have set are L which enables local mail, C
+     for Crash Mail and B which allows BBS access.
+
+        E1 is set to Errorlevel 10, which sets  the SCHED  variable to
+     SCHED D. When the event starts it goes to SCHED D in OMMM.CTL and
+     processes the mail as above.
+
+     FidoNews 5-07                Page 9                   15 Feb 1988
+
+
+        From 3:00 am to  3:59  am  I  poll  various  nodes  to  get my
+     echomail.
+
+        From 04:00 to 05:00 (NMH) I use SCHED M which is show below.
+
+     SCHED M
+
+         UNHOLD ALL       ; Removes Holds From All Packets
+
+         ONEHOLD 135/4    ;
+         ONEHOLD 129/34   ;
+         ONEHOLD 135/68   ; Hold EchoMail For Pickup
+         ONEHOLD 170/211  ;
+         ONEHOLD 104/24   ;
+
+        Here is the event line for this schedule.
+
+     Event All   04:00 05:00 N     E1=11 E2=30 E3=50 A=180
+
+        E1 is  set to Errorlevel 11 which sets the schedule to SCHED M
+     which is my NMH schedule.
+
+        I hope you are beginning to understand this. Basically you set
+     each schedule to handle the mail the way you want it done.
+
+        So far,  I have  not touched  on the command line for OMMM but
+     will now cover that.
+
+        All of  my  events  call  the  procedure  named  :BUNDLE which
+     basically starts  OMMM on its way. Here is what BUNDLE looks like
+     in my batch file.
+
+        :Bundle
+        Ommm -s%sched% -hd:\zzzznet\outbound  -cd:\Bink\ommm.ctl     -
+     Id:\Bink\binkley.PRM -Md:\zzzznet -n -d -z
+        Goto Start
+
+        This breaks down as follows:
+
+        -s%sched% is  the SCHED  variable set by the various events as
+     the day goes by.
+
+        -hd:\zzzznet\outbound is the holding  area  for  messages once
+     they have  been processed. This is WHERE they seem todisappear to
+     after OMMM has processed them. This is also where Binkley EXPECTS
+     to find them.
+
+        -c:\Bink\ommm.ctl is  the COMPLETE  path and  file name of the
+     control file for OMMM.
+
+        -Id:\Bink\binkley.PRM is the COMPLETE  path and  file name for
+     the Binkley PRM file.
+
+        -Md:\zzzznet is  the directory  where Quick  BBS and any other
+     utility stores messages WAITING to be processed.
+
+     FidoNews 5-07                Page 10                  15 Feb 1988
+
+
+        Once OMMM has processed the mail, the batch file goes  back to
+     the start and runs Binkley again.
+
+        E3 in the Binkley.cfg file is a special flag. This is what you
+     want to occur when CRASH  Mail  is  received.  I  have  listed my
+     procedure below.
+
+     :Unpackmail        ; Procedure Name
+      C:                ; Change To Drive C
+      Cd\AAAAAAAA       ; Change To Quick BBS Sub Directory
+      echogen -U -T     ; Unarc and Toss All Echomail
+      ARCMAIL  FROM  ALL    ;  Just  In  Case Echogen Misses Something
+      ECHOTOSS          ; Same As Line Above
+      MailToss 2        ; Toss NetMail Into Quick BBS Board 2
+      D:                ; Change Back To Drive D
+      Cd \Bink          ; Change To Binkley Sub Directory
+      Goto Bundle       ; Ah, Here Is Bundle Again
+
+        Bundle is called at the end to process the mail again. Echogen
+     produces the  echomail for the nodes I feed. If any EchoMail came
+     in the CRASH mail, Echogen sends it to the nodes I feed  and then
+     tosses it  into the  appropriate message  boards in the Quick BBS
+     message file.
+
+        So, as you can see, running OMMM to  process the  mail is done
+     after any  mail comes  in, and  again at  the start  of every new
+     event. By setting the  SCHED variable  to the  proper schedule in
+     OMMM.CTL you determine how the mail is to be handled.
+
+        You will  notice the  following lines  at the  top of my batch
+     file to run Binkley.
+
+        Set BINKLEY=D:\BINK\
+        If %Sched%!==! goto day_route
+
+        The first line sets the Dos variable BINKLEY equal to the PATH
+     where the Binkley files are stored. This is QUITE important, so I
+     set it here as well as in my AUTOEXEC.BAT file  upon system start
+     up.
+
+        The second  line covers unexpected mistakes on my part. If, in
+     my all night editing sessions  I  screw  up  and  leave  an event
+     unscheduled, it  reverts to the day time mail schedule which ONLY
+     sends local mail. I learned this lesson the hard way.
+
+        I hope  that explains  a little  more about  how Binkley works
+     with  Quick  BBS.  I  have  enclosed  my  complete batch file and
+     configuration at the end of this article to  help you  along your
+     way.
+
+        As the  Quick BBS HELP node I keep a complete set of Quick BBS
+     and Binkley files on-line. These are available to new callers for
+     download on  the FIRST call. Here is the latest list of Quick BBS
+     and associated files that go along with Quick BBS.
+
+        You can request FILES from 1/114 to get the latest  listing of
+     FidoNews 5-07                Page 11                  15 Feb 1988
+
+
+     files  available.  This  is  updated  twice  a  day and is always
+     current.
+
+     EGEN_105.ARC Version 1.05 Fixes BUGS In 1.04
+     QUICKUPD.ARC Update Quick BBS 1.01 To 1.02
+     QUICKBBS.ARC QuickBBS Standard Package (Main Program)
+     QUICKDOC.ARC QuickBBS Sysop Documentation
+     QUICKNET.ARC QuickBBS Net Mail Option
+     QUICKECO.ARC QuickBBS Echo Mail Option
+     QUICKPAK.ARC All Of The Above Files
+
+     BATCH.ARC My Batch And Control Files For This System
+     SAMPMENU.ARC Menus Used On This System
+     SAMPQEST.ARC Sample New User Questionnaire
+     STRUCT.ARC File Structures For Quick BBS
+     X00106.ARC Fossil Driver For QuickBBS
+
+     BULLMAKE.ARC News/Bulletin Generator (FREEWARE)
+     CVTMSG.ARC Imports Messages From Opus To Quick BBS
+     CVTUSER.ARC Converts Opus User File To Quick BBS
+     DSZ0110.ARC External Zmodem Protocol (Latest Version)
+     FILESCAN.ARC Creates List Of Available Files V5.1
+     USERLOG.ARC Userlog/Message Base/Answerfile Utility <-New
+     UPURGE.ARC Purge By Date, Security Level
+     WXMODEM.ARC External Wxmodem Driver
+
+     BINKBATS.ARC My Cfg And Bats To Run Binkley
+     BEXE_130.ARC Binkley (A Front End For Quick BBS)
+     BINKOMMM.ARC Using OMMM With Binkley
+     BTCTL.ARC Replaces Faulty BTCTL In BEXE_103 Archive
+     CONFMAIL.ARC B. Hartman's Mail Package 3.3
+     FILESCAN.ARC V5.1 Now Supports Binkley <--NEW
+     OMMM_108.ARC Message Handler For Binkley
+     OMMMHELP.ARC More Help Using OMMM With Binkley
+     ONODE146.ARC Nodelist Utility For Binkley
+     REMAPPER.ARC Service Points With Binkley
+
+     - External Protocol Drivers
+
+     OATE_100.ARC Ascii Protocol Transfer Driver
+     OKER_104.ARC Kermit Protocol Driver
+     WMODEMX.ARC Wxmodem Protocol Driver
+     YMG110.ARC YmodemG Protocol Driver
+
+        All of  the  above  files  are  requestable.  Opus  and SEAdog
+     requests are  handled quite  well by  Binkley, so  you should not
+     have any major problems if you decide to request them  from 1/114
+     or 107/246.
+
+        For those  of you that enjoy running programs outside of Quick
+     BBS we have an assortment of RBBS doors and PcBoard programs that
+     work quite well.
+
+     - QUICK BBS EXTERNAL DOOR SOFTWARE
+
+     BBSLIST.ARC User Maintained BBS Listing Program
+     FidoNews 5-07                Page 12                  15 Feb 1988
+
+
+     - Quick BBS External Door Software
+
+     RBBSDOOR.ARC All below REQUIRE This To Run
+     CIA.ARC Join The CIA Adventure Game
+     CHESSDOR.ARC Multi-Player Chess Game
+     TIME.ARC Adventure In Time
+
+     - PCBOARD External Door Software
+
+     QDOOR12.ARC REQUIRED For All Below
+     5-CARD20.ARC 5 Card Draw Poker
+     CHECKERS.ARC On-line Checkers Game
+     CRAPS141.ARC Craps Game
+     FIFI12.ARC Madam Fifi's House Of Pleasure
+     GHOST.ARC Ghost Hunter Adventure
+     KRAPZ15.ARC A Better Craps Game
+     PCBVIET.ARC VietNam Adventure
+     SCRACK12.ARC Safe Cracker
+     TGTRIV26.ARC Top Gun Trivia(Latest Release)
+
+     - Utility Files
+
+     DOORBATS.ARC Sample Door Batch Files And Menus
+     QBBSSPEC.ARC 3 New Game Adventure Doors
+
+        More  and  more  door  software  is being developed and we are
+     expecting a Quick BBS specific version of Trade Wars in  the near
+     future. I  have seen it, and it runs very nicely. I would love to
+     Beta test (Hint) on my system.
+
+        Quick BBS version 2.0 is going into Beta  test very  soon, and
+     we are all looking forward to seeing it.
+
+        For those of you who have never seen Quick BBS in action, here
+     is a list of some of the Beta test sites.
+
+     104/24    QuickBBS Support Board  Adam Hudson
+     104/32    ETA Denver              Rick Christensen
+     104/51    P2 B2 S                 Claude Warren
+     104/54    CoCo County Airport     Ron Biehler
+     105/55    Casper's Place          Dale Weber
+     107/246   QuickBBS East           Gene Coppola
+     202/401   QuickBBS West           Rick Fry
+     381/1     The Data Emporium       Vernon Six
+     383/761   Telelink Information    Michael Otto
+     103/501   Mount Silverthorne      David Garrett
+     132/114   Stateline               Bob Westcott
+     116/2     Music PC Users Group    John Reed
+
+        Each system may appear different  to  you,  as  the  menus and
+     basically  the  entire  presentation  is  designed  by the Sysop,
+     similar to TBBS.
+
+        Ansi graphics are used in many systems and  the color displays
+     can be very nice.
+
+     FidoNews 5-07                Page 13                  15 Feb 1988
+
+
+        Unlike other  systems Quick  BBS does not write a message file
+     for each individual message. Messages  are  stored  in  one large
+     file with the header and other message info in another file. This
+     alone has been the cause for many Opus and Fido  Sysops to switch
+     over to  Quick BBS.  Lots of disk space and directory entries are
+     saved in this manner and the search through  the message  base is
+     extremely fast!
+
+        Currently Echogen  1.05 handles  mail just like Confmail does.
+     It will Toss and Scan mail and is extremely fast.
+
+        Quick  BBS  handles  most  popular  file   transfer  protocols
+     including Zmodem and Ymodem.
+
+        You  can  exit  Quick  BBS  while  on-line  in  one of several
+     methods. One method is  a spawn  to Dos  to run  another program.
+     Another method is an actual exit from Quick BBS and then a return
+     with the special -R command. These two features allow you  to run
+     large programs with no problems.
+
+        A FOSSIL  driver is required to run Quick BBS. At this time we
+     recommend either X00V_106 or  X00V_108  depending  upon  which of
+     those  two  perform  best  on  your  system.  Both will work with
+     Binkley with no problems.
+
+        Well that's about it for now.  Here are  the files  I promised
+     you earlier.
+
+     ;RunBBS Batch File To Run Binkley And Quick BBS
+
+     echo off
+     Set BINKLEY=D:\BINK\
+     If %Sched%!==! goto day_route
+     :Start
+     d:
+     cd \BINK
+     getdate
+     search /d
+     echo off
+
+     BT Share
+
+      If ErrorLevel 100 Goto LocalBBS
+      If Errorlevel  90 Goto nat_mail
+      If ErrorLevel  70 Goto Qmodem
+      If ErrorLevel  50 Goto unpackmail
+      If ErrorLevel  30 Goto unpackmail
+      if Errorlevel  25 goto receive_only
+      If ErrorLevel  24 Goto Baud2400
+      If Errorlevel  20 Goto clean
+      If Errorlevel  15 goto loc2_mail
+      If Errorlevel  14 goto loc_mail
+      If Errorlevel  13 goto o_gate
+      If ErrorLevel  12 Goto Baud1200
+      If Errorlevel  11 goto nat_mail
+      If ErrorLevel  10 Goto day_route
+     FidoNews 5-07                Page 14                  15 Feb 1988
+
+
+      If ErrorLevel   3 Goto Baud300
+      If ErrorLevel   0 Goto End
+
+     Goto Start
+
+     :day_route
+     set Sched=D
+     goto bundle
+
+     :loc_mail
+     set Sched=H
+     goto bundle
+
+     :o_gate
+     set SCHED=P
+     goto bundle
+
+     :nat_mail
+     set Sched=M
+     goto bundle
+
+     :loc2_mail
+     set Sched=V
+     goto bundle
+
+     :receive_only
+     Set Sched=W
+     goto bundle
+
+     :LocalBBS
+      c:
+      Cd\AAAAAAAA
+      Quickbbs -L -E0
+      Goto AfterQuick
+
+     :Baud2400
+      C:
+      Cd\AAAAAAAA
+      QuickBBS -b2400 -E0
+      Goto AfterQuick
+
+     :Baud1200
+      C:
+      Cd\AAAAAAAA
+      QuickBBS -B1200 -E0
+      Goto AfterQuick
+
+     :Baud300
+     C:
+     Cd\AAAAAAAA
+     QuickBBS -B300 -E0
+     Goto Start
+
+     :AfterQuick
+     C:
+     cd \AAAAAAAA
+     FidoNews 5-07                Page 15                  15 Feb 1988
+
+
+     echoscan
+     mailscan
+     d:
+     cd \BINK
+     Goto Bundle
+
+     :Bundle
+     Ommm -s%sched% -hd:\zzzznet\outbound -cd:\Bink\ommm.ctl -
+     Id:\Bink\binkley.PRM -Md:\zzzznet -n -d -z
+     Goto Start
+
+     :Unpackmail
+      C:
+      Cd\AAAAAAAA
+      echogen -U -T
+      ARCMAIL FROM ALL -k
+      ECHOTOSS
+      MailToss 2
+      d:
+      Cd \Bink
+      Goto Bundle
+
+     :Clean
+      C:
+      Cd \aaaaaaaa
+      echokdup
+      MsgPack -R -B
+      D:
+      cd \BINK
+      goto start
+
+
+     :Qmodem
+     d:
+     cd \qmodem
+     c:
+     cd \bink
+     Goto Start
+
+     :end
+     search /a
+     echo on
+     echo Bye Now
+
+     Here is my Binkley Configuration file.
+
+     ; Binkley.CFG
+
+     ;Autobaud
+     ;NoSLO
+     ;Nofullscreen
+     ;Overwrite
+     ;SlowModem
+     ;SmallWindow
+     ;Suffix
+     About     C:\AAAAAAAA\files.txt
+     FidoNews 5-07                Page 16                  15 Feb 1988
+
+
+     Avail     C:\AAAAAAAA\files.txt
+     BBS       Exit
+     Banner    Quick BBS East -=- Wait 5 Seconds or...
+     Baud      2400
+     Boss      107/246
+     Bossphone 1-516-328-7064
+     Busy      |ATZ|
+     Carrier   80
+
+     Event All   00:00 02:59 L B   E1=10 E2=30 E3=50 A=180
+     Event All   03:00 03:59 N     E1=13 E2=30 E3=50 A=180
+     Event All   04:00 05:00 N     E1=11 E2=30 E3=50 A=180
+     Event All   05:00 05:30 N     E1=15 E2=30 E3=50 A=180
+     Event All   05:30 06:00 N R   E1=25 E2=30 E3=50 A=180
+     Event All   06:00 23:59 L B   E1=10 E2=30 E3=50 A=180
+     Hold      D:\ZZZZNET\Outbound\
+     Init      |AT&FM0H0&C1&D2S0=1|
+     LogLevel 5
+     MaxReq    10
+     Netfile   D:\ZZZZNET\
+     Netmail   D:\ZZZZNET\
+     Nodelist  D:\NODELIST\
+     Okfile    C:\AAAAAAAA\okfile.txt
+     Point     107/246
+     Port      1
+     Prefix    |ATDT,
+     Protocol D:\Bink\Kermit.exe
+     Protocol D:\bink\Ascii.exe
+     Protocol D:\bink\Wxmodem.com
+     Protocol D:\bink\Ymodemg.com
+     Reader    Nc
+     Statuslog d:\bink\Binkly.Log
+     Sysop     Gene Coppola
+     System    Quick BBS East
+     Timeout   5
+     Unattended
+     Zone      1
+
+     -----------------------------------------------------------------
+
+     FidoNews 5-07                Page 17                  15 Feb 1988
+
+
+                       The Great Earthquake Hoax
+                             Fredric Rice
+                               (103/503)
+
+        Original  reference   material  may   be  found  at  Griffith
+     Observatory,  located  at  2800  East   Observatorty  Road,  Los
+     Angeles,  California.  90027.  Request  back  issue  of Griffith
+     Observer, January, 1975, page 14, for  Edward K. L. Upton,  "The
+     Great Earthquake Hoax".  Direct  requests to Dr.  Edwin C. Krupp
+     and staff. You may aquire subscriptions to the Griffith Observer
+     through the same  address.  It  provides  a  great  quantity  of
+     understandable  information concerning  astronomy,  (And is well
+     worth the price!)
+                          --------------------
+        The word  "Scientist", as defined  in  the common dictionary,
+     describes a person who is  "expert in science".  It further goes
+     on to say that "Science" is  defined as  "systematized knowledge
+     or a branch  of it".  "Expert" has  been described  as "X", (the
+     unknown factor), and "Spert", (a drip under pressure).
+
+        A scientist would then be  a person  who specializes in drips
+     under pressure. At least this seems to be the  case with some of
+     the so-called "Scientist" that "pop up" every now and then.
+
+        Related here, in the form  of  a  question,  is  the  actuall
+     account of an  incident that many  of you will  remember. Do you
+     remember way back in  1982  when the San  Andreas Fault gave way
+     and California slipped into the contenential shelf?
+
+        If any of you  were quick  enough to  buy Nevada  beach front
+     property after reading  "The  Jupiter  Effect", written  by John
+     Gribbon and Stephen  Plagemann, you would no doubt remember that
+     fatefull day as the day your newly aquired property became beach
+     front indeed.
+
+        Let's explore the outer edges  of known science and see if we
+     can  understand how  these  two  great  scientist  were  able to
+     extrapolate the end of California from mounds of research papers
+     and data.
+                            --------------------
+        In September  of  1975,  two  scientist,  one  who associated
+     within the NASA  circle, the other  who  works for a  scientific
+     journal, wrote a book  that would  inform the general California
+     public about the up-comming destruction of the state.
+
+        The train of events for the discovery of this information was
+     a staggering amount of hypotheses. For each of these hypotheses,
+     a  detailed  examination with supportive  data  and  graphs  was
+     offered.
+
+        1) Within the text of this book, they  say  that sunspots are
+           created by tidal forces generated by the planets.  They go
+           further  to  state  that  sunspot activity  increases when
+           planets are grouped along one side of the sun.
+
+        Can they be serious?  Do they  do their  homework? Well,  the
+     FidoNews 5-07                Page 18                  15 Feb 1988
+
+
+     answer would have to  be no. Tidal  forces are  additive when on
+     opposite  sides of  the  sun  also.  This  would  seem to  be an
+     assumption on  the part of the authors that  the pull of gravity
+     would be additive when on the  same  side  and cancel eachothers
+     pull out when on opposite sides of the sun.
+
+        2) The solar wind produces changes in the air flow pattern in
+           the Earths atmosphere.  Further,  the  changes  that  take
+           place  tend  to  slow  down  the  rotation  of  the Earth,
+           increasing the  length  of  the  day  by  about one  0.001
+           second.
+
+        Well, in fact, this is true. We must agree that the effect of
+     solar particles  and  the accumulation  of  meteroic  dust  does
+     contribute to the  lengthening  of the day.  The rotation of the
+     Earth is not constant and  in fact will  speed up  and slow down
+     for a variety of reasons.
+
+        3) Fault lines are put under additional strain when the Earth
+           is slowed down.  The deceleration of the massive  Earth is
+           great enough to cause major damage to the Earths crust.
+
+        It's a good thing the Earth doesn't have  tecktonic plates or
+     we would all be in trouble! When  in fact, we do  have tecktonic
+     plates that  cause  the  faults  the  authors talk  about. These
+     plates move in all directions, (California will be at the  North
+     Pole some day). The  theory  that the  Earth decelerates quickly
+     enough to cause increased strain to the  Earths crust has not be
+     demonstrated  yet.  At  least  to   subscribed  knowledge,  such
+     evidence does not yet exist.
+
+        4) When Pluto, Neptune, and Uranus join the others planets in
+           1982 there  will  be  a  greater  tidal  pull  on  the sun
+           triggering massive  solar eruptions.  These eruptions will
+           change the air flow pattern of Earth,  causing fault lines
+           to break, and all of California will be history.
+
+        Actually, the authors do  not go  on to  say  that California
+     will be history.  What they actually talk  about is  the massive
+     damage and  loss  of  life  that  will  occure when the  big one
+     finally hits.
+
+        The authors  don't know about  Alaska, Chile, or  Japan where
+     other major faults can be found.  Why would  San  Andreas be the
+     only fault to be affected by the Jupiter Effect?
+
+        California is a nice place.  I have lived on  the Californian
+     beach for over 28  years,  and  even  spent  some  time  in  Los
+     Angeles! I was born  in southern  California  at  an undisclosed
+     year, but I am forced to admit that  the  people  are  a  little
+     quick to  accept  any  "scientific"  observation  or device that
+     makes the six  o'clock news.  That and the earthquakes that take
+     place from  time  to  time  add  up  to an  underlying fear that
+     someday the big one will come.
+
+        It  would  have  been  better for  everyone concerned  if the
+     FidoNews 5-07                Page 19                  15 Feb 1988
+
+
+     authors had  published their scientific  data  in a  comic book.
+     This type of  sensationalization of  a planetary "alignment" was
+     childish and  gives  the  rest  of  the  scientific  community a
+     black eye.
+                           --------------------
+        It is up to the scientist  of the community  to suppress this
+     type of nonesense  and psuedo-sciences such as astrology and tea
+     leaf reading. Unfortunatly, respectable scientist don't have the
+     visability that the  authors of "Jupiter" do. You might remember
+     the revelations  about the  origin of humans in the Von Danakain
+     Theory or  "Chariots of the Gods!".  Many  graphs,  charts,  and
+     photographs prove points which the layman or  uninformed are not
+     trained to understand.
+
+        Carl Segan has  stated that  just  because  he  is  a  highly
+     visable scientist, you shouldn't take his  word as an authority.
+     This is a good message to  take with you on your way to the book
+     store.
+                           --------------------
+     Additional Information:
+
+     1) The actual "Alignment" that took place in 1982 was not a true
+        alignment in the proper sence. The planets  grouped along 100
+        degrees  of the ecliptic when they are usually further apart.
+        In  this sense, it could be said that an alignment was taking
+        place.
+
+     2) The solar tide  is affected  by  the  planets  by  about  one
+        milimeter. This is about the thickness of a dime.
+                            --------------------
+      Additional Reading:
+
+     1) The Jupiter Effect. Don't wast your money if you can't borrow
+        a copy of this book.  The library in your area  might have it
+        so ask them first.
+
+     2) Griffith Observer,  January 1975,  Volume 39,  Number 1.  The
+        Great Earthquake Hoax by Edward K. L. Upton. Subscriptions to
+        the Griffith Observer  may be  aquired  through  the  address
+        offered at the top  of this article.  A monthly  booklett  is
+        published by the Griffith Observatory in Los Angeles and each
+        contains a wealth  of valuable information.  The subscription
+        price is probibly still around  $10.00 or $15.00, and is used
+        to maintain  that  great  institution.  To  find  the  actual
+        subscription  price, call  the  observatory  and ask  for the
+        subscription rates available.
+     -----------------------------------------------------------------
+
+     FidoNews 5-07                Page 20                  15 Feb 1988
+
+
+     =================================================================
+                                  WANTED
+     =================================================================
+
+     Thomas Kenny
+     Metatron's Opus @ 107/416
+
+                             Anybody for Chess?
+
+     I would like to know how I can contact Don Berg the author of the
+     program "chess88".
+
+     I'm also interested in obtaining chess programs that run on MSDOS
+     machines. Any leads for public domain, shareware or even
+     commerical programs would be appreciated.
+
+     Another thing I would like to do is start a Chess echomail
+     conference. Please let me know if you are interested in linking
+     in. If I get real adventurous I may even gateway the
+     rec.games.chess newsgroup from UseNet if there is enough
+     interest!
+
+     Last but not least I'm interested in playing some email chess
+     games. If you are interested, send me netmail and I'll let you
+     know how we can proceed.
+
+     Regarding any of the above items please address FidoNet mail to
+     Thomas Kenny at 107/416. Thanks!
+
+
+     -----------------------------------------------------------------
+
+     FidoNews 5-07                Page 21                  15 Feb 1988
+
+
+     =================================================================
+                                  NOTICES
+     =================================================================
+
+                          The Interrupt Stack
+
+
+     19 Feb 1988
+        Start  of  the  International  FidoNet  Associations  Board of
+        Directors meeting in St. Louis. Meeting runs through the 21st.
+
+     16 Jul 1988
+        A new areacode, 508, will form in eastern Massachusetts and
+        will be effective on this date. The new area code will be
+        formed from the current areacode 617. Greater Boston will
+        remain areacode 617 while the rest of eastern Massachusetts
+        will form the new areacode 508.
+
+     25 Aug 1988
+        Start  of  the  Fifth  International FidoNet Conference, to be
+        held  at the Drawbridge Inn  in Cincinnatti, OH.  Contact  Tim
+        Sullivan at 108/62 for more information. This is FidoNet's big
+        annual get-together, and is your chance to meet all the people
+        you've  been talking with  all this time.  We're hoping to see
+        you there!
+
+     24 Aug 1989
+        Voyager 2 passes Neptune.
+
+
+     If you have something which you would like to see on this
+     calendar, please send a message to FidoNet node 1:1/1.
+
+     -----------------------------------------------------------------
+
+                          Latest Software Versions
+
+     BBS Systems            Node List              Other
+     & Mailers   Version    Utilities   Version    Utilities   Version
+
+     Dutchie        2.80    EditNL          3.3    ARC            5.21
+     Fido            12e*   MakeNL         1.10    ARCmail         1.1
+     Opus          1.03a    Prune          1.40    ConfMail       3.31*
+     SEAdog         4.10    XlatList       2.85*   EchoMail       1.31
+     TBBS           2.0M                           MGM             1.1
+     BinkleyTerm    1.30*
+     QuickBBS       1.02
+
+     * Recently changed
+
+     Utility authors:  Please help  keep  this  list  up  to  date  by
+     reporting  new  versions  to 1:1/1.  It is not our intent to list
+     all utilities here, only those which verge on necessity.
+
+     -----------------------------------------------------------------
+
+     FidoNews 5-07                Page 22                  15 Feb 1988
+
+
+                                      __
+                 The World's First   /  \
+                    BBS Network     /|oo \
+                    * FidoNet *    (_|  /_)
+                                    _`@/_ \    _
+                                   |     | \   \\
+                                   | (*) |  \   ))
+                      ______       |__U__| /  \//
+                     / Fido \       _//|| _\   /
+                    (________)     (_/(_|(____/ (tm)
+
+            Membership for the International FidoNet Association
+
+     Membership in IFNA is open to any individual or organization that
+     pays  a  specified  annual   membership  fee.   IFNA  serves  the
+     international  FidoNet-compatible  electronic  mail  community to
+     increase worldwide communications.
+
+     Member Name _______________________________  Date _______________
+     Address _________________________________________________________
+     City ____________________________________________________________
+     State ________________________________  Zip _____________________
+     Country _________________________________________________________
+     Home Phone (Voice) ______________________________________________
+     Work Phone (Voice) ______________________________________________
+     Zone:Net/Node Number ____________________________________________
+     BBS Name ________________________________________________________
+     BBS Phone Number ________________________________________________
+     Baud Rates Supported ____________________________________________
+     Board Restrictions ______________________________________________
+     Your Special Interests __________________________________________
+     _________________________________________________________________
+     _________________________________________________________________
+     In what areas would you be willing to help in FidoNet? __________
+     _________________________________________________________________
+     _________________________________________________________________
+     Send this membership form and a check or money order for $25 in
+     US Funds to:
+                   International FidoNet Association
+                   c/o Leonard Mednick, MBA, CPA
+                   700 Bishop Street, #1014
+                   Honolulu, Hawaii 96813-4112
+                   USA
+
+     Thank you for your membership!  Your participation will  help  to
+     insure the future of FidoNet.
+
+     Please  NOTE  that  IFNA is a general not-for-profit organization
+     and Articles of Association  and  By-Laws  were  adopted  by  the
+     membership in January 1987.  The first elected Board of Directors
+     was filled in August 1987.  The IFNA Echomail Conference has been
+     established  on  FidoNet  to  assist  the Board.  We welcome your
+     input to this Conference.
+
+     -----------------------------------------------------------------
+
+     FidoNews 5-07                Page 23                  15 Feb 1988
+
+
+                     INTERNATIONAL FIDONET ASSOCIATION
+                                 ORDER FORM
+
+                                Publications
+
+     The IFNA publications can be obtained by downloading from Fido
+     1:1/10 or  other FidoNet compatible  systems, or by purchasing
+     them directly from IFNA.  We ask that  all our  IFNA Committee
+     Chairmen   provide  us   with  the  latest  versions  of  each
+     publication, but we can make no written guarantees.
+
+     Hardcopy prices as of October 1, 1986
+
+        IFNA Fido BBS listing                       $15.00    _____
+        IFNA Administrative Policy DOCs             $10.00    _____
+        IFNA FidoNet Standards Committee DOCs       $10.00    _____
+
+                                                  SUBTOTAL    _____
+
+                      IFNA Member ONLY Special Offers
+
+        System Enhancement Associates SEAdog        $60.00    _____
+        SEAdog price as of March 1, 1987
+        ONLY 1 copy SEAdog per IFNA Member
+
+        Fido Software's Fido/FidoNet               $100.00    _____
+        Fido/FidoNet price as of November 1, 1987
+        ONLY 1 copy Fido/FidoNet per IFNA Member
+
+        International orders include $10.00 for
+               surface shipping or $20.00 for air shipping    _____
+
+                                                  SUBTOTAL    _____
+
+                    HI. Residents add 4.0 % Sales tax         _____
+
+                                                  TOTAL       _____
+
+        SEND CHECK OR MONEY ORDER IN US FUNDS:
+        International FidoNet Association
+        c/o Leonard Mednick, MBA, CPA
+        700 Bishop Street, #1014
+        Honolulu, HI.  96813-4112
+        USA
+
+     Name________________________________
+     Zone:Net/Node____:____/____
+     Company_____________________________
+     Address_____________________________
+     City____________________  State____________  Zip_____
+     Voice Phone_________________________
+
+     Signature___________________________
+
+     -----------------------------------------------------------------
+
+

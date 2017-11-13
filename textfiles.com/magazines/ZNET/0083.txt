@@ -1,0 +1,1192 @@
+______________________________________
+ZMAGAZINE 85         December 23, 1987
+______________________________________
+Special Edition Part 3 of 3 parts
+Best of Technical Help Columns
+______________________________________
+Series compiled and edited by:
+Ron Kovacs
+Published by: Ron Kovacs
+(c)1986, 1987 Syndicate Services/Rovac
+Assistant Publishers: Ken Kirchner
+Susan Perry
+______________________________________
+Xx A Few Notes...
+______________________________________
+Here is the 1988 Schedule for Zmag!
+
+NEW PUBLISHING DAY ANNOUNCED
+
+We will release new issues of Zmag
+every Monday.
+
+Issue 87   1/ 4/88  Issue 88   1/11/88
+Issue 89   1/18/88  Issue 90   1/25/88
+--------------------------------------
+Issue 91   2/ 1/88  Issue 92   2/ 8/88
+Issue 93   2/15/88  Issue 94   2/22/88
+Issue 95   2/29/88  
+--------------------------------------
+Issue 96   3/ 7/88  Issue 97   3/14/88
+Issue 98   3/21/88  Issue 98   3/28/88
+--------------------------------------
+We will update this schedule if needed
+after this run of issues.  Issue 87
+will be Volume 3 Number 1.
+______________________________________
+Xx INDEX 85
+______________________________________
+<*> A Few Notes.............Ron Kovacs
+<*> 256/320K Ramdisk....Steve Ingalsbe
+<*> Modify 850 Express......Ol Hackers
+<*> SG10 Printer Driver
+<*> SX212 Review...........Bob Woolley
+<*> 850 Modification........Mike Davis
+<*> Speaker Addition.....Mr. Goodprobe
+<*> 1050 Notes.................Ed Chop
+<*> Notes on XModem...........TeleTalk
+<*> DataPac Parameters......Ken Watson
+______________________________________
+256/320K Ramdisk
+______________________________________
+256XL/320XE Ramdisk Installer Version
+1.0 Distributed by the Twin Cities
+ATARI Interest Group (TAIG), Mpls.
+Minnesota Original program by Claus
+Buchholz - 320XE modifications
+
+by Steven Ingalsbe
+
+The need for this program arose after
+I had modified my 130XE into a 320XE.
+The only DOS I had that would work
+with all of the extra memory was
+SpartaDos. This is a nice Dos, but
+does not allow me to use the warp
+speed of my INDUS. I also use a
+modified Dos 2.0 a lot, and had no way
+of using it with the 17 banks of
+memory that I now had. I tried loading
+one of Claus'QXL files into my system,
+but it just locked up. I got a copy of
+the source code and looked it over.
+
+The only problem I could see was the
+way he was switching the OS off, so I
+changed that portion of the program so
+it would work with all the XL/XE
+series (it should work with a modified
+1200XL also!).
+
+The program loads the XL/XE operating
+system into the underlying RAM and
+then turns off the ROM Operating
+System(OS). Next it loads the Ramdisk
+handler over the European character
+set and then hooks itself into the
+system. This handler (like Claus'
+original)does not format the drives on
+powerup. You must do that with the I
+function of DOS, or use a XIO 254 from
+BASIC (drives 3 & 4).
+
+I also made a few other minor changes.
+I reassembled some of his code to
+different memory locations; his code
+was at the end of ATARI DOS. Many
+third party Dos's use more memory than
+ATARI Dos, so I moved the code up. It
+has been tried with ATARI Dos 2.0, and
+2.5 as well as Dos 2.6 (highly
+modified). It also will work with
+MYDOS,TOPDOS, and SMARTDOS. I have not
+been able to get it to work correctly
+with DOSXL, it will only setup 1
+single density RamDisk. I feel that 1
+single density RamDisk with
+Synchromesh is better than none.
+
+There are 2 popular programs that will
+not work with this handler-SPARTADOS
+and BASIC XE. Both of these programs
+need the RAM under the OS for their
+own use, and we have that tied up.
+SpartaDos has its own 256XL and 320XE
+handlers so that is no big problem,
+but there is no cure for BASIC XE,
+sorry. There may well be more programs
+that will not work, but most do.
+
+There are a few other things you
+should know. Don't press system reset;
+it will cause the system to
+reinitialize. This causes the system
+to go back to the ROM OS. If you do
+press system reset, you can get back
+to the RAM OS by POKEing 54017,252.
+Also, make sure that you set your DOS
+up for the added drives. Most DOS's
+are shipped set up for 2 drives. I
+always set mine up for 4 (2 physical
+and 2 RAM drives). All of the DOS's
+that I have seen use location 1802 as
+the number of drives location. All
+that you have to do is POKE 1802,X
+then goto DOS and write the new DOS
+files. The change will now be
+permanent. Use this guide to find the
+right number:
+
+# of drives      POKE 1802 with
+=================================
+    1                   1
+    2                   3
+    3                   7
+    4                  15
+
+NOTE:The drives are set up as 3 & 4,
+so you should POKE 1802,15 unless you
+have more than 4 drives.
+______________________________________
+Xx Modifying BBS Express (850)
+______________________________________
+From:The Ol' Hackers BBS(516)-884-4140
+
+If you have an AVATEX 1200 or the
+AVATEX 1200hc this modification may
+help your log-ons.
+
+I made these mods because I didn't
+like the fact that the users had to
+hit Control-M or S to log-on the 850
+version of BBS EXPRESS, so I modified
+a few bytes to allow the users to log
+on by just hitting the Return.
+
+The mods are split-up into to Two
+Parts, Part(A) is for the non-HC
+version of the AVATEX, and Part(B) is
+the change for the AVATEX 1200HC.
+
+The two area's which you are going to
+change affect the baud step rates and
+the defaults of the the EXPRESS BBS
+program for your modem to pick the
+phone by starting the baud rate at 300
+baud.
+
+When BBS EXPRESS 850 hangs up the
+modem, it initializes the modem to
+default configurations, and sets the
+port and modem back to 300 baud. We
+are going to modify part of the code
+in EXPRESS BBS. So don't use your
+original disk, and get your favorite
+disk sector scanner. I suggest that
+you use DISKWIZ II, if you have it.
+
+First format a disk in ATARI DOS 2.0
+S/D and don't write any DOS files to
+the disk. Now copy BBS.COM to your
+formatted disk.
+
+PART -A-         AVATEX 1200 Non HC
+
+Starting at sector 68;
+
+With byte $38 $00 $0A $0C
+-- change this to $0A $00 $0A.
+
+$00=300  Baud
+$0A=1200 Baud
+$0C=2400 Baud
+
+Since you have the AVATEX 1200, byte #
+$32 should be changed to $0A for 1200.
+Now write sector 68 back to the disk.
+
+Starting at sector 271
+
+With byte $39
+
+Your changing the text, which tells
+the printer log and the user at what
+Baud rate he or she logged on with.
+$33 $30 $30 $04 $31 $32 $30 $30 $04
+$32 $34 $30 $30
+
+$33 $30 $30=text 300 $31 $32 $30 $30=
+text 1200 $32 $34 $30 $30=text 2400
+
+I made the following changes; $33 $30
+$30 to $48 $2F $53=H/S for 1200 Baud.
+$31 $32 $30 $30 to $53 $6C $6F $77=
+Slow for 300 users.(hint to get them
+to change over to 1200. $32 $34 $30
+$30 to $20 $48 $2F $53= Blank Space
+then H/S, 1200 again.
+
+Now write that sector back to your
+disk. That's it for the non-HC AVATEX
+1200.
+
+PART -B- AVATEX 1200 HC Mods
+
+Use the changes in -Part A- with the
+following additional change.
+
+Starting at sector # 274
+
+At byte $58 $A0 $00 $8C $7B $30 Change
+the $00 at byte $59 to $01 $00=300
+Baud $01=1200 Baud $02=2400 Baud
+
+Now write this sector back to your
+disk and BOOT up.
+
+Things that will change with your
+log-ons.
+
+1) Non HC AVATEX: after the first line
+of garbage the 1200 user only hits the
+Return key once and he gets the HIT
+RETURN prompt. No more hitting the
+Control-M or S keys or having the user
+log-on first in ASCII then changing
+over to ATASCII.
+
+2) The AVATEX HC, will at the connect
+automatically prompt the 1200 users to
+HIT RETURN without any key strikes at
+all.
+
+Note: I'm sure that the -HC- changes
+will work with any modem that is a
+Hayes compat or the the real Hayes
+1200.  Also PARTS -A and B- will work
+with both versions of the AVATEX,
+however, the non HC version will show
+the user the ATA command then prompt
+them to HIT RETURN.
+
+Special thanks to Keith Ledbetter for
+writing the NEVER crashing BBS EXPRESS
+and to Chris King for the Hard Drive
+back-up program (HARDBACK). Both
+authors are with ORION Micro Systems.
+_____________________________________
+Xx SG10 Printer Driver
+_____________________________________
+After 2 years of frustration and many
+dollars spent on -custom- printer
+drivers, I think I have a solution.
+
+Below is a printer driver that I have
+been using with great success to solve
+many of the Star Gemini - AtariWriter+
+problems. It may give you some ideas
+to help you build one that will suit
+your own needs.
+
+UNDERLINE DRIFT
+
+Most of my word processor print outs
+require underlining in NLQ. If you
+have tried this with inverse video
+underline command you will have a
+problem with what is called underline
+-drift-. The words and underline
+-drift- down as the printer does half
+spacing. Since I seldom have need for
+superscript or subscript, I have
+eliminated the type font macros for
+these and substituted direct codes for
+underline on and underline off (AW+
+[controls G8 and G9 are what I use].
+My printer driver allows for the use
+of inverse video when in draft mode.
+To underline in NLQ I use the G8 to
+begin underline and G9 to end
+underline. NO DRIFT!! Many times I
+will creat my document using inverse
+for rough drafts and then when I am
+ready for final print out go back and
+visually key off the inverse video,
+insert the G8 and G9 codes there and
+-undo- the inverse video using
+[control] U.
+
+You will also find that the G8 and G9
+codes will give you a -solid-
+underline (underlining the spaces
+between words as well).
+
+TURNING OFF NLQ AND MIXING FONTS
+
+My printer driver allows some degree
+of flexibility to change fonts using
+the -G- codes.  You will note that all
+Font type commands begin with 27 66 5.
+This is the SG10 code to turn off NLQ.
+If you are in NLQ and want to change
+to italics with double strike you may
+do so with G5 and G7 command.  If you
+look at the G1 (pica) commands you
+will see the commands to turn off all
+the other font styles. It is important
+to remember that you MUST -pass
+through- G1 to move from all
+typestyles except NLQ or you might get
+some funny looking print outs.
+
+In effect G1 will -undo- everything
+(except underline) and put you back in
+draft mode. If you have need for
+subscript and superscript AND NLQ
+underlining, you may need to make
+modifications to this program.  This
+can be done by substituting sub and
+superscript for perhaps Elite and
+condenced fonts.  If you do this be
+sure to also substitute the -turn off
+commands- in the G1 (pica) codes. It
+would be a good Idea to keep a print
+out of which G codes you are using for
+what on hand.
+
+It may also be necessary to build more
+than one driver if your documents vary
+in format. Hope this is of some help
+to all the SG10 users.
+
+CODES TO ENTER FOR EDITOR PROMPTS:
+
+Underline off       blank
+Underline on        blank
+Backspace           8
+Elongate off        27,87,0
+Elongate on         27,87,1
+Bold off            27,70
+Bold on             27,69
+Up 1/2 line         blank
+Down 1/2 line       blank
+Down 1/2 line and CR blank
+Return w/o line feed 155
+
+Font Type           Codes
+=========================
+1    Pica           27 66 5 27 53 27
+                    72 27 112 0 
+2    Condensed      27 66 5 27 66 3
+3    Proportiional  27 66 5 27 112 1
+4    NLQ            27 66 4
+5    Italics        27 66 5 27 52
+6    Elite          27 66 5 27 66 2
+7    Double Strike  27 66 5 27 71
+8    Underline on   27 45 1
+9    Underline off  27 45 0
+______________________________________
+Xx SX212 HARDWARE REVIEW
+______________________________________
+by Bob Woolley
+
+For those of you with no modem, or a
+SIO connect 8-bit modem, or a 300 baud
+modem (leave anybody out?), Atari has
+got a great new product for you - the
+SX212 1200 baud modem. It has a
+standard RS-232 interface for those
+users with an 850, or an ST, or a P:R
+Connection and an SIO connector for
+those 8-bitters who lack an RS-232
+box. It is Hayes compatible and even
+has a nice row of LEDs accross the
+front of the unit to keep you informed
+of its status (High Speed, AutoAnswer,
+Carrier Detect, Off Hook, Receive
+Data, Send Data, Terminal Ready, and
+Modem Ready).
+
+The best thing about this guy is that
+it only costs $99.95 - List Price. A
+product of increasing integration, it
+is another level up on the path to
+single chip, 1200 baud, modems - much
+like the 300 baud XM301 that preceded
+it.
+
+I can remember my first RS-232 modem.
+It was also Hayes compatible, which
+seems to mean that it has to have 6
+million switches set before your
+computer will talk to it. Not the
+SX212. Absolutely nothing to set on
+this guy. Move it from your 8-bit to
+your 16-bit system ... works just fine
+with no switch juggling. Aren't any to
+mess with, anyway.  My X-Ray Vision
+tells me that there are jumpers
+inside, but it isn't something the
+average guy is going to fool with. I
+tried the 212 on my ST with FLASH.
+Although I am not any kind of TP
+expert, the modem worked just fine. It
+seemed to be perfectly happy with
+XModem downloads and such. Even the
+operator trying to interrupt my call
+didn't bring down the modem. Lots of
+garbage, but carrier stayed up. This
+is exactly what the computer industry
+needs - an affordable product that you
+just pull from the box and run!
+
+When it came to my 8-bit system, I hit
+a little snag. Since the modem would
+connect to the SIO port, it has to
+either emulate an 850 and the Hayes
+modem, or not emulate the 850 and not
+work on my 8-bit. Guess which one I
+got?? Works just fine on the P:R
+Connection as a Hayes (knew that since
+it worked on the ST) . Didn't work at
+all as an 850. I tried a Status
+command to every address on the SIO
+buss and got no response from the SX.
+One thing for sure, no matter how it
+works, the modem requires a handler.
+Some devices load their own handler
+and some programs replace them with
+the handler that the program wants.
+So, without a handler, I had no chance
+to make the thing work. If the device
+didn't even talk to the CPU on the SIO
+buss, how could the handler talk to
+the modem? The XM301 modem came with
+an excellent communications program
+and plenty of documentation on disk to
+fully describe the handler necessary
+for that device. I quickly learned
+that an SIO cable (which is not
+included in the box - for obvious
+reasons. You can't use the SIO feature
+without the handler) and a version of
+EXPRESS will become available from
+Atari at some future date. I should
+hope so. Not requiring a P:RConnection
+or an 850 can save an 8-bit user as
+much as the cost of the modem itself.
+This is one of the greatest assets of
+this device, the ability to run
+without additional interfaces.
+Needless to say, this was most
+discouraging. Maybe a little hacking
+could help?
+
+There was (is?) a company called
+Advanced Interface Devices that made a
+simple RS-232 adapter for the Atari
+SIO buss. Since the SIO is already a
+serial buss that can be programmed to
+operate in almost any mode, they
+thought they could just write a
+handler and wire up a cable that would
+suffice for RS-232 operation. They
+produced the R-Verter and managed to
+do exactly what I described - run the
+SIO as an RS-232 serial interface.
+With this in mind, and a little more
+X-Ray Vision, it appeared that Atari
+was using the same method on the
+SX212. There is a two chip modem set,
+a couple of RS-232 receiver/driver
+chips, an audio amp, an LS logic chip,
+and some sort of clock generator
+inside this modem. It would be very
+unusual for a modem chip set to be
+able to talk to an Atari SIO buss
+directly (the XM301 uses a
+microprocessor to operate as a modem
+and to talk to the buss). So, I had to
+conclude that Atari used the R-Verter
+approach. Close inspection of the SIO
+pins indicate that the -Command line
+(pin 7) is not even connected in the
+SX212. No way to do SIO without that
+pin. No SIO means an RS-232 emulator.
+The only one that I am aware of is the
+AID R-Verter.
+
+So, I logged on to CompuServe and
+looked for an R-Verter handler in DL2.
+Luckily, I found exactly what I needed
+in a file called RVHAND.XMO. It is an
+R-Verter handler that has been re-
+compiled for use with HOMETERM.
+Following the RVHAND.DOC file, I
+created a copy of HOMETERM that would
+run on the R-Verter. Booted up on my
+SX212 and got the 850 status screen.
+Even though the modem is directly
+connected, the program thinks it is
+talking thru an 850. All the commands
+that I needed worked just fine on
+HOMETERM-downloads, disk directories,
+pauses, everything!  Tom Neitzel has
+passed on the word that the same
+handler will allow the SX212 to run
+Amodem 7.4, a program that I am not
+familiar with, but is very popular. I
+have not tried to replace the handler
+in EXPRESS with the R-Verter code. I
+don't think that task will be as
+simple as re-compiling the code, since
+EXPRESS seems to use all available
+memory. None the less, those 8-bit
+users who own SIO connect 300 baud
+modems can upgrade to the SX212 and
+start tele-computing immediately with
+Amodem or HOMETERM.
+
+One or two more comments.
+
+The manual states that the modem
+cannot be used on an 800XL with a
+cassette recorder. The Motor line is
+fed into the modem and is grounded
+thru a 680 ohm resistor. This appears
+to upset the 800XL or the recorder or
+somebody. I don't see any significant
+differences between the 800XL and the
+rest of the Atari line in this
+respect, so expect this restriction to
+apply to all 8-bit models.
+
+A suggestion is made to place the
+modem on top of your disk drive and
+the phone on top of the modem. Some
+telephones have magnets in them - put
+it someplace else if you are not sure.
+Some disk drives generate considerable
+heat, while the SX212 seems very cool.
+I put my modem under my drive, leaving
+the vents on top of the drive clear
+for good cooling.
+
+The bottom line on this modem is that
+it is a great value for the money,
+performs well and can be used on
+either 8 or 16 bit systems with a
+minimum of expertise. The 8-bit
+software is not yet available from
+Atari, but even that can be fixed for
+the time being. No modem offers you so
+much for so little. Don't overlook
+this bargain!!
+______________________________________
+Xx 850 INTERFACE MODIFICATIONS
+______________________________________
+by Michael T. Davis
+
+Since I run a BBS here in Ohio, I have
+the -need for speed- that most SysOps
+who run Atari (8-bit) based BBS'
+usually have.  One of the things I
+discovered early in my BBS setup,
+though, was that the software I was
+(and am) using (Carina) did not handle
+premature logoffs well.  Instead of
+detecting the loss of carrier
+immediately, it just timed out.  I was
+almost positive there had to be a
+better way.
+
+The second problem I was encountering
+had to do with the fact that the 850
+doesn't reset per se.  To reset the
+interface, you have to toggle the
+power switch off and on.  This can get
+annoying if you are constantly
+switching telecommunications software
+or if your 850 is in a hard-to-reach
+place.
+
+Solution One:
+
+First of all, it would simplify
+matters greatly if you have a 130XE.
+While the modifications I am going to
+describe should work with all (8-bit),
+Ataris I can only give specific
+directions for the 130XE, as that is
+what I use.  At points throughout the
+text, I will offer possible
+alternatives, when I am utilizing an
+XE-only feature.
+
+The 130XE does not use trigger input
+four from the missing joystick four
+port.  We can use this input on the
+GTIA chip (pin ten (10)) to monitor
+the Carrier Detect line in the 850
+almost constantly.  (By the way, this
+would be a good time to put in a plug
+for Sam's Technical Reference Sheets..
+they're great for just this kind of
+work.)  Anyway, first identify the
+Carrier Detect (CRX) line on port one
+of the 850. Looking at the port, CRX
+is the fourth pin from the left on the
+top row. Now follow this line into the
+850.  You are trying to find capacitor
+number 117 (C117).  It will be the
+next-to-last capacitor in a row of
+capacitors.  We will attach a jumper
+wire to the side of C117 that runs to
+the 6532 RIOT (RAM, Input/Output,
+Timer) chip.  Solder it in at that
+point any way you like.
+
+The other end is a bit tricky for non-
+XE owners.  Actually, the XL series
+could probably follow the XE scheme,
+but the locations of the circuitry
+will be different.  For XE/XL owners,
+solder the other end to pin 12 of the
+SIO port (either one). Pin 12 is the
+top right pin, as you look at the
+port. If you're doing this for a 400/
+800 setup, you might try pins 9 or 13.
+Note that using either of these,
+however, will prevent use for their
+original purposes (Proceed and
+Interrupt lines, respectively).  This
+isn't too big of a deal, since no one
+has taken advantage of these lines to
+date.
+
+As for the computer side, simply
+solder a wire directly from pin 10 of
+the GTIA chip to pin 12 of the SIO
+port.  Users of computer models other
+than the 130XE should connect this
+line from the GTIA to the appropriate
+SIO line..the same line they connected
+the jumper wire to in the 850.
+
+Now determining the status of CRX is
+simply a matter of a PEEK to location
+53265 ($D011). It will be either on
+(1) or off (0). CRX provides an
+inverted output; that is, if you get a
+1, then there's NO carrier, a 0 means
+there is a carrier.
+
+Solution Two:
+
+Find pin 1 of the 6507 in the 850.
+This is the Reset line (and it is
+active low). To reset the interface,
+we will run a line from this pin,
+through the SIO cable, to pin 39 of
+the PIA.  Note that this will prevent
+the use of a cassette recorder (but
+then who does serious work on cassette
+nowadays, anyway). Connect a wire from
+pin 1 of the 850's 6507 to pin 8 of
+the SIO port. Now, the tricky part: in
+the computer, cut the trace to pin 39
+of the 6520 PIA. MAKE SURE YOU ONLY
+CUT THAT ONE TRACE!!!  Also, to make
+sure we are geting a clear signal, it
+would be a good idea to cut the trace
+at pin 8 of the SIO port in the
+computer, too.  Then connect a wire
+from pin 39 of the PIA to pin 8 of the
+SIO port within the computer.
+
+To reset the 850 now, we need to lower
+bit 3 of PACTL (54018; $D302). In
+BASIC, this is accomplished with POKE
+54018,52:POKE 54018,60.  (60 resets
+PACTL to its original value and puts
+the 850 back in -normal- mode.) Note
+that if you wish to write an assembly
+language routine to accomplish this,
+you should use a suitable delay
+between the time that you lower the
+bit and the time you raise it back to
+logic one.
+
+Conclusion:
+
+If you have any problems, or you just
+want to get in touch with me, I may be
+reached on CompuServe's Atari 8-bit
+SIG (ATARI8). My User ID is 72337,2075
+I am also online in Columbus, Ohio on
+most of the major Atari BBSes,
+including Pandora (614-471-9209) and
+ACEC (Atari Computer Enthusiasts of
+Columbus; 614-471-8559).
+______________________________________
+Xx SPEAKER ADDITION
+______________________________________
+Those Were The Good Old Days
+
+by Mr. Goodprobe
+
+Ah, remember when you could go down
+the boardwalk and smell the nuts
+roasting in the little shops, bikini's
+were the most eye-catching thing
+around beside mini-skirts, and
+skateboards had metal wheels? Some of
+the things from then I dearly miss,
+and others not at all! Those killer
+metal wheels on skateboards quickly
+disposed of several pairs of jeans in
+my teenage years, and accounted for
+numerous shredded elbows, knees and
+jackets!
+
+The Atari 800 had one of the finest
+keyboards available on the home
+computer market, and the entire unit
+was designed with longevity in mind.
+One nice touch the 800 possesed which
+was eliminated with the advent of the
+XL series was the internal speaker.  I
+can remember a game I used to enjoy on
+the 800 whose name escapes me at the
+moment. The general idea was to spray
+the garden with bug spray to rid your
+plot of pesky bugs that would flutter
+about and devour your veggies. As the
+bugs appeared on the screen, from the
+internal speaker would arise such a
+clatter that you would really have to
+stop as it sounded for all the world
+that they were ACTUALLY inside your
+beloved computer...it was an uneasy
+feeling to be sure! Now, just because
+you upgraded to an XL/XE doesn't mean
+you have to do without this feature
+any longer! This will be one of the
+simpler projects you will undertake,
+but its rewards for the installer will
+far exceed the effort expended. This
+article will cover the version I
+whipped together for the 800xl, and
+next issue we will share the version
+for the 130xe with you.
+
+Parts you will need:
+
+1. Diode: Part # ECG 177
+2. Transistor: Part # ECG 123AP
+3. Capacitor: .001 @ 50v
+4. Resistors: 1k 1/2 watt
+         100 ohm 1/2 watt
+5. Speaker: 8 ohm 1/2 or 1 watt
+   variety (The smaller the physical
+   size the better)
+6. Small hook-up wire
+
+Construction:
+
+Dissemble your 800XL, remove keyboard,
+metal shield, and screws and place
+these items safely aside. You will not
+need to remove the PC board from the
+bottom of the case.
+
+   1. Attach wire to bottom side of
+C23. This capacitor can be easily
+located by first looking directly
+between the RF modulator and the
+cartridge slot on the right. find the
+middle ground between these 2 points,
+then mentally draw a line 3 inches
+long back toward yourself from this
+point and you see C23. Just above and
+to the right of this part is a small
+electrolytic standing on end. Found
+it? Good!
+
+   2. At the other end of the wire
+attach your 1k 1/2 watt 
+resistor.
+
+   3. The neatest way to build this
+project is to build a large portion of
+the needed circuitry right onto the
+speaker itself.
+
+Using the lead placement chart solder
+the collector of your ECG 123AP
+transistor to one of the lugs on the
+speaker.
+
+          |                        |
+          \    *     *     *       /
+           \   E     B     C      /
+            \                    /
+             \------------------/
+
+(Bottom view with pins facing toward
+you)
+
+   4. Grasp your ECG 177 diode, and
+connect the end which DOES NOT have
+the band on it to the same lug on the
+speaker as you connected the collector
+of the transistor to.
+
+   5. Connect the front (banded) end
+of the diode to the other lug of the
+speaker.
+
+   6. Connect the 100 ohm resistor to
+lug of the speaker with the banded end
+of the diode.
+
+   7. Connect the .001 capacitor to
+the base of the transistor.
+
+   8. Connect the free end of the 1k
+resistor to the base of the
+transistor.
+
+   9. Locate the small 8 pin IC.
+notice the small dot on the bottom
+left corner. This is pin 1. Count over
+to pin 4, this is the point we will
+use for ground. Connect a wire here.
+
+  10. Connect the other end of this
+wire to the following parts:
+
+A: The free end of the .001 capacitor
+B: The emitter lead of the transistor
+
+  11. Locate C14. This capacitor is
+located directly to the left of the
+modulator. The top of this cap is our
+5v source. Solder a lead to this
+point.
+
+  12. Connect the free end of this
+lead to the free end of your 100 ohm
+resistor.
+
+All that remains to be done is locate
+a spot to mount the speaker inside of
+the cabinet of your XL. The smaller
+the physical size of the speaker you
+have chosen, the easier your task for
+finding the needed space will be.
+
+Also, it might be wise to use
+electrical tape to insulate all
+exposed wire leads of your add-on to
+avoid any future problems.
+
+Keep those Atari's hummin'!
+Mr. Goodprobe
+(on lend from) Midtown TV
+Atari 8/16 Sales/Repair (216) 633-0997
+
+_____________________________________
+Xx 1050 Notes
+_____________________________________
+By:Ed Chop
+
+Did you know that Atari made two 1050
+drives?  The newer drives are Tandon
+drives and the older drives are WST
+(World Storage Technologies). It seems
+that the WST drives are quieter and
+more reliable, but the belts are more
+expensive.  The WST drives are
+generally not marked as to
+manufacturer, but they have NOVACON
+motors.
+
+What about these cheap SD drives you
+see advertised in Computer Shopper all
+the time? Can you use them on your
+Atari?  Well....yes ....and no. You
+can't use them without modifying the
+drive or your computer.
+
+By adding a microprocessor and
+interface circuits to the drive you
+could probably get it to work with
+your Atari just like a 1050.  But an
+easier way may be to take the
+mechanical drive assembly from the
+cheap drive and wire it to the 1050
+electronics.  And why go through all
+this trouble?  Because the cheap drive
+that you want to buy should be gear-
+driven. They are MUCH quieter and
+reliable. According to Bob Wooley,from
+the Compuserve Atari Sig Community,
+the drive must be one that draws less
+power than the original. Bob says that
+you may burn up your driver
+transistors, although he hasn't tried
+it himself, yet.
+
+Another way would be to add a PIO to
+your computer.  That's a parallel I/O
+adapter. Mmmmmmmm..sounds interesting,
+huh? Well it seems our friend Bob
+Wooley is working on such a project.
+The PIO board will plug into the PIO
+port in the XL with a 24- cable. The
+information for building the PIO will
+be available on the Atari Sig when he
+has it completed. By adding the proper
+controller chip to the PIO, you can
+run the new drive with your Atari. But
+Bob has a better idea. How about a
+parallel 1050 drive that can load a
+disk in 10 seconds? Got your
+attention, huh?  Well, he has an
+interface card planned that will plug
+into the PIO to run your 1050. That,
+too, will be available on the Atari
+Sig.  We'll be looking forward to that
+hardware project.
+
+What's Atari doing to enhance their
+drives?  Well, to start with, Bill
+Wilkinson is working on a new DOS
+called A-DOS.  Although originally
+planned for the promised 3.5 inch
+disk, now scrapped, A-DOS is being
+designed for a new DD 5.25- drive from
+Atari.
+_____________________________________
+Xx NOTES ON XMODEM
+_____________________________________
+Ctsy TeleTalk Magazine Issue 12
+
+QUESTION:  -I use XMODEM across the
+system and transfers take twice [or
+thrice] as long as they should. Why?-
+
+ANSWER:  As best as I can tell, the
+information we were passed from the
+Net Exchange BBS was well-meaning but
+wrong.  Here is the scenario as I
+figger it--someone let me know if I'm
+wrong, too.
+
+XMODEM sends data in a 132-byte block
+that resembles a mini-packet:
+
+<----------Direction of transmission
+
+   [SOH] [#] [#] [DATA] [CHK]
+     |    |   |    |      |___ChkSum
+     |    |   |    +128 bytes of data
+     |    |   |_________ block number
+     |    |_____________ Block number
+     |_____Start of header (ASCII 01)
+
+This closely matches the size of a
+Telenet packet (generally 128 bytes)
+and can, for our purposes, be
+considered a packet's worth of data.
+PC Pursuit is set to forward data
+only on full packets and on expiration
+of idle timers (which are set for 1/10
+second).
+
+The delay occurs because a connection
+through PC Pursuit goes through four
+modems and two entirely separate data
+transmissions.  Each block of data
+must undergo the following (assuming
+a download from the BBS to the user):
+ _____      _________      __________
+|     |__  (         )__   |        |
+| BBS | /__(   PDN   ) /___|PCP user|
+|_____|    (_________)     |________|
+
+|_____|     |_______|      |_______|
+      |             |      |_____  1.1
+      |             |_Variable (0.1/1+
+      |__________1.1 seconds
+
+That's potentially 3+ seconds to
+transfer data that would take slightly
+over 1 second to transmit in a direct
+connection--maybe 35% efficiency.
+
+To make matters worse, the
+acknowledgment (ACK) from the user to
+the BBS may take upwards of a second-
+-instead of a fraction of a second-to
+be transmitted back into the network,
+have idle timers expire, be forwarded
+to the outdialer, and be transmitted
+to the BBS.  As you can see, though,
+the real delay is *not* because of the
+delay in sending the ACK, but because
+the block size and packet size so
+nearly match, the two computers are
+almost never working simultaneously.
+
+A protocol that uses a larger block
+size--YMODEM, for instance--will run
+faster over the system, but not
+because it needs fewer
+acknowledgements. Instead, while
+sending the larger block, it causes
+data forwarding on a full-packet
+condition.  After the first packet
+gets sent, both machines are doing
+work for most of the rest of the
+transmission, as such:
+
+    BBS              USER
+    ---              ----
+Start of 1K block
+Sends packet 1       Does nothing
+Sends packet 2       Receives packet 1
+Sends packet 3       Receives packet 2
+Sends packet 4       Receives packet 3
+Sends packet 5       Receives packet 4
+Sends packet 6       Receives packet 5
+Sends packet 7       Receives packet 6
+End of 1K block
+Sends packet 8       Receives packet 7
+Does nothing         Receives packet 8
+(Of course, the BBS is not really
+sending the *packet*, just a packet's
+worth of data.)
+
+In effect, YMODEM wastes only 2 of
+every 9 128-byte transfers; it should
+run at about 75% efficiency.  In
+addition, since it only has a single
+ACK per kilobyte (instead of 8), less
+time is spent in waiting for the idle
+timer to expire.
+
+Of course, to make things more
+confusing, there are XMODEM packages
+using 256-byte and 1K blocks and
+XMODEM packages that allow a -window-
+of unacknowledged blocks to be sent,
+among other flavors.
+
+Recently, the default parameters for
+the PC Pursuit ports were changed; by
+whom, I don't know. For best results,
+users should break to command mode and
+set X.3 parameters 1 and 10 to 0
+(disables break to command mode and
+word wrap) and set ITI parameter 57 to
+1 and parameter 63 to 0 (enable 8-bit
+transparent mode).  This is all done
+with similar commands as those issued
+when connecting to Exec PC.
+_____________________________________
+Xx DATAPAC PARAMETERS
+_____________________________________
+Ctsy CompuServe Atari8 Sig
+
+#: 188501 S2/Telecommunications
+    26-May-87  02:14:07
+Fm: Ken Watson 73157,3100
+To: John Oetter 73657,771 (X)
+
+Hi John,
+
+The method you describe will work if
+you are going through a Datapac public
+dialport but not if accessing Datapac
+through iNet 2000. iNet will _NOT_
+allow the user to have a transparent
+profile (which is what PROF 3 is
+suppose to give you) so you cannot do
+any Xmodem U/L to CIS if you are using
+Datapac through iNet.
+
+For downloads I use a slightly
+different PAD paramater which is as
+follows:
+
+PROF 1
+SET 6:0,126:4
+
+like PROF 3 you won't be able to see
+your last bit of typing. Unlike PROF 3
+(correct me here if I am wrong about
+PROF 3), you will get your character
+echo back after you do the D/L and
+your profile will remain open for
+subsequent downloads while you remain
+on CIS.
+
+Anyway, until iNet installs new
+software that will allow 8 bit
+transfers you cannot U/L to CIS if you
+are using DATAPAC through iNet so poor
+schmucks like myself continue to be
+able to D/L from CIS but not do any 8
+bit U/L.
+
+Ken
+
+Background
+
+Datapac essentialy invloves itself as
+a middleman.  When you type a letter,
+Datapac decides who it is going to,
+sends it, and in this case, is echoed
+back by Compuserve.  This involves
+time delays that make it next to
+impossible to download!  The packet
+switching used by Datapac can be
+overcome.
+
+Solution
+
+The trick is to get Datapac to switch
+off the packet switching.  So here's
+what you do:
+
+Type a CTRL-P <^P> This is a Datapac
+access code. Then type PAR followed by
+a <CR>. Type PROF 3 <CR> (you will not
+be able to see what you are typing)
+Type SET 2:1 <CR> <CR>
+
+Now type in the Compuserve forum
+commands to download.
+
+Once again the sequence should go:
+
+1. CTRL-P
+2. PAR <CR>
+3. PROF 3 <CR>
+4. SET 2:1 (remember, you won't see
+   this line) <CR>
+5. <CR>
+
+Happy downloading and uploading!  If
+you have any comments or suggestions,
+please let me know!!
+John Oetter  73657,771
+______________________________________
+ZMAGAZINE 85  Special Edition 12/23/87
+Next Issue: 12/30/87
+BBS Systems Issue.
+(c)1987 Ron Kovacs
+Volume 2 Number 52
+______________________________________

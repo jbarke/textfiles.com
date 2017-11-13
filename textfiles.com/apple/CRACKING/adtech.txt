@@ -1,0 +1,374 @@
+                         TECH-NOTES FOR
+                     Advanced Demuffin 1.1
+
+                          Written  by
+                           The Stack
+
+                         Copyright 1983
+                       Corrupt Computing
+
+If you want source code for any of Corrupt Computing's line of
+utilities, just contact THE INSPECTOR on THE TWILIGHT PHONE.
+
+================================================================
+
+ZERO PAGE LOCATIONS
+
+  $22  WNDTOP   These 2 zero page locations, WNDTOP and WNDBTM,
+  $23  WNDBTM    are used so that the character that the
+                 character output routines in the monitor will
+                 output characters only in the window below the
+                 first 3 lines and above the bottom 2 lines.
+                 The top 3 and bottom 2 lines are used for title
+                 lines and status display.  These locations
+                 should be restored to normal upon return from
+                 your RWTS if it uses them, although most RWTS's
+                 don't use these reserved monitor locations.
+
+
+  $26  GBASL    These 2 zero page locations are used by many
+  $27  GBASH     routines throughout Advanced Demuffin, such as
+                 the PRINT routine and the routines to display
+                 the status codes on the disk map, but they do
+                 not need to be saved before going to your RWTS.
+                 Many RWTS's, including RWTS 3.3, use these
+                 locations in several places.
+
+
+  $36  CSWL     CSWL and CSWH should always point to the address
+  $37  CSWH      of the current character output routine.
+                 Advanced Demuffin sets these locations to point
+                 to $FDF0, the standard character output
+                 routine.  Note that the outputed characters
+                 will no longer go through DOS as there may be
+                 no DOS in the machine.  Advanced Demuffin
+                 changes the contents of these locations to
+                 point to $Cx00 when a number from 1-7 is
+                 pressed during a conversion or after a
+                 conversion is completed, where x is the number
+                 pressed.  These locations should be restored to
+                 point to $FDF0 if your RWTS uses them in any
+                 way.  Most RWTS's, including RWTS 3.3, don't
+                 use them at all.
+
+
+  $4A  TEMP1    Although most RWTS's don't use these locations,
+  $4B  TEMP2     they are used as scratch locations by Advanced
+  $4C  TEMP3     Demuffin and are VERY IMPORTANT!  Be sure and
+                 save them if your RWTS even looks at them.  The
+                 most important location to save is $4B, which
+                 contains the page number that the current
+                 sector is being loaded into.  Note that this is
+                 a duplicate of the X register upon entry into
+                 the user's IOB module at $1400.
+
+
+PRE-PROGRAM NON-ZERO PAGE LOCATIONS
+
+ $200  BUF      Page 2, the character input buffer, is used as a
+                 buffer to hold the file name of the RWTS or IOB
+                 module to be loaded.  This page may be used by
+                 your RWTS, but your RWTS may not reside in the
+                 area between $200-$21E (unless you don't plan
+                 on loading anything), as this portion of page 2
+                 will be destroyed upon a load.
+
+
+ $3F2  RESET    Advanced Demuffin sets this pointer to pnint to
+                 $FF59.  This means that whenever the RESET key
+                 is pressed, the Apple will jump into the
+                 monitor.  If this is not desired, $12C9 (low
+                 byte) and $12CE (high byte) may be changed to
+                 have the RESET key go wherever you want it to
+                 go including $801 (Advanced Demuffin entry).
+                 $12C9 normally contains a $59 and $12CE
+                 normally contains an $FF.
+
+
+ $3F5  AMPVEC   Advanced Demuffin sets up these locations to
+ $3F8  CTYVEC    jump to the Advanced Demuffin entry point
+                 ($801) when Applesoft recieved the "&" command
+                 and when the monitor recieved the CTRL-Y
+                 command.  This provides a useful way to get
+                 back into Advanced Demuffin after exit.
+
+
+ $400-$7FF      Many times Advanced Demuffin displays data and
+                 status marks on the screen by storing this data
+                 directly into this area of memory.  This
+                 includes all marks on both the track map and
+                 the disk map as well as numbers on the bottom
+                 screen line, and dashes and other messages on
+                 the 3rd and 23rd lines.
+
+
+
+
+
+
+INTER-PROGRAM LOCATIONS
+
+ $800           This is the location where Advanced Demuffin is
+                 designed to run at.  This location contains an
+                 $EA (NOP) as the byte at $800 is often replaced
+                 by a $00.  This is NOT the entry point to
+                 Advanced Demuffin ($801 is the entry) although
+                 if there is an $EA here it won't make any
+                 difference if you use this as the entry.
+
+
+ $801  START0   This is the entry point to Advanced Demuffin 1.1
+                 where there are two instructions, SEI and CLD,
+                 before the actual START of Advanced Demuffin.
+
+
+ $803  START    This is the actual start of the program which
+                 sets CSWL and CSWH to point to the monitor
+                 routine COUT1, sets the RESET, AMPVEC, and
+                 CTYVEC as mentioned above (see appropriate
+                 label), sets the full screen as a window except
+                 for the top 3 and the bottom 2 lines, clears
+                 the screen, puts the title at the top, the
+                 status line at bottom, and starts off the
+                 program by displaying the menu.
+
+
+ $F1E  IOB      This is the IOB that Advanced Demuffin uses when
+                 it uses RWTS.  The built-in IOB module (IOB33)
+                 which is described below, as well as the
+                 default user IOB module (at $1400) also use
+                 this IOB.  The default contents of this IOB are
+                 described in detail below:
+
+ $F1E:01 60     IOB      DFB $01,$60
+ $F20:01        DRIVE    DFB $01
+ $F21:00        VOLUME   DFB $00
+ $F22:00        TRACK    DFB $00
+ $F23:00        SECTOR   DFB $00
+ $F24:2F 0F              DW DCT
+ $F26:00        DPAGL    DFB $00
+ $F27:80        DPAG     DFB $80
+ $F28:00 00              DFB $00,$00
+ $F2A:01        CODE     DFB $01
+ $F2B:00        ERROR    DFB $00
+ $F2C:00 60 01           DFB $00,$60,$01
+ $F2F:00 01     DCT      DFB $00,$01
+ $F31:EF D8              DFB $EF,D8
+
+Note that the slot number used by Advanced Demuffin could easily
+ be changed bu changing $F1F to the $x0 where x is the slot
+ number of the desired drive.
+
+
+ $F33  IOB33    This is the built-in IOB module used to write to
+                 3.3 formatted disks.  A disassembled listing of
+                 it is included below:
+
+ $F33- IOB33  STY SECTOR    ;Store sector
+ $F36-        STX DPAG      ;and page number
+ $F39-        LSR A         ;Convert phase # to track #
+ $F3A-        STA TRACK     ;and store it
+ $F3D-        LDA DRV       ;Check # of drives
+ $F40-        STA DRIVE     ;and store it as drive to write to
+ $F43- THERE  LDA #2        ;Set command code to write
+ $F45-        STA CODE      ;and store it
+ $F48-        JSR GORWTS    ;and go to 3.3 RWTS to write it
+ $F4B-        LDA #1        ;Restore read
+ $F4D-        STA CODE      ;command code
+ $F50-        LDA ERROR     ;Check for an error
+ $F53-        BCC RTS4      ;Exit if none
+ $F55-        CMP #$10      ;Write protect error?
+ $F57-        SEC           ;Keep carry set
+ $F58-        BNE RTS4      ;Not write protect, exit w/carry set
+ $F5A-        LDY #$27      ;Display write protected
+ $F5C- MOV4   LDA WPER1,Y   ;error message
+ $F5F-        STA SCLN1,Y   ;and ask whether
+ $F62-        LDA WPER2,Y   ;to continue or
+ $F65-        STA SCLN2,Y   ;start over
+ $F68-        DEY
+ $F69-        BPL MOV4
+ $F6B-        JSR PRINT     ;Print 3 beeps
+ $F6E-        DFB $07,$07,$87
+ $F71- KEY10  JSR KEYIN     ;Read a key - go back to menu if esc
+ $F74-        CMP #$C3      ;Continue?
+ $F76-        BEQ CONTIN    ;Yes, branch
+ $F78-        CMP #$D3      ;Start over?
+ $F7A-        BNE KEY10     ;No
+ $F7C-        PLA           ;Yes
+ $F7D-        PLA           ;Pull return address off stack
+ $F7E-        JSR REPLNS    ;Replace top 2 lines w/ title lines
+ $F81-        JMP GOTVAL    ;Starts over
+ $F84- CONTIN JSR REPLNS
+ $F87-        BMI THERE     ;Always taken
+
+
+$13FA-$13FB     These 2 bytes are unused
+
+
+$13FC-$13FF     These 4 bytes are reserved for the address and
+                 the length of the IOB module when it is being
+                 loaded.  Advanced Demuffin loads the first
+                 sector from the track/sector list of the IOB
+                 module at $13FC.  Since the first 4 bytes of
+                 this sector contain the address and the length
+                 of the file, those bytes reside in these
+                 locations.  Therefore, the actual IOB module
+                 will start at $1400 (just below).
+$1400  IOBM     This is the user IOB module.  The LOAD NEW IOB
+                 MODULE will load a file into this area (see
+                 above).  A disassembled listing of the default
+                 user IOB module is included in the main manual.
+
+
+$1419-$14FB     These bytes between the user IOB module and RWTS
+                 3.3 are left free for an IOB module longer than
+                 the default one.  This allows an IOB module to
+                 take up as much as $FC bytes total.
+
+
+$14FC-$14FF     These 4 bytes are unused.
+
+
+$1500-$1CDB     RWTS 3.3 resides in this area of memory.  It is
+                 just standard RWTS that has been relocated to
+                 run at this address.  Advanced Demuffin uses
+                 the entry at $1A00.
+
+
+Below are some other locations used as scratch by Advanced
+ Demuffin.  These may be looked at by your IOB module in
+ determining various options about how it is to read sectors
+ from the source disk if desired.
+
+$1CE0  SCVER    This location contains either a $0C or a $0F
+                 for 13 and 16 sector modes, respectively.
+
+$1CE1  STPHS    This location contains phase number to start
+                 reading data from the disk with.  It defaults
+                 to $00.  (Since it is a phase #, a $01 would
+                 mean track .5, etc.)
+
+$1CE2  ENPHS    ENPHS is the same as STPHS except that it
+                 contains the last phase to read data from.
+
+$1CE3  STSEC    STSEC contains the first sector within the phase
+                 specified by STPHS that data should be read
+                 from.
+
+$1CE4  ENSEC    ENSEC contains the last sector within the phase
+                 specified by ENPHS that data should be read
+                 from.
+
+$1CE5  CRPHS    This location contains the current phase that
+                 data is being read from.
+
+$1CE6  CRSEC    This location contains the current sector that
+                 data is being read from.
+
+$1CE7  BGSEC    BGSEC contains the sector number within the
+                 phase specified by BGPHS (below) that data has
+                 started being read from this pass.  i.e. If you
+                 are converting an entire 16 sector disk with
+                 the default options and the default buffer size
+                 ($70 pages), during the first pass BGPHS and
+                 BGSEC will both contain a $00 (phase 00, sector
+                 00 was the start phase, sector in this pass).
+                 During the second pass, BGPHS and BGSEC will
+                 contain $0E and $00, respectively.  (The second
+                 pass started with track 07, sector 00 and track
+                 07 is phase $0E).
+
+$1CE8  BGPHS    See above.
+
+$1CE9  BYPHS    This byte contains the increment in phases.
+                i.e. The default increment, 1.0, would be $02.
+
+$1CEA  NRETRY   This byte contains the maximum number of retries
+                 (normally $01).
+
+$1CEB  RETRY    This byte is used as a counter counting down
+                 from the maximum number of retries to $00.  On
+                 the first attempt to read a sector, RETRY will
+                 equal NRETRY.  If the carry is set upon return
+                 from the user's IOB module, RETRY will be
+                 decreased.  If it is less than zero, a read
+                 error will result.  If not, a read will be re-
+                 attempted.  This process will continue until
+                 the sector either reads correctly or until
+                 RETRY is less than zero.
+
+$1CEC  DRV      This location contains either a one or a two
+                 respective to the number of drives being used.
+                 The built-in IOB module uses this location to
+                 determine which drive to write data to.
+
+$1CED-$1CEF     These 3 bytes are unused
+
+$1CF0  BUFST    BUFST contains the page number of the start of
+                 the buffer.  This buffer is used to store data
+                 read off the source disk.  By changing this
+                 location and/or BUFEN (below) you can easily
+                 change the buffer size and the location of
+                 Advanced Demuffin's buffer.  This location
+                 normally contains a $20 meaning that the buffer
+                 normally starts at $2000.
+
+$1CF1  BUFEN    BUFEN contains the page number of the first page
+                 not to be included in Advanced Demuffin's
+                 buffer (see above).  i.e. If this location
+                 contained a $90 (the default value) and BUFST
+                 (see above) contained a $20 (the default again)
+                 the buffer would reside from $2000 to $8FFF
+                 (which it normally does).  However, this
+                 byte may be changed from a $90 to another
+                 value, such as a $B8, making the buffer much
+                 larger.  In this example, your buffer would be
+                 $9800 bytes long!  This will, of course, erase
+                 DOS when you attempt to convert the disk; but
+                 no problem - Advanced Demuffin does not require
+                 DOS anyway. (Not even for loading RWTS and IOB
+                 modules!)  Another use for changing this byte
+                 the one before it is to move the buffer to a
+                 different place.  i.e. If you had a hi-res
+                 screen on hi-res page 1 ($2000-$3FFF) that you
+                 wanted to keep in memory, you could simply
+                 change BUFST ($1CF0) to $40, forcing the buffer
+                 to start at $4000 instead of $2000 - saving
+                 your screen.
+
+$1F00  DIRSEC   This page is used as a scratch page when loading
+                 sectors from the disk.  i.e. When loading a
+                 RWTS or an IOB module, the directory sector
+                 containing the name of the file to load will be
+                 read into this page.  The track and sector of
+                 the track/sector list will be found and the
+                 track/sector list will then be loaded here.
+
+$BD00  USRRWTS  This is address JuMPed to by the default user
+                 RWTS.  You should either have an RWTS here or
+                 the IOB module should be changed to point to a
+                 different location.  Note the $BD00 does not
+                 necessarily have to be the start of the RWTS
+                 when using the default user IOB module, it must
+                 be the ENTRY POINT of the RWTS.  In fact, most
+                 RWTS's have a STARTING ADDRESS of $B800 but an
+                 ENTRY POINT at $BD00.  Keep this in mind when
+                 you load an RWTS module from disk.
+
+$C000  KEYBD    These are the only hardware locations used by
+$C010  KEYCLR    Advanced Demuffin other than during the screen
+                 dump where $Cx00 is JSRed to (where x is the
+                 slot number).
+
+
+The following monitor routines are used by Advanced Demuffin:
+
+$F847  GBASCALC
+$FB2F  INIT
+$FC58  HOME
+$FD8E  CROUT
+$FDED  COUT
+$FDF0  COUT1
+$FF59  MONITOR
+
+

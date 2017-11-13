@@ -1,0 +1,213 @@
+
+Pirates/gs on Hard Disk
+
+by Rubywand
+
+
+History
+
+     Back in 1987, MicroProse released the GS version of its popular
+Pirates action-adventure. At last, GS users could pursue careers as
+pirates on the Spanish Main with improved sound in beautiful super-res
+color .
+
+     Naturally, the Pirates/GS diskette was copy-protected. As some
+owners have discovered, this means you get to play the game as long as
+your diskette develops no glitches. This is a shame, since the game's
+80-page manual and map are required to enjoy play. There was no need to
+make the diskette uncopiable.
+
+     In any case, within a few months a copy de-protect was developed
+and described in COMPUTIST #61 by Dan Halfwit. It permits making a
+playable backup. The program still retained its documentation check--
+you must look up information in the manual and answer a question to
+begin play-- and needed to run under a specific version of ProDOS. Also,
+the game could not be run from hard disk.
+
+     A few issues later, #65, Brian Troha presented a modified, simpler
+version of Dan's backup procedure and showed how to eliminate the
+restriction on ProDOS version.
+
+     The last published improvement to user access appears to be Keith
+Reed's modification to circumvent the annoying documentation check. It
+appeared in COMPUTIST #72.
+
+
+The Hard Disk Mod
+
+     The Hard Disk Mod lets you play Pirates/gs entirely from hard disk.
+There is no need to insert the game diskette or to have a separate Save
+Game diskette.
+
+     First, you need to make a deprotected copy; and, you might as well
+include mods which eliminate ProDOS version dependency and do away with
+the documentation check. The process outlined below is a mix of the
+techniques developed by Dan Halfwit, Brian Troha, and Keith Reed:
+
+ 1. Set Boot Slot to Slot 5.
+
+ 2. Boot a ProDOS 8 diskette which lets you get to BASIC. If the Visit
+Monitor CDA does not show up when you do an OA-CTRL-ESC
+(OpenApple-Control-Escape), do a CALL-151 to get to the monitor and
+enter # (pound sign followed by RETURN) to activate it. Enter CTRL-Y
+(Control-Y followed by RETURN) to get back to BASIC.
+
+ 3. Boot a ProDOS diskette which has Copy II Plus (version 7.1-8.3) in
+the main directory. Rename the UTIL.SYSTEM file to AAUTIL.SYSTEM.
+Alphabetize the diskette's main directory. You want AAUTIL.SYSTEM to be
+the first .SYSTEM file in the directory.
+
+ 4. While still in Copy II Plus, format an 800k ProDOS diskette. It can
+be an actual diskette or a RAM disk (e.g. /RAM5).  If it's a diskette,
+format it under the name "PCOPY" (i.e. any name except "PIRATES").
+
+ 5. Insert the Pirates/gs diskette (with write-protect tab open to
+prevent accidental writing).  Boot the Pirates/gs diskette.  After the
+usual clatter of the boot start, wait for about a second and, then,
+press OA-CTRL-ESC to stop the boot and go to the CDA Menu.
+
+ 6. Select Visit Monitor. In the monitor, search for the three bytes 4C
+00 20 in the range 0800-1FFF. (Check at address 9CC. If you do not find
+it, use the monitor search command:  \4C 00 20\<800.1FFFP to find the
+bytes.)  If you cannot find the bytes, you may have let the boot
+continue too long before interrupting. Try booting again.
+
+ 7. Change the 4C 00 20 to 4C 69 FF.  Enter CTRL-Y to let the boot
+process continue. The process should hit a snag (the 4C 69 FF) and leave
+you in the monitor.
+
+ 8. Remove the Pirates/gs diskette and insert the ProDOS 8 diskette with
+the AAUTIL.SYSTEM file. You should, still, be in the monitor. Enter
+2000G. Copy II Plus should start and you should arrive at the usual Copy
+II Plus utils display.
+
+ 9. Swap in the Pirates/gs diskette. Since you are using a copy of the
+Pirates/gs ProDOS to handle reads, you should be able to do a CATALOG of
+the diskette under Copy II Plus. Use Copy II Plus to file-copy all of
+the files from Pirates/gs to your formatted 800k diskette or /RAM5. (The
+copying will be much faster to /RAM5.)
+
+10. Set Boot Slot to the Slot of your hard disk. Do an OA-CTRL-RESET to
+boot your usual System from hard disk.
+
+11. Start you favorite block editing utility. Block Warden (from the old
+8-bit version of ProSel) is very good. In ProSel-16, Block Warden is
+called "Zap". Block Work is another good block editor.
+
+12. On your new copy of the Pirates/gs diskette-- i.e. the one on
+diskette or on /RAM5-- search for the bytes 8D 20 B1 A2 00. Or, do a
+Follow File for the file named "PS2" and advance to Rel Block 3. I found
+8D 20 B1 A2 00 in the third block of PS2 starting at byte $039. Change
+8D 20 B1 to 60 EA EA and write the block back to your copy.  Except for
+the volume name, the copy is, now, a bootable, playable backup of the
+original.
+
+13. On your copy, search for the bytes AD FF BF C9 04 F0 0F. Or, do a
+Follow File for the file named "PIRATES.SYSTEM". I found  AD FF BF C9 04
+F0 0F in the first block of PIRATES.SYSTEM starting at byte $034. Change
+F0 0F to 80 0F and write the block back to your copy. This eliminates
+dependency upon a particular version of ProDOS.
+
+14. Exit the block editor back to your usual Finder or program launcher.
+Start BASIC. From your copy load the program named "PICK". (For example,
+you might enter LOAD /RAM5/PICK to load the program from a copy on
+/RAM5.)
+
+15. List line 1121. You want to change the line so that it does a RETURN
+after the Y=10. Line 1121 should look like ...
+
+1121 IF ZZ= 41 THEN X= 4: Y= 10: RETURN
+
+16. Save the new version of PICK back to your copy.  (For example, you
+might enter SAVE /RAM5/PICK to save the program back to  /RAM5.)  This
+eliminates the documentation check.
+
+17. If the copy is on /RAM5, this is a good time to make a diskette
+copy. If the copy is already on diskette, you just need to change its
+name. In order to have a good bootable backup diskette, the diskette
+needs to have the name "PIRATES". (Also, don't forget: rename the
+AAUTIL.SYSTEM file on your Copy II Plus diskette back to UTIL.SYSTEM and
+do an Alphabetize.)
+
+
+     The modifications needed to end up with a version of the game you
+can play from hard disk mainly involve changing a few pathname
+references. To keep it simple, and to avoid having to load up your boot
+volume, specific names are used. This means you must decide on which
+hard disk volume you want Pirates/gs to reside and use that volume name
+when doing the patches. Also, the name of the hard disk volume must be
+no more than five characters in length.
+
+     What you will do is overwrite instances of "/PIRATES/" ,
+"/PIRATES." and "/PIRATES" to match your volume name plus a folder name.
+
+Example: If the target volume is named "MM", then, substituting
+"/MM/PIRA/" would fit. The folder in which Pirates/gs will be located
+would be named "PIRA" on the hard disk volume named "MM".
+
+Example: If the target volume is named "GAMES", then, substituting
+"/GAMES/P/" would fit. The folder in which Pirates/gs will be located
+would be named "P" on the hard disk volume named "GAMES". 
+
+     In the following steps, I'll use "/MM/PIRA/" for the pathname mods.
+
+18. Start your block editor again. Do a Follow File for PIRATES.SYSTEM.
+In the second block of the file (Rel Block 2), "/PIRATES/" should show
+up in the Text side of the display starting at or near byte $3B9. Go to
+Text entry mode and overwrite "/PIRATES/" with "/MM/PIRA/" (or whatever
+/volume/folder/ name you are using).  If you have only hex display and
+entry, you are looking to replace 2F 50 49 52 41 54 45 53 2F with the
+ASCII for the pathname change ( such as 2F 4D 4D 2F 50 49 52 41 2F). 
+Write the changed block back to your copy.
+
+19. Do a Follow File for PS2. In the third block of the file (Rel Block
+3), "/PIRATES." should show up in the Text side of the display at two
+places: starting at or near byte $4E9 and byte $511. Go to Text entry
+mode and, in each case, overwrite "/PIRATES." with "/MM/PIRA/" (or
+whatever /volume/folder/ name you are using).  Similarly, overwrite one
+instance of "/PIRATES" at or near byte $508 with "/MM/PIRA" (or whatever
+/volume/folder/ name you are using without the trailing slash) .  Write
+the changed block back to your copy.
+
+20. Exit the block editor. On volume MM, create a folder named "PIRA". 
+(Or on volume GAMES, create a folder named "P"; or ... .)  In the new
+PIRA folder, create a folder named "SIDE3". Copy all files from your
+copy diskette (or /RAM5) except ProDOS to the new PIRA folder. If you
+have any saved game files on a separate diskette, you can copy them to
+the SIDE3 folder inside PIRA. 
+
+     On hard disk, double-click on PIRATES.SYSTEM to start the game.
+With one exception, your new hard disk version of Pirates/gs will run
+fine started under System 6 and should run well from earlier versions of
+GS/OS, too.
+
+    The exception is Quiting. The game does not do a ProDOS Quit and
+simply hangs. (It does the same thing when playing from diskette.
+Evidently, one of the places PIRATES.SYSTEM saves space is the Quit
+code.)  You must reboot the system to get back to the Finder after a
+session of play. Since Pirates/gs seems to break a number of rules-- for
+example, running it will erase /RAM5-- doing a reboot would be a good
+idea in any case.
+
+     As would be expected, the chief benefits of running Pirates/gs from
+hard disk are convenience, better game speed and quicker, easier saves.
+Also, your worries of losing the game to a defective diskette are over.
+You can make as many backups as you like. 
+
+     Producing the hard disk version is a bit of bother; but, for avid
+Pirates/gs players, the payoff is probably worth the effort. Let me know
+(rubywand@swbell.net)  if there are any questions. Otherwise; good
+hunting, Matey!
+
+
+Rubywand
+         
+
+
+
+
+        
+
+     
+
+ 

@@ -1,0 +1,89 @@
+I am close to agreeing with Randy. We're going on and on with no
+results. I have to admit I contributed to the verbosity in here. 
+
+Before we CODE we gotta assume the basics (we CANNOT require changed
+mailers, we ASSUME FSC-001, we use existing mechanisms asuch as netmail,
+etc). 
+
+Each of us has said, input can come through any mechanism, echo, text
+file, netmail, filerequest, etc. 
+
+The problem isn't bits'n'bytes -- it's our social and transport systems.
+All this thrashing over implementatino specifics, keywords, fileformats
+etc is WAY too early, and NOT where the problem is.
+
+The end result will almost certainly not be whiz-bang code. It should be
+simple stuff. The problem is ORGANIZATIONAL, not technical!
+
+
+
+We're solving a problem much larger than we thought -- we're doing a DNS
+system without a "NIC".  We have a NIC, in essence, the ZC/RCs,
+and it is corrupt. It no longer coordinates but edits. In the Internet
+they've stuck to coordinating and it's fine.
+
+In the Internet, without a NIC noone knows you exist. In FidoNet,
+with ZnnnLIST, eg. echomail, you can talk to sites you don' tknow
+how to contact, or even exist -- ie. broadcast to via ZnnnLIST.
+
+
+
+The problem is to get DNS zones (fidonet nodelist frags) transmitted.
+DIFFs and physical issues are a seprate problem (even if they may impact
+basic design). We need to think out dataflow first.
+
+In FidoNet, SOA == net host, eg. 125/0.
+
+FidoNet frag (DNS zone) is a complete net/region.
+
+Each SOA authors edits to their frag. SOA issues edits into echo
+as they happen.
+
+Edits are incremental changes to the frag. Ex:
+
+; comment
+;KEY=VALUE			IN-BAND DATA
++ node phone ...		ADD NEW/CHANGE EXISTING
+- node				DELETE EXISTING
+
+It is possible to get otu of sync (lost edits, etc). recover by: get a
+copy from a neighbor. Filerequest/magicword/asyetundefinedfeature
+complete frag from the SOA -- eg. the authoring net host.
+
+SOAs make complete frag available for filereq or download as standard
+practice.
+
+Even if occasional edits are lost, frag remains reasonably accurate.
+(additions missed, removals lost, etc). If a specific node in a frag is
+missing/old/bad, then that node is affected. (Note we're talking failure
+mode here, not the nromal case.
+
+Implementation-specific features could "checksum" the list; with each
+update (add, delete, replace node) a "checksum" of some sort; "my frag
+should have N nodes, serial number is X," etc. If an error is found (ie.
+we lost some edit) the compiler then knows enough to get a complete frag
+(inform th NC, fetch autmiatically, download, filerequest, via
+email, whatever)
+
+
+
+If a new net appears, or existing net fragments:
+
+NEW NET: SOA spontaneously generates (no one can stop them!), issues new
+SOA record, plus edits. (eg. SOA 1:125, + 1 "joes BBS", + 2 "mary's BBS"
+etc)
+
+SPLIT NET: new SOA appears as above, old net issues deletes. 
+
+
+
+OPEN ITEMS:
+
+Security implementation (signatures, etc)
+
+DIFFs (Net can generate a DIFF for a current style nodelist; however it
+is likely nodelists in different nets will diverge. This should be
+acceptable. NOTE: if other-zones becomes optional, DIFFs collapse
+anyways.
+-- 
+  Tom Jennings -- tomj@wps.com -- World Power Systems -- San Francisco, Calif.

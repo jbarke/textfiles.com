@@ -1,0 +1,155 @@
+#include <ctype.h>
+
+char *next_arg();
+char *skip_delim();
+char *strip_path();
+
+/*
+
+ Command argument and DOS path manipulation functions. 
+ T. Jennings 7 June 83
+
+ --------------- Command Tail Processing Functions ---------------
+
+	This next set of functions are meant to be used together. Examples
+on their use follows.
+
+
+int num_args(string)	Returns the number of args in the string, seperated
+			by delims (see delim(), below). Leading delimiters
+			are ignored.
+
+char *next_arg(string) Returns a pointer to the next arg, delimited 
+			by a delim, skipping over the current arg. Use via
+			ptr= nextarg(ptr) to skip to each argument. All 
+			switches at the end of the current arg are skipped.
+
+
+char *skip_delim(string) Skips leading delims in a string. returns a pointer.
+
+cpyarg(to,from)	Copies a string, up to the next delim or switch.
+			Leading and trailing delimiters are stripped (from 
+			the output string) and a null terminator is added.
+
+			after cpyarg()		FROM: foo/b foobar fipple
+						TO: foo
+
+delim(c)		Returns true if the character is a delimiter.
+			Nulls are not considered a delimiter. The list of
+			delimiters is contained in the array '_dlmlst', and
+			can be changed via newdelim().
+
+newdelim(s)		Replace the list of delimiters. The string 's' must
+			be less than 20 chars. (Not checked.)
+
+stolower(s)		Convert a string to all lower or upper case.
+stoupper(s)
+*/
+/* Return the number of args left in the string. */
+
+short num_args(string)
+char *string;
+{
+int count;
+
+	count= 0;
+	string= skip_delim(string);		/* skip leading blanks, */
+	while (*string) {
+		++count;			/* count one, */
+		string= next_arg(string);	/* find next, */
+	}
+	return(count);
+}
+
+/* Return a pointer to the next argument in the string. */
+
+char *
+next_arg(string)
+char *string;
+{
+	while ((!delim(*string)) && *string)		/* skip this one, */
+		++string;				/* up to delim, */
+	string= skip_delim(string);			/* then skip delims, */
+	return(string);
+}
+
+/* Skip over the leading delimiters in a string. */
+
+char *
+skip_delim(string)
+char *string;
+{
+	while (delim(*string) && *string) {
+		++string;
+	}
+	return(string);
+}
+/* Copy the string to the destination array, stopping if we find one
+of our delimiters. */
+
+void 
+cpyatm(to,from)
+char *to;
+char *from;
+{
+	while ( (!delim(*from)) && *from) 
+		*to++= *from++;
+	*to= '\0';
+}
+
+/* Copy the string to the destination array, stopping if we find one
+of our delimiters or switches. */
+
+void 
+cpyarg(to,from)
+char *to;
+char *from;
+{
+	while ( (!delim(*from)) && (*from != '/') && *from) 
+		*to++= *from++;
+	*to= '\0';
+}
+
+/* ----- List of legal delimiters. This is the default list ----- */
+
+static char _dlmlst[20] = {" \t,"};	/* space, tab, comma */
+
+/* Return true if the character is a delimiter from the list above. */
+
+delim(c)
+char c;
+{
+char *cp;
+
+	for (cp= _dlmlst; *cp;) if (c == *cp++) return(1);
+	return(0);
+}
+
+/* Change the list of delimiters. */
+
+void newdelim(s)
+char *s;
+{
+	strcpy(_dlmlst,s);
+}
+
+/* Convert a string to lower case. */
+
+stolower(s)
+char *s;
+{
+	while (*s) {
+		*s= tolower(*s);
+		++s;
+	}
+}
+/* Convert a string to upper case. */
+
+stoupper(s)
+char *s;
+{
+	while (*s) {
+		*s= toupper(*s);
+		++s;
+	}
+}

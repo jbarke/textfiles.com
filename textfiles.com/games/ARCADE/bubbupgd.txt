@@ -1,0 +1,516 @@
+
+------------------------------------------------------------------------
+| UPGRADE: PLAY BUBBLES ON YOUR HACKED ROBOTRON/JOUST/STARGATE MACHINE |
+------------------------------------------------------------------------
+
+COPYRIGHT 1994
+
+REVISION NUMBER: 1.0 (first public release)
+  REVISION DATE: 1 Jun 1994
+     CREATED BY: Doug Jefferys
+
+
+STANDARD DISCLAIMER:
+--------------------
+
+The author hereby grants permission to reproduce and distribute this
+document for personal use, subject to the condition that the document
+(along with any copyright and disclaimer notices) is not modified in
+any way.  The opinions expressed within this document are those of the
+author only and not necessarily those of the author's employer.  This
+document is provided for informational purposes only.  Although the
+author has made every effort to provide accurate information, he cannot
+guarantee the accuracy or usefulness of any of the information contained
+herein due to the complexity of the issues involved.  The author takes
+no responsibility for anything arising as a result of anyone using the
+information provided in this document, and the reader hereby absolves
+the author of any and all liability arising from any activities
+resulting from the use of any information contained herein.
+
+
+GENERAL OVERVIEW:
+-----------------
+
+If you've seen my hack describing how to get Robotron, Joust, and
+Stargate to play off the same set of Williams boards, you're probably
+wondering if there aren't more games you can play...
+
+Well, there's at least one -- Bubbles.  Bubbles won't run on the hack
+without an upgrade to the CPU board, but the upgrade is quick, easy,
+and best of all, won't interfere with your older games.
+
+So, if you haven't already modified your Joust or Robotron machine to
+play Joust, Robotron, and Stargate, now's the time to hack it up.  Then
+turn back to this file to give yourself a fourth game, Bubbles.
+
+As with my previous conversions, sections labeled "Tech Note" are
+primarily for people who want to know *WHY* the hack works, and how
+it was designed.  If you're only interested in building the unit,
+you can skim over these sections.
+
+
+INGREDIENTS:
+------------
+
+1 - Working Joust or Robotron machine, hacked to play Joust, Robotron,
+    and Stargate as per my earlier conversion hack.
+1 - Set of controls for Robotron.  You should already have these due
+    to your previous hackery.
+1 - 27512 EPROM at 450ns or faster
+1 - 2732 EPROM at 450ns or faster
+1 - 6514 CMOS RAM chip (these are rare, but a 2114 RAM chip will work too)
+1 - 18-pin DIP socket
+
+You will also need an EPROM programmer (or a friend who has one),
+binary dumps of the Bubbles ROMs, and a soldering iron.
+
+
+DETAILED INSTRUCTIONS:
+----------------------
+
+0) Read all of these instructions before you begin.
+
+   This is a fairly simple upgrade; it shouldn't take you more than an
+   hour from start to finish.  Good luck!
+
+
+1) Create the program ROM data files:
+
+
+1.1) Read the Bubbles ROMs and store the data on disk.  When reading
+     ROMs, make sure your programmer is set to the correct chip type
+     (2732 or 2532).  As long as you get the data in, the rest doesn't
+     matter.
+
+
+1.2) Create a dummy file of hex $FFs, 4096 bytes long.
+
+     Call this file "blank.fff".
+
+
+1.3) Create the program ROM, using a 27512.  The contents of the game
+     will be mapped onto each ROM as follows:
+
+     $0000-$0FFF = ROM 1
+     $1000-$1FFF = ROM 2
+     $2000-$1FFF = ROM 3
+     $3000-$1FFF = ROM 4
+     $4000-$1FFF = ROM 5
+     $5000-$1FFF = ROM 6
+     $6000-$1FFF = ROM 7
+     $7000-$1FFF = ROM 8
+     $8000-$1FFF = ROM 9
+     $9000-$CFFF = BLANK
+     $D000-$DFFF = ROM 10
+     $E000-$EFFF = ROM 11
+     $F000-$FFFF = ROM 12
+
+     Executing the following script will create the required file:
+
+     cat bubbles.01 > bubbles.512
+     cat bubbles.02 >> bubbles.512
+     cat bubbles.03 >> bubbles.512
+     cat bubbles.04 >> bubbles.512
+     cat bubbles.05 >> bubbles.512
+     cat bubbles.06 >> bubbles.512
+     cat bubbles.07 >> bubbles.512
+     cat bubbles.08 >> bubbles.512
+     cat bubbles.09 >> bubbles.512
+     cat blank.fff >> bubbles.512
+     cat blank.fff >> bubbles.512
+     cat blank.fff >> bubbles.512
+     cat blank.fff >> bubbles.512
+     cat bubbles.10 >> bubbles.512
+     cat bubbles.11 >> bubbles.512
+     cat bubbles.12 >> bubbles.512
+
+     Tech Note:  The address space between $9000 and $CFFF is used
+                 by the machine for I/O and other goodies, so you
+                 can't use it for your own hacks.  Sorry...
+
+
+1.4) If your sound board uses 2532s (as it probably does), and you only
+     have 2732s to program for the missing games, you'll have wired up
+     an adaptor when you hacked your game to play Robotron, Stargate,
+     and Joust.  Read in the Bubbles sound data to create "bubbles.snd",
+     the file for the new Bubbles sound ROM.
+
+
+2) Fry up the ROMs:
+
+
+2.1) Burn a 27512 with the contents of "bubbles.512".
+
+
+2.2) Burn a 2732 with the contents of "bubbles.snd".
+
+
+3) Okay, now you've got your chips, but you've got a bit more work left
+   to do before Bubbles will run.  If you plug the chips in now and
+   power things up, you should see what appears to be a normal powerup
+   sequence, a couple of encouraging text messages, and then a brief
+   flash of color as the game resets itself.
+
+   So, what's the deal here?
+
+   [Editor's Note:  This whole section is basically an extended tech
+                    note, but it's probably worth reading, just to
+                    get a feel for what we're trying to accomplish
+                    with all of this...]
+
+   The deal is that Robotron and Joust used 4K of CMOS RAM, organized
+   in a 1K-by-4bit block.  Bubbles, on the other hand, used the full
+   eight bits of the data bus, requiring a second CMOS RAM chip.
+
+   The cool part is that plunking in the second chip will make Bubbles
+   happy, but because none of the earlier games depended on the older
+   RAM architecture, it'll be completely transparent to them.
+
+   Once more, we go to the board and ask what we can use...
+
+   (Well, like what?)
+
+   Like the 6514 RAM that's already there.  It's got the same pinout
+   as the new RAM chip we're going to install, so we can save ourselves
+   a lot of wiring by just sticking our new chip directly on top of the
+   old one.
+
+   (Yeah, but what about...)
+
+   ...the upper 4 bits of the data bus?  Okay, we'll bend those pins
+   away from the body of the old chip and hook 'em up to the data bus
+   somewhere else.
+
+   (Like where?)
+
+   Like on the 74LS245 that's about two inches away from our two RAM
+   chips.  How's that?
+
+   (Sounds cool.  When do we start?)
+
+   How 'bout now?
+
+
+4) Safety precautions:
+
+   You're going to be soldering wires and a chip socket directly onto
+   some existing chips on your CPU board.  For best results, you should
+   "tin the leads" of the both the wires and the pins of the existing
+   chips.  This is best done by briefly touching the soldering iron to
+   the leg of the chip in question, and then touching some solder to
+   the now-heated chip leg.
+
+   The risk you run while doing this is that you may overheat the chip.
+   For maximum safety, do things one leg at a time, in random order
+   around the chip, and wait a few seconds between legs to let things
+   cool off a bit between tinnings.
+
+   Before you solder anything, you should remove the three batteries
+   from their clip; remember that messing around with powered chips is
+   usually a bad idea, and that the CMOS RAM is powered at all times by
+   these batteries.
+
+   As a final precaution, you may wish to remove the 6809 CPU chip and
+   the two video decode ROMs before you begin; the video decode ROMs
+   are difficult (if not impossible) to replace should they die, and
+   the 6809 is very close to the area of the circuitry on which you'll
+   be working.  Better safe than sorry.
+
+
+5) Identify your chips:
+
+   Locate chips 1C and 1G on your Robotron (or Joust) CPU board.
+
+   Chip 1C should be a 6514 (or 5114, or something ending in "14").
+   It will be found on the top row of chips, two chips to the left
+   of 1E, the 6809 CPU.
+
+   Chip 1G is the 74LS245; it will be found on the top row of chips,
+   immediately to the right of 1E, the 6809 CPU.  The following diagram
+   should clear up any doubt:
+    ______________________________________________________
+   |                                                      |
+   |         #########     ####                           |
+   |            _ _                                       |
+   |  1 1 1 1  | U |  1 1 1 1  [                       ]  |
+   |  A B C D  |   |  G H I J  [  RAM - 1K through 1R  ]  |
+   |           | 6 |           [                       ]  |
+   |           | 8 |                                      |
+   |    2 2 2  | 0 |  2 2 2 2  [                       ]  |
+   |    B C D  | 9 |  G H I J  [  RAM - 2K through 2R  ]  |
+   |           |___|           [                       ]  |
+   |                                                      |
+   |___/\              /\      [   /\                  ] _|
+         \  /\      /\/  \  /\ [/\/  \- 3K thr/\/\ 3R  ]/
+          \/  \  /\/      \/  \/      \  /\/\/    \  /\/
+               \/                      \/          \/
+
+   Tech Note:  Here are the pinouts for the 6514 CMOS RAM chip at 1C.
+               They are identical in every way with a 2114 RAM chip,
+               so if you can't find a 6514, don't worry; a 2114 will
+               do just fine.
+                   __ __
+                A6|  U  |+5V
+                A5|     |A7
+                A4|     |A8
+                A3| 6 2 |A9
+                A0| 5 1 |I/O1
+                A1| 1 1 |I/O2
+                A2| 4 4 |I/O3
+               !CS|     |I/O4
+               GND|_____|!WE
+
+
+5.1) Wire up the socket.
+
+     Take an 18-pin DIP socket and bend pins 11 through 14 out at
+     a right angle.  These pins will eventually carry the upper four
+     bits of the data bus to the chip.
+
+     The other pins should all be soldered directly onto the existing
+     chip at 1C on the CPU board.  When you're done, you should have
+     something like this when viewed from the air:
+
+     LEGEND:
+     -------
+     . = empty space on motherboard
+     C = 6514 CMOS RAM beneath empty socket
+     - = bent pin from 18-pin socket and associated wire
+
+     . . . . . . . . . .
+     . . . . . . . . . .
+     .     . .     . . .
+     .  1  . .  18 . . .
+     .   C     C   . . .
+     . . C  6  C . . . .
+     . . C  5  C . . . .
+     . . C  1  C . . . .
+     . . C  4  C---  . .
+     . . C     C---  . .
+     . . C  1  C---  . .
+     . . C  C  C---  . .
+     . . C     C . . . .
+     . . . . . . . . . .
+     . . . . . . . . . .
+
+     From the side, it should look like this:
+
+     LEGEND:
+     -------
+     = = motherboard material
+     # = body of 18-pin DIP socket
+     | = uncut pins
+     x = the stub of the cut pin
+     ; = the end of a bent pin, pointing towards the viewer.
+
+            ###################        < body of 18-pin
+            ###################        < DIP socket
+             ! ! ! ! ! ! ! ! !
+             | ; ; ; ; | | | |         < pins 11-14 bent at right angles
+             |         | | | |
+             |         | | | |         < remainder of pins connected
+             |         | | | |         < directly to legs of 6514 chip
+           .-|---------|-|-|-|-.
+           | | _ _ _ _ | | | | |       < body of 6514 chip
+           | V V V V V V V V V |       < wide part of 6514 pins
+           `-|-|-|-|-|-|-|-|-|-'       < skinny part of 6514 pins
+     ==================================< PCB material
+             ' ' ' ' ' ' ' ' '         < solder behind motherboard
+
+
+5.2) Connect the socket to the data bus.
+
+     The four bent pins of the socket you just glommed onto the 6514
+     at location 1C will carry signals D4 through D7.  You can get these
+     signals from the 74LS245 at location 1G.
+
+     Connect four thin wires directly to pins 6 through 9 of the 74LS245
+     at 1G.  Connect these four wires to the four bent pins of the socket
+     you installed in step 4.1) as follows:
+
+     .----------.
+     | DATA BUS |
+     |----------------------------------------------------------------.
+     | 1C14 - 1G6  |  D4                                              |
+     | 1C13 - 1G7  |  D5                                              |
+     | 1C12 - 1G8  |  D6                                              |
+     | 1C11 - 1G9  |  D7                                              |
+     `----------------------------------------------------------------'
+
+     When you're done, your modified CPU board should look like this:
+
+     LEGEND:
+     -------
+     . = empty space on motherboard
+     C = 1C - 6514 CMOS RAM beneath empty socket
+     G = 1G - 74LS245
+     x = unrelated chips (included for reference only)
+     - = bent pin from 18-pin socket (and associated wire)
+
+     . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+     . . . . . . . . . . . . . . . . . . . . . . . .     . .     .
+     .     . .     . . . . . . . . . . . . . . . . .  1  . .  20 .
+     .  1  . .  18 . . . . . . . . . . . . . . . . .   G     G   .
+     .   C     C   . . x     x . . . . . . . . . . . . G  7  G . .
+     . . C  6  C . . . x  1  x . . . x           x . . G  4  G . .
+     . . C  5  C . . . x  D  x . . . x           x . . G  2  G . .
+     . . C  1  C . . . x     x . . . x           x . . G  4  G . .
+     . . C  4  C<------------------------------------->G  5  G . .
+     . . C     C<------------------------------------->G     G . .
+     . . C  1  C<------------------------------------->G  1  G . .
+     . . C  C  C<------------------------------------->G  G  G . .
+     . . C     C . . . . . . . . . . x           x . . G     G . .
+     . . . . . . . . . . . . . . . . x 1E - 6809 x . . . . . . . .
+     . . . . . . . . . . . . . . . . x    CPU    x . . . . . . . .
+     . . . . . . . . . . . . . . . . x           x . . . . . . . .
+
+
+6) Regression test:
+
+   You've done all the wiring, but before we go any further, let's make
+   sure that we haven't damaged anything in the process.
+
+   Plug your modified CPU board into the harness and power up all three
+   games (Robotron, Joust, and Stargate).  If everything works normally,
+   you can go for Bubbles in a few minutes.
+
+   If you notice problems, work backwards - disconnect the four wires
+   and see if that fixes things.  If not, chances are you've either
+   shorted something out with a stray glob of solder, or you've gone
+   and fried the CMOS RAM or the '245.
+
+   If the game powers up, but behaves erratically, odds are the fault
+   lies with the CMOS RAM.  If the game appears dead to the world (no
+   evidence of CPU activity whatsoever), it's the '245.  Check for solder
+   globs first, and as a last resort, replace the chips.
+
+   The odds of problems arising from this procedure are slim, but you
+   always have to be careful when soldering directly to a motherboard.
+
+   If the three older games work fine, power back down and insert your
+   6514 or 2114 RAM chip, and swap in the Bubbles ROMs.  Power up, and
+   verify that Bubbles now functions normally.  If something goes wrong
+   here, it's almost certainly a bad solder joint - you haven't shorted
+   out anything vital (because the other games work fine), but neither
+   do you have good contact to the newly-expanded RAM on which Bubbles
+   depends.
+
+   Finally, when you have verified that Bubbles is running, make sure the
+   other three games function normally with the new RAM in the system.
+   There should be no problems with any of the four games at this stage.
+
+
+7) Control panels:
+
+   Okay, so you can run Bubbles on your console, but how the heck do
+   you actually play the game?
+
+   Well, pretty easily.  If you've hacked your machine to play Joust,
+   Stargate, and Robotron, you'll be pleased to note that Robotron is
+   almost 100% compatible with Bubbles.  If you can live with starting
+   2-player games with the 1-player start button and vice versa, you're
+   done.  If you're really feeling masochistic, you can build a quick
+   adaptor to swap pins 15 and 16 (the P1 and P2 start buttons), or
+   you can just use your Robotron panel as-is.
+
+   For the record, here are the pinouts of the two interface boards:
+
+
+7.1) Robotron interface board pinout
+
+         1 - P1 fire left
+         2 - P2 move up
+         3 - P2 move down
+         4 - P2 move left
+         5 - P2 move right
+         6 - P2 fire right
+         7 - P2 fire up
+         8 - P2 fire down
+         9 - P2 fire left
+        10 - GND
+        11 - P1 move up
+        12 - P1 move down
+        13 - P1 move left
+        14 - P1 move right
+        15 - 1-player start
+        16 - 2-player start
+        17 - P1 fire up
+        18 - P1 fire down
+        19 - P1 fire right
+        20 - GND
+
+
+7.2) Bubbles interface board pinout
+
+         1 -
+         2 - P2 move up
+         3 - P2 move down
+         4 - P2 move left
+         5 - P2 move right
+         6 -
+         7 -
+         8 -
+         9 -
+        10 - GND
+        11 - P1 move up
+        12 - P1 move down
+        13 - P1 move left
+        14 - P1 move right
+        15 - 2-player start
+        16 - 1-player start
+        17 -
+        18 -
+        19 -
+        20 - GND
+
+
+8) Usage instructions:
+
+   Use the hack just like you used your hacked board set for the
+   other three games; the modification is completely transparent
+   with respect to the older games.  The only difference is that
+   you can now run four games in the cabinet instead of three.
+
+   If you've substituted a 2114 in place of a 6514 for the CMOS
+   RAM extension, I'd recommend *NOT* replacing the batteries, as
+   the 2114 may draw too much power and drain the batteries too
+   quickly to be of any practical value.  I don't have any hard
+   data on this, as I've left the batteries out of my system from
+   the day I completed this hack.  If anyone uses a 2114 with the
+   batteries, let me know how it turned out and I'll add your info
+   to this document.
+
+
+TROUBLESHOOTING:
+----------------
+
+Safety Check:
+
+- Check *EVERYTHING* for shorts, etc... before powering up.  Go over
+  it and look for little bits of solder that went to the wrong place,
+  strands of wire, *anything* that could cause trouble.  If you've got
+  a multimeter with a continuity checker, use it.  The five minutes you
+  spend now may save you hours of debugging later.
+
+  See section 6) for additional debugging tips pertaining to wiring and
+  solder shorts.  Good luck!
+
+- When switching between games, wait at least 10-20 seconds before
+  switching chips.  The power supply can still supply enough power
+  to damage your chips if you yank 'em out too early.  Yes, you could
+  always burn yourself another set, but why take the chance?
+
+  Changing the control panel adaptor before changing chips is a good
+  way to make this habit automatic -- by the time you've changed the
+  panel adaptor, it'll be safe to swap the EPROMs.
+
+
+Sound Check:
+
+- If you get no sound when playing Bubbles, check your ROMs.  I've
+  seen at least one set of Bubbles ROMs that are incompatible with
+  one version of the Bubbles sound chip.  Your mileage shouldn't vary,
+  but don't be surprised if it does.
+
+

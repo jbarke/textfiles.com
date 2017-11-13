@@ -1,0 +1,436 @@
+**************************************
+*                                    *
+*     Apple-Cat  Modem  A.P.I.       *
+*                                    *
+*     By: The Tailpipe               *
+*                                    *
+**************************************
+This is a disk copy of what is in the
+Cat-API book..
+Register Index
+Hex        Decimal    Read     Write
+---------------------------------------
+$C080     -16256     SWBYT     DACBYT
+$C081     -16255     TONBYT    SQUBYT
+$C082     -16254     ---       SHBYT
+$C083     -16253     ---       BSRBYT
+$C089     -16247     ---       RECBYT
+$C08A     -16246     ---       CON
+$C08B     -16245     INDAT     SPDBYT
+$C08C     -16244     ---       COM
+$C08D     -16243     ACBYT     XMBYT
+$C08D     -16242     ---       OUTDAT
+$C08F     -16241     STATUS    DEVBYT
+212 CARD
+$C080     -16256     ---       212BYT
+* ADD $N0 to hex address or 16*N to 
+decimal base address (where N=slot of 
+apple cat or 212 card) to obtain slot
+adjusted address.
+---------------------------------------
+BIT COMPONENT INDEX
+Bit Component               Register
+---------------------------------------
+Audio detect                  SWBYT
+BSR 60 Hz input               SWBYT
+BSR 120 KHz output            BSRBYT
+Carrier detect                SWBYT
+Carrier detect timing         RECBYT
+Clear DV                      SHBYT
+Clear to send                 ACBYT
+DAC bits                      DACBYT
+DV from touch tone            SWBYT
+Fiarmware switches            SWBYT
+From UART tdx to              DEVBYT
+IRQ 29.1 Hz enable            XMTBYT
+IRQ 29.12 Hz enable           RSRBYT
+IRQ 29,12 Hz status           TONBYT
+Microphone squelch            SQUBYT
+Mode control bits             RECBYT
+Receive baud rate             SPDBYT
+Receive data from UART        INDAT
+Ring detect                   ACBYT
+Speaker squelch               SQUBYT
+Swith hook                    SHBYT
+Tape recorder motor cont.     SQUBYT
+Touch tone bits               TONBYT
+Transmit baud rate            SPDBYT
+Transmit data to UART         OUTDAT
+Transmitter mode              XMTBYT
+UART command receiver         COM
+UART command transmitter      COM
+UART control parity mnable    CON
+UART control parity           CON
+UART control #stop bits       CON
+UART control #data bits       CON
+UART rxd to                   DEVBYT
+UART status overrun error     STATUS
+UART status framing error     STATUS
+UART status parity error      STATUS
+UART status tx data           
+         register empty       STATUS
+UART status rx data
+        register full         STATUS
+UART status transmit IRQ      STATUS
+UART status receive IRQ       STATUS
+UART status ring IRQ          STATUS
+212 analog loopback           212JYT
+212 carrier                   ACBYT
+212 character length          212BYT
+212 digital loopback          212BYT
+212 enable                    SQUBYT
+212 mode                      SQUBYT
+212 remote digital loopback   212BYT
+212 reset option              212BYT
+--------------------------------------
+               SWBYT
+               $C080
+               -16256
+               READ
+---------------------------------------_
+BIT #       
+7  DV FROM TOUCHTONE
+     1 valid touch tome present
+     0 no valid touch tone present
+       (CLRDV high)
+6  BSR 60 HZ INPUT
+     continuous 1 no 60 Hz
+     alternation 60Hz
+5  CARRIER DETECT
+     1 carvier present
+     0 no carrier present
+4  AUDIO DETECT*
+     1 no audio present
+     0 audio present
+3  FIRMWARE SWITCH 4
+     1 open (off)
+     0 closed (on)
+2  FIRMWARE SWITCH 3
+     1 open (off)
+     0 closed (on)
+1  FIRMWARE SWITCH 2
+     1 open (off)
+     0 closed (on)
+0  FIRMWARE SWITCH 1
+     1 open (off)
+     0 closed (on)
+* Audio detect input changes with 
+speach, dial tone, and busy signal. 
+The input to the audio detector is the 
+output of the receiver filter.
+---------------------------------------
+               TONBYT
+               $C081
+               -16255
+               READ
+---------------------------------------
+7  NOT USED
+6  NOT USED
+5  NOT USED
+4  IRQ29.12 HZ STATUS
+3  TOUCH TONE BIT D8
+2  TOUCH TONE BIT D4
+1  TOUCH TONE BIT D2
+0  TOUCH TONE BIT D1
+--------------------------------------
+               SQUBYT
+               $C081
+               -16255
+               WRITE
+--------------------------------------
+7  212 ENABLE*
+     1 212 disable
+     0 212 enable
+6  NOT USED
+5  212 MODE
+     1 212 originate
+     0 212 answer
+4-2 TAPE RECORDER MOTOR CONT.
+     111 motor on
+     000 motor off
+1 SPEAKER SQUELCH
+     1 not squelched
+     0 squelched
+0  MICROPHONE SQUELCH
+     1 squelched
+     0 not squelched
+* 212 ENABLE is sut to 1 in 212 analog
+loopgack test (see 212BYT)
+NOTE: When changing ANS/ORIG dome, first
+write word with bit 5 in desired state
+and with bit 7 high; then wait 5-10 msec
+and write word with same state for bit 
+5 but with bit 7 low. Bit 7 must be 
+left enabled (low) whenever operating
+212.
+--------------------------------------
+               SHBYT
+               $C082
+               -16254
+               WRITE
+--------------------------------------
+7  NOT USED
+6  NOT USED
+5  NOT USED
+4  NOT USED
+3  NOT USED
+2  NOT USED
+1 SWITH HOOK
+     1 off hook (holding line)
+     0 on hook (not holding line)
+0  CLEAR VD (reset touch tone)
+     1 clear DV to 0
+     0 DV set
+--------------------------------------
+               BSRBYT
+               $C083
+               -16253
+               WRITE
+--------------------------------------
+7  NOT USED
+6  NOT USED
+5  NOT USED
+4  NOT USED
+3  NOT USED
+2  IRQ 29.12 HZ ENABLE
+     1 IRQ disabled/rest*
+     0 IRQ enabled
+1  BSR 120 KHZ OUTPUT
+     1 disabled
+     0 enabled
+0  NOT USED
+* To clear IRQ< Bit 2 nust be disabled,
+then enabled immediately.
+--------------------------------------
+               RECBYT
+               $C089
+               -16247
+               WRITE
+--------------------------------------
+7  NOT USED
+6  CARRIER DETECT TIMING*
+     1 normal carrier
+     0 fast carrier
+5-0 MODE CONTROL BITS
+     mode                       value
+  103 ANS                        $64
+  103 ANS (mark carrier detect)  $60
+  103 ORIG                       $65
+  103 ORIG(mark carrier detect)  $61
+  202                            $5C
+  202(mark carrier detect)       $58
+  DEAF(TDD)                      $2D
+  ANS V.21                       $66
+  ANS V.21(mark carrier detect)  $62
+  ORIG V.21                      $67
+  ORIG V.21(mark carrier detect) $63
+  900 Hz detect                  $6F
+  dial tone & busy signal*       $7E
+* This mode does not detect dial tone
+or busy but simply puts the receiver
+filter in the frequency range of dial
+ton, busy signals and ringing. The 
+audio detect bit (SWBYT bit 4) should
+be looked at to determine what is dial
+tone, busy, or speech.
+---------------------------------------
+               CON
+               $C08A
+               -16246
+               WRITE
+--------------------------------------
+7  NOT USED
+6  PARITY ENABLE
+     1 enabled
+     0 disabled
+5-4 PARITY*
+     Z1
+ mark
+     10 odd
+     01 space
+     00 even
+3-2 NUMBER OF STOP BITS
+     11-
+     10  2
+     01  1.5
+     00  1
+1-0 NUMBER OF DATA BITS
+     11 8
+     10 6
+     01 7
+     00 5
+*  The parity bit is additional to the 
+number of data bits.
+--------------------------------------
+               SPDBYT
+               $C08B
+               -16245
+               WRITE
+--------------------------------------
+7-4 TRANSMIT BAUD RATE*
+3-0 RECEIVE BAUD RATE*
+  baud         bit          value
+  rate         time
+  1200          .831ms        $0
+   600          1.66ms        $1
+   300          3.33ms        $2
+   150          6.65ms        $3
+   110          9.15ms        $5
+    75          13.3ms        $6
+    50          20.0ms        $7
+    45.5        22.0ms        $4
+* Transmit and receive baud rates are
+independent.
+--------------------------------------
+               COM
+               $C08C
+               -16244
+               WRITE
+--------------------------------------
+7  NOT USED
+6  NOT USED
+5  NOT USED
+4  NOT USED
+3-2 TRANSMITTER
+     11 xmit off
+     10 xmit on, enable IRQ
+     01 xmit on, disable IRQ
+     00 xmit bread (space)
+1-0 RECEIVER
+     11 --
+     10 receiver on, enable IRQ
+     01 reveiver on, disable IRQ
+     00 receiver off
+--------------------------------------
+               ACBYT
+               $C08D
+               -16243
+               READ
+--------------------------------------
+7  NOT USED
+6  NOT USED
+5  NOT USED
+4  NOT USED
+3  CLEAR TO SEND
+     printer handshake (busy)
+     Follows input
+2  212 CARRIER DETECT
+     1 carrier present
+     0 no carrier present
+1  NOT USED
+0  RING DETECT*
+     1 ring present
+     0 ring not present
+* If IRQ enabled on ring, IRQ occurs on 
+leading edge of ring (when RING goes
+high)
+--------------------------------------
+               XMTBYT
+               $C08D               
+               -16243
+               WRITE
+--------------------------------------
+7  NOT USED
+6  NOT USED
+5 NOT USED
+4 IRQ RING ENABLE*
+     1 disabled/reset
+     0 enabled
+3-0 TRANSMITTER MODE
+   function                  value
+   103 ANS                    $0
+   103 ORIG                   $1
+   CCITT ANS                  $2
+   CCITT ORIG                 $3
+   DEAF (TDD)                 $4
+   202 SOFT CAR           $5
+   202 U.S. OR CCITT V.23     $6
+   REV CHAN ING (VIEWDATA)        $7
+   disabled                  >$7
+* To clear IRQ, write 1 then 0
+--------------------------------------
+               STATUS
+               $C08F
+               -16241
+               READ
+--------------------------------------
+7  OVMRRUN ERROR
+     1 error
+     0 ok
+6  FRAMING ERROR
+     1 error
+     0 ok
+5  PARITY ERROR
+     1 error
+     0 ok
+4  TX DATA REG EMPTY
+     1 empty
+     0 full
+3  RX DATA REF FULL
+     1 full
+     0 empty
+2  TRANSMIT IRQ
+     1 transmit IRQ
+     0 no transmit IRQ
+1  RECEIVE IRQ
+     1 receive IRQ
+     0 no receive IRQ
+0  RING IRQ
+     1 no IRQ
+     0 IRQ
+--------------------------------------
+               DEVBYT
+               $C08F
+               -16241
+               WRITE
+--------------------------------------
+7  NOT USED
+6  NOT USED
+5  NOT USED
+4  NOT USED
+3-2 FROM UART TXD TO
+     11 --
+     10 add-on 212
+     01 printer port
+     00 main modem
+1-0 UART RDX TO
+     11 --
+     10 add-on 212
+     01 printer prot
+     00 main modem
+* Register must be written to when 
+entering 212 mode
+--------------------------------------
+               212BYT
+               $C080
+               -16256
+               WRITE
+--------------------------------------
+7  NOT USED
+6  NOT USED
+5  ANALOG LOOPBACK
+     1 analog loopback
+     0 normal
+4  DIGITAL LOOPBACK
+     1 digital loopback
+     0 normal
+3  REMOTE DIGITAL LOOPBACK
+     1 remote digital loopback
+     0 normal
+2-1 212 CHARACTER LENGTH*
+     10 10 bits
+     01  9 bits
+0  RESET
+     1 normal
+     0 reset option
+* Length includes one start and one
+stop bit.
+NOTE: 1) Write with bits as desired and
+bit 0 low
+      2) Delay at least 500ms
+      3) Write with bit 0 high, all
+other bits unchanged
+---------------------------------------
+         CALL THE PITSTOP 10 MEG
+           AE/CAT-FUR LINE
+            

@@ -1,0 +1,1156 @@
+     Volume 6, Number 24                                  12 June 1989
+     +---------------------------------------------------------------+
+     |                                                  _            |
+     |                                                 /  \          |
+     |                                                /|oo \         |
+     |        - FidoNews -                           (_|  /_)        |
+     |                                                _`@/_ \    _   |
+     |        International                          |     | \   \\  |
+     |     FidoNet Association                       | (*) |  \   )) |
+     |         Newsletter               ______       |__U__| /  \//  |
+     |                                 / FIDO \       _//|| _\   /   |
+     |                                (________)     (_/(_|(____/    |
+     |                                                     (jm)      |
+     +---------------------------------------------------------------+
+     Editor in Chief:                                  Vince Perriello
+     Editors Emeritii:                                     Dale Lovell
+                                                        Thom Henderson
+     Chief Procrastinator Emeritus:                       Tom Jennings
+     
+     FidoNews  is  published  weekly  by  the  International   FidoNet
+     Association  as  its  official newsletter.  You are encouraged to
+     submit articles for publication in FidoNews.  Article  submission
+     standards  are contained in the file ARTSPEC.DOC,  available from
+     node 1:1/1.    1:1/1  is  a Continuous Mail system, available for
+     network mail 24 hours a day.
+     
+     Copyright 1989 by  the  International  FidoNet  Association.  All
+     rights  reserved.  Duplication  and/or distribution permitted for
+     noncommercial purposes only.  For  use  in  other  circumstances,
+     please contact IFNA at (314) 576-4067. IFNA may also be contacted
+     at PO Box 41143, St. Louis, MO 63141.
+     
+     Fido  and FidoNet  are registered  trademarks of  Tom Jennings of
+     Fido Software,  164 Shipley Avenue,  San Francisco, CA  94107 and
+     are used with permission.
+     
+     We  don't necessarily agree with the contents  of  every  article
+     published  here.  Most of these materials are  unsolicited.    No
+     article will be rejected which is properly attributed and legally
+     acceptable.    We   will  publish  every  responsible  submission
+     received.
+
+
+                        Table of Contents
+     1. ARTICLES  .................................................  1
+        Policy4 Passes  ...........................................  1
+        Improve Your Programs with Default Parameters  ............  2
+        Words from Under the Basement Steps  ......................  5
+        Miscellaneous Musings  ....................................  9
+        What is the spirit of UseNet?  ............................ 14
+     2. LATEST VERSIONS  .......................................... 16
+        Latest Software Versions  ................................. 16
+     3. NOTICES  .................................................. 17
+        The Interrupt Stack  ...................................... 17
+     FidoNews 6-24                Page 1                   12 Jun 1989
+
+
+     =================================================================
+                                 ARTICLES
+     =================================================================
+
+
+     From NodeList.160:
+
+     I am pleased to announce the passing of POLICY4.06
+     as the new governing policy document for FidoNet.
+     The vote was YES=152, NO=75.  POLICY4.06 will
+     be known as POLICY4 and will be in effect immediately.
+
+
+     -----------------------------------------------------------------
+     FidoNews 6-24                Page 2                   12 Jun 1989
+
+
+     John Herro
+     1:363/6
+
+
+               IMPROVE YOUR PROGRAMS WITH DEFAULT PARAMETERS
+
+
+     In my previous article on improving your programs, we learned how
+     Named Notation  (or Named Parameter Association)  in Ada can make
+     your programs easier to read.  One reader asked me if Named Nota-
+     tion can also be used with records.  The answer is yes.   For ex-
+     ample, in Ada we can write
+
+     type MONTH_TYPE is
+         (JAN, FEB, MAR, APR, MAY, JUN, JUL, AUG, SEP, OCT, NOV, DEC);
+     type DATE is
+        record
+           DAY   : INTEGER;
+           MONTH : MONTH_TYPE;
+           YEAR  : INTEGER;
+        end record;
+     USA : DATE;
+
+     Since USA is declared to be of type DATE,  it has three "fields":
+     USA.DAY,  USA.MONTH,  and USA.YEAR.  These fields can be referred
+     to individually, as in USA.DAY := 4;  or the entire record can be
+     referred to at once, as in
+
+                           USA := (4, JUL, 1776);
+
+     Here's where Named Notation comes in.  If  we prefer to write the
+     month first, we can write
+
+               USA := (MONTH => JUL, DAY => 4, YEAR => 1776);
+
+     similar to the way we used  Named  Notation  in subprogram calls.
+     Also,  having  the names of the fields right there in the assign-
+     ment often makes the code easier to read.
+
+     Closely associated with Named Notation  is the concept of Default
+     Parameters.  They allow your Ada subprograms to be both  FLEXIBLE
+     and  EASY  TO  USE,  where  in  other languages you would have to
+     choose between these two features.
+
+     For example,  suppose you want to write a  procedure  DISPLAY  to
+     display an integer on some  special  device,  perhaps an array of
+     lights.  To make  DISPLAY  as easy to use as possible,  you might
+     give it only one argument: the integer being displayed.  However,
+     to make it flexible, you might want to give it two additional ar-
+     guments: the base and the width, so that the user can specify any
+     reasonable base,  and allow extra space for  the  integer  if  he
+     wants  to.  The  problem  is that in most languages the procedure
+     would no longer be easy to use,  because  the  base and the width
+     would have to be specified in every call.  For example,  in  For-
+     tran we could write
+
+     FidoNews 6-24                Page 3                   12 Jun 1989
+
+
+                          SUBROUTINE DISPLA (ITEM)
+
+     which would be easy to use but not flexible, or we could write
+
+                  SUBROUTINE DISPLA (ITEM, IBASE, IWIDTH)
+
+     which would be flexible but clumsy to  use,  because the base and
+     width would have to be specified in every call.  However,  in Ada
+     we can write
+
+       procedure DISPLAY(ITEM : in INTEGER; BASE : in INTEGER := 10;
+                         WIDTH : in INTEGER := 6);
+
+     If the BASE isn't specified in a call to DISPLAY, it's assumed to
+     be 10,  and if the WIDTH isn't specified,  it's  assumed to be 6.
+     (We chose  6  because the longest integer in 16-bit two's comple-
+     ment representation is -32768.)  If the BASE and WIDTH are speci-
+     fied, they overwrite the default values in the procedure specifi-
+     cation.  ITEM must be specified in every call, because there's no
+     default value for that parameter.
+
+     We now have a procedure that's both  flexible  and  easy  to use.
+     With most calls to DISPLAY,  we need specify only the integer be-
+     ing displayed.  For example, if N is an integer, we could write
+
+                                DISPLAY(N);
+
+     If we need to display N in hex, we could write
+
+                          DISPLAY(N, BASE => 16);
+
+     If we want to display N with extra space, we could write, for ex-
+     ample,
+
+                          DISPLAY(N, WIDTH => 9);
+
+     Finally,  if we want to specify both the  BASE and the WIDTH,  we
+     can do so, and we don't need to remember which of these two argu-
+     ments came first in the procedure specification:
+
+                    DISPLAY(N, WIDTH => 9, BASE => 16);
+
+     In these examples,  we could have written ITEM => N in place of N
+     if we wanted to use Named Notation even with the first argument.
+
+     Ada comes with a procedure PUT that's very similar to the DISPLAY
+     procedure we've been  discussing,  writing integers to the screen
+     rather than to an array of lights.  However,  before  we can make
+     use of that procedure, we have to learn a little about  Generics,
+     and that's a topic for a future article.
+
+     Default values can be assigned in  records  as well as subprogram
+     specifications.  For example, if we write
+
+
+
+     FidoNews 6-24                Page 4                   12 Jun 1989
+
+
+                       type DATE is
+                          record
+                             DAY   : INTEGER;
+                             MONTH : MONTH_TYPE;
+                             YEAR  : INTEGER := 1776;
+                          end record;
+
+     then every object that we create of type DATE  will automatically
+     have its YEAR field initialized to 1776  when it's created.  How-
+     ever, the similarity to default parameters in subprogram specifi-
+     cations is limited.  Although subprogram calls can omit arguments
+     that have default  values,  we must specify all three fields when
+     we assign objects of type  DATE.  For example,  if we declare USA
+     to be of type DATE, we may NOT write USA := (4, JUL); because all
+     three fields must be specified.  We'll show the  real  usefulness
+     of default values in record types when we discuss Ada STRINGs and
+     type TEXT in a later article.
+
+     As you can see from this and earlier articles,  Ada  has many ad-
+     vantages over earlier programming languages,  that make your pro-
+     grams easier to read and easier to  maintain.  Ada  is  no longer
+     for large programs only;  it's an ideal language for general pur-
+     pose programming on a PC.  (There are now several inexpensive Ada
+     compilers available for the PC.)   You can find my shareware pro-
+     gram  "ADA-TUTR, the Interactive Ada Tutor"  as  ADA-TUTR.ARC (or
+     .ZIP, etc.) on many boards, but 1:363/6 (407-773-2831) always has
+     the  latest  version.  ADA-TUTR  doesn't require an Ada compiler,
+     but a list of Ada compilers  available for the PC  is included in
+     the documentation.  If you have an Ada compiler, ADA-TUTR can au-
+     tomatically check your "homework."
+
+     Since my last article on Ada,  ADA-TUTR  has been updated to ver-
+     sion 1.21.  This version  automatically  remembers your place be-
+     tween  learning  sessions,  without your having to write anything
+     down.  It lets you choose colors while still remaining compatible
+     with monochrome machines.  At any time,  it can tell you how  far
+     you are through the course, and let you go back to the last ques-
+     tion or to the last  "homework" assignment.  The documentation on
+     how to install the program on  mainframes  and  workstations  has
+     been expanded.
+
+     I welcome your  comments  and  suggestions,  and wish you success
+     with Ada!
+
+     -----------------------------------------------------------------
+     FidoNews 6-24                Page 5                   12 Jun 1989
+
+
+     Bob Rudolph, 261/628
+     President, IFNA
+
+          A good number of folks have taken me to task recently, both
+     publicly and privately for hiding here under the steps in my
+     basement, where my PC's live, and not "communicating" with the
+     general public.
+
+          There may be some justification for the castigation I have
+     received. In any event, it is long past time that I said a few
+     words about IFNA, and the relationship of IFNA to FidoNet -
+     and, incidentally, why IFNA should not be buried prematurely.
+
+          By way of a little background, IFNA was started (perhaps
+     formed is a little imprecise) to assist in the management of
+     FidoNet and the nodelist, and to make it possible to get some
+     of the volunteer expenses reduced or funded. That particular
+     aspiration has not changed, although everything else (not only
+     in IFNA but in FidoNet at large) has changed.
+
+          Nobody ever anticipated that FidoNet would grow so fast.
+
+          Nobody ever anticipated the coming of EchoMail and what
+     effects it would have on what appears to be our (OUR is used
+     rather loosely to reflect everything associated with any
+     FidoNet-compliant network) world and mission.
+
+          Nobody anticipated the paranoia and acrimony that would
+     result from the attempt to found IFNA.
+
+          Nobody (myself included) anticipated the great personal
+     time and sacrifice that an organization such as IFNA would
+     demand of its people.
+
+          Nobody had the vaguest notion how thankless and demanding
+     the tasks to be done would grow to be.
+
+          And NOBODY anticipated that the great network of FidoNet
+     would so soon become populated by non-technical folks.
+
+          However, IFNA still manages to do a few things, and to do
+     at least some of them somewhat well.
+
+          IFNA maintains a telephone and U.S. Mail address for the
+     sole purpose of answering questions about FidoNet technology
+     and its uses, for folks that have no way otherwise to find out
+     about it. The DAK catalog supplied us with literally thousands
+     of phone calls, many of which I personally answered (to the tune
+     of more than $1000 in long distance charges from my personal
+     pocket, not reimbursed).
+
+          IFNA sponsors the FTSC. Please note sponsors - IFNA does not
+     "run" the FTSC - it isn't necessary that IFNA run it, and it
+     seems to work better when not interfered with.
+
+          IFNA helps allay some of the international costs of the
+     FidoNews 6-24                Page 6                   12 Jun 1989
+
+
+     FidoNet International Coordinator.
+
+          IFNA represents FidoNet in the Electronic Mail Association
+     which is an organization of professionals involved with the
+     various types of electronic mail mechanisms.
+
+          IFNA supplies seed money for FidoCon, if asked. IFNA also
+     through Membership Services attempts to find areas of need and
+     bring either resources to bear, or to direct to appropriate
+     places the people or organizations in need.
+
+          IFNA DOES NOT RUN FIDONET. IFNA never DID run FidoNet -
+     and couldn't if it wanted to, which it does not. IFNA does not
+     meddle in FidoNet day-to-day operations, in spite of what some
+     folks would have you to believe. FidoNet does pretty well on
+     its own without our interference.
+
+          I can hear the questions forming now - "Why do we need an
+     organization like IFNA anyhow?"  If you'll bear with me a few
+     more minutes, I'll try to tell you from my perspective why we
+     need IFNA.
+
+          As an information source IFNA is needed - a central place
+     to go to get information for those not already affiliated with
+     some network or another. If you heard about FidoNet, who would
+     you call to find out about it? If you read about it in the
+     paper or in a catalog, you'd probably see our P.O. Box. We
+     have the information, and would supply it.
+
+          The proliferation of networks, and the flame wars that have
+     raged have pointed out the need for some "United Nations" sort
+     of body to hear disputes and to work out agreements between the
+     OtherNets and FidoNet. The players in both places at the upper
+     levels are very close the the frictions - an arbitration group
+     could help there.
+
+          FidoNet is an organization that functions but has no legal
+     existence. IFNA supplies that legitimacy, by supplying the
+     information clearinghouse and a corporate existence with some
+     responsibility. IFNA, through the work of some concerned members
+     of various committees has been active with telephone company
+     concerns, and with several social projects. Maybe they're not
+     important to the Average Sysop, but they're important to someone
+     somewhere, or these hard working folks would not be taking their
+     time and resources to involve themselves in these projects. IFNA
+     supplies a FidoNet-wide view, as opposed to a local-net view -
+     something that is occasionally badly needed.
+
+          IFNA, because it is classified as a charitable organization
+     COULD (capitalized because MakeNews doesn't like italics) be
+     used as a source for operational funds for various areas in both
+     FidoNet and the OtherNets - much as it currently funds part of
+     the IC's phone costs. It puts IFNA in a position to solicit
+     funds for operations from commercial organizations, provided
+     that some common good benefit accrues.
+
+     FidoNews 6-24                Page 7                   12 Jun 1989
+
+
+          Difficult as it may be to believe, the continued operation
+     of FidoNet is all the common good that is needed - FidoNet,
+     through its sysops is supplying to the modem-owning public all
+     kinds of useful information, programs, files, and conversation.
+     FidoNet-technology users, regardless of net affiliation perform
+     a public service by permitting access to their systems.
+
+          The spread of FidoNet Technology and assistance where
+     needed or asked in the implementation, organization, operation,
+     and education as regards the uses of this technology is the
+     reason for IFNA to continue to exist. IFNA supplies the
+     "figurehead" (I don't like that term, but no better term comes
+     to mind at present) upon which questions may be focussed, and
+     through which funding may be attained, resources brought to
+     bear, and agreements brought to fruition.
+
+          These things may be done without interference in day-to-day
+     operations of the various networks.
+
+          IFNA is also charged to protect the trademarks of Tom
+     Jennings and Fido Software. The license to do so is part of our
+     responsibility. IFNA could be the arbiter that resulted in more
+     peace and quiet between or among the various networks. IFNA
+     should be the source of funding and hardware for the FTSC to let
+     realistic software test suites be developed to assure that the
+     standards promulgated by that organization were adhered to in a
+     meaningful and reasonable manner.
+
+          IFNA was formed for a lot of reasons. Along the way, most
+     of them got to be obsolete or less interesting. Along the way,
+     lots of us buried friends. After several years of struggle, IFNA
+     has the coveted 501(c)(3) from the IRS which permits us to seek
+     funding of industry. This funding could help FidoNet and all the
+     OtherNets - if we were to go after it - if we were convinced
+     that it was wanted.
+
+          I don't know why so many FidoNet folks feel that IFNA wants
+     to RUN FidoNet on a day-to-day basis - I sure don't want to do
+     that, and as IFNA President I can state that that is not the
+     aim, wish, or intent of the organization.
+
+          IFNA has the potential to do a lot of good - to remove
+     some of the costs of doing business that currently plague
+     FidoNet, to act as a dispute resolver, to assist in the formation
+     of policy, to assist in the definition and testing of standards,
+     and to operate for the benefit of the public at large whilst
+     doing these things.
+
+          So someone please tell me why these are "bad" ideals? Why
+     is there rampant paranoia in FidoNet and other places? What have
+     I done to any of you to deserve the vilification that is being
+     heaped on the corporate head of IFNA?
+
+          IFNA is not perfect. I can assure you that I am likewise
+     not perfect. IFNA is, however, the one small voice that has the
+     potential to "bring the word" about FidoNet technology to the
+     FidoNews 6-24                Page 8                   12 Jun 1989
+
+
+     balance of the known universe in a coordinated and global manner
+     as is needed, and it is the one organization in the realm of
+     FidoNet that has the corporate recognition and the tax exempt
+     status that will be so valuable as a source of funding, provided
+     the organization is not summarily executed.
+
+          Lots of good people have worked within IFNA, burned out and
+     dropped out. Lots more have stood on the outside throwing rocks.
+     Personalities have played a major role where they should have
+     had no role whatever to play. We are FINALLY rising above some
+     of that. We aren't perfect, but we do try - and we still have
+     the potential to be the seed of democracy for FidoNet.
+
+          I am not asking you to LET us do these things. I am asking
+     you to put aside paranoia and bad feelings and HELP us to do
+     these things. IFNA isn't Bob Rudolph and the rest of the guys
+     on the BoD, regardless how capable they may be on selected days.
+     IFNA should be all of the world of FidoNet technology, and it
+     isn't - and one of the reasons it isn't is that in the process
+     of listening to everyone, we ended up not able to do much of
+     anything without getting shot at - and getting shot at is not
+     much fun. A plea for a little reserve here - help educate us;
+     don't tell us we're wrong all the time, for we already KNOW it -
+     instead, help us to do it right.
+
+          But I'm warning you - it takes commitment.
+
+     -----------------------------------------------------------------
+     FidoNews 6-24                Page 9                   12 Jun 1989
+
+
+                         Miscellaneous Musings
+                 about FidoNet policy and other things
+
+                           by Daniel Tobias
+                                1:380/7
+
+     Much discussion about the proposed (and maybe enacted by the
+     time this sees print) POLICY4, and other ramifications of
+     FidoNet policy, has been going on in recent FidoNews issues.
+     I put in my own two cents in FidoNews 623, regarding the
+     European rejection of POLICY3 and POLICY4 in favor of their
+     own policy which they claim supersedes the overall net
+     policy.
+
+     (By the way, that article saw print just hours after I wrote
+     and submitted it.  Has FidoNews eliminated the former three
+     week lead time, or did the editor just consider my article
+     to be sufficiently timely to suspend it?  Whatever, I like
+     this timely publication, and hope it continues.  It's nice
+     to carry on discussion about FidoNet issues before they
+     become stale.)
+
+     Here are a few more comments regarding directions in which
+     FidoNet policy might evolve.
+
+     First of all, let me state up front that I'm not a *C, *EC,
+     IFNA BoD member, or any other elected or appointed position
+     within FidoNet or any related organization.  For that
+     matter, I have never had a major dispute or quarrel with any
+     *C, *EC, IFNA BoD member, or other officer of FidoNet-
+     related organizations.  I am not part of any faction,
+     clique, in-group, good-old-boy-network, or power-seeking
+     cabal.  Rather, I'm just a sysop who has been fascinated by
+     the concept of FidoNet ever since I first discovered it in
+     September, 1985.  All ideas expressed here are my own,
+     presented in the spirit of seeking common-sense solutions to
+     the various problems of net policy.  I have no axes to
+     grind or vested interests to promote or tear down; I'm
+     willing to change any opinions upon being presented with
+     sufficient evidence to back opposing viewpoints.  All I ask
+     in return is that whatever ideas I present be evaluated and
+     allowed to stand or fall on their own merits rather than
+     becoming the subject of personal attacks, innuendos, or
+     accusations of power-monging.
+
+     As I stated last time, I'm opposed to the European nodes
+     claiming to be exempt from POLICYx.  This, however, does not
+     mean I'm a centralist opposed to the devolution of power to
+     more grass-roots levels.  Actually, I'm very much in favor
+     of making FidoNet a grass-roots network with the ultimate
+     power residing at the lowest level.  This, however, should
+     be within a framework of overall POLICY applying to all and
+     setting the very basic ground rules by which the network is
+     to operate.  Much latitude should be given to local
+     subsections of FidoNet to adjust to their own particular
+     conditions, so long as the basic principles of FidoNet are
+     FidoNews 6-24                Page 10                  12 Jun 1989
+
+
+     not subverted.  Exactly what these basic principles are is
+     something the whole net must somehow come to agreement on;
+     this should preferably be a fairly minimal set of standards
+     so that individual freedom is not stifled.
+
+     Much in the European policy (which I haven't actually seen,
+     so I just know what was written about it in FidoNews) would
+     be reasonable to emulate in a new netwide policy.  For
+     instance, a switch to a bottom-up system of selecting
+     coordinators would be a practical way of introducing a
+     measure of democracy.  NCs ought to be elected by their
+     constituent sysops, RCs by their NCs, ZCs by their RCs, and
+     the IC by the ZCs.  The latter two are done in POLICY4, but
+     I think it would be reasonable to extend democracy all the
+     way down.  (One reservation about this:  it could result in
+     politicising coordinator positions which are really intended
+     to be technical; however, this isn't really a significant
+     objection given that these positions have already been
+     irreversably politicized, and are granted legislative,
+     executive, and judicial powers by POLICY and precedent;
+     hence, making them subject to democratic election only
+     provides the grunt sysops with some power over net politics
+     that they don't presently have.)
+
+     Other proposals for democracy are more problematic; any
+     attempt to have the whole net vote on anyone or anything
+     is a major logistical problem with the 5000+ nodes, added to
+     the fact that most sysops don't seem to give a damn about
+     net politics (and why should they?  If only the squabbles
+     can stop, maybe all of us can turn our energies to
+     productive labor enhancing the technical aspects of the net,
+     and "politics" will be a forgotten vestige of the past), and
+     hence all such votes (e.g., the vote to ratify the IFNA
+     bylaws a few years ago) will end up with an underwhelming
+     turnout, and any number of militant factions claiming to
+     speak for the silent majority.  Hence, we may have to stick
+     with the POLICY4 means of ratification of policy changes by
+     *C voting.  Perhaps, though, the coordinators should be
+     required to disclose their votes to their constituents
+     rather than using a secret ballot, so any sysops who care to
+     be involved in net policy can judge whether they are fairly
+     represented.
+
+     One democratic reform that should be adopted is a means for
+     sysops to place POLICY amendments on the table for
+     consideration, besides submission by a majority of RCs as
+     provided in section 8.1 of the POLICY4 proposal.  Just as
+     U.S. Constitutional amendments may be proposed either by
+     Congress or by a convention called by state legislatures,
+     there should be two alternate methods of proposing POLICY
+     amendments, to prevent any one group from squelching all
+     consideration of change.  A good second method would be by
+     petition from at least n sysops, where n is set sufficiently
+     large to discourage frivolous proposals, but small enough to
+     allow for proposals emerging from a grass-roots level.
+     Reasonable values might range from 50 to 250, or
+     FidoNews 6-24                Page 11                  12 Jun 1989
+
+
+     alternatively, a percentage of the nodelist size between 1%
+     and 5%.
+
+     Other matters:  At least one sysop is up in arms about all
+     references to geography in the POLICY document.  He's got a
+     point; some coordinators have been fairly tyrannical in
+     their rigorous enforcement of net and region boundaries, in
+     cases where there are rational reasons to disregard the
+     arbitrary boundaries and place nodes where it makes the most
+     sense to the sysops and NCs involved.  On the other hand, I
+     can see the rationale behind the strict maintenance of
+     geographical boundaries; it is intended to prevent nets
+     being created and organized for political purposes, such as
+     to include the friends and exclude the enemies of the local
+     coordinator.  Much of this was alleged to be taking place in
+     Australia at the time of the infamous Communet affair.  This
+     situation can be very confusing to newcomers who are
+     presented not with a simple hierarchical nodelist pointing
+     them to their local coordinator, but a bizarre tangle of net
+     interconnections based more on personal rivalries than
+     technical sense.  Also, should any sort of bottom-up
+     democracy be instituted as I advocate above, an incentive
+     might arise for coordinators to pack their nodelist with
+     supporters who can be counted on to maintain the
+     coordinator's power, and exclude opponents, through
+     judicious ignoring of geographic boundaries.
+
+     Trying to balance these concerns is a feat of tightrope-
+     walking, but perhaps the best way is to preserve most
+     geographical language of POLICY4, but soften the strictness
+     a little.  How about allowing a NC to admit a node even if
+     it's out of its geographical region, without requiring
+     explicit approval of any other coordinators.  Instead,
+     others may challenge such non-geographical admission, but
+     the burden of proof would be on the challenger to show that
+     such a state of affairs lacks technical necessity and would
+     be harmful in some way to FidoNet.   Blatant political
+     tactics could be successfully challenged, but generally,
+     exceptions to geography which have some justifiable
+     technical reason should be allowed to stand unless direct
+     harm can be proven.  Some time limit should be placed on
+     challenges so that an excepted node is not constantly
+     fearful of having its node number altered at the whim of
+     future coordinators.  Later challenges would have the even
+     more difficult burden of proving new harm as a result of the
+     exception that didn't exist (or didn't come to light) at the
+     time it was first granted.
+
+     The converse situation, a NC refusing to admit a node in its
+     geographical area, should be much more strictly regulated;
+     the only justifiable reasons should be when the node engages
+     in bulk commercial traffic (and hence should be an
+     independent in its region) or when the node violates policy
+     in some manner making it ineligible for admission to the
+     nodelist.  Discrimination by political viewpoint, race,
+     creed, nationality, or any other such criteria unrelated to
+     FidoNews 6-24                Page 12                  12 Jun 1989
+
+
+     technical necessity or POLICY violation, should be
+     prohibited; all qualifying nodes have the right to be
+     admitted to their geographically-appropriate network should
+     they desire to do so.  Hence, the geographic boundaries
+     would serve more as an entitlement of all systems in that
+     area to be part of the given net, region, or zone, rather
+     than an absolute requirement that they do so even if a
+     different location would be advantageous for some reason.
+
+     At any rate, in order to be constructive rather than
+     destructive, I'm seriously thinking of putting together a
+     proposed POLICY5 (assuming POLICY4 passes; POLICY4 if not)
+     incorporating these ideas.  If any of you have any
+     constructive suggestions (e.g., things in POLICY3 or 4 that
+     you'd like to see changed, and what you want to change them
+     to and why), I'll take them into account in writing my
+     proposal.  When it's done, I'll circulate it for the rest of
+     the net to read/ignore/adopt/reject/consider/amend/defeat/
+     flame/line-their-birdcage-with/etc.  At least (I hope), I
+     won't be accused of promoting some power structure or other,
+     given that I'm not part of any such thing, and maybe
+     whatever ideas are incorporated into the proposal will be
+     given a fair hearing and make a start toward bringing to an
+     end the disgusting factionalism that's paralyzed the net for
+     the last few years.
+
+     Send all comments by netmail to 1:380/2.  Try to give
+     rational reasons for your ideas, rather than raving about
+     evil conspiracies to undermine FidoNet.
+
+
+                    - While I'm At It Department -
+
+     A few more comments about FidoNews 623's articles:
+
+     I think Jamie MacDonald doth protest too much when he
+     laments all the "fake" users.  Sure, there are some abusive
+     users; every sysop encounters them.  Other users are
+     innocent but stupid; there's not much one can do about them;
+     while I'd prefer smarter users, it's not really fair to
+     punish people for an attribute they are born with.  Just
+     grin and bear these people, and hope others of a higher
+     caliber choose to grace your system with their presence as
+     well.
+
+     But you reserve the epithet "the worst class of users" to
+     those who aren't really doing anything wrong: those who call
+     from elsewhere than their own home for any of a number of
+     reasons, such as their modem being broken, etc.  I've been
+     in that category myself; for a while I didn't have a
+     functional computer myself, and had to use computers at work
+     to telecommunicate.  What's wrong with that, other than a
+     little difficulty for the sysop to verify this status?  The
+     user isn't trying to make things difficult for you; show
+     some tolerance and understanding.
+
+     FidoNews 6-24                Page 13                  12 Jun 1989
+
+
+     Perhaps you prefer to impose strict control on your users,
+     but I'm much more tolerant.  I'm willing to put up with
+     occasional minor abuse in order to avoid the complications
+     imposed on both sysop and user by complex validation
+     procedures.  In three years of running BBSs with no pre-
+     registration requirement (my previous board was wide open
+     without even a mandatory questionnaire; my current board
+     requires new users to fill out a questionnaire and read a
+     policy document, but I don't voice-verify) I haven't had any
+     major system abuse; I've had a few twits log in under
+     multiple names to get more online time, but they generally
+     stopped when I informed them I knew what they were doing.
+     The vast majority of my users have been responsible, and
+     they appreciate my tolerance of the wide variety of
+     circumstances they are under (e.g., when line noise hampers
+     their access at 1200 baud, they can step down to 300; I
+     don't discriminate against 300 baud callers like some
+     elitist sysops).  I'm not quick to judge a user as a "loser"
+     because of his situation which he perhaps is unable to help.
+
+
+     About the FidoNet archives:  That's very interesting
+     reading, though I've seen most of these documents already in
+     my copious perusal of FidoNet materials throughout my long
+     involvement with the net.  Regarding Richard Wilkes'
+     document, it is simultaneously overcritical and prophetic.
+     He attempted to "rain on Fido's parade" by shooting down the
+     idea of FidoNet as impractical given the level of PC
+     technology of the day.  He had fairly elitist expectations
+     due to his involvement in UUCP/UseNet, and didn't see much
+     value in a BBS network of much lower functionality.
+     Fortunately, others were willing to work with what they had,
+     and accomplished a lot with a network at not quite as lofty
+     a level as Wilkes would have liked.
+
+     However, Wilkes' minimum standards for an ideal FidoNet
+     system (e.g., a large hard drive, multiple lines, and a fast
+     processor) have ultimately become a necessity for echomail
+     hubs, so it seems the net has finally caught up to him.
+
+     (I'd like to know what he means by XMODEM not being a "real"
+     file transfer protocol, though.)
+
+
+                        - That's all, folks! -
+
+
+     -----------------------------------------------------------------
+     FidoNews 6-24                Page 14                  12 Jun 1989
+
+
+     What is the spirit of UseNet?
+     From a posting in Usenet submitted by Randy Bush, 1:105/6
+
+     From: brad@looking.UUCP (Brad Templeton)
+     Subject: What is the Spirit of Usenet?
+     Date: 14 Mar 89 19:26:48 GMT
+
+     (This discussion belongs in news.misc)
+
+     Many people  recently  have  talked about something they call the
+     "Spirit of Usenet."  What  does this mean, other than, "The way I
+     think USENET should be run"?
+
+     Some talk as though  there are some stone tablets in a golden ark
+     that  describe  the  spirit  of  usenet.    Some  have  picked  a
+     philosophical  principle which they feel should  guide  not  just
+     their  own  actions, but the actions of  everybody  else  on  the
+     network.
+
+     But the Spirit of Usenet is not what  Denninger  says  it is, not
+     what Crawford says it is and not even what  I  say  it  is.   The
+     spirit  of usenet is, quite simply, what usenet readers and  site
+     admins wish to read, transmit and pay for.
+
+     How  do you learn just what that is?  You watch,  you  talk,  you
+     survey.   If  there's  no  precedent,  you  *act* and see whether
+     people like it  or  not.    This  is  how  the "spirit of usenet"
+     develops.
+
+     I have observed this net for a very long time.  I was on my first
+     arpanet digest mailing list before  there  even  was a usenet.  I
+     started reading news with A news  before there even was a B news.
+     That experience tells me certain things, and they are my opinions
+     of the spirit of usenet.
+
+     First of all, the net is not a  commune.   People own and control
+     property,  both  physical  and  intellectual.    This  comes from
+     outside the  net,  not  within it.  Because the net is subject to
+     outside rules it  is  also not an anarchy, not strictly speaking.
+     It is a propertarian minarchy, to get technical.
+
+     People often write that  commercial  use of usenet is against the
+     spirit of usenet.  They  haven't watched the net.  The real rule,
+     I think, is that commercial *abuse*  of  usenet  is  what  people
+     don't want.
+
+     In  general  what  this  means  is  that  commercial  traffic  is
+     accepted, even encouraged, when it's a win/win situation -- where
+     netters and vendors benefit.  There is nothing wrong  with mutual
+     profit, and I'm surprised that I have to say this  in the western
+     world.
+
+     The proof of this is everwhere.  Comp.newprod is both advertising
+     and news  --  win/win.    Software support from vendors like MKS,
+     SCO, Microport, Telebit,  Telenet,  Microsoft, Sun, Apple, Atari,
+     Commodore and many others  benefits  both those companies and the
+     FidoNews 6-24                Page 15                  12 Jun 1989
+
+
+     readers -- win/win.  The OtherRealms fanzine gets submissions and
+     promotion and usenauts read it for  free.  A book of net material
+     gets  announced  that netters clearly enjoy and  demand  --  they
+     spent their money on it, not just their words.
+
+     The examples are countless.  If net readers  want it, it's in the
+     spirit  of  usenet.  To run a stream of  ads  for  something  net
+     people aren't interested it -- that would be abuse.   To post a 1
+     meg demo people aren't interested in, that would be abuse.
+
+     Is shareware abuse?  Not if people want it.  People  can even FTP
+     shareware  from  sites  on the highly regulated MILNET -- the net
+     people take as their model of non-commercial operation.
+
+     Usenet is  built  by  people  who  *do*,  not by people who argue
+     endlessly about undoing.    In  this  case,  I  was  going  to do
+     something fairly new.   So  I  asked  netters  to  give  me their
+     opinions.  They did, and  they  were overwhelmingly in favour.  I
+     tried to guage the spirit of usenet not by dictating what I think
+     it is, but by trying to find  out  what it is.  Those who dictate
+     what others should do are the ones violating the spirit of usenet
+     -- that much I do know.
+
+     Brad Templeton, Looking Glass Software Ltd.  -  Waterloo, Ontario
+
+     -----------------------------------------------------------------
+     FidoNews 6-24                Page 16                  12 Jun 1989
+
+
+     =================================================================
+                              LATEST VERSIONS
+     =================================================================
+
+                          Latest Software Versions
+
+                           Bulletin Board Software
+     Name        Version    Name        Version    Name       Version
+
+     Fido            12m+*  Phoenix         1.3    TBBS           2.1
+     Lynx           1.30    QuickBBS       2.03    TComm/TCommNet 3.4
+     Opus          1.03b+   RBBS          17.1D    TPBoard        5.2*
+
+     + Netmail capable (does not require additional mailer software)
+
+
+     Network                Node List              Other
+     Mailers     Version    Utilities   Version    Utilities  Version
+
+     BinkleyTerm    2.20    EditNL         4.00    ARC           6.02*
+     D'Bridge       1.18    MakeNL         2.12    ARCmail        2.0
+     Dutchie       2.90C    ParseList      1.30    ConfMail      4.00
+     FrontDoor       2.0    Prune          1.40    EMM           2.02*
+     PRENM          1.47*   XlatList       2.90    GROUP         2.10*
+     SEAdog         4.51*   XlaxDiff       2.32    MSG            3.3*
+                            XlaxNode       2.32    MSGED         1.99
+                                                   TCOMMail       2.2*
+                                                   TMail         1.11*
+                                                   TPBNetEd       3.2*
+                                                   UFGATE        1.03
+                                                   XRS            2.2
+     * Recently changed
+
+     Utility authors:  Please help  keep  this  list  up  to  date  by
+     reporting  new  versions  to 1:1/1.  It is not our intent to list
+     all utilities here, only those which verge on necessity.
+
+     -----------------------------------------------------------------
+     FidoNews 6-24                Page 17                  12 Jun 1989
+
+
+     =================================================================
+                                  NOTICES
+     =================================================================
+
+                          The Interrupt Stack
+
+
+     15 Jul 1989
+        Start of the SAPMFC&LP (Second Annual Poor Man's FidoCon and
+        Lake Party) to be held at Silver Lake Park on Grapevine Lake
+        in Arlington, Texas.  This started as an R19-only thing last
+        year, but we had so much fun, we decided to invite everybody!
+        We'll have beer, food, beer, waterskiing, beer, horseshoes,
+        beer, volleyball, and of course beer.  It's an  overnighter,
+        so bring your sleeping bag and plan to camp out.  Contact one
+        of the Furriers (Ron Bemis at 1:124/1113 or Dewey Thiessen at
+        1:130/24) for details and a fantastic ASCII map.
+
+      2 Aug 1989
+        Start of Galactic Hacker Party in Amsterdam, Holland. Contact
+        Rop Gonggrijp at 2:280/1 for details.
+
+     24 Aug 1989
+        Voyager 2 passes Neptune.
+
+     24 Aug 1989
+        FidoCon '89 starts at the Holiday Inn in San Jose,
+        California.  Trade show, seminars, etc. Contact 1:1/89
+        for info.
+
+      5 Oct 1989
+        20th Anniversary of "Monty Python's Flying Circus"
+
+     11 Oct 1989
+        First International Modula-2 Conference at Bled, Yugoslavia
+        hosting Niklaus Wirth and the British Standards Institution.
+        Contact 1:106/8422 for more information.
+
+     11 Nov 1989
+        A new area code forms in northern Illinois at 12:01 am.
+        Chicago proper will remain area code 312; suburban areas
+        formerly served with that code will become area code 708.
+
+
+     -----------------------------------------------------------------
+
+     FidoNews 6-24                Page 18                  12 Jun 1989
+
+
+            OFFICERS OF THE INTERNATIONAL FIDONET ASSOCIATION
+
+     Mort Sternheim 1:321/109  Chairman of the Board
+     Bob Rudolph    1:261/628  President
+     Matt Whelan    3:3/1      Vice President
+     Bill Bolton    3:711/403  Vice President-Technical Coordinator
+     Linda Grennan  1:147/1    Secretary
+     Kris Veitch    1:147/30   Treasurer
+
+
+            IFNA COMMITTEE AND BOARD CHAIRS
+
+     Administration and Finance     Mark Grennan    1:147/1
+     Board of Directors             Mort Sternheim  1:321/109
+     Bylaws                         Don Daniels     1:107/210
+     Ethics                         Vic Hill        1:147/4
+     Executive Committee            Bob Rudolph     1:261/628
+     International Affairs          Rob Gonsalves   2:500/1
+     Membership Services            David Drexler   1:147/1
+     Nominations & Elections        David Melnick   1:107/233
+     Public Affairs                 David Drexler   1:147/1
+     Publications                   Rick Siegel     1:107/27
+     Security & Individual Rights   Jim Cannell     1:143/21
+     Technical Standards            Rick Moore      1:115/333
+
+
+                      IFNA BOARD OF DIRECTORS
+
+         DIVISION                               AT-LARGE
+
+     10  Courtney Harris   1:102/732    Don Daniels     1:107/210
+     11  Bill Allbritten   1:11/301     Mort Sternheim  1:321/109
+     12  Bill Bolton       3:711/403    Mark Grennan    1:147/1
+     13  Irene Henderson   1:107/9       (vacant)
+     14  Ken Kaplan        1:100/22     Ted Polczyinski 1:154/5
+     15  Scott Miller      1:128/12     Matt Whelan     3:3/1
+     16  Ivan Schaffel     1:141/390    Robert Rudolph  1:261/628
+     17  Neal Curtin       1:343/1      Steve Jordan    1:206/2871
+     18  Andrew Adler      1:135/47     Kris Veitch     1:147/30
+     19  David Drexler     1:147/1       (vacant)
+      2  Henk Wevers       2:500/1      David Melnik    1:107/233
+
+     -----------------------------------------------------------------
+     FidoNews 6-24                Page 19                  12 Jun 1989
+
+
+                                                        __
+                                   The World's First   /  \
+                                      BBS Network     /|oo \
+                                      * FidoNet *    (_|  /_)
+     FidoCon '89 in San Jose, California              _`@/_ \    _
+       at The Holiday Inn Park Plaza                 |     | \   \\
+            August 24-27, 1989                       | (*) |  \   ))
+                                        ______       |__U__| /  \//
+                                       / Fido \       _//|| _\   /
+                                      (________)     (_/(_|(____/ (tm)
+
+
+                     R E G I S T R A T I O N   F O R M
+
+
+     Name:    _______________________________________________________
+
+     Address:    ____________________________________________________
+
+     City:    _______________________ State: ____ Zip: ______________
+
+     Country:    ____________________________________________________
+
+
+     Phone Numbers:
+
+     Day:    ________________________________________________________
+
+     Evening:    ____________________________________________________
+
+     Data:    _______________________________________________________
+
+
+     Zone:Net/
+     Node.Point:  ___________________________________________________
+
+     Your BBS Name:  ________________________________________________
+
+
+     BBS Software:  _____________________ Mailer: ___________________
+
+     Modem Brand:  _____________________ Speed:  ____________________
+
+     What Hotel will you be Staying at:  ____________________________
+
+     Do you want an in room point?  (Holiday Inn only) ______________
+
+     Are you a Sysop?  _____________
+
+     Are you an IFNA Member?  ______
+
+     Additional Guests:  __________
+     (not attending conferences)
+
+     Do you have any special requirements? (Sign Language translation,
+     handicapped, etc.)
+     FidoNews 6-24                Page 20                  12 Jun 1989
+
+
+               ______________________________________________________
+
+
+     Comments: ______________________________________________________
+
+               ______________________________________________________
+
+               ______________________________________________________
+
+
+     Costs                                   How Many?   Cost
+     ---------------------------             --------    -------
+
+     Conference fee $60 .................... ________    _______
+        ($75.00 after July 15)
+
+     Friday Banquet  $30.00 ................ ________    _______
+
+                                             ========    =======
+
+     Totals ................................ ________    _______
+
+     You may pay by Check,  Money Order,  or Credit Card.  Please send
+     no  cash.   All monies must be in U.S.  Funds.   Checks should be
+     made out to: "FidoCon '89"
+
+
+     This form should be completed and mailed to:
+
+                         Silicon Valley FidoCon '89
+                         PO Box 390770
+                         Mountain View, CA 94039
+
+
+     You may register by Netmailing this completed form to 1:1/89  for
+     processing.   Rename  it  to  ZNNNXXXX.REG where Z is  your  Zone
+     number, N is your Net number, and X is your Node number.  US Mail
+     confirmation  is  required  within  72  hours  to  confirm   your
+     registration.
+
+     If  you are paying by credit card,  please include the  following
+     information.   For  your own security,  do not route any  message
+     with your credit card number on it.  Crash it directly to 1:1/89.
+
+
+     Master Card _______     Visa ________
+
+
+     Credit Card Number _____________________________________________
+
+
+     Expiration Date ________________________________________________
+
+
+     Signature ______________________________________________________
+
+     FidoNews 6-24                Page 21                  12 Jun 1989
+
+
+     No  credit  card registrations will be accepted without  a  valid
+     signature.
+
+
+     Rooms  at the Holiday Inn may be reserved by calling the Hotel at
+     408-998-0400,  and mentioning that you are with  FidoCon.   Rooms
+     are $60.00 per night double occupancy.   Additional rollaways are
+     available  for $10.00 per night.   To obtain these rates you must
+     register before July 15.
+
+     The official FidoCon '89 airline is American Airlines.   You  can
+     receive  either  a  5%  reduction in supersaver fares  or  a  40%
+     reduction in the regular day coach fare.  San Jose is an American
+     Airlines  hub  with direct flights to most  major  cities.   When
+     making reservations, you must call American's reservation number,
+     800-433-1790, and reference Star number S0289VM.
+
+
+     -----------------------------------------------------------------
+     FidoNews 6-24                Page 22                  12 Jun 1989
+
+
+                                      __
+                 The World's First   /  \
+                    BBS Network     /|oo \
+                    * FidoNet *    (_|  /_)
+                                    _`@/_ \    _
+                                   |     | \   \\
+                                   | (*) |  \   ))
+                      ______       |__U__| /  \//
+                     / Fido \       _//|| _\   /
+                    (________)     (_/(_|(____/ (tm)
+
+            Membership for the International FidoNet Association
+
+     Membership in IFNA is open to any individual or organization that
+     pays  a  specified  annual   membership  fee.   IFNA  serves  the
+     international  FidoNet-compatible  electronic  mail  community to
+     increase worldwide communications.
+
+     Member Name _______________________________  Date _______________
+     Address _________________________________________________________
+     City ____________________________________________________________
+     State ________________________________  Zip _____________________
+     Country _________________________________________________________
+     Home Phone (Voice) ______________________________________________
+     Work Phone (Voice) ______________________________________________
+
+     Zone:Net/Node Number ____________________________________________
+     BBS Name ________________________________________________________
+     BBS Phone Number ________________________________________________
+     Baud Rates Supported ____________________________________________
+     Board Restrictions ______________________________________________
+
+     Your Special Interests __________________________________________
+     _________________________________________________________________
+     _________________________________________________________________
+     In what areas would you be willing to help in FidoNet? __________
+     _________________________________________________________________
+     _________________________________________________________________
+     Send this membership form and a check or money order for $25 in
+     US Funds to:
+                   International FidoNet Association
+                   PO Box 41143
+                   St Louis, Missouri 63141
+                   USA
+
+     Thank you for your membership!  Your participation will help to
+     insure the future of FidoNet.
+
+     Please NOTE that IFNA is a general not-for-profit organization
+     and Articles of Association and By-Laws were adopted by the
+     membership in January 1987.  The second elected Board of Directors
+     was filled in August 1988.  The IFNA Echomail Conference has been
+     established on FidoNet to assist the Board.  We welcome your
+     input to this Conference.
+
+     -----------------------------------------------------------------
+

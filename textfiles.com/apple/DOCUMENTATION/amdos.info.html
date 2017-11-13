@@ -1,0 +1,112 @@
+list
+
+List (Unformatted): AMDOS.INFO
+
+This file must be called "AMDOS.INFO" on your computer.
+
+                            AmDOS 3.5
+                  Copyright 1985 Gary B. Little
+ 
+AmDOS 3.5 (Amateur Disk Operating System version 3.5) is an
+Apple II program for initializing 3.5-inch UniDisk disks in such
+a way that they will boot the DOS 3.3 operating system and work
+properly with it. To use it, first LOAD your Applesoft greeting
+program into memory and then BRUN the program called AMDOS INIT.
+After you press the space bar to clear the "user-supported
+program" notice, enter the slot and drive number of the disk to
+be formatted and then the name of the greeting program; once you
+do this, insert the disk to be formatted and press "F" to start
+the process. Formatting takes approximately one minute.
+ 
+AmDOS logically divides a formatted 3.5-inch disk into two
+discrete 400K volumes; there are 50 tracks per volume and 32
+sectors per track. Use the ",D1" and ",D3" drive parameters (as
+well as a slot parameter, if necessary) with your DOS 3.3
+commands to select the first and second volumes of drive 1. Use
+",D2" and ",D4" to select the first and second volumes of drive
+2. For example, to catalog the second volume on drive 1, use the
+command "CATALOG,D3". As with standard DOS 3.3, if you don't
+specify a slot or drive parameter, the most recently specified
+value is implicitly used.
+ 
+Compatability
+ 
+With AmDOS installed, the INIT command is disabled. If you need
+to initialize a 5.25-inch floppy disk, you will first have to
+boot a disk that contains a standard copy of DOS 3.3. To re-
+install AmDOS after you've loaded standard DOS 3.3, boot from a
+previously formatted 3.5-inch disk.
+ 
+AmDOS makes use of two data areas in the high end of memory:
+$BD12-$BD14 and $BEAF-$BFA7. These areas must not be used by any
+DOS 3.3 "patches" you might install. AmDOS also uses a 512-byte
+I/O buffer at $9AF9-$9CF8; the standard DOS 3.3 file buffers are
+installed just below this area. AmDOS sets MAXFILES = 2 (two
+file buffers) when it boots up; this means that HIMEM (the top
+of memory pointer) initially contains $9653. The DOS 3.3 default
+of MAXFILES = 3 is not used because that would result in a HIMEM
+of $9400, instead of the usual $9600, and any program that used
+the area from $9400 and $95FF for data storage would not work
+properly because the file buffer area would be overwritten. Such
+programs erroneously assume that HIMEM is always $9600.
+ 
+If you want to run a program that expects three file buffers to
+be active (there are not many programs like this), enter the
+DOS 3.3 "MAXFILES 3" command before running it.
+ 
+You can use a slightly-modified version of the FID utility
+program on the DOS 3.3 system master disk to transfer files to
+and from AmDOS-formatted 3.5-inch disks. Here are the steps to
+follow to make the modifications to a copy of FID:
+ 
+        ]UNLOCK FID
+        ]BLOAD FID
+        ]CALL -151
+        *0973:B5
+        *09BF:B5
+        *11ED:4C 89 16
+        *1414:B1
+        *1689:8D 31 19 B9 8B 19 8D 32 19
+        *1692:B9 8C 19 8D 33 19 0D 32 19
+        *169B:0D 31 19 4C F2 11
+        *3D0G
+        ]BSAVE FID,A2051,L4686
+ 
+The modified FID will still work properly with standard DOS 3.3
+and with 5.25-inch floppy disks.
+ 
+Memory Map
+ 
+Here is a memory map showing the arrangement of buffers below
+the main AmDOS code and data area beginning at $9D00:
+ 
+               ^                        ^
+               |     AmDOS (DOS 3.3)    |
+               |    code and data area  |
+               -------------------------- <--- $9D00
+               |         [unused]       |
+               -------------------------- <--- $9CF9
+               |  AmDOS 512-byte buffer |
+               -------------------------- <--- $9AF9
+               |                        |
+               |     File buffer #1     |
+               |                        |
+               -------------------------- <--- $98A6
+               |                        |
+               |     File buffer #2     |
+  default      |                        |
+   HIMEM  ---> -------------------------- <--- $9653
+               |                        |
+               |     File buffer #3     |
+               | (only if MAXFILES = 3) |
+               -------------------------- <--- $9400
+ 
+ 
+AmDOS 3.5 is a user-supported program. Try it for 30 days and if
+you find it useful, send $15 (U.S.A. funds) or $20 (Canadian
+funds) to Gary B. Little, #210 - 131 Water Street, Vancouver,
+British Columbia, Canada, V6B 4M3 (Telephone: (604) 681-3371).
+Otherwise, pass your copies along to others or erase them.
+
+
+ACTION> (Next, Down, Xm, List) 

@@ -1,0 +1,380 @@
+  ZDDDDDDDDDDDDDDDDDD? IMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM; ZDDDDDDDDDDDDDDDDDD?
+  3   Founded By:    3 :  Network Information Access   : 3 Mother Earth BBS 3
+  3 Guardian Of Time 3D:            01APR90            :D3  NUP:> DECnet    3
+  3   Judge Dredd    3 :       Guardian Of Time        : 3Text File Archives3
+  @DDDDDDDDBDDDDDDDDDY :            File 29            : @DDDDDDDDDBDDDDDDDDY
+           3           HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<           3
+           3          IMMMMMMMMMMMMMMMMMMMMMMMMMMMMM;              3
+           @DDDDDDDDDD: VMS System Manager's Manual :DDDDDDDDDDDDDDY
+                      :        Chapter 5.11         :
+                      HMMMMMMMMMMMMMMMMMMMMMMMMMMMMM<
+
+$Chapter 5 Begin
+
+PERFORMING BATCH AND PRINT OPERATIONS
+
+If you have a printer on your system, or if you want to use batch
+processing on your system, then you MUST us queues.  A queue allows users
+to submit requests for printing or batch processing, and the system prints
+or processes the users' jobs as resources allow.
+
+The system manager is responsible for setting up batch and print queues
+and making sure that they function properly.  This chapter describes how
+to set up (initialize)  and maintain batch and print queues for you system
+or cluster.
+
+Setting up and maintaining batch and print queues are closely related
+system management tasks.  However, you are not required to set up both
+types of queues if you need only one type.  In a VAXcluster environment,
+queues can be accessed from any node on the cluster.
+
+5.1  GENERIC QUEUES AND EXECUTION QUEUES
+
+In the VMS operating system, batch and print operations support two types
+of queues: generic queues and execution queues.
+
+An execution queue is a queue through which the job (either print or
+batch) is actually processed or executed.  For printing, an execution
+queue is associated with a specific printer; for batch processing in a
+VAXcluster environment, and execution queue is associated with a specific
+node.  When a print or batch job is submitted to an execution queue, the
+job is ultimately printed on the output device associated with that queue or
+processed on the associated batch queue.
+
+A generic queue is an intermediate queue that holds a job until an
+appropriate execution queue becomes available to initiate the job.  Users
+can submit jobs to a generic queue, and the generic queue then directs the
+job to an appropriate execution queue; alternatively, users can submit
+jobs directly to an execution queue.
+
+For example, suppose you have a system with several printers.  You would set
+up individual execution queues for each of the printers,  and you could
+also set up a generic queue, and the generic queue would subsequently
+direct the print job to an available printer.
+
+For batch processing, generic queues are often used in clustered systems
+to distribute the workload across several nodes.  For example, suppose you
+have a Local Area VAXcluster environment with each of the satellite nodes
+having a batch processing queue.  You could then establish a generic batch
+queue for the cluster.  When users submit batch jobs to the generic queu,
+the generic queue would direct individual batch jobs to the execution
+queue that is best able to handle the workload.
+
+If you only have a single printer for your system or cluster, or if you
+only establish a single batch queue, then there is no value in
+establishing generic queues.
+
+5.2  SETTING UP QUEUES
+
+Set up your queues by including the appropriate commands in your
+site-specific startup file,SYS$MANAGER:SYSTARTUP_V5.COM.  Section 2.4.3
+describes the commands that should be included in SYSTARTUP_V5.COM, and this
+section summarizes them.
+
+To establish and use queues, you must first start the queue manager and
+identify a queue file.  To do this, include the following command in
+SYS$MANAGER:SYSTARTUP_V5.COM, making sure that this command appears before
+any other queue commands:
+
+$ START/QUEUE/MANAGER/RESTART SYS$COMMON: [SYSEXE] JBCSYSQUE.DAT
+
+If you have a cluster, you should use only one queue file for the cluster.
+Make sure that the queue file is on a disk that is accessible to all of the
+nodes in the cluster from which you may want to submit batch or print jobs.
+
+When you create a generic queue, you specify a list of execution queues to
+which the generic queue ultimately directs jobs.  In a VAXcluster
+environment, the execution queues that you specify for a generic queue can
+be on the same node as the generic queue, and they can also be on different
+nodes within the cluster.
+
+Once you have established the queue file, you can set up individual
+execution queues and generic queues by using the INITIALIZE/QUEUE command in
+your SYSTARTUP_V5.COM file.  Be sure to initialize execution queues before
+initializing the generic queues.  For example, you could include the
+following series of commands to set up execution and generic queues for
+batch and print operations in a VAXcluster environment.
+
+$ INITIALIZE /QUEUE /ON=BLUE::LPA0 /START  BLUE_LPA0                 (1)
+$ INITIALIZE /QUEUE /ON=GREEN::LPA0 /START GREEN_LPA0                (2)
+$ INITIALIZE /QUEUE /GENERIC=(BLUE_LPA0,GREEN_LPA0) /START SYS$PRINT (3)
+$
+$ INITIALIZE /QUEUE /BATCH /ON=BLUE:: /START BLUE_BATCH              (4)
+$ INITIALIZE /QUEUE /BATCH /ON=RED:: /START RED_BATCH                (5)
+$ INITIALIZE /QUEUE /BATCH /GENERIC=(BLUE_BATCH,RED_BATCH) /START SYS$BATCH
+  (6)
+
+This series of commands in SYSTARTUP_V5.COM does the following:
+
+(1) Sets up an execution printer queue associated with LPA0 on node BLUE with a
+    queue name of BLUE_LPA0.
+
+(2) Sets up an execution printer queue associated with LPA0 on node GREEN with a
+    queue name of GREEN_LPA0.
+
+(3) Sets up a generic print queue for the cluster.  The generic print queue
+    has the name SYS$PRINT and directs print jobs either to BLUE_LPA0 or to
+    GREEN_LPA0.
+
+(4) Sets up an execution batch queue on node BLUE with the queue name
+    BLUE_BATCH.
+
+(5)  Sets up an execution batch queue on node RED with the queue name
+     RED_BATCH.
+
+(6)  Sets up a generic batch queue for the cluster.  The generic batch queue
+     has the name SYS$BATCH.  When a job is submitted to SYS$BATCH, this
+     generic queue directs the job either to BLUE_BATCH or to RED_BATCH.
+
+If you want to set up a terminal as an execution queue, use exactly the same
+procedure as for setting up print queues and use the /DEVICE=TERMINAL
+qualifier in your INITIALIZE command line.
+
+5.3  MAINTAINING BATCH AND PRINT QUEUES
+
+Once you have modified SYS$MANAGER:SYSTARTUP_V5.COM to establish your queues
+properly, they will be set up and available every time that your system is
+booted.  From time to time, however, some additional maintenance of your
+queues may be needed.
+
+The VMS operating system provides several DCL-level commands that you can
+use to manage your queues.  Tabl 5-1 shows some of the commands that are
+available for queue management.  More information about these commands is
+available in the VMS GENERAL USER'S MANUAL.
+
+ZDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD?
+3TABLE 5-1 QUEUE MANAGEMENT COMMANDS                                           3
+CDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD4
+3SET QUEUE :  Allows you to change the attributes of a queue (for example,     3
+3             the number of jobs that can execute simultaneously in a batch    3
+3             queue) without having to stop the queue, initialize it, and      3
+3             then restart it.                                                 3
+3                                                                              3
+3SHOW QUEUE:  Provides the status of queues, listing the jobs that are         3
+3             currently executing, as well as the jobs that have not yet       3
+3             begun execution.                                                 3
+3                                                                              3
+3STOP /QUEUE: Allows you to pause a queue temporarily.  Using the appropriate  3
+3             qualifiers, you can use the STOP /QUEUE command to stop jobs     3
+3             that are currently executing, to stop a queue after the          3
+3             completion of all jobs that are currently executing, to shut down3
+3             the queue manager on the node from which you execute the command,3
+3             and to perform other related function.                           3
+3                                                                              3
+3START /QUEUE: Resumes execution of a queue that has been temporarily halted   3
+3              by the STOP /QUEUE command.                                     3
+3                                                                              3
+3STOP /QUEUE /MANAGER: Shuts down the queue manager on the node from which     3
+3                      you execute the command.                                3
+3                                                                              3
+3START /QUEUE /MANAGER: Starts the queue manager on the node from which you    3
+3                       execute the command.                                   3
+@DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDY
+
+5.4  MONITORING JOBS
+
+As system manager, you use SHOW QUEUE as the primary command to monitor the
+overall status of a queue.  The SHOW QUEUE command displays the status of
+each queue selected, and it also shows the status of all jobs in each of the
+selected queues.  With SHOW QUEUE, you can also obtain a summary of the
+status of jobs in each queue by using the /SUMMARY qualifier.
+
+Additionally, you can also use the SHOW ENTRY command to monitor the status
+of jobs belonging to a particular user, or to determine the status of
+individual batch and print jobs.  SHOW ENTRY and SHOW QUEUE each provide
+complete information about jobs, but SHOW QUEUE also provides status
+information about the queues themselves.  SHOW ENTRY  generally provides a
+faster response time than SHOW QUEUE.  For a full description of the SHOW
+ENTRY and SHOW QUEUE commands, see the REFERENCE SECTION of the VMS GENERAL
+USERS MANUAL.
+
+The following list describes the types of jobs status returned by the SHOW
+QUEUE and SHOW ENTRY commands:
+ZDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD?
+3STATUS                      DESCRIPTION                                   3
+3                                                                          3
+3Aborting                    Executing job is terminating                  3
+3Executing                   Job is executing from a batch queue           3
+3Holding                     Job is being held until explicitly released   3
+3Holding until               Job is being held until a specified time      3
+3Pending                     Job is in a waiting state                     3
+3Printing                    Job is executing from a printer or terminal   3
+3                            queue                                         3
+3Processing                  Job is executing for a server queue           3
+3Retained on Completion      Job remains in the queue upon completion      3
+3Retained on Error           Job remains in the queue upon encountering an 3
+3                            error                                         3
+3Waiting                     Symbiont refuses the job                      3
+@DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDY
+
+5.4.1 DELETING JOB
+
+Under certain circumstances, it is necessary to terminate an executing batch
+or print job.  For example, you may need to terminate a program that has
+entered an endless loop or a job that is executing on a faulty print device.
+
+Follow this procedure to delete a job:
+
+1.  Determine the entry number of the job
+2.  Delete the job by entering the DELETE/ENTRY command
+
+The DELETE/ENTRY command is restricted to user with either OPER privilege, E
+access to the queue, or D access to the specified job.
+
+For example, assume that you observe a job that appears to be processing in
+an endless loop and is using an inappropriate amount of system resources.
+You can delete the job by entering the command DELETE/ENTRY=entry_number.
+To determine the entry number, enter the command SHOW
+QUEUE/BATCH/ALL/BY_JOB_STATUS=EXECUTING.  The following example shows how to
+determine the entry number and delete the job:
+
+$  SHOW QUEUE/BATCH/ALL/BY_JOB_STATUS=EXECUTING
+
+Batch queue ZEUS_BATCH, on ZEUS
+
+ jobname        Username   Entry  Status
+ -------        --------   -----  ------
+ 2307smrcl      MARCO      1719   Executing
+ TEST           JONES      1720   Executing
+
+$ DELETE/ENTRY=1719
+
+5.2.2 RETAINING JOBS IN A QUEUE
+
+To retain a job in a queue after it has been processed, specify the /RETAIN
+qualifier with the INITIALIZE/QUEUE START/QUEUE, or SET QUEUE command.  The
+/RETAIN qualifier has the following format:
+
+/[NO]RETAIN[=option]
+
+By using the ERROR option with the /RETAIN qualifier, you indicate that the
+jobs in a queue will be held if they do not successfully complete.  A job
+that has been held by the /RETAIN=ERROR qualifier can later be released or
+requeued after the problem that caused the error has been resolved.
+
+By default, jobs are NOT retained.
+
+For example, to retain print jobs that do not successfully complete, you
+could include the following command in your SYSTARTUP_V5.COM file, after you
+have initialized and started the queue:
+
+$ SET QUEUE /RETAIN=ERROR GREEN_LPA0
+
+5.4.3  MODIFYING JOB PROCESSING ATTRIBUTES
+
+You can modify certain job processing attributes by specifying qualifiers with
+the command SET ENTRY entry-number, as shown in the following table:
+
+ZDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD?
+3Qualifier               Description                                         3
+CDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD4
+3/[NO]AFTER              Controls whether a job is held until a specified    3
+3                        time                                                3
+3/[NO]HOLD                Controls whether a job is available for immediate  3
+3                         processing or held until it is released for        3
+3                         processing                                         3
+3/NAME                    Specifies a new name for a job                     3
+3/[NO]PASSALL             Specifies whether the symbiont bypasses all        3
+3                         formatting and sends the output directly to the    3
+3                         device driver                                      3
+3/PRIORITY                Specifies the relative scheduling priority of the  3
+3                         job, with respect to the priorities of other jobs    3
+3                         in the queue                                       3
+3/RELEASE                 Releases a previously held job                     3
+3/REQUEUE                 Requests that the job be moved from the original   3
+3                        queue to the specified queue; this qualifier can    3
+3                        also be used with the STOP/QUEUE/ENTRY command        3
+@DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDY
+
+5.4.3.1 HOLDING AND RELEASING A JOB
+
+The /HOLD qualifier of the SET ENTRY command controls whether a job is to be
+made available for immediate processing.  To release a held job, use either
+/NOHOLD or the /RELEASE qualifier.
+
+To request that the job be held until after a specified time, use the /AFTER
+qualifier with the command SET ENTRY.  The job is queued for immediate
+processing when the specified time arrives.  The /AFTER=time qualifier
+accepts either absolute or delta time values in the format
+[dd-mmm-yyy][hh:mm:ss.cc].  You can also specify the following keywords:
+
+TODAY
+YESTERDAY
+TOMORROW
+
+The following command holds a print job until it is queued for processing at
+the specified date and time:
+
+$ SET ENTRY 1121/AFTER=12-JUL-1988:17:30
+
+You can use the /NOAFTER qualifier to release immediately a job that is
+being held until a specified time.
+
+The /RELEASE qualifier releases a job that is being held for any of the
+following reasons:
+
+:  A job was submitted with the /HOLD qualifier
+:  A completed job was held in a queue by the /RETAIN qualifier
+:  A job was submitted with the /AFTER qualifier
+
+Use the SET ENTRY command with the /HOLD and /RELEASE qualifiers to hold and
+release a batch job.  This procedure applies only to a batch job that is
+currently in a pending state(that is, a job that has not yet begun to
+execute).  The following example shows how to hold and release a batch job
+that has not begun execution:
+
+$ SET ENTRY 1234/HOLD
+$ SET ENTRY 1234/RELEASE
+
+5.4.3.2  REQUEUING A JOB
+
+To requeue a job that has not begun execution, use the SET ENTRY /requeue
+COMMAND.  If you want to requeue a job that has already begun execution, use
+the STOP/QUEUE/REQUEUE command.  The STOP/QUEUE/REQUEUE command suspends the
+currently executing job and requeues it to the specified queue, for example:
+
+$ STOP/QUEUE/REQUEUE=ALPHA_LPA0 ALPHA_LPB0
+
+This command causes the executing print job on ALPHA_LPB0 to be stopped and
+requeue to ALPHA_LPA0.  The queue does not stop; only the currently
+executing job is affected.  Other jobs remain pending in the queue until
+they are processed.
+
+You can further qualify the STOP/QUEUE/REQUEUE command with the /HOLD
+qualifier.  To hold an aborted print job, enter the STOP/QUEUE/REQUEUE/HOLD
+command in the following format:
+
+STOP/QUEUE/REQUEUE/HOLD [queue-name]
+
+When you specify /HOLD, the aborted job is placed in a hold state for later
+release with the SET ENTRY/RELEASE command.  If you do not need to process a
+job that is being held in a queue, you can delete the job with the
+DELETE/ENTRY command.
+
+NOTE:  If you are requeuing a job on a batch queue, you must include the
+/ENTRY=n qualifier, for example:
+
+$ STOP/QUEUE/ENTRY=1251/REQUEUE=FRED_BATCH
+
+5.4.3.3  CHANGING THE SCHEDULING PRIORITY OF A JOB
+
+You can change the scheduling priority of a job by using the /PRIORITY=n
+qualifier with the SET ENTRY command.  Do not confuse the job scheduling
+priority with the base priority of a queue.
+
+The job scheduling priority value must be in a range of 0 through 255, where
+0 is the lowest priority and 255 is the highest.  The default value for
+/PRIORITY is the value of the SYSGEN parameter DEFQUERPRI(usually set at
+100).  You must have either OPER or ALTPRI privilege to raise the priority
+value above the value of the SYSGEN parameter MAXQUERPRI.  No privilege is
+needed to set the priority of your own job lower than the MAXQUERPRI value.
+The following example changes the priority of a job to 50:
+
+$ SET ENTRY 1131/PRIORITY=50
+
+$END OF CHAPTER 5
+
+[OTHER WORLD BBS]
+
+
+

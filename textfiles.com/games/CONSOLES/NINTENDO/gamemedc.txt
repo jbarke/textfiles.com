@@ -1,0 +1,334 @@
+GAME MEDIC
+by Mr. Turbo of the Silicon Valley Swappe Shoppe
+  Read and playback Sega Genesis and Super Nintendo cartridges
+--------------------------------------------------------------
+
+
+1. Introduction
+
+This information was gleaned from disassembling the Sega Genesis and
+the Super Nintendo and their cartridges.  The contents of this file
+does not come from confidential sources.
+
+The average Sega Genesis/Megadrive cartridge consists of a ROM chip and 
+sometimes a battery backed up static ram chip.  The signals to and from
+the cartridge are all CMOS level (rail to rail voltage swings) and therefore
+all chips which interface to a cartridge or the Genesis/Megadrive should
+be CMOS compatible parts.  When using the 74 series chips, be sure
+to use either 74HC or 74HCT family.  When using EPROMS, be sure they are
+CMOS compatible.  The Sega Genesis uses a CMOS variant of the Motorola
+68000.  Therefore, there are 16 data lines and 23 address lines at the 
+cartridge slot.
+
+Sega cartridges almost exclusively use a single mask programmed 16 bit 
+wide ROM chip in their cartridges, but third party manufacturers sometimes 
+use multiple (sometimes 8 bit wide) ROM chips.  Therefore, reading a
+Genesis cartridge consists of asserting the address and chip select
+lines low, setting the address lines to the address you want to read
+and reading the data of the data lines.  Playing back a game read from
+a cartridge consists of writing the data to an EPROM or equivalent and
+connecting it to the Genesis.
+
+The pinouts for the cartridge port is as follows:
+
+When standing in front of the Genesis, b is frontward, a is rearward,
+1 is to the left and 32 is to the right.
+
+*=active low
+
+a1  - gnd    b1  -
+a2  - +5v    b2  -
+a3  - A8     b3  -
+a4  - A11    b4  - A9
+a5  - A7     b5  - A10
+a6  - A12    b6  - A18
+a7  - A6     b7  - A19
+a8  - A13    b8  - A20
+a9  - A5     b9  - A21
+a10 - A14    b10 - A22
+a11 - A4     b11 - A23
+a12 - A15    b12 -
+a13 - A3     b13 -
+a14 - A16    b14 -
+a15 - A2     b15 -
+a16 - A17    b16 - *OE
+a17 - A1     b17 - *CS
+a18 - gnd    b18 - *AS
+a19 - D7     b19 -
+a20 - D0     b20 -
+a21 - D8     b21 -
+a22 - D6     b22 - D15
+a23 - D1     b23 - D14
+a24 - D9     b24 - D13
+a25 - D5     b25 - D12
+a26 - D2     b26 -
+a27 - D10    b27 - *RESET
+a28 - D4     b28 - *WE
+a29 - D3     b29 -
+a30 - D11    b30 -
+a31 - +5v    b31 -
+a32 - gnd    b32 - gnd
+
+
+2. The Cartridge Reader
+
+2.1 About the IBM PC Parallel Port and the Cartridge Reader
+
+The cartridge reader is designed to interface with the IBM PC (and
+compatibles) parallel printer port.  Although I could have used one of
+the backplane slots to read the cartridge, the parallel port was
+selected because it is easier to construct a device that physically
+plugs into it and they are cheap to replace in case you fry your parallel
+port.  The disadvantage (from the designer's standpoint) is that you
+only have 12 bits of data coming out of it (8 parallel port data and 4
+control) and you can only feed in 4 bits of data into the parallel port.
+
+The solution to this is to use registers/octal latches (the 74HCT374).
+What we do is feed the address we want to read into the latches and
+then read the data off the data lines.  Two of the parallel port
+handshake lines are used to select between the three 8 bit
+registers/latches.  Since the Genesis ROM has a 16 bit datapath, we
+add an extra address line (A0) to select between the upper and lower 8
+bits.  We still have to feed this 8 bit data into a 4 bit port so we
+use a 74HCT244 as a data selector to select between the upper and
+lower 4 bits of data.  Another control line is used to make the
+selection.  Note that because of the way IBM designed their parallel
+prot, the highest bit of this 4 bit input is inverted.
+
+2.2 Building the Cartridge Reader
+
+Be sure to use the 74HCT family or equivalent when purchasing the parts.
+The HCT family means that the chips are "high speed", CMOS level outputs
+and TTL level inputs.
+
+You can either print out the PCB pattern I provided or wire wrap the
+circuit.  Another option is to use a breadboard but you must be
+careful because breadboard projects tend to loosen their wires over a
+period of time. The filename for the schematic is READ-SCH and the
+filename for the pattern is READ-PAT.
+
+If you want to etch your own PCB, one thing you can try is the laser
+printer direct method.  Print the pattern on a plastic sheet and iron
+the sheet to a clean copperclad board.  The laser printer toner will
+transfer from the plastic to the copperclad and act as a resist.  You
+then toss the copperclad into some etchant and clean it off when you
+are done.
+
+To build the cartridge reader, you will need the following parts:
+2 - 74HCT139
+3 - 74HCT374
+2 - 74HCT244
+7 - .1 microFarad capacitors
+1 - male DB25 connector
+1 - 64 pin card edge connector with .100 inch contact centers
+1 - 5 volt power source (you can use a 5 volt source from inside your PC)
+
+The first 5 parts are fairly easily obtainable.  If you don't have a
+good electronics store in your area, you can mail order the parts from
+Digikey (call 1 800 344 4539 and ask for a catalog).  The 64 pin card
+edge connector is fairly hard to find.  3M makes such an item but only
+in the ribbon cable variant.  What I did was to use the 3M connector
+with a ribbon cable and put DIP plugs on the other end of the ribbon.
+If you decide to do this, be sure to keep the ribbon cable short (i.e.
+4 inches or less) to cut down on the noise.  When using the 3M connector,
+you have to shave off the edges in order to get it to fit in a Genesis
+cartridge.  If you can't find a 64 pin connector, you can get a 72 pin
+connector, insert a barrier key to separate off 64 pins and cut off
+the extra 8 pins.
+
+The capacitors go between +5 and ground.  Put one as near as possible
+to each chip.
+
+Keep the connection between the IBM PC parallel port and the cartridge
+reader as short as possible to reduce the noise factor.
+
+2.3 Software
+
+All programs are written in C and were compiled using Borland C/C++.
+All you need to do to convert them to Microcrud C or Zortech or whatever
+else, just change the outport() and inport() function calls to whatever
+your compiler uses.
+
+The software is provided as READCART.C,  TESTCART.C and SIZETEST.C.
+
+READCART.C reads the data from the cartridge and writes to the
+specified file.  If no file specification is given, it will write it
+to game.dat.  You must also specify the size of the file in megabits.
+The program is hard coded to read data from LPT1:.  If you use another
+parallel port, be sure to change the address macro definitions.
+
+TESTCART.C is a program to test the cartridge reader.  Feed the lower
+16 bits of the address back into the data lines and this program will
+verify correct operation of the cartridge reader.
+
+SIZETEST.C is a program to automatically determine the size (in
+megabits) of a cartridge plugged into the cartridge reader.
+
+2.4 Testing and Debugging
+
+Hook up the address lines to the data lines (A1 goes to D0, A2 goes to
+D1, etc) and run the TESTCART.C program.  If you get consistent
+errors, then you have a wiring problem or you forgot to hook up the +5
+volt power source.  If you get random errors, you have a noise
+problem.  Shorten the cables between the cartridge and the reader and
+the compuer and the reader.  Add more capacitors to your power source.
+If you still get noise errors, play with the delay factor on line 25
+of TESTCART.C and/or add pullup or pulldown resistors or both to the
+lines going to and from the parallel port.
+
+When you feel confident that everything is working, plug in a
+cartridge and read it in two or three times.  Do a compare of the
+files you get to make sure there are no noise problems.  Offset
+100-19f hex should contain ASCII info on whatever cartridge you have
+plugged in.  If it doesn't, try another cartridge.  It should say
+something like:
+
+SEGA GENESIS (C) SEGA 1992.FEB SONIC THE HEDGEHOG
+etc.
+
+Almost all Sega produced games say SEGA GENESIS at offset 100 hex.
+
+If it appears that the byte order is switched (i.e. it comes
+out ESAGG NESESI or something like that), then the four wires from the 
+74HCT139 to the 74HCT244's are switched around.  If you can't find
+the text at offset 100 hex, try looking at 1 hex and 10000 hex. If
+you find it at one of those locations, then the 3 wires going from
+the 74HCT139 to the 74HCT374's are switched around.
+
+
+3. Playing Back What You Read.
+
+In order to play back what you read out of the cartridge, you will
+need to store it in either static RAM, EPROM or flash memory.  If you
+are going to store it in EPROM or flash memory, you will need an EPROM
+programmer.  Needham Electronics (916 924 8037) sells a nice one for very cheap.
+Flash memory is especially nice since you erase it electronically like
+static RAM, it is non-volatile like an EPROM and programs very fast.
+Unfortunately, they are hard to find.  Microprocessors Unlimited
+(918 267 6961; ask for a price sheet) sells the Intel 28F020 flash
+memory as well as EPROMs and static RAM.  The 28F020 is a 2 megabit
+chip and is 8 bits wide so you will need two of them.  EPROMS have
+the highest density but they are the hardest to program and are a pain
+to erase (you have to put them under a ultra-violet lamp).  The last
+time I checked, static RAM only comes in 1 megabit configurations and
+you have to provide some sort of battery backup when transferring
+programs from the IBM PC to the Genesis.
+
+The easiest way to make a carrier for your memory chips is to get a
+cartridge that already has two 8 bit wide chips on it and hack it
+apart.  Early Electronics Arts games use such an arrangement.  Clip
+off all the legs of each of the chips and desolder each of them one by
+one.  Replace each of the chips with a ZIF (Zero Insertion Force)
+socket.  Some of the larger ZIF sockets may not fit in your cartridge.
+Aries Electronics has a small low profile ZIF socket you can buy from
+Digikey (see above).
+
+If you want to make your own, I have provided a PCB pattern called
+CART-PAT.
+
+When you program your memory, if you are using 8 bit wide memory, you
+will need to program one chip with the even addresses and one chip
+with the odd addresses. 
+
+4. Battery Backed up RAM Games
+
+When A21 goes high, then the chip select (*CS) of the battery backed
+up RAM is active (low).  Just connect *CS, *OE, *WE and the rest of
+the address and data lines to the SRAM.
+
+5. Using the Cartridge Reader with the Super Nintendo
+
+The Super Nintendo cartridge is very similar to the Sega Genesis
+arrangement.  The two main differences are that the Sega has 16 data
+lines while the Super Nintendo has 8 and the Super Nintendo has a
+lockout chip.
+
+To adapt the Sega cartridge reader to the Super Nintendo, just wire
+the address lines on the cartridge reader to the proper lines on the
+Super Nintendo (i.e. A1 on the Sega goes to A0 on the SNES, A2-Sega
+goes to A1-SNES, etc) and the D0-D8 lines on the SNES go to the D0-D8
+lines on the cartridge reader.  Line 85 of of READCART.C contains the
+code you need to modify in order to convert it to reading Super
+Nintendo cartridges.
+
+The lockout chip really doesn't do much of anything.  All the Super
+Nintendo does is detect its presence.  If the lockout chip is properly
+connected, the Super Nintendo will read the cartridge.  If not, it
+won't.  You may want to use pullup resistors to tie the inputs/outputs
+to the lockout chip high so you don't leave anything floating when you
+read the cartridge.
+
+The cartridge connector inside the Super Nintendo console consists of
+a connector 3 13/16 inches wide using .100 inch contact centers.
+There are 62 pins total, but there are 8 pins on either side which are
+separated from the 46 pins in the center.  The width of the connector
+is roughly the same as a 70 pin solder tail connector so you can use
+one of those with a pair of barrier keys to center the cartridge
+fingers.
+
+If you are looking at the Super Nintendo from the front of the
+console, the connector pins towards the front are numbered from
+1 to 31 from left to right and the connector pins towards the rear are
+numbered from 32 to 62 from left to right.  Remember that for most
+cartridges, only the center 46 pins are used so that the fingers on
+the cartridge are numbered from 5 to 27 and from 36 to 58.
+
+The pinouts are as follows:
+
+5  - gnd                   36 - gnd
+6  - A11                   37 - A12
+7  - A10                   38 - A13
+8  - A9                    39 - A14
+9  - A8                    40 -
+10 - A7                    41 - A15
+11 - A6                    42 - *OE
+12 - A5                    43 - A19
+13 - A4                    44 - A16
+14 - A3                    45 - A17
+15 - A2                    46 -
+16 - A1                    47 -
+17 - A0                    48 -
+18 -                       49 - *CS
+19 - D0                    50 - D4
+20 - D1                    51 - D5
+21 - D2                    52 - D6
+22 - D3                    53 - D7
+23 - A18                   54 - *WE
+24 - Lockout chip pin 1    55 - Lockout Chip pin 2
+25 - Lockout chip pin 7    56 - Lockout chip pin 6
+26 -                       57 -
+27 - +5                    58 - +5
+
+The *CS line of the battery backed up RAM goes active (low) when A18 is
+low, A17 is high and pins 26, 46 and 47 of the cartridge connector are high.
+
+The best way to make a playback cartridge is to scavange an existing
+Super Nintendo cartridge and wiring an adapter to that.  Just desolder
+the existing mask ROM and wire in an adapter from the Sega Genesis
+playback cartridge.  This way, you already have a lockout chip and
+battery backed up RAM already in place.  The schematic is SNES-SCH.
+
+The pinouts for the mask ROM are as follows:
+
+1  A19  32 +5
+2  A16  31 *CE
+3  A15  30 A17
+4  A12  29 A14
+5  A7   28 A13
+6  A6   27 A8
+7  A5   26 A9
+8  A4   25 A11
+9  A3   24 *OE
+10 A2   23 A10
+11 A1   22 A18
+12 A0   21 D7
+13 D0   20 D6
+14 D1   19 D5
+15 D2   18 D4
+16 gnd  17 D3
+
+
+6. Conclusion
+
+Good luck hacking your Game Medic!
+<-> Mr. Turbo '92

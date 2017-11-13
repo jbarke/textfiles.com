@@ -1,0 +1,239 @@
+/*
+	Fido13 -- load/initialize state machine
+
+	3 Sep 93
+
+	Tom Jennings
+	tomj@wps.com
+	(3 Sep 93)
+
+	copyright 1993
+*/
+
+#include <stdio.h>
+#include "fido.h"
+
+/* State machine string sizes, limited for space/performance reasons, to mamimum...  */
+
+#define MAXLABEL 16			/* ...of state label */
+#define MAXNAME 30			/* ...of state name */
+#define MAXINPUT 1			/* ...of user input */
+#define MAXACTION 80			/* ...of action */
+
+/* Symbol table, holding defined menu names (groups, flagged with ':label') */
+
+struct _symtbl {		/* state label table */
+	char name[MAXLABEL + 1];/*   name of label */
+	struct _state *state;	/*   ptr to state it references */
+};
+static struct _symtbl *symtbl;	/* our symbol table */
+static unsigned symtbln;	/* number of entries (for size calc) */
+
+unsigned staten;		/* number of states loaded (size calc, etc) */
+unsigned group;			/* group of states (making up a menu), 1 - N */
+
+struct _state *find_state();
+
+/* Load states into memory from a text file; return 0 if error. */
+
+load_machine(fn)
+char *fn;
+{
+FILE *f;
+short foo;			/* error detector */
+int i;
+char *cp,buff[400];		/* line buffer, etc */
+unsigned lineno;		/* input file line number */
+
+	if ((f= fopen(fn,"r")) == NULL) {
+		fprintf(stderr, "Can't find config file \"fido.conf\"\n");
+		return(0);
+	}
+	current_state= bliss= (struct _state *) malloc(0);/* set a ptr anyways */
+	staten= 0;					/* no states yet */
+	group= 1;					/* start group with 1 */
+
+	symtbl= (struct _symtbl *) malloc(0);		/* empty symbol table */
+	symtbln= 0;
+
+	for (lineno= 0, foo= 1; foo;) {
+		if (fgets(buff, sizeof(buff), f) == NULL) break;
+		++lineno;				/* count another line */
+		for (cp= buff; *cp; ++cp)		/* strip newlines */
+			if (*cp == '\n') *cp= '\0';
+		if (! buff[0]) continue;		/* ignore blank lines */
+		if (buff[0] == '#') continue;		/* and comments */
+
+		if (buff[0] == ':') {			/* if a label definition */
+			foo= add_label(&buff[1], lineno); /* remember this label */
+			++group;			/* new group/menu number */
+			continue;
+		}
+		foo= add_state(buff, lineno, group);	/* add state, check errors */
+	}
+	fclose(f);
+	return(foo);
+}
+
+/* Add a new label to the symbol table; return 0 if it already exists. */
+
+add_label(name, lineno)
+char *name;
+unsigned lineno;
+{
+unsigned i;
+char buff[MAXLABEL + 1];
+
+	name[MAXLABEL + 1]= '\0';			/* possibly truncate */
+	cpyarg(buff, name);				/* clean copy */
+
+	for (i= 0; i < symtbln; i++) {
+		if (strcmp(symtbl[i].name, buff) == 0) {
+			fprintf(stderr,"fido: label \"%s\" previously defined\n", 
+			    symtbl[i].name);
+			return(0);			/* return error */
+		}
+	}						/* else add a new one */
+	symtbl= (struct _symtbl *) realloc((void *) symtbl, (++symtbln * sizeof(struct _symtbl)));
+	strcpy(symtbl[symtbln].name, buff);		/* add a new table entry */
+	symtbl[symtbln].state= current_state;		/* refers to this state */
+	return(1);					/* return no-error */
+}
+
+/* Given a label name, return a pointer to the associated state or 0 for error */
+
+struct _state *
+find_state(name)
+char *name;
+{
+int i;
+char buff[MAXLABEL + 1];
+
+	name[MAXLABEL + 1]= '\0';			/* truncate it */
+	cpyarg(buff, name);				/* clean copy */
+
+	for (i= 0; i < symtbln; i++)
+		if (strcmp(buff, symtbl[i].name) == 0) return(symtbl[i].state);
+	return((struct _state *) 0);			/* not found! */
+}
+
+/* Add a new state to the in-memory state machine; if error return 0. */
+
+add_state(s, lineno, group)
+char *s;
+unsigned lineno;		/* line number, for error reports */
+unsigned group;			/* group/menu number */
+{
+char buff[MAXLABEL + 1];
+struct _state *t;
+
+	bliss= (struct _state *) realloc((void *) bliss, (++staten * sizeof(struct _state)));
+	if (bliss == NULL) {
+		fprintf(stderr,"Fido: realloc in add_state sez we're outa memory!");
+		return(0);
+	}
+	current_state-> next= current_state;			/* assume no "next" */
+	current_state-> menu= group;				/* which menu group */
+
+	if (add_field(&s, &current_state-> name, 1, MAXNAME, "state name", lineno))
+		return(0);
+
+	if (add_field(&s, &current_state-> input, 1, MAXINPUT, "input character", lineno))
+		return(0);
+
+	if (add_field(&s, &current_state-> action, 0, MAXACTION, "action", lineno))
+		return(0);
+
+	if (add_field(&s, &buff, 0, MAXLABEL, "next state", lineno))
+		return(0);
+
+/* 'next state' is optional; if given find the target state, return error if not found.
+If not specified this state points to itself. */
+
+	if (*buff) current_state-> next= t= find_state(buff);
+
+	current_state= &bliss[staten];				/* new "current" state */
+
+	return((int) t);					/* return 0 if error */
+}
+
+/* Given a ptr to the line read from the input file, fill out one field in a structure,
+allocating space for it as necessary, and error-checking its length. Returns 0 if OK. */
+
+add_field(s, field, minimum, maximum, what, lineno)
+char **s;			/* ptr to input string ptr */
+char **field;			/* ptr to field string ptr */
+unsigned minimum, maximum;	/* min, max field lengths */
+char *what;			/* name of field, for error reports */
+unsigned lineno;		/* line number, for error reports */
+{
+unsigned n;
+char buff[101];
+
+	n= copyqstr(s, buff, sizeof(buff));			/* process string */
+	if (error_check(n, minimum, maximum, what, lineno))	/* check length */
+		return(1);
+
+	*field= (char *) malloc(n + 1);				/* allocate space for string */
+	if (*field == NULL) {
+		fprintf(stderr, "malloc (%s) sez we're outa memory!\n", what);
+		return(1);
+	}
+	strcpy(*field, buff);					/* copy into place */
+	return(0);
+}
+
+/* Error-check the string length. Return 0 if OK. */
+
+error_check(n, minimum, maximum, what, lineno)
+unsigned n, minimum, maximum;
+char *what;			/* name of field, for error reports */
+unsigned lineno;		/* line number, for error reports */
+{
+
+	if (n < minimum) fprintf(stderr, "%s is too short in line #%u\n", what, lineno);
+	else if (n > maximum) fprintf(stderr, "%s is too long (missing quote?) in line #%u\n", what, lineno);
+	else return(0);
+
+	return(1);			/* get that? */
+}
+
+/* Copy a (possibly) quoted string, up to the closing quote or terminating comma. Returns
+the number of characters stored in the output string, and leaves the input pointer pointing
+to the character following the last one used. This accepts quoted strings (if the firs
+tnon-blank character is a ") or single, isolated words. */
+
+copyqstr(s, dp, len)
+char **s;		/* ptr to input pointer */
+char *dp;		/* dest. pointer */
+unsigned len;		/* max. string length */
+{
+char run, q, *ip;
+unsigned l;		/* chars stored so far */
+
+	ip= *s;							/* get string ptr */
+	l= 0;
+
+	while (*ip) {
+		if ((*ip != ' ') && 				/* skip leading blanks, */
+		    (*ip != '\t'))				/* and tabs */
+			break;
+	}
+
+	if ((q= *ip) == '"') ++ip; else q= ',';			/* if " skip, else set to , */
+
+	while (*ip) {
+		if (*ip == '\\') {				/* if a literal */
+			if (*(ip + 1)) *dp++= *++ip;		/* copy anything */
+		}
+		if (*ip == q) break;				/* stop on comma/quote */
+		if ((q != '"') && (*ip == ' ')) break;		/* stop on trailing space if not quoted */
+		if (l < len) *dp++= *ip++;			/* copy the character */
+		if (l < len) ++l;				/* count it */
+	}
+	*dp= '\0';						/* terminate it */
+
+	while (*ip) if (*ip++ == ',') break;			/* skip anything before comma */
+	*s= ip;							/* set new ptr */
+	return(l);
+}

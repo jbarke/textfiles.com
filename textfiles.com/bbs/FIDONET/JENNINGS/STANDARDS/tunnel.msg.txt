@@ -1,0 +1,284 @@
+Original Message Date: 21 Sep 92 08:45:29
+From: Uucp on 1:105/42
+To: Tom Jennings on 1:125/111
+Subj: FidoNet Tunnel paper
+From  m2xenix!rain.psg.com!randy
+From: randy@psg.com (Randy Bush)
+To:   jsq@tic.com (Jay Quarterman),
+Date: Mon, 21 Sep 92 7:11:07 PDT
+
+I think that both the Internet and the FidoNet communities should learn
+about this one.  So, ideally, I would like to see the appended short note
+published in both of your 'zines, FidoSnooze and Matrix News.  As Matrix
+News is more formal <g>, I could understand that John might like a
+month's lead or something.  Could you two guys work it out between you?
+
+My apologies that it is so hackerish, includes code, and all that.  This
+stuff just needed to be written down and passed along.  I have been asked
+just too damn many times.
+
+The appended is not final copy, but is quite close.  A few of the usual
+suspects are reviewing it.  When it goes for pub, I am willing to remove
+the copyright notice.
+
+randy
+
+- - - - - - - - - - - - - -   c u t   h e r e   - - - - - - - - - - - - - -
+
+                   How FidoNet<tm> Tunnels the Internet
+                            Randy Bush  92.9.21
+                          randy@psg.com 1:105/42
+       Copyright 1992, Pacific Systems Group.  All rights reserved.
+
+
+Introduction
+------------
+
+A number of the FidoNet zonegates tunnel FidoNet-FidoNet traffic over the
+Internet's intercontinental TCP/IP links.  This note is a short technical
+explanation of how it is done.  For the purposes of this note, it will be
+assumed that you are familiar with FidoNet, TCP/IP, the Internet, and odd
+bits of MS-DOS and uucp cruft.
+
+
+Legalities
+----------
+
+FidoNet owes very deep appreciation to the IP networks which have consented
+to the tunneling of FidoNet traffic through them.
+
+FidoNet has a long-standing written agreement with the Internet not to use
+the Internet for FidoNet-FidoNet traffic without explicit consent.  It is
+exceedingly important to note that the tunneling discussed in this note is
+done with the explicit consent and encouragement of the owners of the IP
+links concerned, e.g. EUnet and UNINET-ZA.  It is also of note that it has
+been agreed that the traffic on the link between Europe and North America
+will not 'compete' with EUnet, i.e. carry traffic which should, more
+appropriately, be gotten from EUnet directly, such as Internet mailing
+lists, MBAS file requests, ...
+
+
+Overview
+--------
+
+A goal of the hack is to make it appear as if the two FidoNet systems had
+actually communicated the 'normal' way by telephone.  Hence gating, in the
+UFGATE sense, is not done.  Instead, packed and compressed FidoNet files
+(xxxxyyyy.MOn) are magically moved from the sending node's outbound
+directory to the receiving node's inbound.  They are then unpacked as if
+they had been transported by phone.
+
+Files are transported by moving the data from the sending FidoNet node to a
+nearby UNIX<tm> host which is on the Internet.  The UNIX host then sends
+the file to a distant UNIX host which, in turn, transfers it to the distant
+FidoNet node.
+
+Different transports may be used between the FidoNet node and its local
+UNIX host.  Sending and receiving scripts are run on the UNIX hosts in
+order to acommodate these differences.  In the examples below, it will be
+assumed that the FidoNet node is on a local ether with its local UNIX host,
+but there are cases where the connection is via uucp etc.
+
+So the file can be routed by the distant UNIX system to the target FidoNet
+node, special processing and routing needs to be done by the receiving UNIX
+system.  Hence, inter-UNIX transport by ftp or rcp is inappropriate, and
+uucp over TCP/IP, aka UUCP-t, is used, so that a command script may be
+executed against the data file on the target host.
+
+
+The Fidonet Node
+--- ------- ----
+
+On the local FidoNet node, mail and echomail are processed in the normal
+manner using normal FidoNet tools.  I happen to use Binkley and QM because
+of their excellent standards conformity and their attempt to work well
+despite some of the non-conforming brain-damaged implementations out there.
+1:105/42 uses FTP Software's excellent PC/TCP package for IP communication
+with the local SUN UNIX host rain.psg.com.  Thus 1:105/42 can rcp, rsh,
+etc.
+
+On 1:105/42, the FidoNet node actually used as the zonegate, QM packs the
+mail and echomail for the target FidoNet node in an outbound directory as a
+uniquely named file, xxxxyyyy.MO?.  As there are only ten possible unique
+files of this form in any one day, *.MO[0-9], the outbound processing of
+the file is done ten or less times in any one day, and is therefore run
+from Binkley's event management system.  So, ten times a day, 1:105/42 runs
+the following .BATch file for each of the tunneled connections:
+
+    : %1 - outbound directory
+    : %2 - .MOn filename in outbound
+    : %3 - target UNIX Internet host
+    : %4 - script name on target UNIX Internet host
+    : %5 - .flo filename in outbound
+    : %6 - target FidoNet node on the other side of %3
+    :
+    : load ether driver and move to outbound directory
+    3c500
+    h:
+    cd %1
+    if not exist %2.* goto noout
+    :
+    : send the outbound files
+    for %%i in (%2.*) do call bink2eux 2fidoeu %%i %3 %4 %6
+    del %5.?lo
+    :
+    :noout
+    : go to inbound directory
+    cd h:\105-42
+    l:
+    cd l:\105-42\files\net\europe
+    :receive inbound files
+    rcp -b fido@rain.psg.com:%3/* .
+    for %%i in (*.*) do rsh rain.psg.com -l fido rm %3/%%i
+    : move received file to real inbound directory
+    mv *.* ..
+    :
+    : reset directories and get rid of driver
+    cd l:\105-42
+    c:
+    cd c:\105-42
+    inet unload
+
+The subsidiary .BATch file BINK2UUX.BAT is as follows:
+
+    rcp -b %2 fido@rain.psg.com:%1
+    if errorlevel 1 goto end
+    rsh rain.psg.com -l fido fido2uucp %1 %2 %3 %4 %5
+    if errorlevel 1 goto end
+    : set the file length to zero but don't delete it
+    nullit %2
+    :end
+
+
+The Local UNIX Host
+--- ----- ---- ----
+
+The local UNIX host, rain.psg.com, is a SUN which is on the international
+Internet via UUNET's commercial IP service, AlterNet, at 56kb.  It has a
+user account set up named fido, with the directory structure as follows:
+
+    % ls -alg ~fido
+    total 9
+    drwxrwx---  7 fido     uucp          512 May 30 19:34 ./
+    drwxr-xr-x 20 root     daemon        512 May 28 07:46 ../
+    -rw-r-----  1 fido     uucp           83 May 23 18:25 .profile
+    -rw-r-----  1 fido     uucp           74 Dec 21  1991 .rhosts
+    drwxrwx---  2 fido     uucp          512 Sep 20 08:17 2fidoeu/
+    drwxrwx---  2 fido     uucp          512 Sep 20 07:02 kudu/
+    drwxrwx---  2 fido     uucp          512 Sep 19 21:34 mcsun/
+    drwxrwx---  2 fido     uucp          512 Sep 18 07:25 pacifier/
+    drwxrwx---  2 fido     uucp          512 Sep 20 04:22 tmp/
+
+The .rhosts file has an entry for puddle.fidonet.org, the FQDN for its
+local friend 1:105/42, and the .profile has a restricted path as one would
+have for a root account.  There is a directory for each of the remote UNIX
+hosts.  There is also, in a directory on the .profile path, the script
+invoked by 1:105/42 and that invoked by the remote UNIX system.
+
+The script invoked by the rsh in 1:105/42's .BATch file is fido2uucp, and
+is coded as follows:
+
+    #!/bin/sh
+    FILE=`echo $2 | tr "[A-Z]" "[a-z]"`
+    cd /home/fido/$1
+    if test -s $FILE; then
+        uux - -r $3!$4 $5 $2 < $FILE
+        fi
+    rm $FILE
+
+The fidouucp script invoked by the foreign UNIX system via uuxqt is as
+follows:
+
+    #!/bin/sh
+    SPOOL=/home/fido
+    SPOOLDIR=$SPOOL/$UU_MACHINE
+    SPOOLTMP=$SPOOL/tmp
+    file=`echo $2 | tr "[a-z]" "[A-Z]"`
+    cat - > $SPOOLTMP/$FILE
+    ln $SPOOLTMP/$FILE $SPOOLDIR/$FILE
+    rm $SPOOLTMP/$FILE
+    find $SPOOLDIR -size 0 -exec rm {} \;
+
+
+Tying it all Together
+----- -- --- --------
+
+Of course, the two UNIX hosts must have uucp accounts for each other which
+allow uuxqting of the appropriate scripts, and providing the appropriate
+directories, Systems (or L.sys) entries, etc. as usual.
+
+The observant reader will note that the system described above does not
+handle transfer of arbitrary files, but only packed and compressed mail.
+To make the Internet hack more general, i.e. move more than outbound mail,
+we sorely need a DOS command to drive the scripts through the .?LO file in
+the outbound directory.  It would be invoked as, for example,
+
+    OFILES <batchname> Z:N/N <more-params>
+
+OFILES invokes the DOS .BATch file <batchname> once for each file listed in
+the .?LO file of the FidoNet node Z:N/N as follows
+
+    <batchname.BAT> <znn> <filename> <trunc-del-leave> <more-params>
+
+where
+
+    <batchname.BAT>   is the batch file named in the OFILES command
+    <znn>             is the Z:N/N from the OFILES command
+    <filename>        is the name of one file in the .?LO filelist
+    <trunc-del-leave> is TRUNC, DEL, or LEAVE depending on the .?LO options
+    <more-params>      are the rest of the params from the OFILES command
+
+What is missing is how OFILES knows if it can delete the entry in the .?LO
+file, i.e. if the invoked .BATch file considers itself successful.
+
+I wish to use it, for example, as
+
+    OFILES BINK2EUR 2:500/1 2fidoeu
+
+with the .BATch file BINK2EUR as
+
+    IF NOT EXIST %2 GOTO end                 ; del entry if can't find
+    RCP -b %2 fido@rain.psg.com:%4           ; copy the file to UNIX
+    IF ERRORLEVEL 1 GOTO error
+    RSH rain.psg.com -l fido fido2uucp %2 %4 ; run the UNIX send script
+    IF ERRORLEVEL 1 GOTO error
+    IF %3 == DEL RM %2                       ; delete   ^ files
+    IF %3 == TRUNC TYPE NUL: > %2            ; truncate # files
+    GOTO end
+    :error
+    <tell OFILES not to delete the entry>
+    :end
+
+Which would allow one to use, for example, file attaches, PLEASE, TICK, ...
+via the Internet hack.  Note that this hack would also allow a .BATch
+hacker to drive anything against the list in a .?LO file.
+
+
+Acknowledgements
+----------------
+
+Daniel Karrenberg, Daniel.Karrenberg@ripe.net, worked out the first UNIX
+script file hacks with me and, more importantly, helped negotiate the very
+generous permission of EUnet to carry the US/Europe traffic.
+
+Henk Wevers, 2:500/1, helped to sort out the first such connection.  We all
+just wish he would share his FidoNet-side code.
+
+Henk's partner in crime, Louis van Geel, 2:295/3, continues to very helpful
+with the socio-political aspects, which seem to have become more important
+than the technical in FidoNet over the years.
+
+Dave Wilson, ccdw@hippo.ru.ac.za, and Doug Palin, doug@pacifier.rain.com,
+helped generalize the hack when we added their links.  They have also
+contributed code.
+
+Vince Perriello, 1:343/491, helped with some hacks and was supportive in
+his wonderful garrulous way.
+
+---
+
+FidoNet is a trademark of Tom Jennings and Fido Software.
+UNIX is a trademark of the soul-less [sic] behemouth AT&T.
+
+-30-
+

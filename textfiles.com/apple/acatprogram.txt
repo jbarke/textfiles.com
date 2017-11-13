@@ -1,0 +1,189 @@
+Advanced Programming Information Fixed
+--------------------------------------
+30-MAR-85 By Homer Brothers Software
+Please upload this doc on every bbs
+you use so that everyone will start
+programming your Cat correctly.
+Along time ago when the Novation Apple
+Cat was first released, Novation
+thought that they would be nice people
+and give all you hackers information
+on how to diddle with there hardware.
+Well since that time many of us have
+found that they messed up in a few
+places, in fact, Advanced Programming
+Information has more bugs than
+COM-WARE did. To my knowledge the
+API manual has never been de-bugged.
+So please throw away your programming
+ego for a few minutes and take the
+time to read this file.
+Thanks
+Homer Brothers
+P.S. I never want to see another 212
+card turn on unless it was suppose to!
+--------------------------------------
+The most important bug in the API
+manual is the 212 card bug. Please
+turn to page 7 students. If you will
+notice the SQUBYT register's hi order
+bit is the 212 disable/enable bit.
+Yes dreaded ol' bit number 7 must be
+on to disable the 212 card just like
+it says here. That means to have the
+handset squelched the cassette off
+and the 212 card off, you would need
+to store a $81 in SQUBYT. Now your
+saying well thats not a bug in the
+manual, well your correct, that
+actual bug that has confused so many
+is on another page. Please turn to
+page 24 students. Please notice the
+modem INIT routine where they load
+the accum with binary 00000001, a hex
+01... Right about now your saying
+damn I shouldn't have cluged that code
+I knew it sucked the second I looked
+at it. Well give him a break, he wrote
+this thing probably before the 212
+card was finished.
+Ok class, you have learned of the most
+common error in programming the Cat.
+Well now, if all you stud programmers
+have managed to stay with us, let me
+please point out some of the more
+obscure mistakes in programming the
+cat. (Ones even total stud programmers
+have made)
+Please turn to page 15 students. Ah
+yes, the dreaded XMTBYT. The cause of
+so many early apple-cat repairs. Yes
+believe it or not, many programmers
+never bother to shut off the carrier
+when they hang up the phone line (As
+the micron did in his Catsend bbs).
+Leaving on the carrier after hanging
+up the phone is not good for the poor
+little heat sensitive LSI chips that
+Novation designed, so you can only
+add to the life of them by giving the
+carrier a rest after the caller is
+logged of by powering there bod's
+down. That means a $1F to the XMTBYT
+and a extended life time for the Cat.
+Ok, well so what that wasn't a bug in
+the manual heres another for you.
+Please turn to page 4 students. Ah yes
+the much loved SWBYT. This do all
+register has been so misunderstood
+because of the mistakes in API.
+Ah those lovely firmware switches,
+when used with the firmware protocol
+they can tell you your modem defaults,
+ie 212 installed? Welp as you may have
+already noticed they botched the bit
+order on the switches. The register
+should read-
+             SWBYT
+7   6   5   4   3   2   1   0
+DV  BSR CD  AD  SW3 SW2 SW1 SW4
+Ok well you thought I would never find
+more than one bug... So whats next?
+Well students flip to page 21. On the
+bottom of the page you should see the
+Label CHKRNG, as you can see they check
+ACBYT's ring bit. If the phone is
+ringing, they print a nice little
+message and wait for the line to stop
+ringing. Now if your saying, well
+thats stupid, why don't they just
+pickup the phone?, well that would be
+okay with most modems. BUT! Novation
+botched the hardware on the Cat, and
+if you pick up the line while the 55
+volt ring pulse is there, WHAM! the
+cat takes a jolt that nocks its
+registers silly.
+Well by now your saying, thats it,
+nothing else... Well I am not out of
+breath yet.
+Bad programmers (shame on you) do
+somthing like this when they init
+there hardware.
+INIT     SEI
+         LDY SLOT
+         LDA #%10000001
+         STA .... etc etc etc
+         init init init....
+         RTS
+More experienced programmers (I love
+you guys) do somthing like this.
+INIT     PHP
+         SEI
+         LDY SLOT
+         LDA #%10000001
+         STA .... etc etc etc
+         init init init....
+         PLP
+         RTS
+Hey, he knows that other devices use
+interupts besides the CAT... boy that
+guy must use ProDOS.
+Well thats realy about all the bad
+things I can say right now. I will try
+to come up with some more. Please take
+the time to make sure you understand
+what I did here if you plan on
+programming your cat from 6502 machine
+code, then rip it up and say you knew
+that a lot longer than Homer did.
+Boy don't we programmers have big
+easily dented ego's? I know I do.
+OH! I cant end this file without
+saying this.
+REAL MEN USE EDASM ProDOS! Boys play
+with Merlin and its wimpy little
+symbol tables. Oh yeah and,
+REAL MEN USE A DCI BASED PRINT
+Whats that? This-
+* PRINT, DCI based of course
+* By Homer Brothers, some time in
+* the late 80's
+TINDR0    EQU $E0
+          LDA #0
+          STA TINDR0
+* Above only need be done once in the
+* begining of your program.
+LOOP      JSR PRINT
+          DCI "How the hell are you? "
+          JMP LOOP
+PRINT     EQU *
+          PLA
+          TAY
+          PLA
+          STA TINDR0+1
+PRINTLOOP INY
+          BNE GETNCHAR
+          INC TINDR0+1
+GETNCHAR  LDA (TINDR0),Y
+          PHP
+          ORA #$80
+          JSR COUT
+          PLP
+          BPL PRINTLOOP
+          LDA TINDR0+1
+          PHA
+          TYA
+          PHA
+          RTS
+Make sure that when you use this, you
+tell everyone that you used it long
+before Homer did, or that you would
+have thought of it anyways.
+God would somone please beat my ego up
+please.
+Homer Brothers
+Call my catsend 24hrs 5meg
+(312) 665-0264
+Put your boards here-
+VIEW FILE # OR ( M ): 

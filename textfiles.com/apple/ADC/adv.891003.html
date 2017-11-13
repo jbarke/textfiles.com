@@ -1,0 +1,384 @@
+America Online
+APPLE II DEVELOPMENT FORUM CONFERENCE LOG
+October 3, 1989  10:00 pm eastern time
+Topic:  Resource Forks and What to do With Them
+Forum Leader:  Dave Sugar (AFL Dyfet)
+
+AFL Scott  Have to find more err.... resources..:)
+AFL Dyfet  Speaking of resources; Good evening and welcome to the Apple II
+           Development
+AFL Dyfet  Forum chat.  Tonight's topic will be 'resources'; What are they;
+           what you can
+AFL Dyfet  do with them; etc.  I was hoping that, by this time, several new
+           products 
+AFL Dyfet  intended to make life easier with resources on the GS would
+           already be out on
+AFL Dyfet  the market, but it appears this has yet to happen.  In any case,
+           we will be
+AFL Dyfet  obverving PROTOCOL tonight, which means that if you wish to ask a
+           question, you
+AFL Dyfet  must enter a '?' on a line by itself, and if you wish to respond
+           or comment on
+AFL Dyfet  the question currently being asked, you must enter a '!' on a line
+           by itself.
+AFL Dyfet  I will then call you each in turn to speak.  Feel free to get your
+           questions
+AFL Dyfet  in the queue now, before I fill the rest of the screen :).
+AFL Dyfet  Go ahead, Coach, you have the floor now.
+Coach101   With a code resource,
+Coach101   I presume that I write the code, use LinkIIGS to make an
+           executable
+Coach101   entity, and then *somehow* get the entire output from LinkIIGS
+           into
+Coach101   the resource fork.  Is there a utility to do that last step for
+           me?
+Coach101   ga
+Coach101   Come on, is that tough a question?
+AFL Dyfet  I would suspect you can bind it using the resource compiler.
+AFL Dyfet  GA Dave...
+Dave Lyons Sorry, I was away from my kbd for a sec--if you're using the Rez
+           compiler (or
+Dave Lyons on the Mac, the RezIIgs tool), you can use a simple directive like
+           "load" (I
+Dave Lyons may have the wrong name there) to include any sort of file (OMF is
+           fine, but
+Dave Lyons it works for anything) as a particular resource type/id.  For
+           example,
+Dave Lyons resource rCDevCode(1) load "myfilename";  or something (CDev code
+           resource
+Dave Lyons with ID 1).  ga
+Coach101   Thanks Dave, I knew it had to be simple I just kept missing it in
+           the
+Coach101   manual....    done...
+Dave Lyons (Oops--it's "read", not "load".)
+AFL Dyfet  Okay, I believe the next question was from WindRider.  GA
+           Wind...
+Windrider5 some basic question What types of resources are there? And what
+           advantages are
+Windrider5 there for using resources
+AFL Dyfet  One advantage of resources is that you can store configuration
+           information,
+Dave Lyons !
+AFL Dyfet  device drivers, etc. in the same file as your application, and not
+           need to
+Coach101   !
+AFL Dyfet  use subdirectories.  You can copy everything you need for your
+           application to
+AFL Dyfet  run in a single operation.  I see a lot of people wish to comment;
+           Dave, GA.
+Dave Lyons Okay...there are as many *types* of
+Dave Lyons resources as you care to invent:  the Resource Manager is
+           completely general
+A GibberFC (hi all)
+Dave Lyons in that sense.  There are a couple dozen "system resource types"
+           (they have
+Dave Lyons a standard format, and their types are in the range $8000+). 
+           Types below
+Dave Lyons  $8000 can be used for whatever anybody wants.  The currently
+           defined system
+Dave Lyons resource types include stuff like strings, control templates,
+           control lists,
+Dave Lyons window templates, control defprocs (code), & lots more (they're
+           defined in
+Dave Lyons the APDA draft of Toolbox Reference, Volume 3).
+Dave Lyons Advantages:
+Dave Lyons Users (and developers) can potentially use resource editors to
+           cusotmize
+Dave Lyons applications (wanna do a French version of your app?  Resources
+           can make your
+Dave Lyons life easier).
+Dave Lyons The Resource Manager works very closely with the Memory Manager to
+           give you
+Dave Lyons stuff like resources that are purgable--if your user has lots of
+           RAM, they
+Dave Lyons won't need to do as much disk switching as a user in a low-memory
+           environment.
+Dave Lyons I'll stop here & give Coach a chance.   ga
+AFL Dyfet  Ga Coach...
+Coach101   I was going to comment on the advisability of storing information
+           in
+Coach101   a the load units resource fork that is *user* dependent (e.g.,
+           configuration
+Coach101   information).  In a multi-launch (file server) environment the
+           user may
+Coach101   not have write access to the program itself and different users
+           may
+Coach101   want different configurations....  ga
+Dave Lyons (Very good point.)
+AFL Dyfet  That is a very good point, Coach...
+Dave Lyons :)
+Coach101   No credit here....   Apple specifically mentions it in their
+           publications.
+AFL Dyfet  Do we have any more comments on this?
+AFL Dyfet  Okay, I believe our next question is from Nuzz.  You have the
+           floor, Nuzz.
+Nuzz       What would be the procedure for an app that wanted to replace a
+           res. without
+Nuzz       having to first load it in and delete it?
+AFL Dyfet  Do you mean applications that would modify their own resource
+           forks?
+Nuzz       Right
+AFL Dyfet  GA Dave...
+Dave Lyons Isn't there a RemoveResource call that takes a type and id &
+           removes it from
+Dave Lyons the most-recently-opened resource file?  (Looking it up....)
+AFL Dyfet  I wish I could find and get all my manuals unpacked...
+Dave Lyons Yes, it looks like there is--call
+Nuzz       Doesn't RemoveResource require that it be loaded?
+Dave Lyons number $0F1E.  Sine the
+Dave Lyons er...SINCE the parameters are a resource type and a resource ID
+           (and not a
+Dave Lyons handle), no--I don't believe it requires you to load the resource
+           first.
+Nuzz       Can you REPLACE a resource without loading it?
+Dave Lyons (The docs say it releases "any memory the resource occupied"; so
+           it does
+Nuzz       and keep the same Id
+Dave Lyons release the resource if you loaded it without detaching it.)
+Dave Lyons Checking AddResource....
+Dave Lyons Since you get to specify the ID when you add a resource, you can
+           just
+Dave Lyons RemoveResource on the existing one and then AddResource with the
+           same type
+Dave Lyons and id as the resource you just removed.  If this isn't
+           "replacing" it, I'm
+Dave Lyons missing the distinction.
+Dave Lyons An alternative
+Dave Lyons approach, if it's easier, would be to SetResourceLoad to false, so
+           that
+Dave Lyons the resource is not actually loaded into memory, SetResourceLoad
+           back to true,
+Dave Lyons (after LoadResource-ing the one you want, of course), then
+           SetHandleSize the
+Dave Lyons handle you got from LoadResource, put whatever data you want in
+           that handle,
+Dave Lyons and WriteResource the thing (or MarkResourceChange so that it gets
+           written
+Dave Lyons later).
+Nuzz       Any chance of a one call thing like _ReplaceResource. Sounds
+           easier. GA
+Dave Lyons I don't see
+Dave Lyons how it's much easier than RemoveResource followed by
+           AddResource--the only
+Dave Lyons thing it saves you is doing a GetResourceAttr if you don't already
+           know the
+Dave Lyons attributes, right?
+Nuzz       Sounds good to me.. Done
+Dave Lyons (done)
+AFL Dyfet  Okay, I see that our next question is from Parik.  GA Parik, you
+           have the
+AFL Dyfet  floor.
+AFL Dyfet  Okay, then I guess Jim will be next :).  GA Jim :)
+JimNiemann What other products do people know about?  Other than
+JimNiemann TML Pascal II, REZ, and Genesys? ga
+JimNiemann I meant resource supportive products, of course!
+Dave Lyons (Besides the Monitor? :-)
+AFL Dyfet  A2GS, you seem to be first, GA :)
+A2GS       Never mind, was wondering what he was talking about  :)
+AFL Dyfet  Okay, GA Doctor Why...
+Doctor Why ByteWorks will have a product early next year. DesignMaster, I
+           think!
+AFL Dyfet  I believe the people that originally put out Dialog Layout Utility
+           will also
+AFL Dyfet  have a visual resource editor sometime in the future.
+AFL Dyfet  Parik, you wished to comment? GA.
+Parik Dude right, DesignMaster by Chris Haun will be published by ByteWorks,
+           its supposed
+Parik Dude to be good * and * cheap!  :)  Also APW had/has (?) a program
+           called Little
+Parik Dude Res which is just a mini resource editor, works good.  Dunno if
+           they'll put it
+Parik Dude out with apw v2.0.  ga
+AFL Dyfet  Okay, Dave, I believe your next...ga...
+Dave Lyons Will any of these products be modular, so that people can write
+           their own
+Dave Lyons editor modules for application-specific resource types (the way
+           you can for
+Dave Lyons ResEdit on the Macintosh)?  ga
+AFL Dyfet  Interesting point, Dave...Um, I believe Mike is next...GA
+           Mike...
+AFL Mike F I believe another Resource Program is Toolbox or something like
+           that from Simple Software -- ...
+AFL Mike F it has been announced and advertised but not out yet, from what I
+           can tell.  GA
+AFL Dyfet  Unfortunately, many of the products mentioned are just not
+           available at this
+AFL Dyfet  time.  When I scheduled this chat originally, I had hoped that at
+           least a few
+AFL Dyfet  of them would have been.
+AFL Dyfet  Do we have any more comments on res editors?
+AFL Dyfet  Okay, I believe our next question is from A2GS.  GA A2...
+A2GS       Wasn't coach first?
+AFL Dyfet  Oops...Okay.  We'll let Coach in, then :)
+A2GS       First come, first serve (that's life)
+Coach101   What do "-flag SYSTEM" and "-flag ROM" accomplish for me, please
+           go
+Coach101   beyond the verbiage in the APW manual :)
+Coach101   Those are REZ options....
+Dave Lyons (No idea so far.)
+Coach101   Next Q     
+AFL Dyfet  A very honest answer, if nothing else :)...
+AFL Dyfet  Okay, for the moment we will go to A2GS then...GA A2...
+A2GS       Are resources discussed thoroughly in TB Ref. III and is it
+           available yet in
+A2GS       it's finished form (TB III)?  GA
+AFL Dyfet  GA Dave...
+Dave Lyons A beta draft of TB Ref 3 is currently shipping from APDA.  No,
+           it's not in its
+Dave Lyons final form yet.  Whether resources are discussed "thoroughly" is
+           somewhat
+Dave Lyons subjective, I guess--I think it's thorough enough, and you can
+           certaily
+Dave Lyons get any questions you have answered here (you may even cause the
+           answers to
+Dave Lyons appear in a future version of the book, or in a Technical Note). 
+           ga
+AFL Dyfet  GA Coach.
+Coach101   I have both ToolBox III and the new APW tools documentation (both
+           from
+Coach101   APDA and both are shipping), and I would say that between the two
+           you 
+Coach101   should find enough information to understand and use resources... 
+            
+A2GS       (Don't use APW, drives me up the wall  :)
+Coach101   Be forewarned, Resources are a *meaty* subject, if you really want
+           to
+Coach101   get an understanding of them and make *maximum* use of them you
+           should
+Coach101   be prepared to invest some time in reading (more than once) the
+           books...
+Coach101   done
+AFL Dyfet  Well said, Coach!  I believe our next question is from Michael. 
+           GA.
+AFL Mike F Slightly off the subject ... any word when System 5.0.2 will be
+           available?  GA
+Dave Lyons ! -> Nope.
+AFL Dyfet  I have a feeling that Dave cannot comment on that one, even if he
+           does know :)
+Dave Lyons ("Soon" is the best I can do...out of my department.  I actually
+           *don't* know.)
+Coach101   Is it actually 5.0.2 or some other number?
+Dave Lyons It's actually 5.0.2.
+AFL Dyfet  Okay, I believe our next question is from JD.  GA JD.
+JDavies1   This is way off the subject but... Does anyone know where I can
+           get
+JDavies1   Prosel16 (?)?
+JDavies1   I can't find it anywhere and I deal in software
+AFL Dyfet  GA Dave...
+Dave Lyons Yes; lots and lots of people know. :-)  $60 from Glen Bredon, 521
+           State Road,
+Dave Lyons Princeton, NJ (but I can never remember the zip).  ga
+AFL Dyfet  GA A2GS...
+Coach101   Also carried by a number of advertisers in InCider....
+A2GS       Never mind, basically STOLE the words right out of my mouth  :)
+A2GS       DAVE
+A2GS       that is
+Dave Lyons :)
+A2GS       :)
+AFA Gary J Stole? :)
+JDavies1   thanks alot.
+A2GS       carefully eased the words right from between my teeth 
+Coach101   Actually an *off the subject* comment as opposed to a
+           question....
+AFL Dyfet  Okay, moving along, I believe Coach now has the floor.  GA
+           Coach...
+Coach101   The technotes and filenotes are now in our library....
+AFA Gary J Yup.
+Coach101   My thanks to those who worked hard to get them there!
+AFL Dyfet  Somebody noticed :)
+Coach101   done
+AFA Gary J :)
+AFA Gary J (Took most of the weekend  :)
+AFL Dyfet  Gary did a very fine job on that :)...Okay, I believe our next
+           question is from
+Doctor Why Dave, is Apple working on SCSI backup & restore utilities that
+           will recognize
+AFL Dyfet  Doc Why.  GA Doc.
+Doctor Why the new file type.
+Doctor Why file type = resource forks
+Dave Lyons Sorry--can't comment on future plans or lack thereof.  (It's a new
+           "storage
+Dave Lyons type", not file type.)  ga
+AFL Dyfet  Prosel16 has utilities to handle backup and restoration of
+           extended files.
+AFL Dyfet  Well, I believe it's time to get that question queue filled back
+           up :)
+AFL Dyfet  GA Gary :)
+AFA Gary J Is there any other reference material avaialble on resource files
+           other than
+Doctor Why Okay, I'll be ordering Prosel16. I just think that it's a mistake
+           for Apple to
+AFA Gary J the two sources mentioned from APDA (TB III and APW), and the
+           Tech Notes?
+Doctor Why supply an operating system that they don't supply the means to BU
+           and Restore.
+AFL Dyfet  Planning a book, Mike? :)...GA Mike...
+AFA Gary J :)
+AFL Mike F Nah Dave -- at least not yet.  But there is an article in Call
+           -A.P.P.L.E. quarterly this fall on
+AFL Mike F resources.
+AFL Mike F Done
+AFA Gary J Great.  (I think I just got mine in the mail today...
+AFA Gary J ..haven't looked at it yet..)  Thanks.
+AFL Mike F (Also has an article on TC by someone married to my wife.)
+AFL Dyfet  Okay, GA A2, you have the floor now (too bad, I was kinda hoping
+           for a new
+AFL Dyfet  book from you, Michael :)
+AFA Gary J heheh
+AFL Mike F Love to do one Dave.  Just need a publisher.
+A2GS       This is Wayyyyyyy of the beaten path and what we've been talking
+           about tonight,
+A2GS       but...
+JDavies1   Who's married to your wife? And your not upset? 
+AFL Mike F :)
+A2GS       anyone know what the story is with this new mag. II Technical,
+           missed them at 
+A2GS       the Fest, Damn    GA
+AFL Dyfet  GA Michael.
+AFL Mike F II Technical is from Randy Hyde and the HAL Labs people -- they of
+           LISA Assembler fame.  Just ...
+AFL Mike F grabbed a look at it at the fest but subsribed right on the spot. 
+           Haven't seen my copy yet but it
+AFL Mike F was already in issue no. 2.  I ordered the back ones too.  GA
+A2GS       I got their first issue and a subscription...just waiting right
+           now.
+AFL Dyfet  I kinda miss "Assembly Lines" myself.
+AFL Mike F Agree Dave.
+A2GS       We need more Mags!!!
+AFA Gary J Yup.
+A2GS       Mike you want to start one instead of your book?    :)
+AFL Dyfet  It sounds like II Technical is trying to go after the old Assembly
+           Lines nitche
+AFL Dyfet  .  GA Mike.
+A2GS       More Technical!
+AFL Mike F On the issue of magazines, I assume everyone knows of the
+           programming mags from Ariel Publishing --
+A2GS       Yup!
+AFL Dyfet  Yes, they put out an interesting zine, mostly dealing with
+           Merlin.
+AFL Mike F one for Merlin people (Sourceror's Apprentice I believe) on on
+           Applesoft (Reboot), one of ZBasic
+AFL Mike F for the II (can't remember the name) and one for ZBasic on some
+           other computer Apple makes.
+AFL Mike F Done
+AFL Dyfet  You are correct on the titles of the first two, Michael.
+AFA Gary J Anyone have an info/order address for II Technical?
+AFL Dyfet  GA A2.
+A2GS       Call...
+A2GS       (714) 359-8480 for more info, to advertise or to submit articles
+A2GS       It's a VERY technical magazine as far as topics go and also VERYYY
+           interesting!
+A2GS       Well not that Technical...
+AFA Gary J Thanks.
+AFL Dyfet  Sounds like just the kind of magazine I want to read :)
+AFL Dyfet  GA A2...
+A2GS       interested in the highlights of the first issue...or am I getting
+           just a weee
+A2GS       to much carried away   :)
+AFA Gary J I'm interested.
+AFL Dyfet  Why don't you start a thread on the subject of good hard core
+           technical mags in
+AFL Dyfet  one of the forum areas? :)
+AFA Gary J Good idea.
+A2GS       sounds good
+AFL Dyfet  Maybe 'Forum Business'.

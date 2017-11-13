@@ -1,0 +1,441 @@
+Sega Genesis Hardware Internals - Revised: 04/07/1993
+
+An up-to-date version of this file can be gotten by anonymous ftp
+from ftp.spd.louisville.edu, in the file "pub/sega/hardware.txt".
+
+Please send corrections or comments to:
+
+	Rick McTeague
+	sysrick@starbase.spd.louisville.edu
+
+
+Disclaimers:
+
+The following information was extracted without the use of official
+information from Sega Enterprises, Ltd. I therefore offer no warranty 
+on the correctness of this information.  Use it at your own risk.
+
+This information was gathered as a personal project, and is not the
+responsibility of my employer.
+
+Different versions of the Genesis exist, so I won't suggest that any of
+this information is right for anybody's Genesis but my own.
+
+Sega, Genesis, Sonic the Hedgehog, and Ecco the Dolphin are trademarks
+of Sega Enterprises, Ltd. Other trademarks are the property of their
+respective companies.
+
+
+The Cartridge ROM
+-----------------
+
+As others on the net have observed, a standard Genesis cartridge is nothing 
+more than a small printed circuit board with a ROM on it. There are some
+cartridges which have battery-backed RAM for saving high scores, 
+configurations, etc., but I haven't seen these, so I don't know about them. 
+If you know of a particular cartridge that has RAM, let me know so
+I can go rent one and take it apart (shhhh!) to see what's in it.
+
+A cartridge contains a word-wide (16 bit) ROM with up to 2 Meg words
+(4 Mbytes). This is based on the signal !C_CE (see below), which is used
+as the cartridge ROM's chip enable on the cartridges I've looked at, and
+which is active at addresses $000000-$3fffff.
+
+It may be possible to have more than 4 Mbyte cartridges; if so, either
+they ignore the !C_CE line and do their own address decoding, or there's
+a register somewhere in the Genesis which changes the default address
+decoding scheme for !_CE.
+
+Note that cartridges are advertised as being "8 Meg"; as far as I know,
+is 8 Meg _bits_, not bytes. 1 Mbyte is still pretty impressive for a 
+game machine.
+
+SONIC uses a 40-pin 256Kx16 (512Kx8) ROM in word mode. 
+
+Ecco the Dolphin uses a 42-pin 512Kx16 (1024Kx8) ROM in word mode. This one
+confused me because I'd never seen a 42-pin DIP before, so I thought it was
+40 pins. No wonder the signals didn't look right...
+
+Putting together a little bit of information from a Sharp data sheet for
+a 512 Kword ROM with a bit of conjecture based on the Sonic and Ecco
+cartridges, this is what I can come up with for pinouts:
+
+	      Sonic				     Ecco
+	   (256 Kword)				  (512 Kword)
+
+						 ------u------
+	  ------u------	               A18    1=|	      |=42   VCC?
+A17    1=|	       |=40   A 8      A17    2=|	      |=41   A 8
+A 7    2=|	       |=39   A 9      A 7    3=|	      |=40   A 9
+A 6    3=|	       |=38   A10      A 6    4=|	      |=39   A10
+A 5    4=|	       |=37   A11      A 5    5=|	      |=38   A11
+A 4    5=|	       |=36   A12      A 4    6=|	      |=37   A12
+A 3    6=|	       |=35   A13      A 3    7=|	      |=36   A13
+A 2    7=|	       |=34   A14      A 2    8=|	      |=35   A14
+A 1    8=|	       |=33   A15      A 1    9=|	      |=34   A15
+A 0    9=|	       |=32   A16      A 0   10=|	      |=33   A16
+!CE   10=|	       |=31   !BYTE    !CE   11=|	      |=32   !BYTE
+GND   11=|	       |=30   GND      GND   12=|	      |=31   GND
+!OE   12=|	       |=29   D15      !OE   13=|	      |=30   D15
+D 0   13=|	       |=28   D 7      D 0   14=|	      |=29   D 7
+D 8   14=|	       |=27   D14      D 8   15=|	      |=28   D14
+D 1   15=|	       |=26   D 6      D 1   16=|	      |=27   D 6
+D 9   16=|	       |=25   D13      D 9   17=|	      |=26   D13
+D 2   17=|	       |=24   D 5      D 2   18=|	      |=25   D 5
+D10   18=|	       |=23   D12      D10   19=|	      |=24   D12
+D 3   19=|	       |=22   D 4      D 3   20=|	      |=23   D 4
+D11   20=|	       |=21   VCC      D11   21=|	      |=22   VCC
+          -------------			         -------------
+
+Note that the address line numbering is different than that of the 68000;
+line A0 of the ROM is really connected to the 68000's A1. This is because
+of the way the 68000 handles even/odd byte addressing using !UDS and !LDS.
+
+The !BYTE line is held high. This puts the ROM chip into "word" mode,
+where data is accessed 16 bits at a time.
+
+The convenient correspondence between ROM and 68000 data and address
+lines (ROM D0 = 68K D0, ROM D1 = 68K D1, etc..., and ROM A0 = 68K A1, 
+ROM A1 = 68K A2, etc...) may not exist in all cartridge designs. This
+is sometimes difficult to visualize, but keep in mind that the ROM 
+doesn't care whether its D0 is really D0, or if its A3 is really A3,
+etc. As long as each data line is used as the same D## line for both 
+programming and reading, and each address line is used as the same A## 
+for both programming and reading, the ROM will function properly and 
+the 68000 will see the right instructions. Think about it...
+
+Why bring this up? If you remove the ROM from the cartridge PCB and try
+to read it with a EPROM programmer, there may be situations where you 
+won't see valid 68000 instructions, or things won't be in the right 
+place... Assuming your programmer isn't messed up, this would be because
+the address and data lines on the ROM aren't assigned the way you'd expect.
+
+Why would someone make a cartridge like this? To make your life difficult,
+if you're wanting to hack their ROMs, or to make their life easy, by making
+the cartridge PCB easier to design.
+
+Does anyone make cartridges like this? I don't know. But the possibility
+exists, and I thought you should know.
+
+The easiest way to avoid this potential problem is to build an adapter 
+from your programmer's EPROM socket to an edge card connector into which
+you plug the cartridge. This is a bit safer, too, so you don't have to
+remove the ROM from the cartridge (or even open it up).
+
+
+The Cartridge Port
+------------------
+
+The cartridge port presents the 68000's 23 address lines, 16
+data lines, as well as some control signals, described below.
+
+With the exception of the standard 68000 signals, signal names
+are my own and may bear no resemblance to their real (i.e., internal
+to Sega) names.
+
+Active low signals are prefixed with a "!".
+
+!C_OE drives the cartridge ROM's output enable. It's taken low on
+any 68000 read from locations $000000 to $0dfffff, but doesn't really 
+matter unless !C_CE is low.
+
+!C_CE is the cartridge ROM's chip enable, and is taken low when the
+processor accesses memory locations $000000 to $3fffff.
+
+!LO_MEM looks similar to !C_CE, but is taken low on accesses to
+locations $000000 to $7fffff. I haven't tried tying anything to this
+yet. Not used by the ROM.
+
+CLK is the 68000's 7.67 MHz clock, being fed to the cartridge in case
+something might want to use it. Not used by the ROM.
+
+There's a !DTACK at the cartridge port, but I don't know how useful it
+is. It looks like the Genesis has its own logic for giving !DTACK to the
+processor, so it's not necessary (or advisable) for the cartridge to 
+generate it. Perhaps there's some good reason why a cartridge might want
+to see the !DTACK being generated on its behalf. Directly connected to
+the 68000 (open collector line?). Not used by the ROM.
+
+!AS isn't used by the cartridge ROM, but is present in case something
+else wants it. Direct from the 68000.
+
+Byte reads from ROM don't need !UDS or !LDS, as the processor just
+ignores the unneeded bytes on the data bus. Byte writes shouldn't enable
+both upper and lower bytes, so the cartridge port provides a lower-
+byte write (!LDSW) and upper-byte-write (!UDSW) signals. These would be
+useful for cartridges with RAM.
+
+!RESET is provided for cartridges with logic which needs to be reset.
+Direct from the 68000. Not used by the ROM.
+
+!S_RESET is an input to the Genesis which causes a "soft" reset (see
+below). Not used by the ROM.
+
+!H_RESET is an input to the Genesis which causes a "hard" reset (see
+below). Not used by the ROM.
+
+!CART_IN is an input to the Genesis which lets it know that the
+cartridge is in place. This is used to enable the internal OS ROM
+and !C_CE signals. See the discussion on hard and soft resets, below.
+
+HS_CLK is a 13.188 MHz output from the Genesis. You tell _me_ what it's
+for! Not used by the ROM.
+
+VIDEO is an output which appears to be some sort of (non-NTSC?)
+video signal. I guess this goes with VSYNC and HSYNC, but I haven't
+tried to look at it.
+
+VSYNC is a 60 Hz output - possibly the vertical sync signal for VIDEO.
+
+HSYNC is a 16.240 KHz output - possibly the horizontal sync signal for
+VIDEO. This isn't NTSC... What is it? EGA?
+
+There are four signals I haven't got a clue on:
+
+	B1:  Goes through capacitor and resistor to IC12 pin 2.
+	B3:  Goes through capacitor and resistor to IC12 pin 8.
+	B21: This is a strange one. When the processor is halted,
+	     this signal pulses at 60 KHz. When the processor is
+	     running, its rate varies. Hmmm....
+	B31: This is an output, but it's always high and I've not
+	     seen it go low. I know it's not an input because it
+	     sources too much current; it's not a 5V supply because it
+	     doesn't source enough.
+
+
+There is no R/!W line, as it's built into !UDSW and !LDSW signals.
+
+There are no !BR, !BG, or !BGACK signals at the cartridge port.
+
+
+The cartridge port pins are numbered A1-A32 and B1-B32, left-to-right, with
+the A row toward the back of the Genesis and the B row toward the front.
+
+The "i" and "o" labels describe whether a signal is an input and/or an output
+to/from the Genesis.
+
+Signals with an "o" are output from the Genesis to the cartridge.
+Signals with an "i" are input to the Genesis from the cartridge.
+
+Pin 	Signal		Pin 	Signal
+--------------------------------------
+A1  - 	gnd 		B1  -	?
+A2  - 	+5v		B2  i  	!H_RESET
+A3  o 	a8		B3  -  	?
+A4  o 	a11		B4  o  	a9
+A5  o 	a7		B5  o  	a10
+A6  o 	a12		B6  o  	a18
+A7  o 	a6		B7  o  	a19
+A8  o 	a13		B8  o  	a20
+A9  o 	a5		B9  o  	a21
+A10 o 	a14		B10 o 	a22
+A11 o 	a4		B11 o 	a23
+A12 o 	a15		B12 o 	VIDEO
+A13 o 	a3		B13 o 	VSYNC
+A14 o 	a16		B14 o 	HSYNC
+A15 o 	a2		B15 o 	HS_CLK
+A16 o 	a17		B16 o 	!C_OE
+A17 o 	a1		B17 o 	!C_CE
+A18 - 	gnd		B18 o 	!AS
+A19 io 	d7		B19 o 	CLK
+A20 io 	d0		B20 i 	!DTACK
+A21 io	d8		B21 o 	?
+A22 io 	d6		B22 io 	d15
+A23 io 	d1		B23 io 	d14
+A24 io 	d9		B24 io 	d13
+A25 io 	d5		B25 io 	d12
+A26 io 	d2		B26 o 	!LO_MEM
+A27 io 	d10		B27 o 	!RESET
+A28 io 	d4		B28 o 	!LDSW
+A29 io 	d3		B29 o 	!UDSW
+A30 io 	d11		B30 i 	!S_RESET
+A31 - 	+5		B31 o 	?
+A32 - 	gnd		B32 i 	!CART_IN
+
+
+Resets and the OS ROM
+---------------------
+
+A hard reset, which happens at power-up or when the cartridge port's
+!H_RESET line is pulled low, enables the Genesis' internal "OS" ROM. 
+This is responsible for checking for a "valid" (i.e., does it say "SEGA" at
+location $000100?) cartridge, presenting the "Produced by or licensed from
+Sega Enterprises, ltd." message, enabling the cartridge ROM, and jumping
+to the cartridge's entry point.
+
+This only happens if the !CART_IN signal is pulled low; if not,
+the internal ROM (and cartridge ROM) is disabled, the 68000 sees
+invalid instructions, and eventually puts its heels up and dies. A
+system with a CD may behave differently, but I don't have one, so I
+don't know.
+
+A soft reset, which happens when you press the reset button or pull the
+cartridge port's !S_RESET line low, causes a 68000 reset: the
+processor fetches an initial stack pointer from locations $000000-$000003, 
+and jumps to the initial PC specified by locations $000004-$000007. This
+will be the entry point of the cartridge ROM, if it's enabled, or
+the entry point of the OS ROM if the processor is reset before the OS
+ROM is finished doing its business.
+
+
+The Memory Map
+--------------
+
+$000000 $3fffff	Cartridge ROM, when enabled by cartridge control
+		register and !CART_IN.
+
+$000000 $0007ff	Internal OS ROM, when enabled by cartridge control
+		register and !CART_IN.
+
+$ff0000 $ffffff	64Kbytes scratchpad RAM
+		Partially decoded; RAM actually appears repeated between
+		$e00000 through $ffffff.
+
+$a14101		cartridge control register
+		bit 0 = 0: cartridge disabled, OS ROM enabled
+		bit 0 = 1: cartridge enabled, OS ROM disabled
+
+$a00000 $a????? Unknown. Audio? Controller I/O?
+
+$c00000 $c?????	Video display controller registers
+
+
+The OS puts the top of its stack at $ffff00, and defines a "user stack
+pointer" at $000000 (building down through the top of RAM memory).
+
+The Z80 processor (used for sound? controller i/o?) uses 8Kbytes of RAM.
+I don't know anything about how the Z80 does its work, as I haven't looked.
+
+
+Major parts
+-----------
+
+I don't know what some of these are, as I'm working off a 1988 IC Master
+and a couple of data books. If anyone has better information, I'd love
+to have it.
+
+IC1
+	Hitachi HD68HC000P8 - Motorola 68000-compatible CMOS microprocessor,
+	clock: 7.67 MHz
+
+IC2, IC3
+	Motorola MCM51L832 - 32K x 8-bit pseudo-static RAM for 68000
+
+IC4
+	Sega 315-5433 - glue chip ? - 160 pins
+	On older systems, this is a Sega 315-5364.
+
+IC5
+	No such beast on newer systems. On older systems, this is
+	an 80 pin chip, labelled Sega 315-5309.
+
+IC6
+	NEC D780C-1 - Zilog Z80-compatible microprocessor
+
+IC7
+	Samsung KM6264BLS - 8K x 8 static RAM (used by the Z80)
+
+IC8
+	Sega 315-5313A-01 - glue chip? - 128 pins
+
+IC9, IC10
+	Hitachi HM53461ZP - 64K x 4 bit dual-port video RAM
+
+IC11
+	Yamaha YM2612 - Sound chip?
+
+IC12	Sony CXA1034P - Timer? Op-amp?
+
+IC13
+	Sony CXA1145P - RGB to Composite Video encoder.
+
+IC14
+	LM358 - Dual op-amp. Used for sound?
+	
+OSC1
+	53.6931 MHz crystal oscillator. Divided by 7 to get the 68000
+	clock frequency, and used elsewhere for video, sound, Z80 
+	clock, etc.
+
+Printed Circuit Board
+	My Genesis circuit board is labelled "IC BD M5 USA".
+	An older (and presumably PAL) system which has an IC5 and a
+	different IC4 is labelled "IC BD M5 PAL".
+
+There is no explicit OS ROM chip, nor is there a ROM chip for the Z80.
+My guess is that these "ROMs" are part of one or both of the glue chips,
+IC4 and IC8 (and IC5 on older systems).
+
+
+System Revisions
+----------------
+
+I'm aware of at least two revisions of the Genesis. Earlier models may
+not have had an OS ROM, so some of the above discussion is probably not
+valid. Specifically:
+
+	o There is probably no Cartridge Control Register.
+
+	o Hard and soft resets might be one-and-the-same. I don't know about
+	  the cartridge pins used for these signals.
+
+	o Any cartridge - not just those with "SEGA" in the right place -
+	  will work (maybe).
+
+	o The parts in the box are different. IC5 is present, and IC4 is
+	  different.
+
+How can you tell new and old ones apart without opening it up? I think
+that older ones don't give a "Produced..." message on power-up with a
+Sega-produced/licensed cartridge.
+
+I'd like to get more complete info on this. If you happen to open your
+Genesis, I'd appreciate it if you'd compare it the information above and
+let me know if there are any differences.
+
+One poster on netnews mentioned a "Type III" Genesis. Does anyone know
+anything about this?
+
+
+The Joystick Ports
+------------------
+
+Info on the joystick ports can be found in the file "pub/sega/joystick.txt"
+on ftp.spd.louisville.edu. See acknowledgements below.
+
+
+The Game Genie
+--------------
+
+The Game Genie sits between the cartridge port and the cartridge. It
+watches the address bus during read accesses to the cartridge ROM, and
+substitutes its own data/instructions according to the Game Genie codes
+you've entered.
+
+Game Genie codes are nothing more than encoded address and data.
+
+More information on the encoding scheme, and a C program which decodes
+Game Genie codes can be found in "pub/sega/game_genie.txt" and
+"pub/sega/decoder.c".
+
+See acknowledgements below.
+
+
+Acknowledgements
+----------------
+Thanks to:
+
+d91jn@efd.lth.se (Tore Nestenius) for info on older Genesis systems.
+
+lewism@rpi.edu (Michael Lewis) for info on the Sony CXA1145 and Samsung 
+	KM6264 chips.
+
+crs@crs-sys.uucp (Chris Gregors) for posting a version of the Genesis
+	cartridge port pinouts.
+
+nhowland@matt.ksu.ksu.edu (Neal Howland) for information on the Joystick
+	port.
+
+merlyn@digibd.com (Brian Westley) for Game Genie information and decoder
+	program.
+ 

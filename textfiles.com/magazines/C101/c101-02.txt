@@ -1,0 +1,682 @@
+                          CRACKING 101 - 1990 edition
+
+                                   Lession #1
+
+                             ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+                             ³ CRACKING DOS Files ³
+                             ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+                               By Buckaroo Banzai
+
+
+              Today I'm here to about is cracking a dos format (either
+         .EXE or .COM) file.  This, in my mind is releativly the
+         simplest (in theory although pratice might say otherwise)
+         type of crack to do.
+
+              There are really 3 steps in cracking a dos file.  Step
+         1, is finding where the protection routine is.  How to go
+         about it, well, there are several diffrent methods.  Here are
+         the steps that I often use.
+
+              First, I will run the program under PC-WATCH (PW)
+         trapping INT13 all functions and INT21 functions 3Dh and 3Fh.
+         Why trap the functions.  This will give (hopefully) a
+         starting place to look for the protection.  Once you have set
+         the breakpoints, press [F4] to execute and you will drop to
+         dos.  When you do, PW should display several calls to INT13.
+         What closly at the CS:IP of these calls.  Record it for later
+         because these are calls from dos.  We will uses this data to
+         recognize what is a call to the protection and what is not.
+
+              Next, run the program to be cracked.  As it executes,
+         PC-WATCH will show what files are opened (including the file
+         you just ran since DOS uses function 3Dh to open a file when
+         it executes one) and what (and more improtantly WHERE) data
+         is read to.  Makes a list saying what data is read in from
+         what file.  Here is an example.  Lets say you ran the program
+         "XXX.COM".  While running, "XXX.COM", you noticed that 2
+         other files "YYY.BIN" and "ZZZ.BIN" were also opened.  So
+         make a list like this:
+
+             XXX.COM       YYY.BIN       ZZZ.BIN
+             ÄÄÄÄÄÄÄ       ÄÄÄÄÄÄÄ       ÄÄÄÄÄÄÄ
+
+              Now, lets say that after "XXX.COM" was opened, PW showed
+         that there were 2 reads from "XXX.COM" (the way to tell where
+         the data is being read from is by checking the BX register on
+         calls to 3Fh and the AX registers after calls to 3Dh.  Yes,
+         you should select both INPUT REGISTERS and OUTPUT REGISTERS
+         from the PW menu) 1 at aaaa:bbbb and 1 as cccc:dddd.  Right
+         after "YYY.BIN" was opened, PW showed data was read to
+         eeee:ffff and then after "ZZZ.BIN" was opened, data was
+         written to gggg:hhhh and iiii:jjjj.  Now, our list looks like
+         this:
+
+             XXX.COM       YYY.BIN       ZZZ.BIN
+             ÄÄÄÄÄÄÄ       ÄÄÄÄÄÄÄ       ÄÄÄÄÄÄÄ
+             aaaa:bbbb     eeee:ffff     gggg:hhhh
+             cccc:dddd                   iiii:jjjj
+
+              What we have just created in a program load map.  This
+         map shows where to program to be cracked is loaded in memory.
+         Next, scan though the calls to INT13.  Look for either calls
+         that return with errors, calls that have high values in the
+         CH ( > 28) or CL ( > 9) registers, or calls not made by dos
+         (those calls that have a CS:IP diffrent from the one we
+         copied down before we executed the program).  Now, look at
+         the CS:IP of the call to INT13.  Match the segment address
+         against the program load map.  If only 1 match occurs, then
+         you now know what module the check is in so continue on to
+         step #2.  If more than 1 match occurs, check the offset (IP).
+         Find the one that is closest to one of the write address's
+         offset.  Once you find a match, then go on to step #2.  If no
+         match occurs after both steps, it's time to track through the
+         program.
+
+              Tracking your way though the program is a real bitch.  I
+         do not like to do because it can just take to long.  But here
+         is an overview on how it is done.
+
+              The object, is to keep narowing down calls until disk
+         access if found.  How to do this.  Well, load the program
+         under debug.  Keep tracing through the program in till a
+         "CALL" instruction is found.  Jot down you current IP and
+         PROCEED (using debug P command) over the instruction without
+         tracing in to it.  If you end up at the next instruction
+         without access that disk, then you have not found the routine
+         you are looking for so keep going.  Search for the next
+         "CALL" and then the next and then the next etc.  At some
+         point, when you proceed over a call, the disk will either
+         check protection or load in a new module.
+
+              How to tell the diffrence, well PW is still active and
+         will tell you if it was a call to INT13 or INT21 or BOTH.  If
+         it was the call to INT13 or a call to BOTH then you have
+         found a call to the protection routine (although the actual
+         call may be 100 levels deeper, you are on the right track).
+         Exit and restart but this time when you reach the call,
+         trace into it.  Now do the same process until you get to the
+         call to the next level, then again for the next, etc.
+         Finally you should find where it is.
+
+              But hopefully, you won't have to do that.  As I said, it
+         is very time consumming.  Hopefully, you will know which
+         module to look in.  If you do, here is how to find the call
+         to the protection.  First, try the simple search method.
+         Load up the module using DEBUG and simply type:
+
+                   S CS:100 FFFF CD 13  (use CS:100 if .EXE)
+
+              Debug will hopefully list 1 or more address.  If not,
+         try the same command only using CS:0000.  If again you are
+         not givin any address, you have some tricky debugging at hand
+         (an I suggest rereading the exercise in self-modifying code).
+
+              I will explain in detail how to find self-modifying code
+         later but for now, lets assume we have found the protection
+         routine.  Next, is to figure out what the copy protection is
+         trying to do.  First, look to the printout from PW.  Look
+         through it until you find the calls the INT13 from the
+         protection routine.  Look at the AH register.  If it is 00h
+         then the protection routine is probally reading in data from
+         the protected tracks.  If not, then the protection is simply
+         looking for some KEY (in other words a damaged track or
+         sector) that DOS canno't duplicate.
+
+              The second choice is much eaiser to defeat.  2 quick
+         methods to defeating this type.  First, you can fake the call
+         and simply set the registers.  Take the follow check to a
+         protection routine:
+
+         1:      mov AX,0201h      ; Read 1 sectors using int 13h
+         2:      mov CX,2909h      ; Track 29h sector 09h
+         3:      xor DX,DX         ; Drive 0, head 0
+         4:      int 13h           ; Read sector
+         5:      jnc Bad           ; If no error then it's a copy
+         6:      cmp AH,10h        ; Was it a CRC error
+         7:      jne Bad           ; No, then it's a copy
+         8:      mov AX,0h         ; clear error flag
+         9:      jmp Done          ; we are done
+         Bad:    mov AX,1          ; set error flag
+         Done:   ret               ; we are done
+
+              What is the above code trying to do.  Well, it's
+         checking for a KEY on track 29h.  That key is sector 09h.
+         Normally sector 09h would not have an error.  On a read to
+         the original disk, after the int13 (line 4) is executed, the
+         carry flag (CF) would be set.  The jnc in line 5 would jump
+         if CF is not set (indicating no error, which is bad since the
+         original disk would have an error there).  The next line
+         checks AH to see if it is 10h.  This is checking to see if
+         the error was a Bad CRC on the read (the error that should be
+         there).  If it was not, then again it is not the protected
+         disk.  Only after both of thoses conditions are met, will the
+         protection routine return a "GOOD" result.
+
+              The key here is the value returned in AX an possibly
+         CF.  When the disk is the original, AX would return the value
+         of 0000h and CF = 1 but when it was a copy, it would return
+         0001h and CF = 0 or 1.  Since on a bad return, CF can be 0 or
+         1 then it is preaty safe to assume CF is not used to signal
+         the return.  So what must we do to beat the protection
+         routine, well, simply return from this CHECK with AX = 0000h.
+         Simple.  Just change line 1 to "mov AX,0000h" and line 2 to
+         "RET".  This will just bypass the check.
+
+              Now, this example is quite simple and would probally
+         never be used in a REAL protection routine.  I kept it simple
+         to show the point, see the example on how to crack DRAWING
+         ASSISTANT for a better example.
+
+              The second and more perferd method is to simply bypass
+         the call to the protection routine and kill of the section of
+         code that test for the check position.  Take the following
+         example:
+
+         10:     call 1                  ; call the first example
+         11:     cmp AX,0                ; Was it the original
+         12:     jz  Good2               ; Yes, then good
+         13:     ... BAD it was a copy   ; No, then bad
+         Good2:
+
+              The above example, when used with the last example show
+         a typical call to a protection routine.  The perfered method
+         to crack this protection would not be to simply fake the
+         return, but to remove the call to the protection.  How to do
+         it, simple.  Just jump over the check.  Change line 10 to
+         "jmp Good2".  This will bypass the protection routine.
+
+              Now, you might ask why would you want to take the extra
+         step of finding the call to the protection routine rather
+         than simply faking an int13 and returning with the proper
+         registers set.  2 reasons.  First, What if there wasn't
+         enough room to setup the registers the way you needed them.
+         Then you would have to take the extra step.  Second, what if
+         somewhere down the line, that routine is used for something
+         else (like the int13 is modified into an int10 in a game).
+         Since you have changed the bytes at that location, the
+         modifying routine would create code that wasn't exepcted.
+         But as always, if you can fake the return, and the program
+         works, leave it.  After all, not to many people go around
+         look at other peoples cracks (do they???).
+
+              Now, what to do, if the program actually reads in
+         important data from the disk.  Well, there are 2 ways to go
+         about this (possibly more).  First, you could patch the
+         program so that when it calls it's protection routine, it
+         jumps to your user routine that opens a file and reads in the
+         data to the right place.  This method is preaty simple to add
+         to a .COM file but a much harder to patch on to the back of a
+         .EXE.  I won't really go in to this method much more than to
+         say use your brains.  It's not a difficult concept.
+
+              The other method, is to create a LOADER or a TSR.  I
+         suggest creating an Interrupt Service Routine (ISR) that
+         handles loading in the data.  For example, let say you wrote
+         a routine to read in the needed data for a file.  It is not
+         to difficult to convert that routine into an ISR.  (For notes
+         on ISR and TSRs, try reading The Waite Group's "MS-DOS
+         PAPERS".  It has one of the best sections on the subject).
+
+                        Consider this following example:
+
+
+         A:            call 1           ; test protection
+         B:            jnc Good         ; was it successfull
+         C:            ... BAD load     ; no then it's a copy
+                       ... EXIT TO DOS  ; so exit to dos
+         Good:         ... Good load    ; yes then it original
+                       call 7C00:0000   ; then jump of protection
+                                        ; data
+
+         1:            mov ax,0209      ; Read 9 sectors starting from
+         2:            mov cx,290a      ; Track 29h Sector 0Ah (10)
+         3:            xor dx,dx        ; for drive A: head 0
+         4:            mov bx,7c00      ; read to 7c00:0
+         5:            mov es,bx        ;
+         6:            mov bx,0         ;
+         7:            int 13h          ;
+         8:            ret
+
+
+
+              What the above example dos.  Lines 1-8 try to read in
+         sectors 0Ah - 12h for track 29h on drive A:.  This is the
+         protection check routine.  Lines A - Good attempt to check
+         the protection, and then if the check is good (CF = 0) then
+         a call to the loaded in code (the data loaded in by the
+         protection check) is made.
+
+              What we want to do, is somehow when INT 13h is called,
+         load in the needed data for disk.  Well, here is my
+         suggestion.  First, I would change line 7 from "int 13h" to
+         "int BBh".  Next, I would create a small .COM loader that
+         would execute the main program as a child process (read the
+         DOS TECH REF on the EXEC function).  But before I did that, I
+         would write an ISR (interrupt service routine) for INT BBh.
+         Here is the general outline for the ISR
+
+              þ Use dos to open the file containing the needed data
+              þ Read in the data to ES:BX (where int 13h would put it)
+              þ Close the file
+              þ set AX to 0000 and clear CF
+              þ iret
+
+              The loader would go like this :
+
+              þ Get current int BBh address (DOS func. 35h)
+              þ Set int BBh address to ours (DOS func. 25h)
+              þ use DOS to EXECUTE (Dos func. 4Bh) the program to be
+                cracked
+              þ Restore the address of BBh
+
+              Well, that about all I have to say about cracking a dos
+         file.  I hope this section has been usefull to you.  Next I
+         will show by example the techinques in this section while
+         cracking I.B.M. Drawing Assistance (1.00).
+
+              One last thing.  After you have cracked the program, try
+         running it from a hard drive with PW set to trap calls to INT
+         21h function 1Bh (get fat byte).  If the program make a call
+         to here, get the address and find that section of code.  What
+         the program is trying to do is check to see if you are
+         running from a hard drive (most programs have diffrent
+         protection routines for hard drives).  When you find it,
+         simply replace the "INT 21h" with a "MOV DS:[BX],FDh".  This
+         will fake the program in to thinking you are working on a
+         floppy disk.
+
+              Ok, for our example we will be removing the code from
+         IBM's Drawing assistant.  Now now, I know it's not the best
+         program out there, but shit, It's hard to find shit with on
+         disk copy protection anymore.  So here we go...
+
+              I needed 3 programs in cracking the assist. series.
+         Locksmith by Alph Logic, Periscope debugger, and DEBUG
+         (supplied with DOS).  By using these three programs together,
+         I was able to figure out and remove the copy protection in
+         under 30 minutes.
+
+              Drawing Assistant (DA) is IBM's answer to colorpaint for
+         the Jr.  It is a simple drawing program (a more advanced
+         version is included in StoryBoard Deluxe) but easy to learn
+         and use.  So far, I have only seen version 1.00 of this
+         program.
+
+              DA made calls to the copy protection routine in 3
+         diffrent modules.  The files "SETDRAW.EXE", "DRAWASST.EXE"
+         and "DRAWASST.TWO" all contained calls to the copy
+         protection.  Also, "DRAWASST.TWO" and "DRAWASST.EXE" are for
+         all intensive puporses then same file.
+
+              I first started off by loading DRAWASST.EXE with debug
+         and searched for any int 13's by executing the debug command
+
+                s CS:0 FFFF CD 13         Search CS:0 - CS:FFFF for CD
+                                          13 (int 13)
+
+           I located 2 diffrent calls to int 13h, so I then listed
+         them.  Here is what I found...
+
+                     { First, some initialization routines }
+
+                     18FD:0343 1E            PUSH   DS
+                     18FD:0344 B80000        MOV    AX,0000
+                     18FD:0347 50            PUSH   AX
+                     18FD:0348 B89724        MOV    AX,2497
+                     18FD:034B 8ED8          MOV    DS,AX
+                     18FD:034D BB1000        MOV    BX,0010
+                     18FD:0350 2E            CS:
+                     18FD:0351 8A07          MOV    AL,[BX]
+                     18FD:0353 3C00          CMP    AL,00
+                     18FD:0355 7418          JZ     036F
+
+
+                { This set is called if DA has been installed }
+                             { on the hard drive }
+                  { When cracked, this will NEVER be called }
+
+                     18FD:0357 B419          MOV    AH,19
+                     18FD:0359 CD21          INT    21
+                     18FD:035B 8AD0          MOV    DL,AL
+                     18FD:035D FEC2          INC    DL
+                     18FD:035F B41C          MOV    AH,1C
+                     18FD:0361 CD21          INT    21
+                     18FD:0363 8A07          MOV    AL,[BX]
+                     18FD:0365 BB9724        MOV    BX,2497
+                     18FD:0368 8EDB          MOV    DS,BX
+                     18FD:036A 3CF8          CMP    AL,F8
+                     18FD:036C 7475          JZ     03E3
+                     18FD:036E CB            RETF
+
+            { This set is called if DA is running from the floppy }
+
+                     18FD:036F B419          MOV    AH,19
+                     18FD:0371 CD21          INT    21
+                     18FD:0373 FEC0          INC    AL
+                     18FD:0375 B400          MOV    AH,00
+                     18FD:0377 A320C6        MOV    [C620],AX
+                     18FD:037A 8AD0          MOV    DL,AL
+                     18FD:037C B41C          MOV    AH,1C
+                     18FD:037E CD21          INT    21
+                     18FD:0380 8A07          MOV    AL,[BX]
+                     18FD:0382 BB9724        MOV    BX,2497
+                     18FD:0385 8EDB          MOV    DS,BX
+                     18FD:0387 3CF8          CMP    AL,F8
+                     18FD:0389 7408          JZ     0393
+
+                 { Here is the called to read in the key disk }
+
+                     18FD:038B E8A675        CALL   7934
+                     18FD:038E 3D0100        CMP    AX,0001
+                     18FD:0391 7450          JZ     03E3
+
+           Let's take these code segments 1 at a time.  The fist, is
+         some simple initialization routines.  Here is the code, only
+         this time full comments are added.
+
+         { First, some initialization routines }
+         ; Setup for return to DOS
+
+         18FD:0343 1E            PUSH   DS
+         18FD:0344 B80000        MOV    AX,0000
+         18FD:0347 50            PUSH   AX
+
+         ; Setup DS to point to the data segment
+
+         18FD:0348 B89724        MOV    AX,2497
+         18FD:034B 8ED8          MOV    DS,AX
+
+
+         18FD:034D BB1000        MOV    BX,0010    ; CS:10 points to
+                                                   ; installed flag
+         18FD:0350 2E            CS:
+         18FD:0351 8A07          MOV    AL,[BX]
+
+         18FD:0353 3C00          CMP    AL,00      ; If not installed,
+                                                   ; jump to diskette
+         18FD:0355 7418          JZ     036F       ; routines
+
+           What we are want to do, is fool DA in to thinking that it
+         is stilling loading from diskette.  Nothing really needs to
+         be changed in this segment, but, just to be safe, we will
+         force the jump at 355.  To change the current values, use
+         DEBUG's [A]ssembler command.
+
+                 A CS:355
+                 18FD:355 JMP 36F
+
+           Now, we have forced the jump, we can move on to the third
+         code segment skipping over the second since it will never be
+         called again.  The 3rd code segment checks to see if you are
+         using a hard drive.  It does so by first getting the logical
+         drive letter, then reading in the FAT descriptor byte for
+         that drive.  Here is the commented code.
+
+         { This set is called if DA is running from the floppy }
+
+         ; First, get the current drive
+
+         18FD:036F B419          MOV    AH,19     ; DOS function 19h -
+                                                  ; Get Current Drive
+         18FD:0371 CD21          INT    21
+
+         18FD:0373 FEC0          INC    AL         ; Add 1 for BIOS
+         18FD:0375 B400          MOV    AH,00      ; Clear AH
+         18FD:0377 A320C6        MOV    [C620],AX  ; Store it at C620
+         18FD:037A 8AD0          MOV    DL,AL      ; Store it in DL
+         18FD:037C B41C          MOV    AH,1C      ; DOS function 1Ch
+                                                   ; Get Fat desc.
+         18FD:037E CD21          INT    21         ; returns pointer
+                                                   ; in DS:BX
+         18FD:0380 8A07          MOV    AL,[BX]    ; Get the actual
+                                                   ; byte
+         18FD:0382 BB9724        MOV    BX,2497    ; Restore DS
+         18FD:0385 8EDB          MOV    DS,BX
+
+         18FD:0387 3CF8          CMP    AL,F8      ; Check to see if
+                                                   ; it is a H/D
+         18FD:0389 7408          JZ     0393       ; Yes, then jump
+         abort
+
+         { Fall in to the check for the key disk }
+
+           As you can see, this section of code is quite straigth
+         forward.  It just checks to see if you are using a hard
+         drive.  What we want to do is to fake an DOS function 1Ch and
+         return the value for a floppy.  This is done by putting the
+         value of FDh in AL then NOPing the rest.  Again use the
+         Debug's [A] command.
+
+
+                 A CS:37C
+
+                 18FD:037C MOV AL,FD
+                 18FD:0380 NOP
+                 18FD:0381 NOP
+                 18FD:0382 NOP
+                 18FD:0383 NOP
+
+           Now, you might ask why I didn't simple force a jump over
+         the code.  The answer is what if DA uses the value at C620 at
+         a later time (which it doesn't but let's pretend).  If I had
+         forced the jump then the value might not have been
+         initialized and the crack might not work.  Now that we have
+         simulated running from diskette, we must deal for the check
+         for the key disk.
+
+              This is where Periscope came in to play.  Using
+         periscope, I made the above corrections and ran the program
+         up till CS:038B (the call to the check). Here is the code,
+         including the actual check.  I have indented the check to
+         make it easier to read.
+
+
+         { Here is the called to read in the key disk }
+
+         18FD:038B E8A675        CALL   7934    ; Check key on disk
+                                                ; (track 27h side 0)
+
+           18FD:7934 A120C6        MOV   AX,[C620]     ; Get drive
+                                                       ; letter
+           18FD:7937 FEC8          DEC   AL
+           18FD:7939 A23BC6        MOV   [C63B],AL     ; Store it for
+                                                       ; later
+           18FD:793C 1E            PUSH  DS
+           18FD:793D 07            POP   ES
+           ; Setup pointers to what sectors to try to read
+
+           18FD:793E BB30C6        MOV   BX,C630
+           18FD:7941 891E39C6      MOV   [C639],BX
+           18FD:7945 C6063CC603    MOV   BYTE PTR [C63C],03
+           18FD:794A C6063DC601    MOV   BYTE PTR [C63D],01
+
+           ; Reset the disk
+
+           18FD:794F B400          MOV   AH,00
+           18FD:7951 CD13          INT   13
+
+           ; Get address of sector to read an put it in CL
+
+           18FD:7953 8B1E39C6      MOV   BX,[C639]
+           18FD:7957 8A0F          MOV   CL,[BX]
+
+
+           ; Setup the rest of the read information
+
+           18FD:7959 BBAE3D        MOV   BX,3DAE
+           18FD:795C 81C3D007      ADD   BX,07D0
+           18FD:7960 B001          MOV   AL,01
+           18FD:7962 B527          MOV   CH,27
+           18FD:7964 8A163BC6      MOV   DL,[C63B]
+           18FD:7968 B600          MOV   DH,00
+           18FD:796A B402          MOV   AH,02
+           18FD:796C CD13          INT   13
+
+           ; Test for an error and jump if none is present (ie: the
+           ; copy protection has been removed)
+
+           18FD:796E 80FC00        CMP   AH,00
+           18FD:7971 740C          JZ    797F
+
+           ; test the bad read (protection is missing) 3 times
+
+           18FD:7973 FE0E3CC6      DEC   BYTE PTR [C63C]
+           18FD:7977 75D6          JNZ   794F
+           18FD:7979 B80000        MOV   AX,0000
+           18FD:797C EB13          JMP   7991
+
+           ; Get next sector to check.  If finished, set the flag and
+           ; return.
+
+           18FD:797F FF0639C6      INC   WORD PTR [C639]
+           18FD:7983 FE063DC6      INC   BYTE PTR [C63D]
+           18FD:7987 803E3DC603    CMP   BYTE PTR [C63D],03
+           18FD:798C 75C1          JNZ   794F
+           18FD:798E B80100        MOV   AX,0001
+           18FD:7991 C3            RET
+
+         ; Check to see if the OK flag was set (ax = 0001h means check
+         ; was good)
+         18FD:038E 3D0100        CMP    AX,0001
+         18FD:0391 7450          JZ     03E3
+
+
+           The key check used in DA is quite simple.  It simple tries
+         to read in the illegaly numbered sectors on Track 27h side
+         0h.  If they are missing, it assumes that it is running a
+         pirated copy.  What we must do, is to fool the scheme in to
+         thinking a good read happened.  I choses to fake the read
+         using the easiest method.  Since the protection scheme only
+         check to see if AX returns the value > 0000h, I simply
+         modified the routine at 1BFD:7934 to set AX to 0000h and then
+         return.  Here is the new code (enter using debug's A
+         command)...
+
+                 A 1BFD:7934
+                 1BFD:7934 MOV AX,0000
+                 1BFD:7936 RET
+
+           Now, this file is unprotected and if you type "G" at
+         debug's command prompt, the program will execute, sort-of.
+         See DRAWASST.EXE calls DRAWASST.TWO which also has the
+         protection scheme.  So both must be changed.  To make to
+         changes perement in DRAWASST.EXE, rename the file to
+         DRAWASST.DEB and edit it.  To find the address of the start
+         of the protection code, use debug's search command...
+
+                 S CS:0 FFFF B4 19 CD 21 8A D0
+
+           Now, just uses the modified address to change the program
+         (the code will still be the same, just all calls and jumps
+         will be to diffrent addresses).  Use the same process to stip
+         DRAWASST.TWO (it uses the exact same code).  When you have
+         both of those files unprotected, you can move on to
+         unprotecting the setup program "SETDRAW.EXE"
+
+
+              DRAWASST.EXE AND .TWO are not the only programs that
+         make calls to the protection routine.  SETDRAW.EXE also makes
+         the above calls.  Although the check here is much easier to
+         bypass.  Here is the asm listing of SETDRAW with all of the
+         calls to the protection.  This time, I will not go in to
+         quite as much detail as I did for the other two version.
+
+           I will tell you this.  When SETDRAW checks the key disk,
+         first it checks to see if the protection exists and then to
+         see if the track hasn't been modified.  It again uses AX to
+         determine what happeded.  I used Periscope to trace through
+         the original version to find out what the correct values are.
+           Here is the asm code...
+
+         ; Initialization - checks the current mode and saves it.
+
+         18FD:0000 1E            PUSH     DS
+         18FD:0001 B80000        MOV      AX,0000
+         18FD:0004 50            PUSH     AX
+         18FD:0005 B8321A        MOV      AX,1A32
+         18FD:0008 8ED8          MOV      DS,AX
+         18FD:000A B40F          MOV      AH,0F
+         18FD:000C CD10          INT      10
+         18FD:000E 3C02          CMP      AL,02
+         18FD:0010 740D          JZ       001F
+         18FD:0012 3C03          CMP      AL,03
+         18FD:0014 7409          JZ       001F
+         18FD:0016 A28900        MOV      [0089],AL
+         18FD:0019 B002          MOV      AL,02
+         18FD:001B B400          MOV      AH,00
+         18FD:001D CD10          INT      10
+
+         ; Gets the current drive
+
+         18FD:001F B400          MOV      AH,00
+         18FD:0021 B419          MOV      AH,19
+         18FD:0023 CD21          INT      21
+         18FD:0025 A28700        MOV      [0087],AL
+         18FD:0028 8AD0          MOV      DL,AL
+         18FD:002A FEC2          INC      DL
+
+         ; Checks the FAT descriptor
+
+         18FD:002C B41C          MOV      AH,1C
+         18FD:002E CD21          INT      21
+         18FD:0030 8A07          MOV      AL,[BX]
+         18FD:0032 BB321A        MOV      BX,1A32
+         18FD:0035 8EDB          MOV      DS,BX
+         18FD:0037 C606880000    MOV      BYTE PTR [0088],00
+         18FD:003C 3CF8          CMP      AL,F8
+         18FD:003E 742A          JZ       006A
+
+         ; Read in protection scheme
+
+         18FD:0040 8A168700      MOV      DL,[0087]
+         18FD:0044 E87E0A        CALL     0AC5
+         18FD:0047 C606880000    MOV      BYTE PTR [0088],00
+         18FD:004C 3D0000        CMP      AX,0000
+         18FD:004F 7419          JZ       006A
+
+         ; Read in the dummy scheme
+
+         18FD:0051 C606880001    MOV      BYTE PTR [0088],01
+         18FD:0056 8A168700      MOV      DL,[0087]
+         18FD:005A B84500        MOV      AX,0045
+         18FD:005D E8BD0A        CALL     0B1D
+         18FD:0060 3D0000        CMP      AX,0000
+         18FD:0063 7405          JZ       006A
+
+         ; Start of actual routine.
+
+         18FD:0065 C606880000    MOV      BYTE PTR [0088],00
+
+           There is isn't much to say about the above code.  To bypass
+         it, we will change the hard drive check (int 21 function 1c).
+         Do the same thing we did for DRAWASST.EXE
+
+                A 18FD:2C
+                18FD:002C mov AL,FD
+                18FD:002E nop
+                18FD:002F nop
+                18FD:0030 nop
+                18FD:0031 nop
+
+           Now, just jump over the check to the key disk.
+
+               A 18FD:40
+
+               18FD:0040 jmp 0065
+
+           And thats it.  Now SETDRAW is unprotected.  Drawing
+         Assistant may be used, copied or backed up at your pleasure.
+
+
+              As you can see, this was a good example although the
+         fact that if you only made the changes in DRAWASST.EXE and
+         not in DRAWASST.TWO then the program would copy DRAWASST.TWO
+         to DRAWASST.EXE to restore the protection was a bit strange.
+
+              Well, I hope you are proud.  But be warned, next we take
+         on DOC checks, so get a good nights sleep.  Till then, play
+         lots of SMASH T.V.
+
+                                                      -Buckaroo Banzai

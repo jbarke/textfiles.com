@@ -1,0 +1,1001 @@
+The following text is a construction article for building your own MIDI
+interface for the Commodore 64 or Commodore 128 cartridge port.  If you are
+used to building digital electronic projects, you should be able to put one
+together in a few days for about $25 worth of parts.  However, this is not
+a project for the inexperienced - wiring this circuitry onto a board small
+enough to fit into a cartridge case requires a good eye, a steady hand, and
+a lot of patience.
+
+If you don't even know what a MIDI interface is, it means Musical Instrument
+Digital Interface, and is used to communicate with MIDI capable musical
+instruments.  MIDI is an electronic music industry standard.  The C64 was
+one of the first computers to be used extensively for MIDI applications.
+
+Don't even think of downloading this file to your C64, there is absolutely
+no reason to do so, since it is just a text file that you can print on your
+local host, and besides it contains lots of characters that aren't even on
+some Commodore compatible printers.  When you print this out, make sure you
+allow a full 66 lines per printer page in order to fit the schematic on one
+page by itself.
+
+Following the construction article is a PostScript program which you can send
+to an Apple Laser Writer (or any PostScript compatible printer) to get a really
+high quality printout of the construction schematic.  But don't fret if you
+don't have access to one of these - the ASCII version of the schematic below
+is quite servicable.
+
+If you do build this MIDI interface, or simply buy one, be sure to look for
+my package "The MIDI-SID CONNECTION", to be uploaded to the UXMAZE server soon.
+I will also entertain the idea of uploading other public domain MIDI software
+if there is enough interest.  Just let me know.
+
+Sincerely,
+Frank Prindle
+Prindle@NADC.navy.mil
+
+
+----------------------------------cut here-------------------------------------
+               ____ COMMODORE 64 TRI-STANDARD MIDI INTERFACE              
+              |xtal|                                       .----------.
+   *----------|-||-|----------*         *------------------|11      14|----<+5V
+   |      2Mhz|____|          |         |                  |  74LS293 |
+   |                          |         |               *--|4   12   7|----*   
+   *--\/\/\--*      *--\/\/\--*         |               |  '----------'    |
+   |    2.2K |      |    2.2K |         |    15    1    |        |         |
+   |  |\     |      |  |\     |  |\     *-----@    @    @        *---------*
+   |  | \    |  ||  |  | \    |  | \    |          |   16                  |
+   *--|  >o--*--||--*--|  >o--*--|  >o--*     *----*                       V
+      | /  500pf||     | /       | /          |    |     *---<+5V         GND
+      |/               |/        |/         Rx|  Tx|     |
+                                           CLK| CLK|  Vcc|
+                +5V>-----*----\/\/\---*     .--------------.
+                         |     270    |     | 3    4    12 | ___    ___
+MIDI-IN DIN Jack     .-------.        |     |             7|-IRQ--->IRQ (Pin 4)
+ 5<>--------------*--|2  6   |        |     |              |
+                  |  |      4|--------*--Rx-|2           10|-CS1------------@14
+ 2<>--N/C   diode V  |  PC-  |          DATA|              |
+                 --- |  900  |              |            11|-RS---->A0  (Pin Y)
+            220   |  |      5|------*       |              |   _
+ 4<>-------\/\/\--*--|1      |      |       |            13|-R/W------------@12
+                     '-------'      V       |     6850     |
+                                   GND      |     ACIA   14|-E----->02  (Pin E)
+                      /|       /|           |              |
+MIDI-OUT DIN Jack    / |      / |           |            15|-D7---->D7 (Pin 14)
+ 5<>----\/\/\------o<  |----o<  |--------Tx-|6           16|-D6---->D6 (Pin 15)
+         220         \ |      \ |       DATA|            17|-D5---->D5 (Pin 16)
+ 2<>---*              \|       \|           |            18|-D4---->D4 (Pin 17)
+       |                                    |            19|-D3---->D3 (Pin 18)
+       V                                    |            20|-D2---->D2 (Pin 19)
+      GND   220                 |\          |            21|-D1---->D1 (Pin 20)
+ 4<>-------\/\/\---<+5V         | \         |            22|-D0---->D0 (Pin 21)
+                            *---|  >o-*-CS0-|8             |
+                            |   | /   |     | 9   5 1 23 24|
+        |\                  |   |/    |     '--------------'
+        | \             |   |         @       |   | | |  |
+A6 <----|  >o-----------|2  |         4   @---*   *-*-*--*-------*
+(Pin S) | /             |   |            11  ___  _   _ ___      |
+        |/   |\         |   |                CS2  R V D CTS      V
+             | \        |   |                     T s C         GND
+A5 <---------|  >o------|1  |                     S s D    
+(Pin T)      | /        |   |       
+        |\   |/         |   *-----*   
+        | \             |--_      |                       6@------->A1 (Pin X)
+A4 <----|  >o-----------|3  \     |                                            
+(Pin U) | /             | 74 \  8 |                       2@------->A2 (Pin W)
+        |/   |\         |LS30 |o--*                                            
+             | \        |    /                            3@------->A3 (Pin V) 
+ @-----------|  >o------|12 /                                         _        
+13           | /        |---                              5@------->R/W (Pin 5)
+        |\   |/         |                                                      
+___     | \             |                    
+IO1<----|  >o-----------|11            NOTES:
+(Pin 7) | /             |              1. All inverter/buffers are (1/6)74LS366
+        |/  +5V         |                 with pins 1, 8, and 15 grounded; pin
+             ^      *---|4                16 supplied with +5V. 2 chips needed.
+             |      |   |              2. A .01 uf bypass capacitor from Vcc to
++5V<---------*------*---|5                GND at each chip is not a bad idea.
+(Pin 2)             |   |              3. The PC900 optoisolator available from
+                    *---|6                MIX Bookshelf, 6400 Hollis St. #12,
+        7   GND     |   |                 Emeryville, CA 94608; price $3.00 PP.
+        @    ^      *---|14(Vcc)       4. All (Pin #) numbers refer to the C64
+        |    |          |                 cartridge port connector CN6.
+GND<----*----*----------|7 (GND)       5. All @ symbol numbers refer to pins on
+(Pin 1)                 |                 a 16-pin personality select socket.
+
+
+This interface must be configured for a particular standard by plugging
+jumpers (or a jumpered DIP header) into the personality socket.  The jumpers
+required for each standard are as follows:
+
+    Passport Standard        Sequential Standard        Siel/JMS Standard
+    -----------------        -------------------        -----------------
+         1 - 16                    1 - 16                     1 - 15
+         3 - 14                    4 - 14                     2 - 14
+         2 - 13                    3 - 13                     3 - 13
+         5 - 12                    6 - 12                     6 - 12
+         6 - 11                    2 - 11                     7 - 11
+
+
+To add a MIDI-THRU output jack, it will be necessary to add another 74LS366
+chip, since two more inverters are required.  Simply connect the output from
+pin 4 of the PC900 optoisolator to the following circuit in addition to pin
+2 of the 6850:
+                                                    
+                      /|       /|    
+MIDI-THRU DIN Jack   / |      / |    
+ 5<>----\/\/\------o<  |----o<  |--------- from pin 4 of PC900
+         220         \ |      \ |
+ 2<>---*              \|       \|
+       |
+       V
+      GND   220
+ 4<>-------\/\/\---<+5V
+
+
+A 6N138 optoisolator is the only acceptable substitute for the PC900.  It is
+available from retail parts distributors such as Active Electronics.  Its pin-
+out is different:
+                      PC900 Pin         Corresponding 6N138 Pin
+                         1                         2
+                         2                         3
+                         4                         6
+                         5                         5
+                         6                         8
+
+Radio-Shack optoisolators are not an acceptible substitute!
+
+Resist the temptation to ground the outer shell contact of any DIN jack, or
+pin 2 of the MIDI-IN DIN jack.  Doing so violates the MIDI standard and can
+cause all sorts of ground-loop problems depending on the cables used.  The
+MIDI interface sold by DATEL has this flaw.
+
+Please consult the Motorola MC6850 Data Sheets for details on programming the
+6850.  As you can see, all three interface standards are very similar.  The
+differences are in the frequency of the 6850 clock and the addressing of the
+6850 registers.  These differences are summarized in the following table:
+
+                                 Siel/JMS      Passport     Sequential
+ Control Register Address          DE04          DE08          DE00
+ Transmit Data Register Address    DE05          DE09          DE01
+ Status Register Address           DE06          DE08          DE02
+ Receive Data Register Address     DE07          DE09          DE03
+ Master Chip Reset Command          03            03            03
+ Enable Xmit/Rcv Command            16            15            15
+ Enable Xmit/Rcv + Rcv Interrupt    96            95            95
+ Enable Xmit/Rcv + Xmit Interrupt   36            35            35
+ Enable Xmit/Rcv + Both Interrupts  B6            B5            B5
+
+
+One final note: any software package which uses the "smart" features of a
+specific interface (i.e. it's on-board clock(s), tape/drum sync, foot switch
+interfaces, etc.) will probably not work unmodified with this simple MIDI
+(UART only) interface.  However, a vast majority of public-domain S/W will
+work fine as long as the standard supported is one of the 3 above and the
+hardware and software standards match.  Also beware that the Siel/JMS
+standard (also DATEL) is the LEAST likely to be supported by software in
+the U.S. (Passport is perhaps the MOST supported, with Sequential running a
+close second).
+
+Sincerely,
+Frank Prindle
+Prindle@NADC.arpa
+
+--------------------- Cut Here - PostScript document follows ------------------
+%!PS-Adobe-1.0
+%%Title: minterface3
+%%Creator: f2ps-sun3
+%%CreationDate: Thu Aug 31 16:12:08 1989
+%%For: prindle@tweety (Frank Prindle,703,x2537)
+%%Pages: 1
+%%BoundingBox: 47 49 565 743
+%%EndComments
+/$F2psDict 32 dict def $F2psDict begin $F2psDict /mtrx matrix put
+ /DrawEllipse { /endangle exch def /startangle exch def /yrad exch def /xrad exch def /y exch def /x exch def /savematrix mtrx currentmatrix def x y translate xrad yrad scale 0 0 1 startangle endangle arc savematrix setmatrix } def
+ end /$F2psBegin {$F2psDict begin /$F2psEnteredState save def} def /$F2psEnd {$F2psEnteredState restore end} def
+%%EndProlog
+$F2psBegin
+29.000000 760.000000 translate 0.900 -0.900 scale
+1.066666667 setlinewidth
+newpath 174.000 599.000 60.000 -90.000 90.000 arc stroke
+% Ellipse
+newpath 364 119 2 2 0 360 DrawEllipse stroke
+% Ellipse
+newpath 364 119 4 4 0 360 DrawEllipse stroke
+% Ellipse
+newpath 324 119 2 2 0 360 DrawEllipse stroke
+% Ellipse
+newpath 324 119 4 4 0 360 DrawEllipse stroke
+% Ellipse
+newpath 284 119 2 2 0 360 DrawEllipse stroke
+% Ellipse
+newpath 284 119 4 4 0 360 DrawEllipse stroke
+% Ellipse
+newpath 181 119 3 3 0 360 DrawEllipse stroke
+% Ellipse
+newpath 241 119 3 3 0 360 DrawEllipse stroke
+% Ellipse
+newpath 91 119 3 3 0 360 DrawEllipse stroke
+% Ellipse
+newpath 177 339 3 3 0 360 DrawEllipse stroke
+% Ellipse
+newpath 227 339 3 3 0 360 DrawEllipse stroke
+% Ellipse
+newpath 489 239 4 4 0 360 DrawEllipse stroke
+% Ellipse
+newpath 489 239 2 2 0 360 DrawEllipse stroke
+% Ellipse
+newpath 489 279 4 4 0 360 DrawEllipse stroke
+% Ellipse
+newpath 489 279 2 2 0 360 DrawEllipse stroke
+% Ellipse
+newpath 291 419 3 3 0 360 DrawEllipse stroke
+% Ellipse
+newpath 289 469 4 4 0 360 DrawEllipse stroke
+% Ellipse
+newpath 289 469 2 2 0 360 DrawEllipse stroke
+% Ellipse
+newpath 289 559 4 4 0 360 DrawEllipse stroke
+% Ellipse
+newpath 289 559 2 2 0 360 DrawEllipse stroke
+% Ellipse
+newpath 289 579 2 2 0 360 DrawEllipse stroke
+% Ellipse
+newpath 289 579 4 4 0 360 DrawEllipse stroke
+% Ellipse
+newpath 289 599 4 4 0 360 DrawEllipse stroke
+% Ellipse
+newpath 289 599 2 2 0 360 DrawEllipse stroke
+% Ellipse
+newpath 289 619 2 2 0 360 DrawEllipse stroke
+% Ellipse
+newpath 289 619 4 4 0 360 DrawEllipse stroke
+% Ellipse
+newpath 289 639 4 4 0 360 DrawEllipse stroke
+% Ellipse
+newpath 289 639 2 2 0 360 DrawEllipse stroke
+% Ellipse
+newpath 69 599 2 2 0 360 DrawEllipse stroke
+% Ellipse
+newpath 69 599 4 4 0 360 DrawEllipse stroke
+% Ellipse
+newpath 121 639 3 3 0 360 DrawEllipse stroke
+% Ellipse
+newpath 146 599 3 3 0 360 DrawEllipse stroke
+% Ellipse
+newpath 121 559 3 3 0 360 DrawEllipse stroke
+% Ellipse
+newpath 146 519 3 3 0 360 DrawEllipse stroke
+% Ellipse
+newpath 121 479 3 3 0 360 DrawEllipse stroke
+% Ellipse
+newpath 239 599 5 5 0 360 DrawEllipse stroke
+% Ellipse
+newpath 289 519 4 4 0 360 DrawEllipse stroke
+% Ellipse
+newpath 289 519 2 2 0 360 DrawEllipse stroke
+% Ellipse
+newpath 44 785 4 4 0 360 DrawEllipse stroke
+% Ellipse
+newpath 44 785 2 2 0 360 DrawEllipse stroke
+% Polyline
+newpath 451 439 moveto 457 439 lineto stroke
+% Polyline
+newpath 451 424 moveto 456 424 lineto stroke
+% Polyline
+newpath 451 409 moveto 457 409 lineto stroke
+% Polyline
+newpath 451 394 moveto 457 394 lineto stroke
+% Polyline
+newpath 451 379 moveto 457 379 lineto stroke
+% Polyline
+newpath 451 364 moveto 457 364 lineto stroke
+% Polyline
+newpath 451 349 moveto 456 349 lineto stroke
+% Polyline
+newpath 451 334 moveto 457 334 lineto stroke
+% Polyline
+newpath 454 409 moveto 494 409 lineto stroke
+% Polyline
+newpath 505 293 moveto 501 306 lineto stroke
+% Polyline
+newpath 442 299 moveto 445 299 lineto stroke
+% Polyline
+newpath 457 239 moveto 459 239 lineto stroke
+% Polyline
+newpath 451 259 moveto 454 259 lineto stroke
+% Polyline
+newpath 439 99 moveto 439 119 lineto 464 119 lineto stroke
+% Polyline
+newpath 214 679 moveto 214 645 lineto stroke
+% Polyline
+newpath 214 510 moveto 214 553 lineto stroke
+% Polyline
+newpath 254 429 moveto 254 434 lineto stroke
+% Polyline
+newpath 254 434 moveto 254 599 lineto 244 599 lineto stroke
+% Polyline
+newpath 84 249 moveto 94 249 lineto stroke
+% Polyline
+newpath 349 503 moveto 356 503 lineto stroke
+% Polyline
+newpath 389 503 moveto 396 503 lineto stroke
+% Polyline
+newpath 369 503 moveto 375 503 lineto stroke
+% Polyline
+newpath 305 487 moveto 326 487 lineto stroke
+% Polyline
+newpath 294 519 moveto 304 519 lineto stroke
+% Polyline
+newpath 304 419 moveto 304 469 lineto 294 469 lineto stroke
+% Polyline
+newpath 329 479 moveto 329 519 lineto 304 519 lineto stroke
+% Polyline
+newpath 394 479 moveto 394 499 lineto stroke
+% Polyline
+newpath 374 479 moveto 374 499 lineto stroke
+% Polyline
+newpath 354 479 moveto 354 499 lineto 454 499 lineto 454 499 lineto stroke
+% Polyline
+newpath 414 459 moveto 454 459 lineto 454 519 lineto stroke
+% Polyline
+newpath 294 419 moveto 314 419 lineto stroke
+% Polyline
+newpath 254 429 moveto 254 419 lineto 264 419 lineto stroke
+% Polyline
+newpath 459 279 moveto 484 279 lineto stroke
+% Polyline
+newpath 459 239 moveto 484 239 lineto stroke
+% Polyline
+newpath 449 273 moveto 457 273 lineto stroke
+% Polyline
+newpath 435 212 moveto 456 212 lineto stroke
+% Polyline
+newpath 489 434 moveto 494 439 lineto 489 444 lineto stroke
+% Polyline
+newpath 489 419 moveto 494 424 lineto 489 429 lineto stroke
+% Polyline
+newpath 489 404 moveto 494 409 lineto 489 414 lineto stroke
+% Polyline
+newpath 489 389 moveto 494 394 lineto 489 399 lineto stroke
+% Polyline
+newpath 489 374 moveto 494 379 lineto 489 384 lineto stroke
+% Polyline
+newpath 489 359 moveto 494 364 lineto 489 369 lineto stroke
+% Polyline
+newpath 489 344 moveto 494 349 lineto 489 354 lineto stroke
+% Polyline
+newpath 489 329 moveto 494 334 lineto 489 339 lineto stroke
+% Polyline
+newpath 489 294 moveto 494 299 lineto 489 304 lineto stroke
+% Polyline
+newpath 489 254 moveto 494 259 lineto 489 264 lineto stroke
+% Polyline
+newpath 454 439 moveto 494 439 lineto stroke
+% Polyline
+newpath 454 424 moveto 494 424 lineto stroke
+% Polyline
+newpath 454 394 moveto 494 394 lineto stroke
+% Polyline
+newpath 454 379 moveto 494 379 lineto stroke
+% Polyline
+newpath 454 364 moveto 494 364 lineto stroke
+% Polyline
+newpath 454 349 moveto 494 349 lineto stroke
+% Polyline
+newpath 454 334 moveto 494 334 lineto stroke
+% Polyline
+newpath 444 299 moveto 494 299 lineto stroke
+% Polyline
+newpath 454 259 moveto 494 259 lineto stroke
+% Polyline
+newpath 489 214 moveto 494 219 lineto 489 224 lineto stroke
+% Polyline
+newpath 459 219 moveto 494 219 lineto stroke
+% Polyline
+newpath 414 439 moveto 434 439 lineto stroke
+% Polyline
+newpath 414 334 moveto 434 334 lineto stroke
+% Polyline
+newpath 414 349 moveto 434 349 lineto stroke
+% Polyline
+newpath 414 364 moveto 434 364 lineto stroke
+% Polyline
+newpath 414 379 moveto 434 379 lineto stroke
+% Polyline
+newpath 414 394 moveto 434 394 lineto stroke
+% Polyline
+newpath 414 409 moveto 434 409 lineto stroke
+% Polyline
+newpath 414 424 moveto 434 424 lineto stroke
+% Polyline
+newpath 414 299 moveto 434 299 lineto stroke
+% Polyline
+newpath 414 279 moveto 434 279 lineto stroke
+% Polyline
+newpath 414 259 moveto 434 259 lineto stroke
+% Polyline
+newpath 414 239 moveto 434 239 lineto stroke
+% Polyline
+newpath 414 219 moveto 434 219 lineto stroke
+% Polyline
+newpath 179 394 moveto 174 399 lineto 179 404 lineto stroke
+% Polyline
+newpath 79 394 moveto 74 399 lineto 79 404 lineto stroke
+% Polyline
+newpath 79 364 moveto 74 369 lineto 79 374 lineto stroke
+% Polyline
+newpath 79 334 moveto 74 339 lineto 79 344 lineto stroke
+% Polyline
+newpath 79 394 moveto 84 399 lineto 79 404 lineto stroke
+% Polyline
+newpath 79 364 moveto 84 369 lineto 79 374 lineto stroke
+% Polyline
+newpath 79 334 moveto 84 339 lineto 79 344 lineto stroke
+% Polyline
+newpath 84 369 moveto 114 369 lineto 114 379 lineto stroke
+% Polyline
+newpath 159 399 moveto 174 399 lineto stroke
+% Polyline
+newpath 84 399 moveto 124 399 lineto stroke
+% Polyline
+newpath 84 339 moveto 124 339 lineto stroke
+% Polyline
+newpath 159 339 moveto 174 339 lineto stroke
+% Polyline
+newpath 254 339 moveto 314 339 lineto stroke
+% Polyline
+newpath 204 339 moveto 224 339 lineto stroke
+% Polyline
+newpath 84 279 moveto 94 279 lineto stroke
+% Polyline
+newpath 84 219 moveto 94 219 lineto stroke
+% Polyline
+newpath 79 274 moveto 74 279 lineto 79 284 lineto stroke
+% Polyline
+newpath 79 274 moveto 84 279 lineto 79 284 lineto stroke
+% Polyline
+newpath 79 244 moveto 74 249 lineto 79 254 lineto stroke
+% Polyline
+newpath 79 244 moveto 84 249 lineto 79 254 lineto stroke
+% Polyline
+newpath 79 214 moveto 74 219 lineto 79 224 lineto stroke
+% Polyline
+newpath 79 214 moveto 84 219 lineto 79 224 lineto stroke
+% Polyline
+newpath 164 254 moveto 184 254 lineto stroke
+% Polyline
+newpath 179 244 moveto 174 254 lineto 169 244 lineto stroke
+% Polyline
+newpath 169 244 moveto 179 244 lineto stroke
+% Polyline
+newpath 174 219 moveto 174 244 lineto stroke
+% Polyline
+newpath 174 254 moveto 174 279 lineto stroke
+% Polyline
+newpath 169 254 moveto 179 254 lineto stroke
+% Polyline
+newpath 119 279 moveto 94 279 lineto stroke
+% Polyline
+newpath 194 279 moveto 154 279 lineto stroke
+% Polyline
+newpath 194 219 moveto 94 219 lineto stroke
+% Polyline
+newpath 254 279 moveto 284 279 lineto 284 299 lineto stroke
+% Polyline
+newpath 169 174 moveto 174 179 lineto 169 184 lineto stroke
+% Polyline
+newpath 224 179 moveto 174 179 lineto stroke
+% Polyline
+newpath 274 179 moveto 284 179 lineto 284 219 lineto stroke
+% Polyline
+newpath 224 199 moveto 224 179 lineto 234 179 lineto stroke
+% Polyline
+newpath 254 219 moveto 314 219 lineto stroke
+% Polyline
+newpath 194 199 moveto 254 199 lineto 254 299 lineto 194 299 lineto 194 199 lineto stroke
+% Polyline
+newpath 459 154 moveto 454 159 lineto 459 164 lineto stroke
+% Polyline
+newpath 404 179 moveto 404 159 lineto 454 159 lineto stroke
+% Polyline
+newpath 364 179 moveto 364 144 lineto 324 144 lineto stroke
+% Polyline
+newpath 314 479 moveto 314 179 lineto stroke
+% Polyline
+newpath 414 479 moveto 314 479 lineto stroke
+% Polyline
+newpath 414 474 moveto 414 474 lineto stroke
+% Polyline
+newpath 414 179 moveto 414 479 lineto stroke
+% Polyline
+newpath 314 179 moveto 414 179 lineto stroke
+% Polyline
+newpath 324 124 moveto 324 179 lineto stroke
+% Polyline
+newpath 534 139 moveto 554 139 lineto stroke
+% Polyline
+newpath 538 143 moveto 550 143 lineto stroke
+% Polyline
+newpath 542 147 moveto 547 147 lineto stroke
+% Polyline
+newpath 259 119 moveto 279 119 lineto stroke
+% Polyline
+newpath 259 119 moveto 259 59 lineto stroke
+% Polyline
+newpath 44 79 moveto 59 79 lineto stroke
+% Polyline
+newpath 64 119 moveto 44 119 lineto 44 39 lineto 109 39 lineto stroke
+% Polyline
+newpath 244 119 moveto 259 119 lineto stroke
+% Polyline
+newpath 189 79 moveto 199 79 lineto stroke
+% Polyline
+newpath 199 119 moveto 199 39 lineto 129 39 lineto stroke
+% Polyline
+newpath 209 119 moveto 214 119 lineto stroke
+% Polyline
+newpath 114 29 moveto 114 49 lineto stroke
+% Polyline
+newpath 109 39 moveto 114 39 lineto stroke
+% Polyline
+newpath 124 29 moveto 124 49 lineto 119 49 lineto 119 29 lineto 124 29 lineto stroke
+% Polyline
+newpath 129 29 moveto 129 49 lineto stroke
+% Polyline
+newpath 139 119 moveto 139 79 lineto 154 79 lineto stroke
+% Polyline
+newpath 104 119 moveto 104 79 lineto 94 79 lineto stroke
+% Polyline
+newpath 184 119 moveto 209 119 lineto stroke
+% Polyline
+newpath 124 109 moveto 124 129 lineto stroke
+% Polyline
+newpath 119 109 moveto 119 129 lineto stroke
+% Polyline
+newpath 124 119 moveto 154 119 lineto stroke
+% Polyline
+newpath 94 119 moveto 119 119 lineto stroke
+% Polyline
+newpath 179 119 moveto 154 94 lineto 154 144 lineto 179 119 lineto stroke
+% Polyline
+newpath 149 79 moveto 154 79 lineto 157 74 lineto 162 84 lineto 167 74 lineto 172 84 lineto 177 74 lineto 182 84 lineto 184 79 lineto 189 79 lineto stroke
+% Polyline
+newpath 239 119 moveto 214 94 lineto 214 144 lineto 239 119 lineto stroke
+% Polyline
+newpath 54 79 moveto 59 79 lineto 62 74 lineto 67 84 lineto 72 74 lineto 77 84 lineto 82 74 lineto 87 84 lineto 89 79 lineto 94 79 lineto stroke
+% Polyline
+newpath 89 119 moveto 64 94 lineto 64 144 lineto 89 119 lineto stroke
+% Polyline
+newpath 259 59 moveto 384 59 lineto stroke
+% Polyline
+newpath 384 59 moveto 384 29 lineto 504 29 lineto 504 99 lineto 384 99 lineto 384 59 lineto stroke
+% Polyline
+newpath 504 59 moveto 544 59 lineto stroke
+% Polyline
+newpath 464 99 moveto 464 119 lineto 544 119 lineto 544 139 lineto stroke
+% Polyline
+newpath 369 119 moveto 404 119 lineto 404 99 lineto stroke
+% Polyline
+newpath 489 99 moveto 489 119 lineto stroke
+% Polyline
+newpath 549 54 moveto 544 59 lineto 549 64 lineto stroke
+% Polyline
+newpath 234 179 moveto 239 179 lineto 242 174 lineto 247 184 lineto 252 174 lineto 257 184 lineto 262 174 lineto 267 184 lineto 269 179 lineto 274 179 lineto stroke
+% Polyline
+newpath 282 307 moveto 287 307 lineto stroke
+% Polyline
+newpath 278 303 moveto 290 303 lineto stroke
+% Polyline
+newpath 274 299 moveto 294 299 lineto stroke
+% Polyline
+newpath 119 279 moveto 124 279 lineto 127 274 lineto 132 284 lineto 137 274 lineto 142 284 lineto 147 274 lineto 152 284 lineto 154 279 lineto 159 279 lineto stroke
+% Polyline
+newpath 179 339 moveto 204 364 lineto 204 314 lineto 179 339 lineto stroke
+% Polyline
+newpath 229 339 moveto 254 364 lineto 254 314 lineto 229 339 lineto stroke
+% Polyline
+newpath 119 339 moveto 124 339 lineto 127 334 lineto 132 344 lineto 137 334 lineto 142 344 lineto 147 334 lineto 152 344 lineto 154 339 lineto 159 339 lineto stroke
+% Polyline
+newpath 119 399 moveto 124 399 lineto 127 394 lineto 132 404 lineto 137 394 lineto 142 404 lineto 147 394 lineto 152 404 lineto 154 399 lineto 159 399 lineto stroke
+% Polyline
+newpath 112 387 moveto 117 387 lineto stroke
+% Polyline
+newpath 108 383 moveto 120 383 lineto stroke
+% Polyline
+newpath 104 379 moveto 124 379 lineto stroke
+% Polyline
+newpath 500 212 moveto 521 212 lineto stroke
+% Polyline
+newpath 289 419 moveto 264 394 lineto 264 444 lineto 289 419 lineto stroke
+% Polyline
+newpath 452 527 moveto 457 527 lineto stroke
+% Polyline
+newpath 448 523 moveto 460 523 lineto stroke
+% Polyline
+newpath 444 519 moveto 464 519 lineto stroke
+% Polyline
+newpath 294 639 moveto 434 639 lineto stroke
+% Polyline
+newpath 515 613 moveto 522 613 lineto stroke
+% Polyline
+newpath 489 634 moveto 494 639 lineto 489 644 lineto stroke
+% Polyline
+newpath 489 614 moveto 494 619 lineto 489 624 lineto stroke
+% Polyline
+newpath 489 594 moveto 494 599 lineto 489 604 lineto stroke
+% Polyline
+newpath 489 574 moveto 494 579 lineto 489 584 lineto stroke
+% Polyline
+newpath 489 554 moveto 494 559 lineto 489 564 lineto stroke
+% Polyline
+newpath 494 639 moveto 434 639 lineto 434 659 lineto stroke
+% Polyline
+newpath 294 619 moveto 494 619 lineto stroke
+% Polyline
+newpath 294 599 moveto 494 599 lineto stroke
+% Polyline
+newpath 294 579 moveto 494 579 lineto stroke
+% Polyline
+newpath 294 559 moveto 494 559 lineto stroke
+% Polyline
+newpath 432 667 moveto 437 667 lineto stroke
+% Polyline
+newpath 428 663 moveto 440 663 lineto stroke
+% Polyline
+newpath 424 659 moveto 444 659 lineto stroke
+% Polyline
+newpath 204 679 moveto 224 679 lineto stroke
+% Polyline
+newpath 208 683 moveto 220 683 lineto stroke
+% Polyline
+newpath 212 687 moveto 217 687 lineto stroke
+% Polyline
+newpath 119 639 moveto 94 614 lineto 94 664 lineto 119 639 lineto stroke
+% Polyline
+newpath 144 599 moveto 119 574 lineto 119 624 lineto 144 599 lineto stroke
+% Polyline
+newpath 119 559 moveto 94 534 lineto 94 584 lineto 119 559 lineto stroke
+% Polyline
+newpath 144 519 moveto 119 494 lineto 119 544 lineto 144 519 lineto stroke
+% Polyline
+newpath 119 479 moveto 94 454 lineto 94 504 lineto 119 479 lineto stroke
+% Polyline
+newpath 124 479 moveto 174 479 lineto stroke
+% Polyline
+newpath 149 519 moveto 174 519 lineto stroke
+% Polyline
+newpath 124 559 moveto 174 559 lineto stroke
+% Polyline
+newpath 149 599 moveto 174 599 lineto stroke
+% Polyline
+newpath 124 639 moveto 174 639 lineto stroke
+% Polyline
+newpath 64 479 moveto 94 479 lineto stroke
+% Polyline
+newpath 64 519 moveto 119 519 lineto stroke
+% Polyline
+newpath 64 559 moveto 94 559 lineto stroke
+% Polyline
+newpath 64 639 moveto 94 639 lineto stroke
+% Polyline
+newpath 69 474 moveto 64 479 lineto 69 484 lineto stroke
+% Polyline
+newpath 69 514 moveto 64 519 lineto 69 524 lineto stroke
+% Polyline
+newpath 69 554 moveto 64 559 lineto 69 564 lineto stroke
+% Polyline
+newpath 69 634 moveto 64 639 lineto 69 644 lineto stroke
+% Polyline
+newpath 74 599 moveto 119 599 lineto stroke
+% Polyline
+newpath 34 632 moveto 56 632 lineto stroke
+% Polyline
+newpath 219 504 moveto 214 509 lineto 209 504 lineto stroke
+% Polyline
+newpath 134 679 moveto 134 719 lineto 174 719 lineto stroke
+% Polyline
+newpath 134 699 moveto 174 699 lineto stroke
+% Polyline
+newpath 134 679 moveto 174 679 lineto stroke
+% Polyline
+newpath 64 719 moveto 134 719 lineto stroke
+% Polyline
+newpath 69 714 moveto 64 719 lineto 69 724 lineto stroke
+% Polyline
+newpath 94 719 moveto 94 694 lineto stroke
+% Polyline
+newpath 94 694 moveto 99 689 lineto stroke
+% Polyline
+newpath 94 694 moveto 89 689 lineto stroke
+% Polyline
+newpath 174 469 moveto 174 729 lineto stroke
+% Polyline
+newpath 564 764 moveto 584 764 lineto stroke
+% Polyline
+newpath 568 768 moveto 580 768 lineto stroke
+% Polyline
+newpath 572 772 moveto 577 772 lineto stroke
+% Polyline
+newpath 479 704 moveto 479 744 lineto stroke
+% Polyline
+newpath 479 744 moveto 579 744 lineto 579 704 lineto 479 704 lineto stroke
+% Polyline
+newpath 489 704 moveto 489 689 lineto stroke
+% Polyline
+newpath 494 684 moveto 489 689 lineto 484 684 lineto stroke
+% Polyline
+newpath 369 744 moveto 369 754 lineto 574 754 lineto 574 744 lineto stroke
+% Polyline
+newpath 429 744 moveto 429 754 lineto stroke
+% Polyline
+newpath 454 744 moveto 454 754 lineto stroke
+% Polyline
+newpath 489 744 moveto 489 754 lineto stroke
+% Polyline
+newpath 549 744 moveto 549 754 lineto stroke
+% Polyline
+newpath 574 754 moveto 574 764 lineto stroke
+% Polyline
+newpath 359 704 moveto 359 744 lineto 459 744 lineto 459 704 lineto 364 704 lineto stroke
+% Polyline
+newpath 359 704 moveto 374 704 lineto stroke
+% Polyline
+newpath 369 704 moveto 369 689 lineto stroke
+% Polyline
+newpath 369 689 moveto 374 684 lineto stroke
+% Polyline
+newpath 369 689 moveto 364 684 lineto stroke
+/Courier-Bold findfont 13.333333 scalefont setfont
+499 304 moveto 1 -1 scale (O2 \(Pin E\)) show 1 -1 scale
+420 471 moveto 1 -1 scale (Vss) show 1 -1 scale
+19 499 moveto 1 -1 scale (\(Pin S\)) show 1 -1 scale
+99 254 moveto 1 -1 scale (N/C) show 1 -1 scale
+104 144 moveto 1 -1 scale (560pf) show 1 -1 scale
+434 94 moveto 1 -1 scale (13) show 1 -1 scale
+204 644 moveto 1 -1 scale (7) show 1 -1 scale
+59 789 moveto 1 -1 scale (indicates a pin on the 16-pin personality select DIP socket.) show 1 -1 scale
+34 279 moveto 1 -1 scale (Jack) show 1 -1 scale
+34 264 moveto 1 -1 scale (DIN) show 1 -1 scale
+34 249 moveto 1 -1 scale (IN) show 1 -1 scale
+224 734 moveto 1 -1 scale (\(1/6\)74LS366) show 1 -1 scale
+209 719 moveto 1 -1 scale (All inverters are) show 1 -1 scale
+289 414 moveto 1 -1 scale (CS0) show 1 -1 scale
+34 399 moveto 1 -1 scale (Jack) show 1 -1 scale
+34 384 moveto 1 -1 scale (DIN) show 1 -1 scale
+34 369 moveto 1 -1 scale (OUT) show 1 -1 scale
+399 224 moveto 1 -1 scale (7) show 1 -1 scale
+389 544 moveto 1 -1 scale (S) show 1 -1 scale
+389 529 moveto 1 -1 scale (T) show 1 -1 scale
+389 514 moveto 1 -1 scale (C) show 1 -1 scale
+369 544 moveto 1 -1 scale (D) show 1 -1 scale
+369 529 moveto 1 -1 scale (C) show 1 -1 scale
+369 514 moveto 1 -1 scale (D) show 1 -1 scale
+349 544 moveto 1 -1 scale (S) show 1 -1 scale
+349 529 moveto 1 -1 scale (T) show 1 -1 scale
+349 514 moveto 1 -1 scale (R) show 1 -1 scale
+279 369 moveto 1 -1 scale (DATA) show 1 -1 scale
+289 354 moveto 1 -1 scale (Tx) show 1 -1 scale
+279 249 moveto 1 -1 scale (DATA) show 1 -1 scale
+289 234 moveto 1 -1 scale (Rx) show 1 -1 scale
+304 499 moveto 1 -1 scale (CS2) show 1 -1 scale
+269 524 moveto 1 -1 scale (11) show 1 -1 scale
+274 474 moveto 1 -1 scale (4) show 1 -1 scale
+324 474 moveto 1 -1 scale (9) show 1 -1 scale
+349 474 moveto 1 -1 scale (5) show 1 -1 scale
+364 474 moveto 1 -1 scale (23) show 1 -1 scale
+384 474 moveto 1 -1 scale (24) show 1 -1 scale
+404 464 moveto 1 -1 scale (1) show 1 -1 scale
+349 319 moveto 1 -1 scale (ACIA) show 1 -1 scale
+349 304 moveto 1 -1 scale (6850) show 1 -1 scale
+379 174 moveto 1 -1 scale (Vcc) show 1 -1 scale
+319 424 moveto 1 -1 scale (8) show 1 -1 scale
+499 284 moveto 1 -1 scale (12) show 1 -1 scale
+499 244 moveto 1 -1 scale (14) show 1 -1 scale
+499 264 moveto 1 -1 scale (A0 \(Pin Y\)) show 1 -1 scale
+499 224 moveto 1 -1 scale (IRQ \(Pin 4\)) show 1 -1 scale
+434 444 moveto 1 -1 scale (D0) show 1 -1 scale
+434 429 moveto 1 -1 scale (D1) show 1 -1 scale
+434 414 moveto 1 -1 scale (D2) show 1 -1 scale
+434 399 moveto 1 -1 scale (D3) show 1 -1 scale
+434 384 moveto 1 -1 scale (D4) show 1 -1 scale
+434 369 moveto 1 -1 scale (D5) show 1 -1 scale
+434 354 moveto 1 -1 scale (D6) show 1 -1 scale
+434 339 moveto 1 -1 scale (D7) show 1 -1 scale
+434 304 moveto 1 -1 scale (E) show 1 -1 scale
+434 284 moveto 1 -1 scale (R/W) show 1 -1 scale
+434 264 moveto 1 -1 scale (RS) show 1 -1 scale
+434 244 moveto 1 -1 scale (CS1) show 1 -1 scale
+434 224 moveto 1 -1 scale (IRQ) show 1 -1 scale
+394 304 moveto 1 -1 scale (14) show 1 -1 scale
+394 284 moveto 1 -1 scale (13) show 1 -1 scale
+394 264 moveto 1 -1 scale (11) show 1 -1 scale
+394 244 moveto 1 -1 scale (10) show 1 -1 scale
+394 444 moveto 1 -1 scale (22) show 1 -1 scale
+394 429 moveto 1 -1 scale (21) show 1 -1 scale
+394 414 moveto 1 -1 scale (20) show 1 -1 scale
+394 399 moveto 1 -1 scale (19) show 1 -1 scale
+394 384 moveto 1 -1 scale (18) show 1 -1 scale
+394 369 moveto 1 -1 scale (17) show 1 -1 scale
+394 354 moveto 1 -1 scale (16) show 1 -1 scale
+394 339 moveto 1 -1 scale (15) show 1 -1 scale
+319 344 moveto 1 -1 scale (6) show 1 -1 scale
+184 404 moveto 1 -1 scale (+5V) show 1 -1 scale
+129 239 moveto 1 -1 scale (diode) show 1 -1 scale
+129 299 moveto 1 -1 scale (220) show 1 -1 scale
+129 419 moveto 1 -1 scale (220) show 1 -1 scale
+129 329 moveto 1 -1 scale (220) show 1 -1 scale
+84 394 moveto 1 -1 scale (4) show 1 -1 scale
+84 364 moveto 1 -1 scale (2) show 1 -1 scale
+84 334 moveto 1 -1 scale (5) show 1 -1 scale
+34 354 moveto 1 -1 scale (MIDI-) show 1 -1 scale
+199 284 moveto 1 -1 scale (1) show 1 -1 scale
+199 224 moveto 1 -1 scale (2) show 1 -1 scale
+84 274 moveto 1 -1 scale (4) show 1 -1 scale
+84 244 moveto 1 -1 scale (2) show 1 -1 scale
+84 214 moveto 1 -1 scale (5) show 1 -1 scale
+34 234 moveto 1 -1 scale (MIDI-) show 1 -1 scale
+244 284 moveto 1 -1 scale (5) show 1 -1 scale
+244 224 moveto 1 -1 scale (4) show 1 -1 scale
+219 214 moveto 1 -1 scale (6) show 1 -1 scale
+144 184 moveto 1 -1 scale (+5V) show 1 -1 scale
+244 169 moveto 1 -1 scale (270) show 1 -1 scale
+204 254 moveto 1 -1 scale (PC900) show 1 -1 scale
+319 224 moveto 1 -1 scale (2) show 1 -1 scale
+464 164 moveto 1 -1 scale (+5V) show 1 -1 scale
+394 194 moveto 1 -1 scale (12) show 1 -1 scale
+359 194 moveto 1 -1 scale (4) show 1 -1 scale
+319 194 moveto 1 -1 scale (3) show 1 -1 scale
+339 174 moveto 1 -1 scale (CLK) show 1 -1 scale
+344 159 moveto 1 -1 scale (Tx) show 1 -1 scale
+299 174 moveto 1 -1 scale (CLK) show 1 -1 scale
+304 159 moveto 1 -1 scale (Rx) show 1 -1 scale
+354 109 moveto 1 -1 scale (16) show 1 -1 scale
+319 109 moveto 1 -1 scale (1) show 1 -1 scale
+274 109 moveto 1 -1 scale (15) show 1 -1 scale
+59 69 moveto 1 -1 scale (2.2K) show 1 -1 scale
+134 34 moveto 1 -1 scale (2Mhz.) show 1 -1 scale
+154 69 moveto 1 -1 scale (2.2K) show 1 -1 scale
+389 64 moveto 1 -1 scale (11) show 1 -1 scale
+484 64 moveto 1 -1 scale (14) show 1 -1 scale
+399 94 moveto 1 -1 scale (4) show 1 -1 scale
+459 94 moveto 1 -1 scale (12) show 1 -1 scale
+484 94 moveto 1 -1 scale (7) show 1 -1 scale
+414 49 moveto 1 -1 scale (74LS293) show 1 -1 scale
+554 64 moveto 1 -1 scale (+5V) show 1 -1 scale
+499 339 moveto 1 -1 scale (D7 \(Pin 14\)) show 1 -1 scale
+499 354 moveto 1 -1 scale (D6 \(Pin 15\)) show 1 -1 scale
+499 369 moveto 1 -1 scale (D5 \(Pin 16\)) show 1 -1 scale
+499 384 moveto 1 -1 scale (D4 \(Pin 17\)) show 1 -1 scale
+499 399 moveto 1 -1 scale (D3 \(Pin 18\)) show 1 -1 scale
+499 414 moveto 1 -1 scale (D2 \(Pin 19\)) show 1 -1 scale
+499 429 moveto 1 -1 scale (D1 \(Pin 20\)) show 1 -1 scale
+499 444 moveto 1 -1 scale (D0 \(Pin 21\)) show 1 -1 scale
+274 644 moveto 1 -1 scale (7) show 1 -1 scale
+274 624 moveto 1 -1 scale (5) show 1 -1 scale
+274 604 moveto 1 -1 scale (3) show 1 -1 scale
+274 584 moveto 1 -1 scale (2) show 1 -1 scale
+499 644 moveto 1 -1 scale (GND \(Pin 1\)) show 1 -1 scale
+499 624 moveto 1 -1 scale (R/W \(Pin 5\)) show 1 -1 scale
+499 604 moveto 1 -1 scale (A3 \(Pin V\)) show 1 -1 scale
+499 584 moveto 1 -1 scale (A2 \(Pin W\)) show 1 -1 scale
+499 564 moveto 1 -1 scale (A1 \(Pin X\)) show 1 -1 scale
+274 564 moveto 1 -1 scale (6) show 1 -1 scale
+39 484 moveto 1 -1 scale (A6) show 1 -1 scale
+39 524 moveto 1 -1 scale (A5) show 1 -1 scale
+19 539 moveto 1 -1 scale (\(Pin T\)) show 1 -1 scale
+39 564 moveto 1 -1 scale (A4) show 1 -1 scale
+19 579 moveto 1 -1 scale (\(Pin U\)) show 1 -1 scale
+44 604 moveto 1 -1 scale (13) show 1 -1 scale
+34 644 moveto 1 -1 scale (IO1) show 1 -1 scale
+19 659 moveto 1 -1 scale (\(Pin 7\)) show 1 -1 scale
+179 564 moveto 1 -1 scale (3) show 1 -1 scale
+179 604 moveto 1 -1 scale (12) show 1 -1 scale
+179 644 moveto 1 -1 scale (11) show 1 -1 scale
+224 604 moveto 1 -1 scale (8) show 1 -1 scale
+179 484 moveto 1 -1 scale (2) show 1 -1 scale
+179 524 moveto 1 -1 scale (1) show 1 -1 scale
+199 499 moveto 1 -1 scale (+5V) show 1 -1 scale
+34 724 moveto 1 -1 scale (+5V) show 1 -1 scale
+19 739 moveto 1 -1 scale (\(Pin 2\)) show 1 -1 scale
+79 684 moveto 1 -1 scale (+5V) show 1 -1 scale
+179 684 moveto 1 -1 scale (4) show 1 -1 scale
+179 704 moveto 1 -1 scale (5) show 1 -1 scale
+179 724 moveto 1 -1 scale (6) show 1 -1 scale
+179 584 moveto 1 -1 scale (74LS30) show 1 -1 scale
+199 564 moveto 1 -1 scale (14) show 1 -1 scale
+354 679 moveto 1 -1 scale (+5V) show 1 -1 scale
+474 679 moveto 1 -1 scale (+5V) show 1 -1 scale
+364 719 moveto 1 -1 scale (16) show 1 -1 scale
+484 719 moveto 1 -1 scale (16) show 1 -1 scale
+364 739 moveto 1 -1 scale (1) show 1 -1 scale
+484 739 moveto 1 -1 scale (1) show 1 -1 scale
+449 739 moveto 1 -1 scale (8) show 1 -1 scale
+419 739 moveto 1 -1 scale (15) show 1 -1 scale
+539 739 moveto 1 -1 scale (15) show 1 -1 scale
+569 739 moveto 1 -1 scale (8) show 1 -1 scale
+389 724 moveto 1 -1 scale (74LS366) show 1 -1 scale
+509 724 moveto 1 -1 scale (74LS366) show 1 -1 scale
+showpage
+$F2psEnd
+
+Due to the overwhelming response I received when I mentioned that I had
+once built a MIDI interface for a Commodore 64, I thought it would be best
+if I posted this information:
+
+The May 1986 issue of Electronic Musician magazine has a how-to article on
+how to build a MIDI interface for the C64. (I built mine before this article
+was published, and haven't tried it.)  The interface uses a Vector Electronics 
+37695-1DP Plugboard proto board, modified to fit into the expansion slot of the
+C64.  A 7474 D flipflop is used to divide  the C64's 1 MHz "phase two"
+clock down to 500 MHz, which is fed to the RX and TX clock inputs of a 
+6850 ACIA, which provides the UART functions.  The unbuffered phase two clock
+is fed to the phase two input of the UART.  The rest of the circuit is
+pretty much out of the MIDI spec.  Here are the expansion slot pin assignments:
+(* = NOT)
+pin#	name on 6850:	name on C64:
+4	*IRQ		*IRQ
+7	*CS2		*I/O 1
+X	R/W		A1
+Y	RS		A0
+14	D7		D7
+15	D6		D6
+16	D5		D5
+17	D4		D4
+18	D3		D3
+19	D2		D2
+20	D1		D1
+21	D0		D0
+2			+5V
+3			+5V (paralleled with pin 2)
+22			Gnd
+A			Gnd (paralleled)
+
+There are basically two de-facto standards for MIDI interfaces on the C64.
+The original was by Seqential Circuits.  I have no information on that.
+The later one was by Passport Designs.  That interface used a
+6850 ACIA chip, with its registers at addresses: 56840 (control)
+and 56841 (data), decimal.  There was also a 6840 programmable timer
+onboard, and here are its addresses:
+56832	control register 1
+56833	control register 2
+56834	High byte timer 1
+56835	Low byte timer 1
+56836	High byte timer 2
+56837	Low byte timer 2
+56838 	High byte timer 3 (RESERVED)
+56839	Low byte timer 3 (RESERVED)
+
+There was also a drum sync circuit, which I know very little about.  I guess
+it was a set-reset latch:
+56880	Drum sync SET
+56888	Drum sync CLEAR
+
+For more information on these chips, look at their datasheets.
+
+Now, don't start writing me for a lot of more specific information about the
+MIDI interface.  I suggest that anyone attempting to build their own C64
+interface get a copy of the "Commodore 64 programmer's reference guide,"
+which is what I worked out of (I no longer have this book, having sold it
+along with my C64 years ago).  It contains address maps, schematics, and other
+information you'll find handy for the C64.  In addition, get a copy of the 
+MIDI 1.0 Specification.  It has schematics for the interface side of the
+UART, plus the information you'll need to write MIDI software.  It can be
+purchased from the International Midi Association.  The last address I had
+for them is probably out of date (anybody know a newer address?), but, for
+what it's worth, it's:
+
+The International MIDI Association
+8426 Vine Valley Drive
+Sun Valley, CA 91352
+(213)768-7448
+
+
+This should be enough background information for a technical type to be able
+to build a Passport-compatible C64 MIDI interface.  (By the way, mine wasn't
+compatible with anything, since, when I built it, I had no idea what parts
+had been used by Passport or Sequential.  Oh well...)
+
+Good luck!
+                 - Jim Smith  smithj@hpsad.sad.hp.com
+            Yupatupata da yupadupa chickida, Icktang icktang, 
+            Ickitack tangdow, Rickitickatar ticka chingtar da.

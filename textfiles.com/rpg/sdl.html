@@ -1,0 +1,1468 @@
+From rmr@inferno (Robert Reimann) Sun Jul  9 22:00:23 1989
+From: rmr@inferno.wpd.sgi.com (Robert Reimann)
+Newsgroups: rec.games.frp
+Subject: Mage-to-Mage Magical Combat System (SDL) Update
+Message-ID: <37616@sgi.SGI.COM>
+Date: 8 Jul 89 19:25:04 GMT
+Organization: Silicon Graphics, Inc., Mountain View, CA
+Lines: 1458
+Keywords: Revised, now includes illusions
+
+
+Here is the latest draft of the Mage-to-Mage Magical Combat System,
+the first (to my knowledge) system to make use of a comprehensive
+magical language to tie together all aspects of magic in a gaming
+environment.  Since my last posting of the system, I have made minor
+syntax changes, added an operator (thanx to Brad Knowles), added a
+new class of mages, and integrated demonology and illusionism into 
+the system.  Still coming are the much sought-after biological and 
+psychic set of effects.
+
+If anyone has been using the system, I'd love any feedback you may
+have.
+
+				Robert.
+				rmr@sgi.com
+
+-----------------------------------------------------------------------
+
+Preface
+-------
+
+Presented here is the first draft of the Mage-to-Mage Magical Combat
+System and Spell Description Language, that hopefully addresses the issues
+raised in recent discussions of spell programming languages and mage-to-mage
+combat, while remaining more general than previous offerings of this type.
+
+Some spell construction systems attempt to provide all the functionality 
+of AD&D spells by enumerating hundreds of specialized primitives.
+The high number of primitives present in the some systems
+reflects AD&D's lack of a distinction between *effects*, the actual
+physical, biological, or psychic manifestations of magical forces,
+and *operators* which act to shape those forces into useful configurations.
+Note that what most systems call "effects" are actually combinations
+of effects and operators, as I've defined them above.
+
+AD&D-style spells do not require much distinction between effects and
+operators-- they seem to work better without it-- but an object-oriented, 
+constructive approach really needs to distinguish between objects (effects) 
+and predicates (operators) to be successful and at the same time remain simple.
+
+The system presented here consists of 32 physical effects (an equal numbers
+of biological and psychic effects are currently being developed) and 26
+operators.  The effects presented here are part of a rationale for magic
+that is built into the world; you are welcome to change them to better
+fit your needs, but they were chosen with consistency in mind.  The operators 
+are the real heart of the system, you should modify them only with great care.
+Too many non-general operators will spoil this system.
+
+The Mage-to-Mage Spell Description Language (SDL) uses a straightforward 
+left-to-right, top-to-bottom, multi-line syntax. For the most part, each 
+line of spell description represents one spell (mana) point worth of
+magical effect.  Mage-to-Mage uses a spell point system to determine the 
+spell cost; there is no distinction of "spell levels"; spells may be designed 
+with arbitrary complexity, the limiting factor is the number of spell points a
+mage has available to expend casting it.  Spell points are assigned on the
+basis of mage level, intelligence, and wisdom.
+
+Mage-to-Mage also provides a painless and logical way of producing
+magical items, while at the same time keeping their power limited
+to reasonable levels.  Demonology illusion, necromancy, alchemy, and magical
+medicine/healing can all be implemented within the same framework 
+(some of these are still under development).
+
+Lastly, Mage-to-Mage has been designed to work within any combat system
+that makes use of melee rounds as units of combat action.  
+
+Enjoy, and feel free to write/post comments or suggestions.
+
+
+
+
+
+
+		    MAGE-TO-MAGE Magical Combat System
+		      and Spell Description Language
+
+				Version 0.75
+
+		     Copyright 1989 Robert M. Reimann
+			    All rights reserved.
+
+
+
+
+
+I.  The Nature of Magic and Spellcasting
+
+"Magic" itself is not an energy source in any true sense.  It is rather an
+ability of some entities to alter the fabric of reality in a way that
+changes the "natural" balance of "elemental forces" in a localized area 
+and channel it in a useful fashion.  This ability is inate to some 
+creatures, but others (humans among them) must be trained.
+
+"Spell" is the name given to the psycho-physical manipulations a mage or
+magical creature must perform to produce a magical effect.  Spellcasting
+can, therefore be thought of as a psionic skill, with an important exception.
+Once a spell is cast, it's semi-physical nature gives it a certain "life
+of it's own"; it does not *need* to be constantly maintained after it
+has been cast, although it *may* be altered once it has been cast, by
+the original caster, or by another mage of sufficient power. 
+The existence of any spell is, however, intimately bound to the existence 
+of the casting entity; if the caster is killed, the spell will cease 
+*unless* spell "ownership" has been transfered to another casting
+entity before the original caster dies.  
+
+Spells themselves cannot be written down, but "recipes" for spells
+may be recorded using the spell description language described below.
+Spell descriptions have no magical power themselves, they must be 
+interpreted by a spell caster.  Of course, true, active spells may
+be bound to scraps of paper, thus filling the role of AD&D-style 
+magical scrolls.
+
+As with any skill, magical ability improves with practice.  As mages
+gain spell casting experience, the number of spells a mage can cast
+and/or the complexity of his spells will increase.  Spell casting is an
+exhaustive effort requiring intense powers of will.  Spell points are
+an arbitrary method of measuring a spell's complexity.  A mage is, in 
+a sense, "rated for" a certain number of spell points per day, based on
+his experience (level), and his mental prowess.  
+
+He can't exceed this rating, not because he would do himself harm, but rather, 
+because it is simply beyond his current level of capability.  As in AD&D, 
+an appropriate amount of rest will restore a mage's spell point "rating" to 
+full.
+
+Spells need not be written or memorized, they may be cast "on the fly".
+In fact, this is quite common in magical combat.  Spells are, in general,
+non-permanent for reasons outlined above.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+III.  Elemental Forces, Matter, and Effects
+
+The structure of all matter is created by the flow of elemental forces through 
+the material plane.  Were there no flow of these energies, the material plane
+would consist of formless chaos.  The world in which magic exists is entirely
+shaped by an intricate flow of elemental energies that yields land, oceans, air,
+living things, etc.  All living things possess the ability to alter the flow of
+elemental forces to a certain degree by physically interacting with them.
+Sentient beings further posess the ability to alter the flow of these forces,
+and hence the world around them, purely by using their mind, i.e., by magic.
+
+There are four primary elemental forces, each residing on a separate plane:
+
+EARTH
+AIR
+FIRE
+WATER
+
+However, each of these planes overlaps, to a certain extent, the other three
+planes, yielding a total of 16 subplanes.
+
+Earthy Earth		Airy Air	Fiery Fire	Watery Water
+Airy Earth		Earthy Air	Earthy Fire	Earthy Water
+Fiery Earth		Fiery Air	Airy Fire	Airy Water
+Watery Earth		Watery Air	Watery Fire	Fiery Water
+
+Lastly, there are two states for each of these 16 forces, a high energy
+state and a low energy state. These two states are called "Light" and 
+"Dark" respectively.  Each of the 16 permuted forces above can be 
+manipulated in either the Light or Dark form, yielding a total of 32 
+different elemental flows.  Each type of flow generates a unique set
+of EFFECTs.
+
+There are three manifestations of an effect; physical, biological, and psychic.
+Each manifestation is separate and independent of the other two.  Physical
+effects are primarily for combat.  Biological effects can be used to 
+cure and cause illnesses, and to bestow qualities of living creatures 
+on inanimate objects.  Psychic effects can be used to cure and cause
+mental disorders, to bestow qualities of sentient creatures on
+non-sentient things, and to deal with spirits, which have no physical
+characteristics.  Biological and psychic effects are more complex,
+and may not be used until the mage has gained higher levels:
+
+Level	   Manifestations Usable
+-----	   ---------------------
+
+1+	   Physical
+5+	   Physical, Biological
+9+	   Physical, Biological, Psychic
+
+Currently, the system covers only physical effects; biological and psychic 
+effects will be added in future versions.
+
+One final characteristic of some importance is that dissimilar effects
+may not occupy the same physical space in the Material Plane.  Thus,
+when two different effect types come together, one must give way.  This 
+quality can be used to a mage's defensive advantage.  If he casts a barrier 
+of dissimilar effect in the path of another, oncoming force, and his force
+is as potent or more so than the oncoming force, it will be blocked.
+Note that this only works for effects that are manifested in the same way;
+e.g., a physical effect will not block a psychic effect, for instance.
+
+
+III.  Magical Training and Aptitude
+
+Unlike AD&D, this system offers mages the opportunity to specialize in
+areas of expertise, giving them greater control over more limited resources.
+
+Initial training of a mage lasts a maximum of 12 years.  In that time, the 
+mage may divide his studies among one or more elemental forces, such as 
+Fiery Air.
+
+Each force studied includes both Light and Dark effects, as well as all
+three manifestations (physical, biological, psychic).  When a mage learns
+a force, he generally learns both the Light and Dark versions (exception:
+Elemental Mages, below).
+
+The following table shows how studies may be divided, how much time they
+take, and what abilities each term of study confers on the mage.
+
+
+Study Time	Skill Class	Potency	  Range		Know/Use	Resist
+----------	-----------	-------	  -----		--------	------
+12 years	Elemental*	d8/lev	  80'+8'/lev	40%+4%/lev      20%+2%/lev
+10 years	Singular**	d12/lev	  120'+12'/lev	60%+6%/lev	30%+3%/lev
+ 6 years	Major   	d8/lev	  80'+8'/lev	40%+4%/lev	20%+2%/lev
+ 4 years	Minor   	d6/lev	  60'+6'/lev	30%+3%/lev	15%+2%/lev
+ 2 years	Minimal 	d4/lev	  40'+4'/lev	20%+2%/lev	10%+1%/lev
+
+* Elemental Mages learn all four Light or Dark effects (not both) of an element;
+  thus a Mage of Light Air would learn Light Airy Air, Light Watery Air,
+  Light Fiery Air, and Light Earthy Air.
+
+** Singular Mages may not learn any other force beyond their singular
+   specialty; their minds are too "coloured" by their magic to permit
+   learning a new kind.
+
+So, Medwyn the Mage could spend his 12 years of study becoming an
+Elemental Mage of Light Water or a Singular Mage in Fiery Air, or 
+he could spend 6 getting a Major in Fiery Air, and 6 more getting 
+another Major in, say, Earthy Water.
+
+Or he could get two Minors and and two Minimals, etc.
+
+
+Spending more time learning a particular force allows the mage to use
+it more effectively; a singular mage gets d12 per level damage from his
+effects, twice the damage of a mage with a similar Minor.  Similarly, his
+casting range is larger, his ability to recognize (Know) magic of his
+specialty and make use of it (Use) is better as well.  Finally, he is
+also able to better Resist magic of the type in which he received the 
+training.
+
+Spell points are assigned to Mages according to the following formula:
+
+		Spell Points = (INT+WILL)*level/4
+
+This is the same for all mages regardless of training.  All fractional
+points should be rounded up.
+
+As a mage casts spells, his spell points are depleted.  They are regained
+with sleep; 1/10 of a mage's total points are replenished per hour of rest.
+There is one important exception to this rule: if a spell is still operating,
+the spell points used to create it *cannot* be replenished until the spell
+has been stopped.  Once it has stopped, the points may be replenished as
+described above.  This effectively limits the number of semi-permanent spells
+that a mage is able to cast.
+
+
+
+
+IV. Physical Effects 
+
+The following is a complete list of physical effect.
+
+EARTH
+
+LEE:  Crystal/Glass	DEE:  Stone
+LAE:  Sand		DAE:  Dust
+LWE:  Loam		DWE:  Mud/Quicksand
+LFE:  Lava		DFE:  Metal
+
+
+
+
+
+WATER
+
+LWW:  Water		DWW:  Ice
+LAW:  Foam		DAW:  Erosion
+LEW:  Glue		DEW:  Liquid [Poison]
+LFW:  Steam		DFW:  Oil
+
+
+
+
+FIRE
+
+LFF:  Fire		DFF:  Shadow Fire [Cold]
+LAF:  Plasma		DAF:  Ash
+LEF:  Heat		DEF:  Alkali
+LWF:  Electricity	DWF:  Acid
+
+
+AIR
+
+LAA:  Air/Wind			DFF:  Shadow/Darkness
+LWA:  Ambient Light		DWA:  Fog/Cloud/Mist
+LEA:  Illusion			DEA:  Gas [Poison]
+LFA:  Radiant Light		DFA:  Smoke
+
+
+
+
+V.  Operators
+
+Operators are the core of the Mage-to-Mage SDL, providing the syntax 
+for spell description and execution.  This section gives a summary of all
+SDL operators. followed by complete descriptions of the syntax and semantics
+of each operator.  Examples are included.
+
+
+V.1  Operator Summary
+
+
+Basic (Effect) Operators
+------------------------
+
+create			create a new effect
+destroy			destroy a previously created effect
+move			move an effect to a new location
+rotate			rotate an effect around any axis
+scale			resize a previously created effect
+shape			form an effect into a desired shape
+
+
+Path (Shape) Operators
+----------------------
+
+fill			fill a closed polygonal (2D) area
+lineto			extrude an effect along a given line
+surface			mold an effect along a given surface
+volume			form an effect to fit a specified volume
+
+
+Flow Operators
+--------------
+
+halt			stop a spell
+if...then...else	conditional determined by input events
+repeat...until		loop until event
+wait until		pause spell until event
+
+
+Event Operators
+---------------
+
+and			       |
+or			       | boolean operators for combining events
+not			       |
+interrupted		       signals a spell has been interrupted
+<object><action><proximity>    general format for events
+
+
+Special Operators
+-----------------
+
+bind			bind a spell's range relative to a given object
+interrupt		alter a given spell
+makeowner		reassign ownership of given spell to a new mage
+power			change a spell's power
+range			change a spell's range
+resume			resume an interrupted spell
+<spellname>:		assign a spell a name
+
+
+V.2  Operator Details
+
+This section describes the operators summarized above in detail.
+In the descriptions below, variables are in angle brackets, and
+optional arguments are in straight brackets.  Each operator is listed
+followed by a paragraph describing what it does, followed in
+turn by an example of usage.
+
+
+
+V.2.1 Basic Operators
+
+
+CREATE
+	create <effect> [<effectname>]
+
+
+	Create a point source of the given effect on the tip of the
+	caster's index finger (right or left).  This is an initialization
+	operator, creating the link to another plane.  For physical effects,
+	the effect must be scaled or otherwise shaped to a physical dimension 
+	before any force is actually released (see scale, shape).  The effect
+	may optionally be given a name by which other operators may refer to it.
+
+
+	Examples:
+
+	create (p)LAA
+	create Wind 
+	create Wind mywind
+
+	All three of the above perform the same function.  The first
+	specifies the physical effect Light Airy Air.  The second
+	uses the more colloquial description of Wind.  The third gives
+	the effect a name, making it easier to refer to it later in the
+	spell.  This is useful if you are using multiple effects that
+	are doing different things. 
+
+
+
+DESTROY
+	destroy [<effectname>]
+
+
+	Removes the last created effect, or the one corresponding to
+	<effectname> if it is given.  When a spell terminates, all effects
+	are automatically destroyed.  Any effect which goes outside
+	the spellcaster's range is also destroyed.
+
+
+	Example:
+
+	destroy mywind
+
+
+
+MOVE
+	move [<effectname>] to <distance> pointdir
+	move [<effectname>] to lookat <objectname>
+	move [<effectname>] to <n1>x <n2>y <n3>z
+
+
+	Move the last created effect a specific distance in a direction 
+	indicated by a pointing gesture, to a named object specified by 
+	looking at the object, or a specific position in space relative 
+	to the last position.  If the object has been specified in an event,
+	or has been identified previously in the spell, lookat is not necessary.
+	If an effect name is given, that effect is moved rather 
+	than the last created effect.  An effect may be moved anywhere within 
+	the spellcaster's range, unless somehow obstructed.
+
+
+	Examples:
+
+	move mywind to lookat orc
+	move mywind to 10' pointdir
+	move mywind to 5'x 10'y 15'z
+	
+	The first example moves the Wind ball used in an earlier example
+	in a straight line to the surface of an object specified by lookat,
+	in this case, an orc.  The second example moves the ball
+	in a straight line 10 feet in the direction the caster points.
+	The third moves the ball 5' to the caster's right, 10' up, and
+	fifteen feet forward, away from wherever it was, with respect to
+	the caster.
+
+
+
+ROTATE
+	rotate [<effectname>] <ang>x <ang>y <ang>z [origin <distance> pointdir]
+	rotate [<effectname>] <ang>x <ang>y <ang>z [origin lookat <object>]
+	rotate [<effectname>] <ang>x <ang>y <ang>z [origin <n1>x <n2>y <n3>z]
+
+
+	Rotate an effect around any axis (x,y,z), relative to the center
+	point of the effect (default) or a named point.
+
+	Example:
+
+	rotate firewall 90y origin lookat orc
+
+	This fragment rotates a wall of fire (previously shaped)
+	ninety degrees around the y (up-down) axis with the body of a 
+	given orc as the center of rotation.  Note that the point of
+	rotation does not need to be a point inside the effect itself.
+
+
+
+SCALE
+	scale [<effectname>] <n1>x <n2>y <n3>z
+
+
+	Scale the last created effect to the given size.  If the effect
+	was not previously shaped, the scaled object will be a spheroid.
+	Scaling is always performed using the center of the effect as
+	an origin (see create, shape).  If a name is given, that effect
+	is scaled rather than the last created effect.  An effect may
+	be scaled up to the limit of the spellcaster's range.
+
+
+	Example:
+
+	scale mywind 2'x 2'y 2'z
+
+	This example takes the Wind created in the create example 
+	and enlarges it to a 2' diameter sphere.  
+
+
+
+SHAPE
+	shape [<effectname>] <pathop1>
+       	                    [<pathop2>]
+                                ...
+                            [<pathopN>]
+
+
+	Shape the last created effect using a path described by a "subspell"
+	consisting of valid Path Operators.  If a name is given, that effect is
+	shaped rather than the last created effect.  When an effect is shaped, 
+	any previous scaling or shaping is forgotten; the newly formed effect 
+	will have the same shape and size as the object it was modeled after.  
+	Position of the effect is maintained.  An effect may be shaped from
+	anything fitting within the mage's spellcasting range.
+
+
+	Examples:
+
+	shape mywind surface 1'thick lookat box
+	shape mywind volume lookat donut
+	shape mywind lineto 2"thick lookat corner1
+		     lineto 2"thick lookat corner2
+		     lineto 2"thick lookat corner3
+		     lineto 2"thick lookat closeit
+		     fill
+
+	The first example shapes the wind into a hollow box (i.e., the wind only
+	blows in the planes that form the sides).  The second example forms a
+	solid torus of wind.  The third example shapes the effect into a 4-sided
+	filled polygon (like a wall) of uniform two-inch thickness. (See Path
+	Operators, below.)
+
+
+
+V.2.2  Path Operators
+
+
+FILL
+	fill
+
+
+	Fills any closed polygon defined by a list of
+	lineto operators within a shape operator.
+	The fill operator must directly follow the
+	list of lineto operators.  The fill operator
+	will use the line thicknesses of each lineto
+	to fill with, interpolating if necessary.
+	The lines must form a closed polygon, or the
+	fill will fail. See SHAPE for example.
+
+
+
+LINETO
+	lineto <n>thick <distance> pointdir [smooth]
+	lineto <n>thick [lookat] <objectname> [smooth]
+	lineto <n>thick <n1>x <n2>y <n3>z [smooth]
+	lineto <n>thick trace
+
+
+	Used only in conjunction with the shape operator.  Adds a line 
+	of thickness <n> to the shape of the effect.  The current postion
+	of the effect (or the endpoint of the last line drawn, if there is
+	been no use of the move operator since the last line was drawn) forms 
+	the beginning point of the line, the endpoint may be specified with
+	a distance from the beginning point and a pointing gesture for
+	direction, or by looking at a named endpoint.  For the latter,
+	the endpoint must be a physical object.  If the object has been
+	previously identified in the spell, lookat is not necessary.
+	If smooth is specified, the endpoint will be smoothed to a curve 
+	if another line is drawn from it.
+
+	The third form of lineto allows the mage to specify precise coordinates
+	in space to draw the line to, relative to the current position of the
+	effect or the endpoint od the last line drawn. 
+
+	The fourth form of lineto allows the mage to trace a path with
+	the tip of his finger.  This may only be done with newly created
+	(i.e., unmoved, unscaled, previously unshaped effects).
+
+	See SHAPE for examples.
+
+
+
+SURFACE
+	surface <n>thick [lookat] <objectname>
+
+
+	Shapes an effect to match the size and contours
+	of the selected object.  The object is selected
+	by looking at it; it must be within spellcasting
+	range, and must fit entirely with the spellcasting
+	range.  The surface thickness is determined by <n>.
+	See SHAPE for example.
+
+
+
+VOLUME
+	volume [lookat] <objectname>
+
+
+	Like the surface path operator, but fills
+	the entire volume with the effect.  (See above).
+	See SHAPE for example.
+
+
+
+
+V.2.3  Flow Operators
+
+
+HALT
+	halt
+
+
+	Halts a spell.  A halt is not necessary at the end of
+	a non-looping spell, as it is implied.
+
+	Example:
+	
+	if (nonhuman and intelligent) 10'
+	then halt
+	else ...
+
+	This spell fragment halts the spell if an intelligent nonhuman
+	comes within 10' of the caster, or wherever the caster may have
+        bound the spell.
+
+
+
+IF...THEN...ELSE
+
+	if    <eventop1>
+  	     [<eventop2>]
+                 ...
+  	     [<eventopN>]
+
+	then  <operator1>
+       	     [<operator2>]
+                  ...
+             [<operatorN>]
+
+	[else <operator1>
+             [<operator2>]
+                  ...
+            [<operatorN>] ]
+
+
+	Conditional that determines spell flow based on the truth
+	value of the event operators (see Event Operators).
+
+	Example:
+
+	boltbox:
+	bind to touch box
+	repeat if (orc or kobold) 30'
+	       then if orc 30'
+	            then create bolt Fire
+	                 move to orc
+	                 scale 1'x 1'y 1'z
+	       else create bolt Electricity
+	            move to kobold
+		    scale 1'x 1'y 1'z
+	       wait 2 sec
+	       destroy bolt
+	until me "off"
+
+	This spell creates a 5 foot radius bolt lasting 2 seconds
+	when either an orc or a kobold comes within 30 feet of a
+	box the mage touched when he cast the spell.  If it is an
+	orc, the bolt is of fire, if it is a kobold, the bolt is
+	of electricity.
+
+
+
+REPEAT
+	repeat [<var>=]<num> <operator1>
+       	                    [<operator2>]
+                                ...
+                            [<operatorN>]
+
+
+	repeat <operator1>
+              [<operator2>]
+                   ...
+              [<operatorN>]
+
+	until  <eventop1>
+              [<eventop2>]
+                   ...
+              [<eventopN>]
+
+
+	Repeats part of a spell for a set number of times, or until
+	a specified event becomes true.  A loop variable may be used
+	for spell effects that want to keep track of iteration (see
+	Event Operators).
+
+
+	Examples:
+
+	torch:
+	bind to touch endofstick
+	create Fire
+	scale 1"x 1"y 1"z
+	repeat move to endofstick
+	until me "off"
+
+	This spell creates a torchlight at the end of a staff which will stay
+	lit until the mage says "off" (and is within range).
+
+
+
+WAIT
+	wait <time>
+	wait until <eventop1>
+		  [<eventop2>]
+		       ...
+		  [<eventopN>]
+
+
+	Wait for a specified length of time, or until a specified series
+	of events (see Event Operators, below).
+
+
+	Examples:
+
+	wait 10 min.
+	wait until event: human "bang" 10'
+
+	In the first example, the next spell action will be delayed by
+	10 minutes.  In the second, it will be delayed until the word
+	"bang" is uttered by a human within 10' of the spell's position.
+	A spell's position is either the place it was cast, or the position
+	of an object to which it is currently bound (if any).
+
+
+
+V.2 4  Event Operators
+
+
+AND
+OR
+NOT
+INTERRUPTED
+
+	Event operators take the following general form:
+
+	<objects> <actions> <proximity>
+
+
+	Objects in events can be any physical object, entity, or effect 
+	that the mage can visualize clearly in his mind.  Actions can consist 
+	of any physical action the mage can visualize happening. Proximity must 
+	be a distance within the mage's casting range.  The action of spreaking 
+	a phrase can be abbreviated by placing the phrase in quotes.
+
+	The following is a special action:
+
+	interrupted [by <being>]
+
+
+	"Interrupted" means that the spell has been tampered with by a mage
+	using the interrupt operator (see below).  Interrupted is a trap
+	that prevents a spell from being tampered with.  Interrupted is also
+	an action, and can be treated as such.  If no objects are given
+	with an action, anything performing the action will trigger the
+	event; if no proximity is given, the maximum casting range of the
+	spellcaster is assumed.
+
+	Objects, actions, and proximity can all be modified using the
+	following boolean operators:  
+
+	and	or	not
+
+	Parentheses can be used for clarity of logical groupings.  
+
+	Examples:
+
+	if (man with tatoo and pegleg) (spit and "howdy") 5'
+	then create Fire
+
+	if interrupted
+	then halt
+
+	The first example triggers the if...then operator if a man
+	with a tatoo and a pegleg spits and says "howdy" within
+	five feet of the spell.  The second example halts the spell
+	if it is interrupted.  (A good trap if the spell was, say,
+	holding up the ceiling!)
+
+
+
+V.2.5  Special Operators
+
+
+BIND
+	bind [<spellname>] to touch <objectname>
+
+
+	Binds the named spell in to a named object, which is
+	selected by touching the object.  Once a spell is bound to an
+	object, any effects the spell may generate will operate within
+	the max spellcasting range of the mage, but *relative to the object
+	to which it is bound*, not the mage himself.  Bind may be used
+	multiple times in a spell to switch bindings of other spells, or
+	even the spell in which the binds occur (good for cursed items!).
+	If you are binding the spell in which the bind occurs, you do
+	not need to specify the spellname.
+
+	Note: binding a spell to an object has no effect
+	on the postion of effects.  Movement of effects must be done
+	explicitly within the spell.
+
+	Example:
+
+	bind to touch rod
+
+	This binds the spell in which the bind operator occurs to a rod.
+
+
+
+INTERRUPT
+
+	interrupt <spellname> at "<breakpoint>" [revert]
+		  <operator1>
+       	         [<operator2>]
+	            ...
+                 [<operatorN>]
+
+
+	Allows a mage to interrupt a working spell at a stated
+	point, and replace that line with a series of new lines.
+	If revert is used, and the spell was interrupted inside
+	a loop, the new spell fragment will execute only once,
+	otherwise the changes are permanent (for as long as the
+	spell lasts).  If a halt operator is used in the interruption,
+	the interrupted spell will stop, even if it was in a loop.
+
+	The breakpoint specified must be a single line from the spell.
+	A mage automatically knows breakpoints for his own spells.
+	If he is trying to interrupt another mage's spell, he must
+	roll his Know/Use percentage to figure out the spell.  The 
+	other mage must then roll his Resist roll to prevent the
+	interruption.  Know/Use and Resist rolls must be made for
+	all spells, even bound ones where the caster is not in the
+	vicinity.
+
+	Note: interrupt spells do not have names, and cannot be
+              interrupted themselves.  Spells that have been
+              interrupted may, however, may be reinterrupted any
+              number of times with new changes.
+
+	Example:
+
+	Take a variation of the torch spell described earlier:
+
+	torch:
+	bind to touch endofstick
+	create Fire
+	repeat scale 1"x 1"y 1"z
+               move to endofstick
+	until me "off"
+
+	Suppose Medwyn is holding his lit staff, and an orc
+	comes around the corner.  Medwyn casts:
+
+	interrupt torch at "move to endofstick" revert
+	          move to lookat orc
+	          scale 10'x 10'y 10'z
+	          wait 10 sec
+
+	What happens is that the torchlight is turned into a fireball,
+	and then reverts back to a torch!  It's important to interrupt
+	a spell in an active part; if Medwyn had changed anything before
+	the repeat loop, nothing would have changed, because that part
+	of the spell was already done.
+
+
+
+MAKEOWNER
+
+	makeowner <spellname> touch <spellcaster>
+
+
+	Transfers ownership of the named spell to another spellcaster.
+	The new owner must have enough spell points to have cast the spell
+	but need not have the appropriate training in the effects the
+	spell uses.  The new owner loses the number of spell points
+	equal to the cost of the spell, for as long as the spell is active.
+	The old owner regains the points he had lost while he owned the spell.
+	If the new owner understands the spell, he may interrupt it at will.
+
+	Example:
+
+	makeowner torch touch Medwyn
+
+	This changes the owner of a spell called torch to Medwyn.
+	torch is a 5 point spell, so Medwyn loses 5 spell points for
+	the duration of the spell (or until he stops it himself).
+
+
+
+POWER
+RANGE
+	power <spellname> <mult>
+	range <spellname> <mult>
+
+
+	All spells have a default power and range, determined by the
+	caster's training and skill level.  This power and range can
+	be increased at great cost.  Two amplify a spell's range or
+	power by <mult>  The caster must expend mult^2 the usual number
+	of spell points spent for the *entire remainder of spell*.  
+	This also works if the mult is a fraction (for reduced power
+	and range spells).  Even so, the minimum any spell can cost
+	is 1/4 its base cost, no matter how weak it is.  Spell costs
+	are always rounded up to the nearest integer.
+
+	Range and power operators should come at the
+	beginning of the spell, right after the spellname.
+
+	Example:
+
+	iceball:
+	power iceball 2
+	range iceball 2
+	create Ice
+	scale 6"x 6"y 6"z
+	moveto lookat target
+
+	This example creates a simple ball of ice and hurls it at
+	an opponent.  It does double usual damage and can be hurled
+	for double the mage's usual range, but cost *8 times* the
+	normal spell points (24 instead of 3).
+
+
+
+RESUME
+	resume [<spellname>] at "<breakpoint>"
+
+
+	The resume operator is useful in conjunction with the
+	interrupted event.  You can write a spell which checks
+	for an interrupt cast on it, and which then performs
+	a special task to counteract the intrusion (such as
+	blasting the person who attemtped the interrupt).
+
+	After this is done, you may want to resume the spell
+	at a convenient place.  This is what the resume operator
+	is for.
+
+	Example:
+	
+	torch:
+	bind to touch endofstick
+	create Fire
+	repeat scale 1"x 1"y 1"z
+	    moveto endofstick
+	until me "off"
+	# check for interrupt #
+	if interrupted by me
+	then move to lookat target
+	     scale 10'x 10'y 10'z
+	     wait 10 seconds
+	     resume at "repeat scale 1"x 1"y 1"z"
+	else if (interrupted by being) and (being is not me)
+	     then move to being
+	          scale 10'x 10'y 10'z
+	          wait 10 sec
+	          resume at "repeat scale 1"x 1"y 1"z"
+
+
+	This version of the torch spell will actively fireball
+	anyone except the casting mage who tries to interrupt
+	the spell.
+
+
+
+SPELLNAME
+
+	<spellname>:
+
+
+	You must begin every spell with a spell name.
+	This does not add any cost to the spell.
+
+	Example:
+
+	fireball:
+	create Fire
+	move to lookat orc
+	scale 5'x 5'y 5'z
+	wait 5 sec
+
+
+
+
+VI.  Spell Cost and Duration
+
+Spells cost 1 point per line of spell description, with the following
+exceptions:  spellname, power, and range operators, which have no cost
+(although the power and range operators do change the *overall* cost of
+the spell as described in the last section). 
+
+Because spells can loop, they have a potential duration limited only
+by the life of the owner of the spell (i.e., the original caster, or
+a new owner assigned using the makeowner operator).  However, since 
+the spell points used to maintain a spell cannot be recovered until
+the spell has ceased (or been terminated), it is in the interest of
+a mage not to leave too many semi-permanent spells lying around.
+
+
+
+
+VII.  Mage-to-Mage Combat 
+
+Unlike most systems, Mage-to-Mage allows mages to directly counter
+spells cast by other mages under certain conditions.  Of particular
+importance, then, is the way in which mages can determine what other
+mages are casting.  This is called "reading".
+
+Reading a spell being cast within range is like a sixth sense,
+it requires no more time or energy than watching a fighter draw a sword.  
+If a spell is not understood by a mage, it is like watching a fighter draw an
+unfamiliar weapon.  Mages cannot "read" precast spells in the same fashion; 
+it is the act of casting that allows them to be read.  Reading precast spells 
+is a skill that requires several minutes of concentration.  A spell being
+cast by another mage may be read successfully by another mage only if
+the following conditions are met:
+
+1.  The reading mage must be within his spell casting range of the enemy.
+
+2.  The spell may only contain effects with which the reader has been trained.
+
+3.  The reader must make his Know/Use roll successfully.
+
+
+Another crucial element of magical combat is its timing and scheduling.
+Instead of trying to gauge specific casting times for spells, a more
+general rule is used for the scheduling of magical combat; one that
+will hopefully make it easier to integrate Mage-to-Mage into existing
+combat systems.
+
+In Mage-to-Mage, all normal offensive and defensive spells
+take 1 melee round to cast.  Spells cast in one melee
+round start to take effect (execute) in the following round.
+Execution of a spell is automatic, a mage does not need to
+maintain the spell once he has cast it.
+
+There is a 3rd variety of spell beyond offensive and
+defensive (which can be auto-flash or normal shields).
+This is the interrupt spell, a spell which alters another
+spell.  Since this is a modification to an existing
+spell, it is relatively instantaneous in its casting
+and its execution.  An interruption to a spell effectively
+delays the final outcome to the beginning of the next round,
+at which time it can be once again altered by an interruption.
+Only one mage may interrupt a given spell in a round; if more
+than one tries, the outcome is decided by an initiative roll.
+A mage can always interrupt his own spells (unless he fails
+an interruption initiative roll in a given round), but to
+interrupt another mage's spell, The interruptor must beat the
+enemy's Resist percentage, as well as having been successful
+at reading the enemy's spell as it was cast.
+
+Interrupt spells themselves cannot be interrupted.
+
+
+A mage may perform one of the following options in any given melee round: 
+
+1. He can try to interrupt (change) an incoming spell 
+
+2. He can cast an offensive spell (which will execute on the following
+   round).
+
+2. He can cast a defensive spell (which will execute on the following
+   round).
+
+4. He can interrupt (change) his own offensive or defensive spell.
+
+
+Precast offensive and defensive spells are, of course, safe
+from enemy interruptions.  If a precast offensive spell is
+triggered by an event, it executes immediately; the only
+defense against a precast offensive spell that has just been
+triggered is a precast defensive spell. 
+
+
+In general, a mage-to-mage combat may go as follows:
+
+Round 1
+-------
+Mage 1 casts offensive spell
+Mage 2 casts defensive (shielding) spell
+
+Round 2
+-------
+Mage 2 interrupts and changes Mage 1's spell (or fails and is zapped)
+Mage 1 casts defensive spell
+
+Round 3
+-------
+Mage 1 interrupts and changes Mage 2's defensive spell
+...
+
+And so on, until somebody slips up.  There are, of course,
+many other possible strategies, some of the most useful
+involving precast defesive spells which the enemy cannot
+interrupt.
+
+
+
+
+VIII.  Other Combat
+
+Combat against a non-mage follows the same rules outlined above.
+A spell takes one round to cast, and only one spell may be cast
+by a mage in a given round.  The spell begins to take effect at
+the beginning of the next melee round.
+
+A mage may cast an offensive spell, a defensive spell (again,
+the distnction between the two is blurred), or may interrupt
+one of his own precast spells.  As with standard spells, the 
+effects of an interrupt begin at the start of the next melee 
+round.
+
+
+
+
+IX.  Level Advancement
+
+Mage level advancement is directly determined by the amount of magic
+the mage uses "in the line of duty".  A mage gets one experience point
+for every line of spell description he casts in melee or other non-casual
+situations.  Advancement of levels becomes harder with each level advanced.
+Going from first to second level requires 100 xp.  From second to third
+requires 200 *more* xp.  Third to fourth requires an additional 300 xp.,
+and so on.
+
+
+
+
+X.  Saving Throws and Extended Duration Effects
+
+There is one standard saving throw for all types of magic, corresponding
+to a "Save vs. Magic" in AD&D.  Since all magic items in the Mage-to-Mage
+system are essentially spells bound to objects, there is no need for a
+separate saving throw for wands, staves, etc.
+
+Making a saving throw has one of two results.  If the save is versus an
+area of effect, it means the victim takes half damage in that round
+*and any succeeding round* in which he is still immersed in the effect.
+If the save is versus an effect of which the victim is the sole target,
+making the saving throw negates (destroys) the effect.
+
+For effects lasting more than one melee round, damage is taken by those
+in range of the effect in *each succeeding round*.  However, for each
+round that a victim must take damage, he is entitled to a new saving throw,
+until he is successful.
+
+Thus, an orc that is caught in a sheet of flame for 3 rounds would take
+full damage from the flame each round, unless he made his saving throw.
+If he doesn't make it the first round, he can roll again in the second
+round, and so on.  If the orc were to make the saving throw in his second
+round, he would only receive half damage in the second and third rounds.
+
+Now let's suppose that the orc is the victim of a spell that puts darkness
+over his face and keeps it there for three rounds, hence blinding him.
+This is a target-victim spell, not an area of effect, so if the orc were
+to save on the second round, the darkness would be negated.
+
+
+
+
+XI.  Demons and Elementals
+
+Unlike living creatures of the material plane, which consist of complex
+matrices composed of varying amounts of all the elemental forces, demons
+and elementals are composed of only a single force.
+
+Each demon or elemental lives in the subplane to which it is attuned.
+Thus one would expect to see wind demons, ice demons, fog demons, etc.
+Demons and elementals are very similar; the key difference is that demons
+are sentient, whereas elementals are only of animal intelligence (if that).
+
+Demons and elementals may be summoned from a pure flow of any
+appropriate elemental force that is large enough to pass them through 
+to the material plane (pentagrams for demons, trigrams for elementals).  
+Elementals may be summoned relatively easily, while demons usually appear
+only if their True Name is uttered by the mage during the summoning
+ritual.  A demon will almost always attempt a contest of wills before obeying
+a mage; usually in the form of magical combat.  If the mage loses, he
+is liable to be consumed, or worse if the demon is particularly vengeful.
+If the mage wins, the Demon is bound to obey a single command as issued
+by the mage.  The most common command is to enter an object of power
+and maintain its magic (in other words, take ownership of any spells
+bound to the object), remaining there until the object or its magic
+is destroyed.  This allows the creation of permanent magical items,
+since demons are immortal.
+
+Demons are always Singular Mages in the force to which they are attuned, 
+at a level (and with spell points) commensurate with their hit dice.
+
+There is a small chance that ordinary use of magic may cause an elemental,
+or even in rare cases a demon, to be summoned inadvertantly. 
+
+
+
+
+XII.  Spirits.
+
+Spirits are the disembodied minds of once-living sentient beings that
+for some reason were not extinguished when the being died.  They too
+can be summoned by name, using a circle of Darkness.
+
+Summoning a spirit involves much the same dangers as summoning a demon; spirits
+are often waiting for the chance to inhabit a living body again, and will 
+attempt to do so by turning a mage's power against him, and then invading the 
+freshly-dead body.  Most forms of what are commonly called "the undead" are the
+result of spirits gaining control over physical objects (corpses, skeletons, 
+etc). 
+
+Spirits who were mages when they were alive have all the magical ability they 
+had at that time.  Spirits who were not mages are not useful for creating 
+permanent magic items, because they cannot use make use of spell points.  
+They may, however, be useful for questioning and as servants.
+
+Spirits which are not mages may be subdued fairly easily by use of Radiant 
+Light.  All spirits have the innate ability to manipulate Darkness like a
+Singular Mage at a level of ability commensurate with their hit dice.  
+However, this ability cannot be harnessed for use with a magic item by
+the summoning mage.
+
+In darkness, spirits also have the ability to life-drain at a touch.  Summoners
+of spirits must be very careful not to allow themselves to be surrounded by
+darkness, lest he be trapped by the spirit.  Once the spirit has been subdued
+in contest, it will remain so until it has completed the task commanded of it. 
+
+
+
+XIII.  Summoning Rituals
+
+All discorporeal entities (demons, elementals, and spirits) require special
+summoning rituals to call them to the mage's service.  There are four parts
+to any summoning ritual, which must be executed in order:
+
+1. Gate
+2. Naming
+3. Sacrifice
+4. Contest
+
+
+Gate
+----
+
+The summoner must create (via spell) a gate of appropriate elemental
+force, and of the appropriate configuration.  The configurations are:
+
+Trigram:	Elementals
+Pentagram:	Demons
+Circle:		Spirits
+
+These may be created on any flat, solid surface (stone floors or
+walls are the most common places).  The Gate for summoning a
+demon or elemental is composed of the elemental force to which
+the being to be summoned is attuned; the Gate for summoning a
+spirit is always composed of Darkness.
+
+
+Naming
+------
+
+Once the Gate has been created, the mage must call upon the being
+by name.  In the case of demons and spirits, the True Name of the
+being must be uttered three times.  in the case of elementals, which
+have no specific names, the general name of the kind of elemental
+desired must be uttered instead.  The naming is generally accompanied
+by a rhythmic chant (sometimes accompanied by drums) which helps
+guide the being to the entrance of the Gate.  The Naming may take
+from several minutes for a minor elemental, to hours or even days
+for a very great demon.  The naming is complete when a "presence"
+is felt near the Gate, usually accompanied by a drop in temperature
+in the vicinty of the ritual.  This means that something (hopefully
+the summoned being) is on the threshold of the Gate.
+
+The chance of of a being hearing the call is equal to the suumoner's
+Know/Use percentage -5% for every level above the summoner that the
+being is, +3% for every level below the summoner the being is.
+
+
+Sacrifice
+---------
+
+All summoned creatures require a sacrifice to bring them across the
+threshold of the Gate.  Elementals require only freshly slaughtered
+animals; demons generally require a living, sentient sacrifice to
+consume.
+
+Spirits are different; their sacrifice must be an object that was
+important to the spirit while it was alive.  Images of loved ones,
+or symbols of glory are the two most often used objects, but others
+may be more appropriate to given instances.
+
+Sacrifices are delivered to the center of the Gate, usually via a
+rope or cart, or some other mechanism.  Naught but that which is
+to be sacrificed should enter the Gate at this time, any person
+who does so is in great peril. 
+
+At this point, the being will either accept the sacrifice and enter
+through the Gate to take it and meet the summoner, or will reject it
+and depart.
+
+
+Contest
+-------
+
+If the being accepts the sacrifice, the summoner must immediately
+be on his guard, for the being will almost certainly attempt a
+Contest of Will.  In the case of an elemental, it will attack unless
+shown an immediate demonstration of force.  After this is done,
+the elemental will obey a single command before returning to its
+plane of origin.  Demons and spirits wiil engage in a full magical
+battle with the mage.  If the demon or spirit surrenders, it will
+obey a single command as well.  Commands can be phrased so as to
+allow a mage to permanently contain a demon or spirit within a magic
+item.  Elementals do not serve in this purpose because they have
+no magical ability (being non-sentient); their attacks are purely
+physical (since they are composed of pure force).
+
+If the mage loses the battle (which must be fought one-on-one for
+the victory conditions to hold), the demon or spirit may take 
+possession of the mage's body and/or soul, unless it is stopped by
+companions of the mage.
+
+
+
+XIV.  Illusions
+
+Mages specializing in Light Earthy Air learn the ability to cast
+illusions; spells which create images and other stimuli that fool
+the senses.  The physical manifestation of LEA allows the mage to
+create only images and sounds; tactile and olfactory illusions
+must be effected using the biological manifestation of LEA, and the
+more complicated illusions which adjust to creatures' perceptions
+are possible only using the psychic manifestation of LEA.
+The shape of visual illusions is determined by the shape of the
+effect; the actual image is arbitrary.  Auditory, tactile, and
+olfactory illusions are active within the volume defined for the effect
+by the mage.  It may sometimes be useful to divide illusions into
+separate effects, some of which overlap (i.e., the sound of an
+illusory breaking glass should be heard beyond the volume defined
+by the glass itself).
+
+
+XIV.1  Illusion Complexity by Level of Caster
+
+The complexity of cast illusions rises with the level of the
+caster.  This is in part due to the fact that the more complicated
+biological and psychic manifestations of the LEA force are accessible
+only at higher levels, and in part due to the fact that truely refined
+illusions are possible only with great experience and practice.
+
+The following table lists the type of illusions allowed at each level.
+In general each level builds on the previous one.
+
+
+1st level:  Auditory effects only.
+
+2nd level:  Separate auditory and non-animated visual effects.
+
+3rd level:  Mixed auditory and non-animated visual effects.
+
+4th level:  Mixed auditory and animated visual effects.
+
+5th level:  Like above plus separate olfactory effects. (start biological)
+
+6th level:  Like above but mixed.
+
+7th level:  Like above plus separate tactile effects.
+
+8th level:  Like above, but all mixed.
+
+9th level:  Like above but includes objects that enter into the illusion
+            as part of the illusion (i.e., arrows you shoot at the illusory
+            monster will *appear* to stick in it).  (start psychic)
+
+10th level: Like above, but living things that enter the illusion are included
+            as part of the illusion (Targ *seems* to be crossing the
+            illusory bridge; he's really fallen to a gory death).
+
+11th level: Like above, but sentient beings who enter the illusion believe
+            it themselves (Targ thinks he is crossing the bridge up to
+            the instant he is killed by impact with the ground below).
+
+
+Note that the lower level illusions will have inconsistencies that 
+may be spotted by intelligent characters (given the time). A 2nd level
+illusory floor covering a pit has no tactile sense, so you can put your
+hand right through it.  A 7th level one would appear solid were it hit
+with a pole a character was holding (assuming the tactile part of the
+illusion were cast in a area around the pit that the characters would
+pass the pole and their hands through), but anything thrown on top of it
+would still fall right through.  It would take a 9th level version to
+circumvent that precaution.  In a 10th level version a character would
+appear to be fine on top of it, but the party may still hear a scream
+and a thud.  An 11th level version is completely deadly unless someone
+makes a lucky roll, and the character notices some small flaw in the
+illusion (like, the characters visible on top aren't saying much...).
+
+
+XIV.2  Caster Familiarity
+
+A caster need not be exceptionally familiar with the illusion he creates.  
+This is especially true for illusions of creatures or objects invented 
+by the illusionist.
+
+In the case of illusions of very specific beings or objects, one would
+expect the caster to be knowledgeable enough to convince others who
+knew the being or object well, otherwise they would get suspicious,
+even if the illusion were technically perfect.
+
+
+XIV.3  Disbelief
+
+Disbelief of an illusion isn't really a matter of looking
+at, say, a wall and saying "I don't believe that's there!", but rather
+a process of noticing inconsistencies or technical flaws in the illusion
+that give it away.  How likely characters are to notice these flaws
+is dependent in my system on the character's Reasoning Factor (INT+WIS)/2
+and the caster's level.
+  
+If a character makes his RF roll on a d20, he then has a base 35% chance of
+hestating and detecting a flaw in the illusion -3% per level of the caster
+over 1, +5% for each level of the victim over that of the caster.
+Characters always have at least a 5% chance if they make their RF roll.
+
+  
+XIV.4  "Deadly" Illusions
+
+In the case of an illusion which a character believes will cause him
+deadly harm, the character rolls a save vs. Magic.  If s/he saves,
+the character is stunned d6 rounds.  If s/he fails, s/he must make a
+CON roll; if successful, the character faints.  If not, the character
+suffers heart failure  (note: s/he could be revived with CPR or similar
+drugs/techniques, but it must be done quickly, and probably will keep
+the character out of action for several days).
+
+Note: for illusions like a baseball thrown hard at your head, in other
+words, illusions that might cause some harm, but aren't deadly, use only
+the save vs. Magic, and eliminate the CON roll.

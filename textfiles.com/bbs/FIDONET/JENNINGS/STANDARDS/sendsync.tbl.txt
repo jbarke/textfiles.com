@@ -1,0 +1,259 @@
+Tom Jennings
+1 Sep 89	revision 1
+6 Sep 89	revision 2
+
+Proposed WAZOO/FSC001 combined protocol state machines. Tell me what youç
+think.
+
+This revision is in response to a comment Vince made to me regarding the firstç
+one, that the sync machines would falsely trigger "FSC001" on and two 'C's inç
+a BBS signon (for example: "... Opus CBCS System ..."). First, a digression...
+
+There is something important that all of our mailers and BBSs do that is notç
+documented directly in anything I've ever seen: they all output text toç
+presumably inform humans as to why they may not be able to get access, becauseç
+that phone number is mail-only, either temporarily or permanently.
+
+	1. Modems connect
+	2. Ambiguous delay
+	3. Signon message
+	4. Ambiguous delay
+	5. Protocol determination
+	6. ...
+
+The goal is not to distinguish between two (at the moment...) protocols; it isç
+to determine "human" login, or FSC001 or WAZOO. BBS vs. mailer.
+
+Anyways, the important Thing is actually in FSC001: the old "whack return"ç
+sequence. It was not only for that terrible baud-rate-determination business,ç
+but also to get in sync with the mailer; the "call back later" code was/isç
+part of the protocol. It's an edge-detector; the edge between BBS-signon andç
+no-BBS-signon (from where protocol starts).
+
+The first version of these tables was meant to deal with the TSYNC/YOOHOOç
+portion only, out of it's overall context, but Vince, by pointing out theç
+above, made clear the importance of the WhackCR/WaitClear states. 
+
+
+
+... but back to the issue at hand. My response is twofold:
+
+First, the sync machines should never see a BBS signon. The WhackCR/WaitClearç
+states would take care of getting through the BBS signon in the normal caseç
+(ahem). (See the WaitSync state in the Receiver's state machine.)
+
+Second, sequentiality on the 'C'(or NAKs) s doesn't guarentee anything: whyç
+there's a BBS in my own net called "NCFCC". There you go. 
+
+
+
+The WhackCR/WaitClear thing in FSC001 (and in these tables) is not what Fidoç
+ever did, nor does now. (I better get coding!) Fido's is a loop that issuesç
+the CR/space FIRST, then looks for a response. (20 tries max.) All of ourç
+programs DO this in reality; Bink issues the "hit ESCape if you're a human"ç
+message, which satisfies it, then falls into the "loop" where it looks for aç
+CR "first".
+
+Should we codify this, so that the spec requires the outputting of text (CRs,ç
+more specifically), or should we make it work as in Binkley, that it toleratesç
+them? I prefer making them mandatory, ie. as in FSC001 (see statesç
+WhackCRs/WaitClear), but it could also be that the sender "prefers" them:
+
+|     |          |                         |                         |     |
+|-----+----------+-------------------------+-------------------------+-----|
+| WSC | WhackCR  | 1. Over 10 seconds      | assume no BBS signon    | WS0 |
+|     |          | 2. CR received          | BBS signon in progress  | WSD |
+|     |          | 3. neither              | output CR, space        | WSC |
+|-----+----------+-------------------------+-------------------------+-----|
+| WSD | WaitClear| 1. no input for 500mS   | go determine protocol   | WS0 |
+|     |          | 2. over 60 sec not clear| hang up, report garbage | exit|
+|-----+----------+-------------------------+-------------------------+-----|
+|     |          |                         |                         |     |
+
+WhackCRs.1: OK, it's either a dead-as-a-doorknob modem, or a mail-only systemç
+with no human/BBS message (rude! (unlikely today)) In either case, theç
+connection is made, we've paid for it (assuming a phone line), and if it'sç
+dead, well, we're dealing with an exception to begin with. Subsequent statesç
+will figure that out.
+
+WhackCRs.2: No problem. Normal state of affairs today.
+
+WhackCRs.3: FSC001, vestigial, and painless, and also can be used to re-syncç
+lost and/or confused senders (see Receiver's WaitSync.4). 
+
+Who knows. This isn't critical now; Fido does it "my" way, and Bink does itç
+according to FSC001 (presumably), and others do similar things, and they allç
+work together, because we all issue messages. But what about the future, sayç
+assumed-network-node-only? (But we're documenting current practice! Hmm...)
+
+
+
+Now let me cause a bit more trouble (Bob & Vince: you can wreak revenge on meç
+later! :-) I think Bink's outputting the "... if you're a human ..." messageç
+once per second or more often prevents Fido11's mailer from getting past theç
+WaitClear state; it requires significantly longer than 500mS of quiet. Andç
+will also degrade noise margins, by excessively narrowing the potential forç
+there actually being 500mS of quiet ...
+
+    0                            500mS                        1000mS
+    |--------------------X--------+------------X-----------------|
+
+If a garbage character (X's) occurs say 300mS after the message stops, itç
+leaves only a 700mS window for the quiet time to occur ... and if one happensç
+in there, it will miss. Outputting the message every (say) 3 - 4 seconds wouldç
+suffice to make the window much wider.
+
+If this is even the case, I am going from memory how fast the Bink messageç
+"appears" to be ... luckily you both live far away from me so physicalç
+retribution is difficult.
+
+----------------------------------------------------------------
+
+
+SendSync: Wazoo vs. FSC001 Protocol Determination
+
+
+This is the senders FSC001/Wazoo protocol session synchronization and protocolç
+determination. In simple terms, this issues the two different protocol syncç
+characters, YOOHOO for the WAZOO protocol, and TSYNC for the FSC001 protocol,ç
+and attempts to determine from the receivers response which protocol toç
+select.
+
+The protocol drivers in use "today" (September, 1989) many times support bothç
+WAZOO and FSC001; those that do heavily favor WAZOO, for it's added featuresç
+and performance. The sync process below favors WAZOO but allows reliable 
+fall-back to FSC001.
+
+(rev2) Before the protocol determination is done, a process historically knownç
+as "whack return" is done; it originally was to determine baud rate from dumb,ç
+non-"AT command" type modems (say, Bell 212A's), but also causes the mailer toç
+act like a human caller, to get it through initial welcome messages and theç
+answering modem/software system's initial delays and such. 
+
+After the BBS Response phase, YOOHOO and TSYNC characters are issued, afterç
+which we wait for a response. A response indicating WAZOO is acceptedç
+immediately. Possible responses to TSYNC (see below) are deferred for 10ç
+seconds. This allows distinguishing apparent TSYNC "responses" from garbage,ç
+and allows receivers that favor WAZOO to respond. If no valid response toç
+YOOHOO is received within 10 seconds, the TSYNC character(s) received earlierç
+are honored, and FSC001 protocol is selected.
+
+Selection of WAZOO protocol is immediate; selection of FSC001 is delayed 10ç
+seconds from the receipt of the first valid TSYNC character, which adds 10ç
+seconds of connect-time to all FSC001 sessions.
+
+IMPLEMENTATION NOTE: While WAZOO defines ENQ as a response to the sendersç
+YOOHOO, there is no corresponding "TSYNC response" designed into FSC001ç
+protocol. What is generally accepted as a "TSYNC response" is to wait for theç
+'C' or NAK character that the receivers' XMODEM driver issues when it hasç
+recognized the senders TSYNC. (Refer to FSC001-9, state R2, WaitTsync.) Thisç
+"eats" one XMODEM-start character, and delays the actual start of the packetç
+transfer, but is otherwise acceptable.
+
+
+Sender:
+
+  .-----+----------+-------------------------+-------------------------+-----.
+  |State| State    | Predicate(s)            | Action(s)               | Next|
+  |  #  | Name     |                         |                         | Stat|
+  |-----+----------+-------------------------+-------------------------+-----|
+  | WSA | SendInit |                         | Dial modem              | WSB |
+  |-----+----------+-------------------------+-------------------------+-----|
+  | WSB | WaitCxD  | 1. Carrier detected     | delay 1 - 5 seconds     | WSC |
+  |     |          | 2. busy, etc            | report no connection    | exit|
+  |     |          | 3. voice                | report no carrier       | exit|
+  |     |          | 4. carrier not detected |                         |     |
+  |     |          |    within 120 seconds   | report no connection    | exit|
+  |-----+----------+-------------------------+-------------------------+-----|
+  | WSC | WhackCRs | 1. Over 30 seconds      | report no response      | exit|
+  |     |          | 2. ?? CRs received      | delay 1 second          | WSD |
+  |     |          | 3. CRs not received     | output CR, space, CR,   |     |
+* |     |          |                         |     space               | WSC |
+  |-----+----------+-------------------------+-------------------------+-----|
+  | WSD | WaitClear| 1. no input for 500mS   | go determine protocol   | WS0 |
+  |     |          | 2. over 60 sec not clear| hang up, report garbage | exit|
+  |-----+----------+-------------------------+-------------------------+-----|
+  | WS0 | SyncInit |                         | Prepare 3 sec Sync timer|     |
+  |     |          |                         | Prepare 10 sec TSYNC tmr| WS1 |
+  |-----+----------+-------------------------+-------------------------+-----|
+  | WS1 | SendSync | 1. 3 sec elapsed        | Send YOOHOO, then TSYNC | WS2 |
+  |     |          | 2. not elapsed          |                         | WS2 |
+  |-----+----------+-------------------------+-------------------------+-----|
+  | WS2 | WaitResp | 1. ENQ received         | Wazoo Protocol selected | exit|
+  |     |          | 2. 'C' received         | probable FSC001         | WS3 |
+  |     |          | 3. NAK received         | probable FSC001         | WS3 |
+  |     |          | 4. 10 sec timer elapse? | assume FSC001           | exit|
+  |     |          | 5. Debris, nothing      | require a response      | WS1 |
+& |     |          | 6. (YOOHOO AND 127)     | probable BBS input echo | WS1 |
+& |     |          | 7. (TSYNC AND 127)      | probable BBS input echo | WS1 |
+  |     |          | 8. Over 60 seconds      | no response             | exit|
+  |-----+----------+-------------------------+-------------------------+-----|
+  | WS3 | TsyncTmr | 1. Timer not running    | Start 10 second timer   | WS1 |
+  |     |          | 2. Timer running        |                         | WS1 |
+  `-----+----------+-------------------------+-------------------------+-----'
+
+* (IMPLEMENTATION NOTE: Issueing an ETX (03 decimal) and a VT character (11ç
+decimal) at this point is tolerable to the receiver, and might abort longç
+bulletin board "welcome messages" that delay getting through the syncç
+process.)
+
+& (IMPLEMENTATION NOTE: Cute, but hardly necessary. Most BBS line inputtersç
+(say first name, last name, password...) strip parity from incomingç
+characters, so if you somehow reached a BBS that doesn't do FidoNet mail, itç
+may assume your mailer program is a human with a strange name. Might be nice to see in a log file, is all.)
+
+Note that there is no mention of the 00/FF responses in YOOHOO.DOC. I don'tç
+know what that is, though I suspect it is SEALINK. I don't know SEALINK.ç
+Doesn't it do an xmodem-like "initial NAK"? Wouldn't it start OK by issuingç
+NAK/C, and the 00/FF's fall under "debris"?
+
+
+RecvSync: Wazoo vs. FSC001 Protocol Determination
+
+This is the receivers FSC001/WAZOO session protocol determination. In simpleç
+terms, this listens for one of the two possible protocol sync characters;ç
+YOOHOO for WAZOO protocol, or TSYNC for FSC001 protocol.
+
+Once again, the protocol drivers in use "today" (September, 1989) many timesç
+support both WAZOO and FSC001; those that do heavily favor WAZOO, for it'sç
+added features and performance. The sync process below favors WAZOO but allowsç
+reliable fall-back to FSC001.
+
+Response to YOOHOO is immediate; WAZOO is selected. If a TSYNC character isç
+received however, it is deferred for 10 seconds to allow detection of anyç
+subsequent YOOHOO character. After 10 seconds, if not YOOHOO is received, theç
+TSYNC is honored and FSC001 protocol selected.
+
+.-----+----------+-------------------------+-------------------------+-----.
+|State| State    | Predicate(s)            | Action(s)               | Next|
+|  #  | Name     |                         |                         | Stat|
+|-----+----------+-------------------------+-------------------------+-----|
+| WR0 |          |                         | send signon/welcome msg | WR1 |
+|-----+----------+-------------------------+-------------------------+-----|
+| WR1 | WaitSync | 1. YOOHOO received      | Send ENQ character,     |     |
+|     |          |                         |     WAZOO selected      | exit|
+|     |          | 2. TSYNC received       | probable FSC001         | WR2 |
+|     |          | 3. 10 sec timer elapsed | FSC001 protocol selected| exit|
+|     |          | 4. CR received          | Sender still in FS2     | WR3 |
+|     |          | 5. 60 seconds elapses   | No proper response      | exit|
+|-----+----------+-------------------------+-------------------------+-----|
+| WR2 | TsyncTmr | 1. Timer not running    | Start 10 second timer   | WR1 |
+|     |          | 2. Timer running        |                         | WR1 |
+|-----+----------+-------------------------+-------------------------+-----|
+| WR3 | SyncCR   |                         | Send CR                 | WR1 |
+`-----+----------+-------------------------+-------------------------+-----'
+
+Spare parts:
+
+.-----+----------+-------------------------+-------------------------+-----.
+|State| State    | Predicate(s)            | Action(s)               | Next|
+|  #  | Name     |                         |                         | Stat|
+`-----+----------+-------------------------+-------------------------+-----'
+
+.-----+----------+-------------------------+-------------------------+-----.
+|     |          |                         |                         |     |
+|     |          |                         |                         |     |
+|-----+----------+-------------------------+-------------------------+-----|
+|     |          |                         |                         |     |
+|     |          |                         |                         |     |
+`-----+----------+-------------------------+-------------------------+-----'

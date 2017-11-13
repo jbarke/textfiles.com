@@ -1,0 +1,150 @@
+MiniSport Laptop Hacker - Vol 18, Dec 1993
+To discourage pecuniary interests, Copyright (c) 1993 Brian Mork
+
+>>> ADMIN
+Remember, you can get copies on disk of any software or text file I re-
+fer to (including the MLHacker series) by sending me a disk and SASE.
+I'll put a variety of other MLHacker related goodies on there, too.
+MLHacker is available on the KA6ETB Internet HAM-Server.  Send a message
+to ham-server@grafex.cupertino.ca.us with the single line of text: HELP
+to get access information.  Check the \hamradio\newsletters directory.
+If you're comfortable with late-night long distance phone calls, you may
+download MLHacker related stuff directly from me at 509-244-9260. Use
+the FILES command, and L)og into the \public\computer directory.  Stand-
+ard XMODEM and YMODEM protocols are available.  ARO related CD-ROM, In-
+ternet e-mail, and Usenet newsgroups are also available from this free
+service.
+
+
+>>> POWER SUPPLY
+Nothing, I repeat nothing, beats a schematic diagram when fixing elec-
+trical equipment.  No fancy test equipment can compare.  Thank you big
+time, Brian, for 1) recognizing my reverse engineered attempt (see Vol
+17), and 2) sending me the real schematic!  Two hours later...  I have a
+dead n-channel enhancement-mode MOSFET ("K612" in case anybody can offer
+a cross reference).  There's a 7V p-p, 500 KHz square wave arriving at
+the gate.  The intent is that the drain pulls current through a switch-
+ing power supply transformer primary.  Wasn't happ'ning.  Drain stays at
+the +V supply voltage.  Comparing with another K612 that handles the
+electroluminescent screen voltages confirms the first one is not work-
+ing.
+
+Several parts houses couldn't identify the K612 part, so I made a trip
+to Radio Shack and picked up a 276-2072 IFR510 n-Channel MOSFET.  It's
+about twice as big as the K612, and its specifications are an over-kill,
+but it's all I had available.  It cost just over $2.00.  Instead of
+mounting it as a surface mount on the bottom side of the circuit board,
+I layed it sideways between some capacitors on the top of the circuit
+board and ran hookup wire to the bottom side of the board for connec-
+tions.  Everything works fine!  A representation of the power supply
+pinout given in Vol 5 is in order.  This time, I know functionality,
+too.
+
+With the bottom of the computer removed, the motherboard still in place,
+pin 1 is toward the right and front of the computer, numbered like this:
+
+     15 13 11  9  7  5  3  1
+     16 14 12 10  8  6  4  2
+
+ 1   5 V backup supply #1, 10-300 mA
+ 2   BACKUP-ON request from computer, TTL levels
+ 3   Ground (backup power supplies)
+ 4   5 V backup supply #2, 10-45 mA
+ 5   VEE-ON request from computer, TTL levels
+ 6   -22 V (Vee), 10mA
+ 7   +10 V, 10 mA
+ 8   -10 V, 10 mA
+ 9   EL-ON (LCD screen) request from computer, TTL
+10   Li Battery +V input to power supply (~6.3 V)
+11   Ground (Li battery circuits)
+12   POWER-ON request from computer, TTL levels
+13   Ground (hi current return from pins 15/16)
+14   Duplicates Pin 13
+15   5 V (Vcc), 0.25-0.6 A)
+16   Duplicates Pin 15
+
+A note of caution is in order.  The computer will automatically shut
+down if certain voltages don't come up to specs within a few seconds
+(this appears as a 2 second blink of the power and numlock LEDs and the
+screen).  Requests from the computer can be deceiving unless you know
+what you're looking at.  For instance, I repeatedly measured Pin 9 at
+zero volts during my debugging.  I thought the computer was erroneously
+not asking for the screen voltages.  In fact, right when I pushed the
+power button, it came high for a few seconds, and then shut back off.
+It !was! working ok.  Pin 12, on the other hand, went high to 5+ volts
+and then dropped back to 4.7 volts as the main 5 V supplies were shut
+down.  This pin kept the request (4.7 volts is TTL high) active, and
+only dropped back to zero when I pressed the power switch once again,
+telling the computer to shut "off".  Realize if there are good NiCads,
+good Li batteries, or the external charger is plugged in, this computer
+never really shuts totally off.
+
+There are three main sections to the power supply.  The first handles
+all the 5 Volt supplies.  Both batteries are brought in to this section
+and the normal computer supply and the backup voltages are provided from
+this circuitry.  If pins 1, 4, 15, or 16 are bad at the power supply
+header, this section is malfunctioning.
+
+The second section is where my trouble occurred.  An integrated circuit
+regulator provides oscillation signals for the switching converter and
+appropriate voltage feedback control.  A three-tapped transformer fol-
+lowed by diode rectification provides +10v, -10v and -22v.  If pins 6,
+7, or 8 are not at correct voltages, suspect problems in this area.
+
+The last section is associated with the electroluminescent screen volt-
+ages, and has its own 6-pin header.  To see it, open up your Minisport
+using the directions in MLH Vol 5 and find the 6-pin jumper going from
+the power supply board into the display pivot joint.  Only 4 wires are
+used.  One handles ground.  Two carry current to/from the brightness
+control, and one is the high voltage drive for the display.  Specifical-
+ly:
+
+     6    50-150 VAC p-p, nominally 138 VAC
+     5    n/c
+     4    GND
+     3    n/c
+     2    return from 20 Kohm brightness control
+     1    diode rectified 10 VDC going to brightness control
+
+If pins 1 or 6 !of the screen connector! are at incorrect voltages, sus-
+pect problems here.  Incidentally, Pin 9 of the motherboard power supply
+connector (see MLH Vol 5 and Vol 17) is a TTL level request from the
+computer to turn the electroluminescent display on.  It goes into Pin 14
+of the MB3778.  The MB3778 oscillator output is buffered through three
+parallel CMOS gates and toggles the gate of a K612 MOSFET, which in turn
+pulls current through a transformer.  Subsequently, a high voltage step
+up transformer (looks like a telephone line isolation transformer) gen-
+erates the high VAC for the screen.
+
+Packing tape applied on the front and sides of the keyboard worked well
+to bundle the keyboard to the motherboard as I worked on the assembly.
+Without this, the keyboard connector ribbons get severely strained as
+the board is flipped this way then that way.
+
+I am growing to dislike auto-routed circuit boards.  The computer logic
+generates through-the-board vias that terribly confuse a person trying
+to trace the circuitry.  In a lot of cases, casual inspection shows sin-
+gle side alternative routes were available.
+
+>>> BAD ROM DISK
+I received a message over Internet from a Minisport user that indicated
+his ROM disk (C:) has gone dead.  He's getting checksum errors on boot-
+up.  Do you have the equipment and willingness to pull your ROM, make a
+copy and send it on to Ron?  I ask this not just for one user, but ever-
+yone else this will eventually happen to.  The source for original ROMs
+has dried up, and if we're going to keep Minisports working, it would be
+good to know who could do this for others.
+
+>>> MEMORY SWAPS
+The first MB of memory on a ZL-2 is eight discrete chips soldered on the
+motherboard.  The second MB is a SIPP package.  I know from experience
+the 2nd MB can be unsoldered and swapped into a ZL-1.  Thomas asks if
+the lower and upper MB are interchangeable.  Unfortunately, no.  Howev-
+er, I would be interested in soldering a standard PC SIPP into my ZL-1
+and see if the graft takes.  Do you have an unused 1 MB SIPP you'd be
+willing to let me use?
+
+   Please provide feedback:   * BBS 1-509-244-9260
+                              * AX.25 KA9SNF@wb7nnf.#spokn.wa.usa
+                              * Internet bmork@opus-ovh.spk.wa.us
+73, Brian                     * 6006-B Eaker, Fairchild, WA 99011

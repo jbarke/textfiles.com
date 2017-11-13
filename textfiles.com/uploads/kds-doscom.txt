@@ -1,0 +1,105 @@
+                                                                     
+                                                                     
+                                                                     
+                                             
+KDS-DOSCOM: DOS COM File
+========================
+v1.0 (C)opyright 2010, King Dominic Salemno.
+July 2010.
+
+Disclaimer: I make no guarantees to the accuracy found in this document. My views and opinions are solely based upon my individuality and do not express the views and opinions held by the intellectual property rights owner of the information detailed inside this document. This is not an *OFFICIAL* or *AUTHORITATIVE* source in regards to the subject matter reviewed and explained below. I am not responsible for the damage done to any system and/or data done by testing the information found in this document. One should also consult the intellectual property rights owner in regards to use and/or licensing regarding the technology in this document.
+
+Table of Contents
+=================
+  1. Introduction
+  2. Structural Overview
+  3. Structure Examples
+    3.1. Hex Dump
+    3.2. Byte Analysis
+    3.3. x86 Assembly Program
+  4. Analysis/Research Overview
+  5. References
+
+1. Introduction
+===============
+This document explains the structural details regarding the COM file format used by CP/M and DOS. These files are a type of executable file used in DOS systems.
+
+2. Structural Overview
+======================
+The COM file is a binary executable file that only contains data and code sections all stored in the same segment when loaded into memory (pointed to by the CS Register). Due to the nature of such a file, the file size limitation is 65,280 bytes. This is due to the fact that the first 256 bytes (ending at memory location 0x00FF) in memory are the DOS Program Segment Prefix (KDS-DOSPSP). There is no file header for a COM file.
+
+3. Structure Examples
+=====================
+
+  3.1. Hex Dump
+  -------------
+  The following is a hex dump of the program *in memory*.
+
+  000100: EB 07 46 52 4F 47 0D 0A-24 B4 09 BA 02 01 CD 21
+  000110: B8 00 4C CD 21
+
+  This is the same stream of 0x15 bytes that will appear in the COM file in question.
+
+  3.2. Byte Analysis
+  ------------------
+  The following is an *in-memory* analysis of the program code.
+
+   __________________________________ ___________________________
+  | MEMORY OFFSET   | BYTES          | x86 Instruction Mnemonics |
+   --------------------------------------------------------------
+  | xxxx:0100       | EB07           | JMP 0109                  |
+  | xxxx:0102       | 46             | DB 46                     |
+  | xxxx:0103       | 52             | DB 52                     |
+  | xxxx:0104       | 4F             | DB 4F                     |
+  | xxxx:0105       | 47             | DB 47                     |
+  | xxxx:0106       | 0D0A24         | DB 0D,0A,24               |
+  | xxxx:0109       | B409           | MOV AH,09                 |
+  | xxxx:010B       | BA0201         | MOV DX,0102               |
+  | xxxx:010E       | CD21           | INT 21                    |
+  | xxxx:0110       | B8004C         | MOV AX,4C00               |
+  | xxxx:0113       | CD21           | INT 21                    |
+   --------------------------------------------------------------
+     
+  Notice that little-endian is used.
+ 
+  3.3. x86 Assembly Program
+  -------------------------
+  The program code is x86 Assembly Language.
+
+  ; Program (Print a string to standard output)
+  ;
+  JMP 0109                        ; Near jump to 0109 (Instruction: MOV AH,09)
+  DB 46
+  DB 52
+  DB 4F
+  DB 47
+  DB 0D, 0A, "$"
+  MOV AH,09                       ; Output String to STDOUT
+  MOV DX,0102                     ; Load address of string
+  INT 21
+  MOV AX, 4C00                    ; Terminate Program
+  INT 21
+
+4. Analysis/Research Overview
+=============================
+All of the material presented in this document was analyzed and tested with the following software:
+
+  4.1. FreeDOS (Operation System / DOS Clone)
+  -------------------------------------------
+    4.1.1. FreeDOS was was used in combination with DEBUG to write and test the example used in this document.
+  
+  4.2. DEBUG (DOS Debugging Utility)
+  ----------------------------------
+    4.2.1. DEBUG was was used in combination with FreeDOS to write and test the example used in this document.
+  
+  4.3. DOSBox (DOS Virtual Machine)
+  ---------------------------------
+    4.3.1. DOSBox was used to test the resulting .COM File product by FreeDOS & DEBUG.
+  
+  4.4. Python
+  -----------
+    4.4.1. Python was used to generate a sample .COM File byte-by-byte to verify the technical accuracy of this document.
+
+5. References
+=============
+[KDS-DOSPSP] King Dominic Salemno, "DOS Program Segment Prefix", July 2010

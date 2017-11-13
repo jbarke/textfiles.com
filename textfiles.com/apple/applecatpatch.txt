@@ -1,0 +1,116 @@
+Patch list for CATMSFT and CATPCPI CP/M Apple-Cat II modem programs
+I have decided not to include the source files, but many of the operating
+parameters and features of the programs can be changed by changing bytes
+with DDT or EDFILE (Edfile is definitely easier!).
+This is an edited version of the .PRN file which resulted from the
+assembly of the front end module of the program.  The addresses are
+the same for both the Softcard and PCPI versions.
+Here is a quick example of how you would use DDT to change an
+operating parameter.  Lets say you decided you could really use
+that extra two k of buffer, so you want to tell the program not
+to save the CCP but to warm boot instead (which frees up the memory).
+Looking at the table you would find that the byte SAVCCP is located
+010F in memory.  It is set to FF to indicate that saving the ccp is
+desired. To make the change (IMPORTANT: do this on a COPY so that
+you can go back if you mess it up!) you would bring the program in
+with DDT thus:
+DDT CATMSFT.COM
+(some numbers will appear, which you don't need to worry about.  If
+you get a ? that means that DDT could not find the file.)
+to change the byte, use the S command (for Set bytes) and type:
+S10F
+DDT responds with
+010F  FF  (the cursor remains to the right of the byte waiting for
+          you to change the value or hit return).
+Type in a zero and hit return.  DDT will respond with the
+next byte in memory to be changed.  Simply type a period to
+exit the S mode (and a 'return').
+Type control-C to exit ddt.  Now you want to save your
+modified file back to disk.  The standard command is
+SAVE 85 CATPCPI.COM  (for the applicard version)
+SAVE 75 CATMSFT.COM (for the softcard version).
+That's all there is to it.  Good Luck!
+(P.S.:  If anyone really wants to play with the source code, I can supply it.
+It is not possible to change the slot of the apple-cat from slot two without
+re-assembling.  Since 99.9% of the Apple world runs their modems in slot two,
+the best solution is just to move it over.  If there is some reason you cannot
+do this, contact me and I will assemble you a version for the slot you need,
+or provide you with the source if thats appropriate.  At this point, this
+program must be assembled and Linked with the Assembly Language Development
+System for the Apple II from Microsoft.  (I can provide the patches to make
+the assembler work with the Applicard, provided you do own the software.))
+0109'   00            BAKUPBYTE:        ;FF=make .BAK file
+010A'   00            CKSUMDFLT:        ;FF=default to Checksum checking
+010B'   FF            TOGLCRC:          ;FF=allow toggling of Checksum to CRC
+010C'   00            CONVBKSP:         ;FF=convert backspace to rub
+010D'   FF            TOGLBK:           ;FF=allow toggling of bksp to rub
+010E'   00            ADDLF:            ;FF=add LF after CR
+010F'   FF            TOGLLF:           ;FF=allow toggling of LF after CR
+0110'   FF            STRLF:            ;FF=strip LF after CR in terminal file
+output
+0101'   FF            TOGSLF:           ;FF=toggle strip LF after CR in file
+output
+0102'   FF            SAVCCP:           ;FF=DO NOT OVERWRITE CCP
+0113'   00            LOCONEXTCHR:      ;FF=local command if EXTCHR precedes
+0114'   FF            TOGLLOC:          ;FF=allow toggling of LOCONEXTCHR
+0115'   FF            LSTTST:           ;FF=ALLOW TOGGLING OF PRINTER ON/OFF
+;***** WARNING *****
+;The three mode bytes XOFFTXT, XONWAIT, and ECHWAIT are mutually exclusive
+; modes.  Do NOT attempt to set more than one of them at a time, as very
+; unpredictable results will ensue.
+0116'   FF            XOFFTST:          ;FF=ALLOW TESTING OF XOFF FROM REMOTE
+                                        ;while transmitting a file in terminal
+mode
+0117'   00            XONWAIT:          ;FF=wait for XON after sending CR while
+                                        ;transmitting a file in terminal mode
+0118'   FF            TOGXOFF:          ;FF=allow toggling of XOFF/XON testing
+0119'   00            ECHWAIT:          ;FF=wait for echo before sending next
+                                        ;character in terminal mode file output
+011A'   00            EOFSEND:          ;FF=send eof in terminal mode file
+output
+011B'   FF            NAKONLY:          ;FF=resends a record only after a valid
+                                        ;0=resends a record after any non-ACK
+                                        ;FF is intended only for use with
+mainframes
+                                        ;that send, for example, xoff when
+buffer is
+                                        ;full
+0112'   01            MSPEED:           ;sets the display time to send a file
+                                        ;0=110 1=300 2=450 3=600 4=710
+                                        ;5=1200 6=2400 7=4800 8=9600
+0123'   00            BYTDLY:           ;default time to send character in
+                                        ;terminal mode file transfer
+                                        ;0=0 delay, 1=0.02 sec, -- ,9=0.18 sec
+0124'   00            CRDLY:            ;default time for extra wait after CR
+                                        ;in terminal mode file transfer
+                                        ;0=0 delay, 1=0.02 sec, -- ,9=0.18 sec
+0125'   1E            BELRPT:           ;bell repeat time = value*0.03 sec
+0126'   05            NOOFCOL:          ;number of directory columns
+0127'   00            DIALSW:           ;DIALER DEFAULT MODE
+                                        ;0=TOUCHTONE, 1=PULSE
+0128'   10            IDGT:             ;interdigit delay value for touch tone
+dialer
+                                        ;increase if your exchange needs slower
+dialing
+                                        ;should be 10H minimum
+0129'   FF            BYESAV:           ;FF saves mspeed in 03CH so that xmodem
+                                        ;can be used after
+012A'   FF            CTLTRP:           ;FF terminal mode traps control
+characters
+                                        ;(except tab,cr,lf,bs,rub) before
+sending to console
+012B'   05            EXITCHR:          'E'-40H ; ^E = Exit without disconnect
+012C'   0F            LOGCHR:           'O'-40H ; ^O = Send logon
+012D'   1A            LSTCHR:           'Z'-40H ; CHANGED DUE TO MAINFRAMES
+USING CTL P FOR A 'BREAK'
+012E'   12            UNSAVECHR:        'R'-40H ; ^R = Close input text buffer
+012F'   14            TRANCHR:          'T'-40H ; ^T = Transmit file to remote
+0130'   19            SAVECHR:          'Y'-40H ; ^Y = Open input text buffer
+0131'   1E            EXTCHR:           '^'-40H ; ^^ = Send next character
+                        ;
+                        ;
+0135'   1B 59 00                        These bytes define the clear to
+0138'   00 00                           end of screen sequence.
+                        ;
+0145'   1B 2A 00                        These bytes define the clear
+0148'   00 00                           screen/home cursor sequence.

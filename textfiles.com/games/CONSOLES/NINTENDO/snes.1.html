@@ -1,0 +1,394 @@
+ ----------------------------------------------------------------------------
+|rwd2?|Address|Title & Explanation                                           |
+||||||-----------------------------------------------------------------------|
+||||||                                                                       |
+||||||__  ?: Don't know what the statistics on this register are.            |
+|||||____ 2: 2 byte (1 word) length register.                                |
+||||_____ d: Double-byte write required when writing to this register.       |
+|||______ w: Writable register.                                              |
+||_______ r: Readable register.                                              |
+|                                                                            |
+|----------------------------------------------------------------------------|
+|rwd2?|Address|Title & Explanation                                           |
+|----------------------------------------------------------------------------|
+| w   |$2100  |Screen display register.                                      |
+|     |       |x000bbbb              x: 0 = Screen on.                       |
+|     |       |                         1 = Screen off.                      |
+|     |       |                   bbbb: Brightness ($0-$F)                   |
+|     |       |                                                              |
+|     |       |Incrementing $2100 up to $xF will result in a screen fade.    |
+|     |       |Do this only during the VBL period, the screen goes silly.    |
+|     |       |                                                              |
+|     |       |                                                              |
+| w   |$2101  |OAM (Sprite) size register.                                   |
+|     |       |sssnnbbb              s: 000 = 8x8 or 16x16  > Size.          |
+|     |       |                         001 = 8x8 or 32x32 /                 |
+|     |       |                      n: Name selection (upper 4k word adr).  |
+|     |       |                      b: Base selection (8k word segment adr).|
+|     |       |                                                              |
+|     |       |                                                              |
+| w 2 |$2102  |OAM (Sprite) address register.                                |
+|     |       |???????? ????????                                             |
+|     |       |                                                              |
+|     |       |                                                              |
+| wd  |$2104  |OAM (Sprite) data register.                                   |
+|     |       |????????                                                      |
+|     |       |                                                              |
+|     |       |                                                              |
+| w   |$2105  |Screen mode register.                                         |
+|     |       |abcdefff              a: Plane 3 tile size    > 0 = 8x8.      |
+|     |       |                      b: Plane 2 tile size   /  1 = 16x16.    |
+|     |       |                      c: Plane 1 tile size  /                 |
+|     |       |                      d: Plane 0 tile size /                  |
+|     |       |                      e: Make Plane 2 take highest priority.  |
+|     |       |                      f: MODE definition.                     |
+|     |       |                                                              |
+|     |       |                                                              |
+| w   |$2106  |Screen pixelation (aka. MOSAIC) register.                     |
+|     |       |xxxxabcd              x: Pixel size ($0-$F).                  |
+|     |       |                      a: Affect Plane 3.                      |
+|     |       |                      b: Affect Plane 2.                      |
+|     |       |                      c: Affect Plane 1.                      |
+|     |       |                      d: Affect Plane 0.                      |
+|     |       |                                                              |
+|     |       |                                                              |
+| w   |$2107  |Plane 0 VRAM location register.                               |
+|     |       |xxxxxxab              x: Address of VRAM location.            |
+|     |       |                     ab: Virtual screen size selection.       |
+|     |       |                                                              |
+|     |       |The virtual screen size goes from 32x32 to 32x64 to 64x32 to  |
+|     |       |64x64. Visually, you only see 32x32(x25) at once unless you   |
+|     |       |change the ACTUAL screen size.                                |
+|     |       |                                                              |
+|     |       |                                                              |
+| w   |$2108  |Plane 1 VRAM location register.   > Same setup as $2107.      |
+| w   |$2108  |Plane 2 VRAM location register.  /                            |
+| w   |$2108  |Plane 3 VRAM location register. /                             |
+|     |       |                                                              |
+|     |       |                                                              |
+| w   |$210B  |Tile VRAM location register (Planes 0 & 1).                   |
+|     |       |aaaabbbb              a: Location of tiles for Plane 1.       |
+|     |       |                      b: Location of tiles for Plane 0.       |
+|     |       |                                                              |
+|     |       |Since you only have a nibble to work with for your tile mem-  |
+|     |       |ory location, you cannot have an address such as $5F91 or     |
+|     |       |$1C4A. You must have something like $D000 or $3000.           |
+|     |       |                                                              |
+|     |       |                                                              |
+| w   |$210C  |Tile VRAM location register (Planes 2 & 3). > Same as $210B.  |
+|     |       |                                                              |
+|     |       |                                                              |
+| wd  |$210D  |Plane 0 X-Scroll register.                                    |
+|     |       |aaaaaaaa              a: Plane 0 "location".                  |
+|     |       |                                                              |
+|     |       |This is an intruiging register. Like the types define, it has |
+|     |       |to be written to twice: The first time holds the first 8 bits,|
+|     |       |and the second time holds the last 3 bits. This makes a total |
+|     |       |of 11 bits for information. I guess you could look at it this |
+|     |       |way:                  a: Location/info.    1st byte  2nd byte |
+|     |       |                                           aaaaaaaa  -----aaa |
+|     |       |                                                              |
+|     |       |Here's some example code:                                     |
+|     |       |*** This moves Plane 0 to the left.                           |
+|     |       |                                                              |
+|     |       |     LDA Plane0X      ; Byte variable; we need to keep track  |
+|     |       |     DEC              ; of where the plane is, since the      |
+|     |       |     STA Plane0X      ; register itself isn't readable. :-(   |
+|     |       |     STA $210D        ; Store data  (1st byte)                |
+|     |       |     STZ $210D        ; Store zeros (2nd byte)                |
+|     |       |                                                              |
+|     |       |As you can see, I store zeros for the 2nd byte; this is bad,  |
+|     |       |since MODE 7 uses 13 bits of the above, while the rest use 10.|
+|     |       |I'm not taking care of the MSB. :-( But, the results for other|
+|     |       |MODEs is a smooth scrolling background :-)                    |
+|     |       |                                                              |
+|     |       |                                                              |
+| wd  |$210E  |Plane 0 Y-Scroll register.        > Same setup as $210D.      |
+| wd  |$210F  |Plane 1 X-Scroll register.       /                            |
+| wd  |$2110  |Plane 1 Y-Scroll register.      /                             |
+| wd  |$2111  |Plane 2 X-Scroll register.     /                              |
+| wd  |$2112  |Plane 2 Y-Scroll register.    /                               |
+| wd  |$2113  |Plane 3 X-Scroll register.   /                                |
+| wd  |$2114  |Plane 3 Y-Scroll register.  /                                 |
+|     |       |                                                              |
+|     |       |                                                              |
+| w   |$2115  |Video port control.                                           |
+|     |       |????????                                                      |
+|     |       |                                                              |
+|     |       |If $80 (#128) is stored here, the "...H/L is incremented which|
+|     |       |determines if the address will be incremented after it reads  |
+|     |       |or writes to/from $2118 and $2139, or $2119 and $213A."       |
+|     |       |                                                              |
+|     |       |                                                              |
+| w 2 |$2116  |Video port address.                                           |
+|     |       |???????? ????????                                             |
+|     |       |                                                              |
+|     |       |                                                              |
+| w 2 |$2118  |Video port data.                                              |
+|     |       |???????? ????????                                             |
+|     |       |                                                              |
+|     |       |                                                              |
+| w   |$211A  |MODE7 Information register.                                   |
+|     |       |xy????ab              a: Horizontal or Vertical flip.         |
+|     |       |                      b: Horizontal or Vertical flip.         |
+|     |       |                      x: Landscape repeat type.               |
+|     |       |                      y: Landscape repeat type.               |
+|     |       |                                                              |
+|     |       |I have no idea what the original author means!!! HELP ME!     |
+|     |       |                                                              |
+|     |       |                                                              |
+| w   |$211B  |COS (COSIN) rotate angle / X Expansion.                       |
+| w   |$211C  |SIN (SIN)   rotate angle / X Expansion.                       |
+| w   |$211D  |SIN (SIN)   rotate angle / Y Expansion.                       |
+| w   |$211E  |COS (COSIN) rotate angle / Y Expansion.                       |
+| wd  |$211F  |"13 bit address for the center of Rotate X."                  |
+| wd  |$2120  |"13 bit address for the center of Rotate Y."                  |
+|     |       |                                                              |
+|     |       |                                                              |
+| w   |$2121  |Colour # (or pallete) selection register.                     |
+|     |       |xxxxxxxx              x: Colour # ($00-$FF).                  |
+|     |       |                                                              |
+|     |       |                                                              |
+|     |       |Simply store the # of the colour you want to change/modify    |
+|     |       |here, before you write to $2122 (Colour data register). This  |
+|     |       |register is AUTO INCREMENTING! So, you do not have to tech-   |
+|     |       |nically do a "LDA #$00, STA $2121...LDA #$01, STA $2121...    |
+|     |       |LDA #$03, STA $2121..." and so on.                            |
+|     |       |                                                              |
+|     |       |Here's some example code:                                     |
+|     |       |*** Stores colour-values in colour #0, #1, and #2.            |
+|     |       |                                                              |
+|     |       |     STZ $2121        ; Start at colour #0.                   |
+|     |       |     STZ $2122        ; Color #0 = $0000 (black).             |
+|     |       |     STZ $2122                                                |
+|     |       |     LDA #$FF         ; Color #1 = $7FFF (white).             |
+|     |       |     STA $2122                                                |
+|     |       |     LDA #$7F                                                 |
+|     |       |     STA $2122                                                |
+|     |       |     LDA #$1F         ; Color #2 = $001F (red).               |
+|     |       |     STA $2122                                                |
+|     |       |     STZ $2122                                                |
+|     |       |                                                              |
+|     |       |                                                              |
+| wd  |$2122  |Colour data register.                                         |
+|     |       |xxxxxxxx              x: Value of colour.                     |
+|     |       |                                                              |
+|     |       |SNES colour is really "strange" from what i'm used to. It's 5 |
+|     |       |bit, not like the normal 4 bit i'm used to on the IIGS, or the|
+|     |       |8 bit i'm used to on the PC. Make sure you check the code I   |
+|     |       |gave in register $2121. Make SURE to check Section #2 on how  |
+|     |       |SNES colour works, and for tile-setup, check Section 4!       |
+|     |       |                                                              |
+|     |       |                                                              |
+| w   |$212C  |Plane-enable/sprite-enable register.                          |
+|     |       |abcdefgh              a: Enable Plane 3 sprites.              |
+|     |       |                      b: Enable Plane 2 sprites.              |
+|     |       |                      c: Enable Plane 1 sprites.              |
+|     |       |                      d: Enable Plane 0 sprites.              |
+|     |       |                      e: Enable Plane 3.                      |
+|     |       |                      f: Enable Plane 2.                      |
+|     |       |                      g: Enable Plane 1.                      |
+|     |       |                      h: Enable Plane 0.                      |
+|     |       |                                                              |
+|     |       |This register allows you to enable which Planes you want to   |
+|     |       |put sprites on (to move, or etc.) and to scroll, or other neat|
+|     |       |thing... If you want to use all 4 Planes, but no sprites, put |
+|     |       |a $0F into this register. If you want to use all the Planes,  |
+|     |       |but only put sprites on Planes 1 and 3, you would put an $AF  |
+|     |       |in this register. Very self explanatory, eh? :-)              |
+|     |       |                                                              |
+|     |       |                                                              |
+| w   |$2133  |Screen mode register.                                         |
+|     |       |????ab?c              a: Interlace Y.                         |
+|     |       |                      b: Overscan.                            |
+|     |       |                      c: Interlace X.                         |
+|     |       |                                                              |
+|     |       |                                                              |
+|r  2 |$2139  |VRAM port data (reading).                                     |
+| w 2 |$213A  |VRAM port data (writing).                                     |
+|r d  |$213C  |Horizontal scan-line location.                                |
+|r d  |$213D  |Vertical scan-line location.                                  |
+|     |       |- I have no idea how these are setup, other than they're sup- |
+|     |       |  posedly 9 bits in length... Sound fishy to me. I guess these|
+|     |       |  can be used for getting a random-# seed. :-)                |
+|     |       |                                                              |
+|     |       |                                                              |
+|rw   |$2140  |< These are the infamous audio registers which interact with  |
+|rw   |$2141  | \the SPC700 sound co-CPU. Check the document included in     |
+|rw   |$2142  | /this archive called 'sound.doc' for more information.       |
+|rw   |$2143  |<                                                             |
+|     |       |                                                              |
+|     |       |                                                              |
+| w   |$4200  |Counter enable.                                               |
+|     |       |a?yx???b              a: 0 = NMI/VBlank interrupt not enabled.|
+|     |       |                         1 = NMI/VBlank interrupt enabled.    |
+|     |       |                      b: 0 = Joypad counter not enabled.      |
+|     |       |                         1 = Joypad counter enabled.          |
+|     |       |                      x: 0 = Horizontal counter not enabled.  |
+|     |       |                         1 = Horizontal counter enabled.      |
+|     |       |                      y: 0 = Vertical counter not enabled.    |
+|     |       |                         1 = Vertical counter enabled.        |
+|     |       |                                                              |
+|     |       |                                                              |
+| w   |$4201  |8-bit parallel data. > Expansion port for the Famicom!!!      |
+|     |       |                                                              |
+|     |       |                                                              |
+| w   |$420B  |DMA enable register.                                          |
+|     |       |abcdefgh              a: DMA #7.                              |
+|     |       |                      b: DMA #6.                              |
+|     |       |                      c: DMA #5.                              |
+|     |       |                      d: DMA #4.                              |
+|     |       |                      e: DMA #3.                              |
+|     |       |                      f: DMA #2.                              |
+|     |       |                      g: DMA #1.                              |
+|     |       |                      h: DMA #0.                              |
+|     |       |                                                              |
+| w   |$420C  |HDMA enable register. -> Same as $420B.                       |
+|     |       |                                                              |
+| w   |$420D  |Cycle speed register.                                         |
+|     |       |???????x              x: 0 = Normal (2.68MHz).                |
+|     |       |                         1 = Fast (3.58MHz).                  |
+|     |       |                                                              |
+|     |       |                                                              |
+|r    |$4210  |NMI register.                                                 |
+|     |       |x???????              x: 0 = NMI disabled.                    |
+|     |       |                         1 = NMI enabled.                     |
+|     |       |                                                              |
+|     |       |                                                              |
+|    ?|$4211  |???.                                                          |
+|     |       |x???????              x: 0 = IRQ is not enabled.              |
+|     |       |                         1 = IRQ is enabled.                  |
+|     |       |                                                              |
+|     |       |Arrrrgh! Where's the description for this register!!! :-( :-( |
+|     |       |                                                              |
+|     |       |                                                              |
+|rw   |$4212  |Status register.                                              |
+|     |       |xy?????a              x: 0 = Not in VBlank state.             |
+|     |       |                         1 = In VBlank state.                 |
+|     |       |                                                              |
+|     |       |                      y: 0 = Not in HBlank state.             |
+|     |       |                         1 = In HBlank state.                 |
+|     |       |                                                              |
+|     |       |                      a: 0 = Joypad not ready.                |
+|     |       |                         1 = Joypad ready.                    |
+|     |       |                                                              |
+|     |       |Here's some example code for joypad-input:                    |
+|     |       |*** Wait for the ready-state bit to become ready.             |
+|     |       |                                                              |
+|     |       |-    LDA $4212                                                |
+|     |       |     AND #$01                                                 |
+|     |       |     BNE -                                                    |
+|     |       |                                                              |
+|     |       |                                                              |
+|rw   |$4218  |Joypad #0 register (1 out of 2).                              |
+|     |       |abcd0000              a: 0 = 'A' not pressed.                 |
+|     |       |                         1 = 'A' pressed.                     |
+|     |       |                      b: 0 = 'X' not pressed.                 |
+|     |       |                         1 = 'X' pressed.                     |
+|     |       |                      c: 0 = TOP-LEFT not pressed.            |
+|     |       |                         1 = TOP-LEFT pressed.                |
+|     |       |                      d: 0 = TOP-RIGHT not pressed.           |
+|     |       |                         1 = TOP-RIGHT pressed.               |
+|     |       |                                                              |
+|     |       |Here's some example code:                                     |
+|     |       |*** Check for the 'A' button and the TOP-RIGHT button.        |
+|     |       |                                                              |
+|     |       |     LDA $4218        ; Get status register.                  |
+|     |       |     BIT #$80         ; Is the 'A' button pressed?            |
+|     |       |     BNE YesA         ; 1 = Yes, so go to label 'YesA'.       |
+|     |       |     BIT #$10         ; Is the TOP-RIGHT button pressed?      |
+|     |       |     BNE YesTR        ; 1 = Yes, so go label 'YesTR'.         |
+|     |       |                                                              |
+|     |       |*** NOTE: The Corsair & Dax document was *WRONG*. It took me  |
+|     |       |          a good hour or two to figure this out, so I decided |
+|     |       |          i'd better write down the correct info! :-)         |
+|     |       |                                                              |
+|     |       |                                                              |
+|rw   |$4219  |Joypad #0 register (2 out of 2).                              |
+|     |       |abcdefgh              a: 0 = 'B' not pressed.                 |
+|     |       |                         1 = 'B' pressed.                     |
+|     |       |                      b: 0 = 'Y' not pressed.                 |
+|     |       |                         1 = 'Y' pressed.                     |
+|     |       |                      c: 0 = SELECT not pressed.              |
+|     |       |                         1 = SELECT pressed.                  |
+|     |       |                      d: 0 = START not pressed.               |
+|     |       |                         1 = START pressed.                   |
+|     |       |                      e: 0 = UP not pressed.                  |
+|     |       |                         1 = UP pressed.                      |
+|     |       |                      f: 0 = DOWN not pressed.                |
+|     |       |                         1 = DOWN pressed.                    |
+|     |       |                      g: 0 = LEFT not pressed.                |
+|     |       |                         1 = LEFT pressed.                    |
+|     |       |                      h: 0 = RIGHT not pressed.               |
+|     |       |                         1 = RIGHT pressed.                   |
+|     |       |                                                              |
+|     |       |                                                              |
+|rw   |$421A  |Joypad #1 register (1 out of 2).      > Same setup as $4218   |
+|rw   |$421B  |Joypad #1 register (2 out of 2).     /  and $4219.            |
+|rw   |$421C  |Joypad #2 register (1 out of 2).    /                         |
+|rw   |$421D  |Joypad #2 register (2 out of 2).   /                          |
+|rw   |$421E  |Joypad #3 register (2 out of 2).  /                           |
+|rw   |$421F  |Joypad #3 register (2 out of 2). /                            |
+|     |       |                                                              |
+|****************************************************************************|
+|***** The following data is for DMA-transfers.                              |
+|***** The 'x' represents the DMA #, which ranges from 0 to 7.               |
+|***** So, the following would represent each DMA-memory section.            |
+|***** DMA #0: $4300-$4305.                                                  |
+|***** DMA #1: $4310-$4315.                                                  |
+|***** ....................                                                  |
+|***** DMA #7: $4370-$4375.                                                  |
+|****************************************************************************|
+|     |       |                                                              |
+| w   |$43x0  |DMA Control register.                                         |
+|     |       |vh0cbaaa              a: Transfer type.                       |
+|     |       |                         001 = 2 addresses: LH.               |
+|     |       |                         010 = 1 address.                     |
+|     |       |                         011 = 2 addresses write twice: LLHH  |
+|     |       |                         100 = 4 addresses: LHLH              |
+|     |       |                      b: 0 = Address inc/decrement on.        |
+|     |       |                         1 = Fixed address (used for clearing |
+|     |       |                             VRAM and etc.)                   |
+|     |       |                      c: 0 = Increment.                       |
+|     |       |                         1 = Decrement.                       |
+|     |       |                      h: For HDMA only:                       |
+|     |       |                         0 = Absolute addressing.             |
+|     |       |                         1 = Indirect addressing.             |
+|     |       |                      v: 0 = RAM ----> VRAM.                  |
+|     |       |                         1 = VRAM ---> RAM.                   |
+|     |       |                                                              |
+| w   |$43x1  |DMA Destination register.                                     |
+|     |       |     I'm pretty sure that what you tell this register is the  |
+|     |       |     lower-byte of the address of where you want to access,   |
+|     |       |     the upper ALWAYS (?????) being $21.                      |
+|     |       |Example:                                                      |
+|     |       |     LDA #$04            ; Access $2104                       |
+|     |       |     STA $4301           ; Use DMA #0                         |
+|     |       |or:                                                           |
+|     |       |     LDA #$22            ; Access $2122                       |
+|     |       |     STA $4321           ; Use DMA #2                         |
+|     |       |                                                              |
+| w 2 |$43x2  |Source address.                                               |
+| w   |$43x4  |Source bank address.                                          |
+| w 2 |$43x5  |Transfer size register.                                       |
+| w   |$43xA  |Number of lines for HDMA transfer.                            |
+|     |       |                                                              |
+|****************************************************************************|
+|***** Addition information follows.                                         |
+|***** Most of the following information is for SMC defined files...         |
+|****************************************************************************|
+|     |       |                                                              |
+|rw   |$FFC0  |Cartridge title.                                              |
+|rw   |$FFD6  |ROM/RAM information on cart.                                  |
+|rw   |$FFD7  |ROM size.                                                     |
+|rw   |$FFD8  |RAM size.                                                     |
+|rw   |$FFD9  |Maker ID code.                                                |
+|rw   |$FFDB  |Version #.                                                    |
+|rw   |$FFDC  |Checksum complement.                                          |
+|rw   |$FFDE  |Checksum.                                                     |
+|rw   |$FFEA  |NMI vector/VBL interrupt.                                     |
+|rw   |$FFEC  |Reset vector.                                                 |
+|     |       |                                                              |
+|     |       |*** With SMC (Super MagiComm) files, the offset is $7E00 less |
+|     |       |    than what is listed above.                                |
+ ----------------------------------------------------------------------------

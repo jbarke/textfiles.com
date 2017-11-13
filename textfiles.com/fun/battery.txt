@@ -1,0 +1,172 @@
+Charging batteries
+    after reading some of the messages under "battery help",I thought I might
+be able to clear up some of the popular misconceptions about batteries.
+Many of the problems blamed on memory or shorted cells are often problems
+resulting from improper charging or discharging.It's a very grey area and
+clearcut answers are hard to find,you will soon find out why!
+    One question often asked about ni-cad's is;"should they be deep discharged
+to condition the cells".Heres where that grey area starts,most manufacturers
+suggest some form of deep discharge occasionally but never a total discharge.
+Most devices(ie.laptops,camcorders)have internal circuitry to sense when
+a battery has discharged to or near its rated capacity and disconnect either
+partially or totally from the load,don't drop a load resistor across the
+terminals and kill it,this will cause cell damage to one extent or another.
+Most importantly begin charging shortly after you have completed discharge!
+I will adress lead acid batteries later in this file,but by all means don't
+deep discharge a lead acid cell,doing so will definetly harm it and possibly
+destroy it.Again charging shortly after discharge is essential to long
+cycle life of a lead acid battery as well.
+    Ni-cad chargers exist in many forms.They can be a simple as a transformer
+cap and diode or as complicated as microprossesor based systems that cost
+up and over $1000.The more extravigant,the better the results,usually.
+The problem is when to terminate charge,overcharging a cell results in
+venting.This is when a cell builds pressure internally as a result of
+overcharging and releases elecrolite into the air.Over time this can cause
+cell damage resulting in a significant decrease in cycle life.(# of times
+a battery discharges and subsequently recharges to full capacity)
+    The following graph shows the voltage profile of a single ni-cad cell
+during a charge cycle.
+
+l                                                    x  l   x
+l                                              x        l         x      x
+l                                        x              l
+l   voltage                        x                    l
+l                            x                          l
+l                      x                                l
+l               x                                       l
+l          x                                            l
+l    x                            capacity              l
+l_______________________________________________________l______________________
+0%                                                approx 100%
+
+Notice how the voltage peaks near full capacity and then starts to drop.
+So a simple assumption would tell you that you could sense that peak
+and drop (commonly referred to as the negative delta v) and terminate charge,
+right?......wrong!
+The promblem occurs when you put cells in series (a battery)to get appropriate
+voltages.They all have slightly different voltage profiles during the charge
+cycle,like this:
+                                                 t1                    t2
+l           x=cell 1                             l                     l
+l           o=cell 2                             l                     l
+l           t=cell 3                             l     o  o  xt x  t   l
+l                                                   o   x t     o   x t
+l                                                oxt               o    x  t
+lvoltage                                  xot
+l                                  xot
+l                            xot
+l                      xot
+l               xot                                l ???    100%    ??? l
+l        xot                                       l                    l
+l xot                                 capacity     l                    l
+l__________________________________________________l____________________l_______
+0%                                                 l        100%        l
+
+
+As you can see,things get kinda grey!
+
+    This graph is unrealistic in the sense that it's impossible to determine
+individual cell voltages when they are connected in series to form a battery.
+What actually happens is you get a very mushy curve.If you terminate early
+at position t1(see graph)most of your cells will be below full capacity,
+terminate at t2 and most of them will be in overcharge.
+    There are a number of methods of charge termination,some simpler than
+others some more effective than others,these are a few of the popular ones.
+    -temperature    as a cell accepts current,it has a certain effeciency
+at wich it turns incoming energy into stored chemical energy.(cell efficiency)
+most cell systems have been optimized over the years to a point were they
+are all very efficient.Were this comes into play is simple,energy in = energy
+out.If a cell has reached full capacity,the incoming energy from the charging
+system has to go somwhere,that somwhere is heat!So,what you can do is sense
+that increase in temperature and terminate charge.sounds simple but,there
+are numerous drawbacks.first of all,you have to have a temprature sensing
+device in close proximity to the cells,this is impracticle in most cases.
+Secondly you again have the problem of cells being different from eachother
+you may terminate to early or maybe to late,your guess is as good as mine!
+Lastly if your battery is located near your charging system,your near
+transformers,transitors,diodes and other heat generating devices,how do you
+compensate for this???
+    -negative delta v    as discussed before,this has many drawbacks but is
+the more popular among higher grade systems.
+    -coulometric control  basically,a coulometer that keeps track of how
+much energy gets discharged and then puts it back in,high cost and
+inaccuracies in mesuring equipment keep this one in the ultra high
+grade market.
+    -constant voltage   don't even think about it!every manufacturer
+strongly suggest anything but!
+    -constant current  the most popular,requires alot of guess work
+on the part of the manufacturer.you have to select a charge current
+appropriate for capacity of the cells.To high and you overcharge,to low
+and it takes you 12+ hours to reach full capacity,if at all.
+    combinations of any of these are also very common (exept con.v) and
+can result in some nice systems.
+    So far I've told everything wrong with ni-cad chargers,to be truthfull
+many of these can work ok.Most manufacturers claim ni-cad's can cycle up to
+10,000 times if treated properly,The problem is that treated properly
+means making many compromises that are unrealistic or impossible for
+most applications.The last form  of charging I'd like to discuss is algorithm
+or "pulse" charging.It employs alot of the methods listed above,but with
+a twist.
+
+    A basic pulse charge algorithm looks somthing like this:
+
+
+ l --------------------1 second------------------------l--next cycle-----
+ l                                                     l
+ l                                                     l
+  xxxxxxx----charge level 1 ---xxxxxxxxxxxxxx          xxxxxxxxxxxxxxxxxx
+                                            x          x
+ 0 charge level-------------------------    x   xxxxxxxx  -----------------
+                                            x   x
+                                            x   x
+                                            xxxxx  ----------- -2.5 discharge
+
+
+    To start this a constant current charger,the output is determined by
+The capacity of the cells.Charge level one represents current being passed
+to the battery at a specified level.Lets say for now that that level is 1
+amp.(charge level 1=1 amp)For a period of time,lets say 985ms we are putting
+current into the battery.(charge level 1)After that time expires we go to
+part two.(-2.5 discharge)At this point,for a short period of time,say
+5ms we discharge at 2.5 times the level we charged at.(or in our case,2.5 amps)
+this serves one major function,"burping".When a ni-cad cell is charging one
+of the gasses being generated internaly is oxygen,it forms and sits on the
+two plates of the battery.The problem happens when crystals begin to form
+in the cell and use these bubbles as a bridge between the two plates(anode
+and cathode)of the cell,if they complete the bridge you now have a dialectric
+short,or a dead battery!What happens during that 5ms pulse or "burp" can
+save alot of trouble,it breaks the bubbles and allows the oxygen to be more
+readily available for the continuing chemical reaction.This accomplishes a
+couple of things,as a result of the oxygen situation mentioned above you can
+charge at much higher levels without cell venting.(fast charge)secondly,you
+prevent shorts,giving you longer cycle life.Just as a note of interest,the
+crystals that form in the cell,shorting or not,cause the chemical conversion
+that takes place during charging and discharging to slow down,somtimes to a
+point where the cell can't function anymore.True "memory"has yet to be proved
+and this is what is really happening when your battery quits!Best way to
+prevent it is to keep your battery charged when not in use.
+    Getting back to pulse charging,the last segment in the algorithm is
+called the quiet window.It serves two basic purposes,it allows the cell
+to chemically recuperate after discharging and it provides a period of time
+to collect information from the cells.(such as looking for - delta v).after
+the quiet window the loop begins again at charge level 1,it runs continuosly
+at 1 second intervals until terminated by some method of charge termination.
+Once the cell reaches near full capacity some type of maintanance charge is
+usually applied,such as running an algorithym at a lower frequency and
+amplitude,this helps top off the cells and keep them fully charged.
+    This technology is fairly new and should be introduced into the various
+consumer markets soon.My only advice to people who are stuck with cheap
+ni-cad chargers supplied by manufacturers is to be more selective next
+time!Spending an extra $100 at purchase time will pay for itself if one
+battery last you 2 years as opposed to 2 cycles.
+
+                      comments or questions??
+                    send replies to glenn sahlin
+
+
+
+
+
+
+
+

@@ -1,0 +1,283 @@
+America Online
+APPLE II DEVELOPMENT FORUM CONFERENCE LOG
+Tuesday, October 2, 1990  10:00 p.m. Eastern Time
+Topic:  Assembly Language Programming
+Forum Leader:  Dave Sugar  (AFL Dyfet)
+
+AFL Dyfet  Tonight's topic is assembly language programming.
+AFL Dyfet  Yes, Surak, that would be a good place to start...go ahead with
+           your question.
+Surak TFF  OK... 1) When does the Control Panel NDA expect you to return it
+           something
+Surak TFF  other than a 0?
+Surak TFF  It doesn't really say much in the technote about returning
+           values.
+Surak TFF  (make that filetype note)
+Matt DTS   I believe it says either "reserved" or "unused" all the places
+           you're supposed to return zero.
+Matt DTS   No one here has the functions memorized so we can't answer that
+           off the tops of our heads, but you can
+Matt DTS   look at the sample CDEV in the latest sample code batch if
+           something's really confusing you.
+Dave Lyons Yup, that's safe.  Return 0 unless it says you should return
+           something different.
+Surak TFF  OK...And Part 2) Can a CDEV install an interrupt handler as part
+           of its boot
+Surak TFF  procedure? 
+Surak TFF  (Say, a SysBeep procedure, or something of that type)
+Matt DTS   You'd have to allocate new memory under a user ID that's not the
+           CDev's, but yes, it can be done.
+Matt DTS   The Control Panel reserves the right to shut down your CDev and
+           purge all memory with its ID when it
+Matt DTS   feels like it, so you'd have to give it memory with some other
+           user ID (get a new one from GetNewID)
+Matt DTS   so it would stick around.  (GA)
+Surak TFF  OK, thanks... I guess I'll have the CDEV out soon then :)   
+           GA...
+AFL Dyfet  GA A2...
+A2GS       This is really a Q....wouldn't shutting down a CDEV where the CDEV
+           has
+A2GS       installed an Interrupt Handler be kind of dangerous?  You'd have
+           this loose
+A2GS       handler picking interrupts with no CDEV making use of it.
+AFL Dyfet  GA Winkie :)...
+WinkieJim  The CDEV would have to put the code that handles the inturupt in a
+           separate
+WinkieJim  memory handle.
+WinkieJim  ga
+A2GS       I know that...but still the interrupt would be handled with no
+           application 
+A2GS       making use of the info provided by the handler..if nothing else,
+           it's a waste 
+A2GS       of CPU time.
+Matt DTS   That's why you have to have separate code that *won't* go away
+           claiming the interrupts.
+Matt DTS   You have to use the system's communicative facilities (like
+           MessageByName) to set flags that the
+Matt DTS   CDev can read when it's ready.
+Matt DTS   And sometimes you want separate code doing things when the CDev is
+           not around.  For example,
+Matt DTS   a "SoundMaster" CDev should patch out the appropriate vectors and
+           play sounds when disks are
+Matt DTS   inserted (or whatever) even if the CDev isn't open.  The CDev
+           communicates with the other code to let 
+Matt DTS   it know what sounds to play at the appropriate times.  (GA)
+AFL Dyfet  GA Surak...
+A2GS       Ok. But since no actual application is making use of the
+           Interrupt...there's
+A2GS       no Direct to now that it exists and shut it down when it's not
+           useful anymore.
+Surak TFF  OK, well, my CDEV doesn't do ANYTHING with the interrupts - the
+           interrupt hand-
+Surak TFF  ler does everything with them... It's just a SysBeep-type
+           routine... And others
+Surak TFF  So, there shouldn't be any problem of that kind, A2... :) 
+Surak TFF  Matt, you picked me out exactly.. :)   [GA]
+AFL Dyfet  GA Winkie...
+WinkieJim  Matt, isn't there a shutdown command sent to a Cdev when the
+           Control panel
+WinkieJim  closes or switches Cdevs?
+WinkieJim  that would seem to allow for shutting off the various intrupts.
+WinkieJim  ga
+Matt DTS   Yes, that's true...
+Matt DTS   ...but if you're trying to write something that stays around in
+           the background all the time...
+Matt DTS   ...you want it to stay around *AFTER* the shutdown command is
+           received.  If you're writing a CDev that
+Matt DTS   lets you pick a sound file to play instead of the normal beep, you
+           probably still want to hear it 
+Matt DTS   after you close the CDEv or the Control Panel!  (GA)
+A2GS       Including for ex. the  Ensoniq interrupts?
+AFL Dyfet  GA Jeffry
+JeffreyH11 A2, If the interrupt routine was something you would need to shut
+           down before
+JeffreyH11 reboot, you would have to write it such that the CDEV could tell
+           the interrupt
+JeffreyH11 routine to shut itself down, possibly through MessageCenter as
+           Matt suggests.
+JeffreyH11 GS
+JeffreyH11 (OOPS: GA) :)
+AFA Gary J :)  GS is fine :)
+JeffreyH11 :)
+A2GS       Exactly...but that requires specific code....the original Q was
+           whether it
+A2GS       was "Dangerous to write an Interrupt Handler which ALWAYS hung
+           around, 
+A2GS       assuming that a Handler need not always be active (barring the
+           sysbeep example)
+JeffreyH11 The answer to which is "No, not if it needs to to do its job."
+JeffreyH11 P.S. And it's done properly.  GA
+A2GS       "Dangerous" also includes wasted CPU time.
+A2GS       Not necessarily a possible Fatal error.
+AFL Dyfet  Go ahead Jeffrey...
+JeffreyH11 Something that only needs to be active while the CDEV is visible
+           should be
+JeffreyH11 installed when the CDEV is selected, not at boot time.
+JeffreyH11 GA (or GS :)
+AFA Gary J :)
+A2GS       Forget it...we're talking about theoretical problems/wasted
+           time.
+WinkieJim  Please kill me if I'm wrong, but couldn't the Intrupt handler take
+           itself out
+WinkieJim  of the intrupt queue when it's finished?
+JeffreyH11 (Yes. )
+A2GS       Yes...But that wasn't brought up..because it also requires special
+           code.
+AFL Dyfet  I think we will now get to Nuzz's question, and maybe move this
+           discussion
+AFL Dyfet  into the message area :)...Go ahead Nuzz...
+JeffreyH11 Good idea.
+Surak TFF  Yes, good idea.
+Nuzz       I see that the latest source code is also in tool form. Can I
+           include that in
+Nuzz       an app. Does it need a license, or whhatever
+Nuzz       GA
+AFL Dyfet  GA Matt :)
+Matt DTS   "the latest source code" is not in "tool form" - One of the
+           twenty-four things we just released is
+Matt DTS   a set of tools we include in both linkable library and user tool
+           set form (mostly because some
+Matt DTS   languages don't let you link in external code).  You're free to
+           use this in an application without
+Matt DTS   licensing, WITH THE EXCEPTION OF pixelMap2Rgn, which is part of
+           the Pixel Map Tools.  That covers
+Matt DTS   the patented region structure so we have to license it, just like
+           BitMap2Rgn on the Macintosh.
+Matt DTS   GA.
+Nuzz       You mean I can use all the PixelMap tool but use the pixelMap2Rgn
+           call. GA
+Nuzz       but not use call. Sorry
+Matt DTS   You can use everything for free, but there's a modest license fee
+           (I think it's like $25) if you
+Matt DTS   use pixelMap2Rgn in an application you distribute.  If the call is
+           useful to you then it's probably
+Matt DTS   worth the fee.  FakeModalDialog and the rest of the PM tools have
+           no license for their use.  (GA)
+Nuzz       Sounds good. Thanks Done
+AFL Dyfet  GA Tamira...you have the floor now...
+Tamira     My only ? centers on whether anyone has seen CHERNISS
+Tamira     doing something and need some feedback
+AFL Dyfet  Go ahead Winkie :)...
+WinkieJim  No. GA
+AFL Dyfet  Jim, 10 yard penalty :)
+Tamira     thanx anyway  :(
+WinkieJim  Sorry...couldn't resist
+Tamira     jim   :P to you so there 
+WinkieJim  It just seemed a wierd question to come up here :)
+AFL Marty  (Seen it?  I don't even know what it is.)
+AFA Gary J :)
+Tamira     forget it then!
+AFL Dyfet  Okay, I believe Surak is next...Go ahead Surak...
+Surak TFF  OK...
+Surak TFF  In the SysBeep-type routine I mentioned before...
+Surak TFF  Is it possible to play a digitized sound (from within the vector
+           call to BELL1)
+Surak TFF  while the Sound Tools are already being used? I know Desk
+           Accessories can't do
+Surak TFF  it because interrupts could try to use the DOC while they're using
+           it... But
+Surak TFF  if I saved DOC RAM around it, I am already an interrupt, and thus
+           can't be
+Surak TFF  "interrupted"... Correct me, please, if I am way off base... :)
+Surak TFF  GA
+AFL Dyfet  Go ahead Jim...
+WinkieJim  Nope...if the sounds tools are in use...you shalt not use them
+           thyself. GA
+Matt DTS   What he said.  If the Sound Tools are started, only the
+           Application can use DOC RAM.  (GA)
+WinkieJim  (you might notice that SYSBEEP doesn't work when an application is
+           using sounds)
+Surak TFF  OK, thanks... That actually makes it a bit easier... :) I know
+           SysBeep doesn't
+Surak TFF  but I thought maybe it could.
+Dave Lyons (Meaning SYSBEEP the Utility, not SysBeep the Misc Tools call.)
+AFL Dyfet  Okay, do we have any other questions for tonight??
+AFL Dyfet  GA Winkie
+WinkieJim  I have a NDA with a menu bar in it's window with the menus in
+           resources. The
+WinkieJim  menu comes up right when the window is opened and I can use them,
+           but when I
+WinkieJim  resize the window or move the window it crashes in the Info bar
+           drawing routine
+WinkieJim  any ideas? ga
+AFL Dyfet  Go ahead Dave...
+Dave Lyons The info bar drawing routine is handled more strangly than the
+           content-draw routine.  For a
+Dave Lyons regular content draw, there was an Update event that SystemEvent
+           gave to your DA, and SystemEvent
+Dave Lyons set the current resource application to be your NDA before calling
+           you.  Life is good.
+Dave Lyons But info-bar drawing routines are getting called more
+           directly--you need to call GetCurResourceApp,
+WinkieJim  Ah.....:)
+Dave Lyons keep the result, do a SetCurResourceApp to your own ID (the one
+           you called ResourceStartUp with), and
+Dave Lyons set the current resource app back to what it was before you
+           exit).
+WinkieJim  Should have figured that out since the info update is outside the
+           NDA code
+WinkieJim  technicaly...
+Dave Lyons This way the menu mgr will be able to find your resources, since
+           it will be looking in the right
+Dave Lyons search path. 
+Dave Lyons (done)
+WinkieJim  Thanks.
+WinkieJim  <---happy camper
+AFL Dyfet  Go ahead, Parik...
+AFA Parik  any e-z way to have the scroll bars in a window not go inactive if
+           another 
+AFA Parik  window is selected?  not controls, just standard window vert/horz
+           scrollbars.
+AFA Parik  ga
+AFL Dyfet  Go ahead Winkie...
+WinkieJim  There is a flag that allows a window's controls to be the same
+           state as the
+WinkieJim  window or not (you want not the same state) but the
+WinkieJim  window will still have to be activated to use the scroll bars
+WinkieJim  ga
+AFL Dyfet  Go ahead Dave...
+Dave Lyons Yeah, that flag applies to *content* controls.  I believe you're
+           talking about "frame" scroll
+WinkieJim  PS it's the wFrameBits parm
+Dave Lyons bars, which are always deactivated when the window is deactivated.
+            You should be able to call
+Dave Lyons TrackControl on an active scroll bar in an inactive window with no
+           problem, although I'm not sure
+Dave Lyons you can get TaskMaster to do it for you.
+Dave Lyons ga
+AFA Parik  okedokee.  thanks dave & jim (done)
+AFA Parik  (yes, you're right - frame scrollbars :(
+A2GS       Why would you want 2 window scroll bars active at once...you can
+           only work on
+A2GS       one at a time anyways.
+JeffreyH11 To be able to scroll a window you're looking at without making it
+           active and
+JeffreyH11 then having to switch back to the one you're typing in.
+AFA Parik  "        "        "
+AFL Dyfet  Okay, I think that we have reached the end of our queue :)
+A2GS       good point
+JeffreyH11 You noticed.
+JeffreyH11 :)
+AFA Parik  (ditto, what he said, etc, etc)
+AFA Gary J Oh!  :)
+A2GS       hey, let's not get carried away...one good point per nite from me
+           is enough  :)
+JeffreyH11 Wow!  I must be psychic.
+JeffreyH11 :)
+AFA Gary J Q = WinkieJim
+WinkieJim  Anyone have any idea when 5.0.3 will be shipping
+WinkieJim  ga
+A2GS       Yeah when 7.0 Mac OS ships
+AFA Gary J 5.0.3 is no secret to the tech notes.
+AFL Dyfet  :)
+JeffreyH11 What happened to the fabled System 6.0 ?
+Dave Lyons (Yeah, but did the technotes say when it was shipping?)
+A2GS       I here it's been delayed ANOTHER 6 months!! (7.0 that is)
+Tamira     right A2
+AFA Gary J No, that WAS left out, for some reason, Dave :)
+WinkieJim  <---desparately need the fixed resource manager in 5.0.3
+WinkieJim  ah well, I'm used to waiting :)
+AFA Parik  (I heard 5.03 ships next week...but i also heard elvis is alive)
+AFA Gary J :)
+JeffreyH11 :)
+

@@ -1,0 +1,2739 @@
+*--------------------------------------------------------*
+* Dalton's Disk Disintegrater Version 2.1 Enhanced       *
+* Packing algorithm by Dalton                            *
+* Enhancement by Ziopoth of The Assembly Line - '86      *
+* Disassembly by L.H.A - 04/86                           *
+* Commenting by Sound Wave of The LEGION - 12/86         *
+*                                                        *
+* Coming soon (or maybe not so soon):                    *
+* DDD ProDOS 8 v1.0 - packs 5.25 and 3.5" disks, no fuss *
+* DDD ProDOS 16 v1.0 - IIgs only (uses all memory)       *
+* The source code for above will be available-for free   *
+*--------------------------------------------------------*
+
+H00 = $00
+WNDLFT = $20
+WNDTOP = $22
+WNDBTM = $23
+CH = $24
+CV = $25
+BAS = $28
+BS = $88
+CTRLJ = $8A
+CTRLK = $8B
+CR = $8D
+FA = $95
+ESC = $9B
+SPC = $A0
+IOB = $F3
+IN = $0200
+H0300 = $0300
+RESET = $03F2
+H0800 = $0800
+H0900 = $0900
+H0C00 = $0C00
+H4C00 = $4C00
+FMTSLSEC = $B5C9 File Mgr T/S List Buffer Addr
+HB500 = $B500
+HB521 = $B521
+HB527 = $B527
+HB530 = $B530
+HB534 = $B534
+HB535 = $B535
+HB57C = $B57C
+RWTS = $BD00
+KEY = $C000
+STROBE = $C010
+VTAB = $FC22
+HOME = $FC58
+CLRCR = $FD8B CLREOL, CR
+PRBYTE = $FDDA
+PRHEX = $FDE3
+COUT = $FDED
+SETINV = $FE80
+SETNORM = $FE84
+SETKBD = $FE89
+SETVID = $FE93
+
+*-------------------------------
+
+ JSR SETKBD
+ JSR SETVID
+ JSR $03E3 Get IOB Addr in A, Y
+ STY IOB
+ STA IOB+1
+ LDX #2
+ LDY #$0E
+ LDA (IOB),Y ;Get volume # of last access
+ STA H468A,X
+ INY
+ LDA (IOB),Y
+ LSR
+ LSR
+ LSR
+ LSR
+ STA H4684,X ;store last used slot*16 in 4684
+ INY
+ LDA (IOB),Y ;store last used drive #
+ STA H4687,X
+ LDA FMTSLSEC ;set up t/s list for when we
+ STA IOB ;reconfigure
+ LDA FMTSLSEC+1
+ STA IOB+1
+ LDY #$1E
+ LDA (IOB),Y
+ STA H468E ;track of sector #10 of DDD file
+ INY
+ LDA (IOB),Y
+ STA H468F ;sector of sector #10 of DDD file
+ JSR H38F4 ;make sure we're in main memory
+   ;with 80Store on...
+
+ BIT $C083 ;switch in 16k ramcard, read and
+ BIT $C083 ;write ram (assuming it's there)
+ LDX #0 ;check and see if we have at
+H2F8D STX $E000 ;least 64k of memory...
+ CPX $E000 ;this routine COULD be a
+ BNE H2FCA ;little shorter...
+ DEX
+ BNE H2F8D
+
+ BIT $C082 ;back to main memory
+ LDA #$F8 ;make it show 64k
+ STA H2FDC+1
+ JSR H3CF9 ;clc = no //e,//c -- sec = 128k
+ BCC H2FD2 ;if no 128k, set some flags, leave
+ LDA #$FC ;else, make it show...
+ STA H2FDC+1 ;128k
+
+ STA $C005 ;write to aux 48k memory
+ LDY #0 ;store a whole page of 0's from
+H2FAF LDA $B600,Y ;$B600 to $BF00.  $0A pages.
+H2FB2 STA $B600,Y
+ INY
+ BNE H2FAF
+
+ INC H2FAF+2
+ INC H2FB2+2
+ LDA H2FAF+2
+ CMP #$C0 ;have we reached the end yet?
+ BLT H2FAF ;no, go do the other pages.
+ STA $C004 ;switch in main 48k
+ BGE H2FDA
+
+H2FCA LDA #$FF ;flags indicate no 64k
+ STA H390F ;if it has not 64k, it certainly
+ STA H3912 ;doesn't have 128k...
+H2FD2 LDA #$FF ;flags indicate no 128k
+ STA H3915
+ STA H3918
+
+H2FDA LDY #3
+H2FDC LDA :MEMORY,Y
+ STA H3161,Y
+ DEY
+ BPL H2FDC
+ LDA $03DA Get Addr for JMP to RWTS
+ STA H3824+1
+ LDA $03DB
+ STA H3824+2
+ JMP START
+
+:MEMORY ASC "48k 64k 128k"
+
+*--------------------------------------------------------*
+* Note: All the memory from $2000 to $3000 is claimed by *
+* a buffer used when we read a track from the disk to be *
+* compacted, or after we have unpacked it, write the     *
+* track back out.  16 pages of 256 bytes, get it?        *
+* All the stuff before $3000 is only executed once, and  *
+* is, therefore, expendable.                             *
+*--------------------------------------------------------*
+
+START JSR $FB2F ;Monitor INIT
+ JSR HOME
+ JSR DISPLAY ;show the following...
+
+ ASC "[ ] ::: ::: ::: :::][::: ::: ::: ::: [ ]"
+ ASC "|\|   Dalton's Disk Disintegrater    |/|"
+ ASC "|/|       Version 2.1 Enhanced       |\|"
+ ASC "|\|      Enhancement by Ziopoth      |/|"
+ ASC "[ ] ::: ::: ::: :::][::: ::: ::: ::: [ ]"
+ BRK
+
+ LDA #5 ;top line is...
+ STA WNDTOP ;line #5
+
+H30D6 JSR HOME ;clear it,
+ JSR SHOWBTM ;put "SOURCE:" on screen
+
+ LDA #$10 ;line #16 is window bottom
+ STA WNDBTM
+
+H30E0 LDX #$FF ;reset the stack
+ TXS
+
+ JSR FIXRESET ;fix the rest vector to reboot
+ JSR H38F4 ;switch in main memory...
+ JSR HOME
+ JSR H466D ;inverse SOURCE: over TARGET:
+
+ LDX #0
+ JSR H3221 ;go manage the screen movement...
+
+ ASL  ;multiply our choice by 2
+ ADC #<CHTABLE ;use our choice as an index
+ STA IOB ;to go to the proper routine
+ LDA #0 ;then return to the caller at the
+ ADC #>CHTABLE ;main menu
+ STA IOB+1
+
+ LDY #0
+ LDA (IOB),Y
+ STA PNTWHERE
+ INY
+ LDA (IOB),Y
+ STA PNTWHERE+1
+ JSR DOROUT ;do whatever we need, then...
+ JMP H30E0 ;return to main menu
+
+DOROUT JMP (PNTWHERE) ;go to adr pointed to by the table
+ RTS
+
+PNTWHERE HEX 0000 ;pointer to wherever we're going...
+
+CHTABLE DA PACK
+ DA UNPACK
+ DA CATALOG
+ DA FORMAT
+ DA NEWSLOT
+ DA RECONFIG
+ DA QUIT
+
+FIXRESET LDA #0 ;make the reset routine point
+ STA RESET ;to $3000
+ LDA #$30
+ STA RESET+1
+ EOR #$A5
+ STA $03F4 ;Fix power-up byte
+ RTS
+
+SHOWBTM JSR DISPLAY
+ HEX 811000
+ HEX 82
+ DCI ' (  '
+ ASC "SOURCE:"
+ BRK
+ LDX #0
+ JSR H31EE ;display slot and drives used...
+ JSR DISPLAY
+ DCI "  "
+ ASC "AVAILABLE RAM:"
+H3161 ASC "48k "
+ ASC '  '
+ ASC " TARGET:"
+ BRK
+ LDX #1
+ JSR H31EE ;put slot drive and volume
+   ;assignments on screen
+ JSR DISPLAY ;display the following...
+ DCI "  "
+ ASC " SECTOR COUNT:"
+ HEX 811227 ;vtab 18,htab 39
+ HEX 82
+ ASC ' *'
+ ASC "TRK                "
+ ASC "1111111111111111222"
+ ASC '  '
+ ASC "   0123456789ABCDEF"
+ ASC "0123456789ABCDEF012"
+ ASC '  '
+ ASC "ST:"
+ HEX 82
+ DCI " #"
+ HEX 82
+ ASC ' ('
+ BRK
+ LDA #$20 ;put an inverse space somewhere
+ STA $07F7
+ RTS
+
+H31EE JSR DISPLAY ;put an 'S' up there...
+ ASC "S"
+ BRK
+ LDA H4684,X ;get the current slot (src, trg)
+ ORA #$B0
+ JSR H44CD ;go print it; checking for Lcase
+ JSR DISPLAY ;put a 'D' up there...
+ ASC ",D"
+ BRK
+ LDA H4687,X ;get the current drive (scs,trg)
+ ORA #$B0
+ JSR H44CD ;go print it using Lcase filter
+ JSR DISPLAY ;put a 'V' up there...
+ ASC ",V"
+ BRK
+ LDA #0 ;high byte to br printed = $00
+ STA H4620
+ LDA H468A,X ;lo byte is the volume number
+ STA H461F
+ JSR H45DA ;convert hex # to decimal
+ JSR H4621 ;print decimals as hex (PRHEX)
+ RTS
+
+H3221 LDA H32C1,X
+ STA WNDLFT ;set left edge of window
+ LDA #0
+ STA CH ;set htab=0
+ LDA #$18
+ STA WNDBTM ;vtab 24 = screen bottom
+H322E JSR H3295 ;set cursor vertical
+]LOOP JSR H44D7 ;wait for key, update s scroll
+ CMP #BS ;is it a backspace?
+ BEQ UP ;yes! move the highlight up
+ CMP #CTRLK ;is it the up arrow?
+ BEQ UP ;yes, move the highlight up
+ CMP #CTRLJ ;is it a down arrow?
+ BEQ DOWN ;yes, move the highlight down
+ CMP #FA ;is it a forward arrow?
+ BEQ DOWN ;yes, move the highlight down
+ CMP #ESC ;is it <Escape>?
+ BEQ ESCAPE ;yes, return to main menu
+   ;(if not already there)
+ CMP #CR ;is it at carriage return?
+ CLC
+ BEQ RETURN ;yes, go service that routine
+ BNE ]LOOP ;no, loop back...
+
+UP DEC H32C7,X
+ LDA H32C7,X
+ CMP H32CA,X
+ BPL H322E
+ LDA H32CD,X
+ STA H32C7,X
+ DEC H32C7,X
+ JMP H322E
+
+DOWN INC H32C7,X
+ LDA H32C7,X
+ CMP H32CD,X
+ BMI H322E
+ LDA H32CA,X
+ STA H32C7,X
+ JMP H322E
+
+ESCAPE LDA #0
+ STA WNDLFT
+ LDA #$10
+ STA WNDBTM ;reset the current window
+ JMP H30E0 ;return whence we came...
+
+RETURN SEC
+ LDA H32C7,X
+ SBC H32CA,X
+ LDX #0
+ STX WNDLFT
+ LDX #$10
+ STX WNDBTM
+ RTS
+
+H3295 LDA H32C4,X ;get index to vertical curs pos
+ STA CV
+ JSR VTAB ;set it to the vtab value
+ LDA H32CA,X
+ STA H32C0
+H32A3 CMP H32C7,X ;is it the one to be inverted?
+ BNE H32AB ;no, don't invert it
+ JSR SETINV ;yes, invert it
+H32AB JSR H44B4 ;go get the index then print
+ JSR SETNORM ;normal text
+ JSR $FC62 ;do linefeed
+ INC H32C0
+ LDA H32C0
+ CMP H32CD,X ;is it the last line?
+ BNE H32A3 ;no, go do some others
+ RTS
+
+H32C0 BRK
+
+H32C1 HEX 0C
+ HEX 02 ;indexes for left edge of window
+ HEX 06
+
+H32C4 HEX 07
+ HEX 11 ;indexes for vertical cursor pos
+ HEX 09
+
+H32C7 HEX 00
+ HEX 07
+ HEX 09
+H32CA HEX 00
+ HEX 07
+ HEX 09
+H32CD HEX 07
+ HEX 09
+ HEX 0D
+ HEX 60
+
+H32D1 DA T:PACK
+ DA T:UNPACK
+ DA T:CAT
+ DA T:FORMAT
+ DA T:NEW
+ DA T:RECON
+ DA T:QUIT
+ DA T:SOURCE
+ DA T:TARGET
+ DA T:LCASE
+ DA T:LANG
+ DA T:AUXMEM
+ DA T:SAVE
+
+T:PACK ASC "PACK A DISK"
+ BRK
+
+T:UNPACK ASC "UNPACK A DISK"
+ BRK
+
+T:CAT ASC "CATALOG A DRIVE"
+ BRK
+
+T:FORMAT ASC "FORMAT A DISK"
+ BRK
+
+T:NEW ASC "NEW SLOT, DRIVE, VOL"
+ BRK
+
+T:RECON ASC "RECONFIGURE"
+ BRK
+
+T:QUIT ASC "QUIT & REBOOT"
+ BRK
+
+T:SOURCE ASC "SOURCE"
+ BRK
+
+T:TARGET ASC "TARGET"
+ BRK
+
+T:LCASE ASC "LOWERCASE"
+ BRK
+
+T:LANG ASC "LANGUAGE CARD"
+ BRK
+
+T:AUXMEM ASC "//E AUXILIARY MEM"
+ BRK
+
+T:SAVE ASC "SAVE CONFIGURATION"
+ BRK
+
+*-------------------------------
+* Here begins the famous Dalton's
+* packing routine.
+*-------------------------------
+
+PACK JSR HOME
+ JSR DISPLAY ;go stick all this stuff all
+ HEX 810612 ;over the screen at various
+ ASC "Pack"     ;locations
+ HEX 810712
+ ASC "----"
+ HEX 811604
+ HEX 82
+ DCI " #"
+ HEX 811223
+ ASC "000"
+ HEX 810900
+ ASC "Filename: "
+ BRK
+ JSR H4518 ;go get the filename
+ CPX #0 ;is the length returned = 0?
+ BNE H33D3 ;no, go pack the blasted thing
+ RTS  ;yes, go back to the menu...
+
+H33D3 LDA #0
+ JSR H4630 ;put inverse "SOURCE:" on screen
+ JSR H46E4 ;print "insert" and proper
+   ;designation
+
+ LDA #0
+ STA H3C90
+ STA H3C91
+ STA H3C92
+ STA H3C93
+ STA H3B6E
+ STA $F9 ;current track starts at $0
+ STA H37FC
+
+ JSR H388D ;$F8,$F7 point to $804 now
+ LDA #1
+ STA H373C
+
+H33F9 LDA #0 ;zero out 2 pages of memory from
+ TAY  ;$200 - $3FF
+]LOOP STA $200,Y
+ STA $300,Y
+ INY
+ BNE ]LOOP
+
+ LDA #1 ;next operation by RWTS is read
+ STA H3805
+
+ LDA #$D2 ;go stick an 'R' on screen
+ JSR H3CD2 ;and switch mem banks around
+
+ JSR H3C94 ;read a WHOLE track into $2000
+
+ LDA #$C3 ;go stick a 'C' on screen for
+ JSR H3CD2 ;compacting; switch mem banks
+
+  JSR H3485 ;Collect # of bytes in $200-$300
+
+ LDA $F9 ;is this the first track? - $0?
+ BNE H342D ;no, skip over this stuff:
+
+ LDA #0 ;do this ONLY if this is the
+ LDY #4 ;first track...
+ JSR H35E6
+ LDA H3807
+ LDY #$80
+ JSR H35E6
+
+H342D JSR H34DA
+ JSR H3527
+
+ LDA #$AE ;print a period (.) on screen
+ JSR H3CD2 ;indicating done w/track
+
+ INC $F9 ;increment the current track
+
+ LDA $F9 ;have we done $22 tracks yet?
+ CMP #$23
+ BNE H33F9 ;no, go do the rest...
+
+ LDA #0 ;yes, now fiddle around a little...
+ LDY #$80
+ JSR H35E6
+ JSR H38A6
+ JSR H38F4 ;set up main memory, no aux
+ JSR H399C
+
+ LDA #1 ;put "TARGET:" in inverse
+ JSR H4630
+
+ LDA H3B6A
+ STA H37FD
+ LDA H3B6A+1
+ STA H37FE
+
+ LDA #$B6 ;file buffer is at $B600
+ STA H3802
+
+ JSR H3820 ;go write it
+ JSR H3C66
+
+ JSR H3BC0 ;update file descriptive entry?
+
+ LDA #$11 ;track $11
+ STA H37FD
+
+ LDA #0 ;sector $0 - bit map
+ STA H37FE
+
+ LDA #$B5 ;buffer to be used is at $B500
+ STA H3802
+
+ JSR H3820 ;use RWTS - write bit map
+ JSR H3CF2 ;turn off drive
+ RTS  ;finish and leave... hallelujah!
+
+H3485 JSR H3884 ;$F5 and $F6 point now to $2000
+ LDY #0
+H348A STY $FB
+ LDA $F6
+ STA $FC
+ LDA ($F5),Y ;$2000,Y
+ LDY #3
+H3494 CMP ($FB),Y ;are they the same
+ BNE H34BF ;no,...
+ DEY
+ BNE H3494
+ LDY $FB
+ LDX $F6
+ CPX #$2F ;have we done all 16 pages?
+ BNE H34A7 ;no, go do some more...
+ CPY #$FD ;have done all but last 4 bytes?
+ BCS H34BF ;nope, go collect some more bytes
+H34A7 JSR H34D0
+ JSR H34D0
+ JSR H34D0
+ JSR H34D0
+ BEQ H34CF
+H34B5 CMP ($F5),Y
+ BNE H348A
+ JSR H34D0
+ BNE H34B5
+ RTS
+
+H34BF LDY $FB
+ TAX
+ INC $200,X ;up over $FF? (inc lo byte)
+ BNE H34CA ;no, pop over this:
+ INC H0300,X ;yes, increment the high byte
+H34CA JSR H34D0
+ BNE H348A
+H34CF RTS  ;leave with my sanity intact...
+
+H34D0 INY
+ BNE H34D9
+ INC $F6
+ LDX $F6
+ CPX #$30
+H34D9 RTS
+
+H34DA LDY #0
+H34DC LDA #0
+ STA H00,Y
+ STA $FB
+ STA $FC
+ TAX
+H34E6 LDA H0300,X
+ CMP $FC
+ BCC H3504
+ BNE H34F6
+ LDA IN,X
+ CMP $FB
+ BCC H3504
+H34F6 LDA IN,X
+ STA $FB
+ LDA H0300,X
+ STA $FC
+ TXA
+ STA H00,Y
+H3504 INX
+ BNE H34E6
+ LDA H00,Y
+ PHA
+ STY H3526
+ LDY #$80
+ JSR H35E6
+ LDY H3526
+ PLA
+ TAX
+ LDA #0
+ STA IN,X
+ STA H0300,X
+ INY
+ CPY #$14
+ BNE H34DC
+ RTS
+
+H3526 BRK
+
+H3527 JSR H3884
+ LDY #0
+H352C STY $FB
+H352E LDY $FB
+ LDA $F6
+ STA $FC
+ LDA ($F5),Y
+ LDY #3
+H3538 CMP ($FB),Y
+ BNE H358D
+ DEY
+ BNE H3538
+ LDY $FB
+ LDX $F6
+ CPX #$2F
+ BNE H354B
+ CPY #$FD
+ BCS H358D
+H354B LDX #4
+ STX $FF
+ JSR H34D0
+ JSR H34D0
+ JSR H34D0
+ JSR H34D0
+ BEQ H356F
+H355D CMP ($F5),Y
+ BNE H356F
+ INC $FF
+ BEQ H356C
+ JSR H34D0
+ BNE H355D
+ BEQ H356F
+H356C JSR H34D0
+H356F STY $FB
+ PHA
+ LDA #$97
+ LDY #$80
+ JSR H35E6
+ PLA
+ LDY #$80
+ JSR H35E6
+ LDA $FF
+ LDY #$80
+ JSR H35E6
+ LDA $F6
+ CMP #$30
+ BNE H352E
+ RTS
+H358D LDY #$13
+H358F CMP H00,Y
+ BEQ H35B0
+ DEY
+ BPL H358F
+ PHA
+ LDA #0
+ LDY #1
+ JSR H35E6
+ PLA
+ LDY #$80
+ JSR H35E6
+H35A5 LDY $FB
+ JSR H34D0
+ BEQ H35AF
+ JMP H352C
+H35AF RTS
+H35B0 TYA
+ TAX
+ LDY H35D2,X
+ LDA H35BE,X
+ JSR H35E6
+ JMP H35A5
+H35BE HEX 03
+ HEX 09
+ HEX 1F
+ HEX 0F
+ HEX 07
+ HEX 1B
+ HEX 0B
+ HEX 0D
+ HEX 15
+ HEX 37
+ HEX 3D
+ HEX 25
+ HEX 05
+ HEX B1
+ HEX 11
+ HEX 21
+ HEX 01
+ HEX 57
+ HEX 5D
+ HEX 1D
+H35D2 HEX 08
+ HEX 08
+ HEX 10
+ HEX 10
+ HEX 10
+ HEX 10
+ HEX 10
+ HEX 10
+ HEX 10
+ HEX 20
+ HEX 20
+ HEX 20
+ HEX 20
+ HEX 20
+ HEX 20
+ HEX 20
+ HEX 20
+ HEX 40
+ HEX 40
+ HEX 40
+
+H35E6 STA H373E
+ STY H373D
+ LDY #0
+ LDA ($F7),Y
+H35F0 LSR H373E ;divide by 10 (decimal)
+ ROL  ;
+ ASL H373C ;multiply it by 10 (decimal)
+ BCC H360B ;was lo-bit set? no, branch...
+ STA ($F7),Y
+ ROL H373C
+ JSR H38A2 ;check for memory full?
+ BNE H3609 ;evidently not full, skip over
+ JSR H399C ;ack! we must be full, go write
+ JSR H4690 ;prompt to re-insert source
+H3609 LDA ($F7),Y
+H360B LSR H373D ;was high bit set?
+ BCC H35F0 ;no, branch...
+ STA ($F7),Y ;yes, store shifted value, why?
+ RTS
+
+*-------------------------------
+* Here begins the equally famous
+* Dalton's unpacking routine.
+*-------------------------------
+
+UNPACK JSR H3891 ;set up a pointer?
+ JSR HOME ;clear the screen
+
+ JSR H46E4 ;check for # of drives, prompt
+   ;for source or target, etc...
+
+ JSR H40CD ;put a LOT of stuff on screen
+   ;then handle file selection
+
+ PHA  ;push the current file #
+ JSR HOME ;clear the screen
+ JSR SHOWBTM ;setup display at page bottom
+ LDA #0 ;go grab the current slots
+ JSR H4630 ;print some extra stuff
+
+ LDA #$10 ;bottom is reset to vtab 16
+ STA WNDBTM
+
+ JSR DISPLAY ;print the following...
+ HEX 810611 ;vtab 6, htab 17
+ ASC "Unpack"
+ HEX 810711 ;vtab 6, htab 17
+ ASC "------"
+ HEX 810900 ;vtab 9, htab 0
+ ASC "Filename: "
+ BRK
+
+ PLA  ;get the current file # back
+ ASL  ;multiply it by 2
+
+ TAX
+ LDA H0900,X ;using the (file #)*2, get a
+ STA IOB ;pointer to the filename...
+ LDA H0900+1,X
+ STA IOB+1
+
+ LDY #9 ;skip over the boring stuff in
+   ;the file description,
+   ;what we want is the filename
+
+H3661 LDA (IOB),Y ;is this the $00 eof marker?
+ BEQ H366B ;yes, leave it..
+ JSR H44CD ;no,
+ INY  ;are we done?
+ BNE H3661 ;nope, keep going...
+
+H366B JSR DISPLAY ;show the following...
+ HEX 811223 ;vtab 18, htab 33
+ ASC "000"      ;clear the sector count
+ BRK
+
+ LDA H0800,X
+ STA H37FD
+ LDA H0800+1,X
+ JSR H3948 ;get the T/S list for this file
+
+ LDA #0
+ STA $F9 ;current track is $0
+
+ JSR H388D
+ LDY #4
+ JSR H370C
+ CMP #0
+ BEQ H36C3
+
+ JSR DISPLAY
+ HEX 810C03
+ ASC "This file was not packed by DDD II."
+ HEX 8D8D
+ BRK
+
+ JSR H45BE
+ JMP H30E0
+
+H36C3 JSR H46B2
+ LDY #$80
+ JSR H370C
+ JSR H3754
+ STA $FA
+ STA H37FC
+ LDA #$C9 ;put an 'I' on screen, also
+ JSR H3CD2 ;switch in main memory
+ LDA #4
+ STA H3805 ;next operation is format ($04)
+ JSR H3820 ;go do it with RWTS
+ JSR H3CEB ;keep drive running
+H36E3 LDA #2
+ STA H3805 ;next operation is write ($02)
+ LDA #$C4 ;put a 'D' on screen, and
+ JSR H3CD2 ;switch in proper memory banks
+ JSR H373F
+ JSR H3760
+ LDA #$D7 ;put a 'W' on screen
+ JSR H3CD2 ;and switch in probably main mem
+ JSR H3C94 ;go write out a track from $2000
+ LDA #$AE ;put a period (.) on screen
+ JSR H3CD2 ;and switch mem banks
+ INC $F9 ;do next track
+ LDA $F9
+ CMP #$23 ;have we done all the tracks?
+ BNE H36E3 ;no, go do the next one
+ JSR H3CF2 ;turn off the drive
+ RTS  ;holy nuts, we're done!
+
+H370C STY H373D
+ LDY #0
+ STY H373E
+ LDA ($F7),Y
+H3716 ASL
+ ROL H373E
+ ASL H373C
+ BCC H3731
+ ROL H373C
+ JSR H38A2
+ BNE H372F
+ JSR H391C
+ JSR H46B2
+ LDY #0
+H372F LDA ($F7),Y
+H3731 LSR H373D
+ BCC H3716
+ STA ($F7),Y
+ LDA H373E
+ RTS
+
+H373C BRK
+H373D BRK
+H373E BRK
+H373F LDX #$13
+ STX $19
+H3743 LDY #$80
+ JSR H370C
+ JSR H3754
+ LDX $19
+ STA $00,X
+ DEC $19
+ BPL H3743
+ RTS
+
+H3754 LDA #0
+ LDX #8
+H3758 ROR H373E
+ ROL
+ DEX
+ BNE H3758
+ RTS
+
+H3760 JSR H3884
+ LDY #0
+H3765 STY $FB
+ LDY #1
+ JSR H370C
+ BNE H3780
+ LDY #$80
+ JSR H370C
+ JSR H3754
+H3776 LDY $FB
+ STA ($F5),Y
+ JSR H34D0
+ BNE H3765
+ RTS
+
+H3780 LDY #2
+ JSR H370C
+ STA $1D
+ LDA #3
+ STA $1C
+H378B LDY #1
+ JSR H370C
+ LSR
+ ROL $1D
+ LDA $1D
+ LDX $1C
+ LDY H37F1,X
+ STY $1E
+ LDY H37F5,X
+H379F CMP H37DD,Y
+ BNE H37AA
+ LDA H00,Y
+ JMP H3776
+
+H37AA DEY
+ CPY $1E
+ BNE H379F
+ DEC $1C
+ BPL H378B
+ LDY #1
+ JSR H370C
+ LDY #$80
+ JSR H370C
+ JSR H3754
+ PHA
+ LDY #$80
+ JSR H370C
+ JSR H3754
+ STA $1C
+ PLA
+ LDY $FB
+H37CE STA ($F5),Y
+ JSR H34D0
+ BNE H37D6
+ RTS
+
+H37D6 DEC $1C
+ BNE H37CE
+ JMP H3765
+
+H37DD HEX 1C
+ HEX 1D
+ HEX 35
+ HEX 00
+ HEX 01
+ HEX 02
+ HEX 03
+ HEX 08
+ HEX 09
+ HEX 0F
+ HEX 1B
+ HEX 05
+ HEX 06
+ HEX 0A
+ HEX 0B
+ HEX 0C
+ INV 'NOAD'
+H37F1 HEX FF
+ HEX 02
+ HEX 0A
+ HEX 11
+H37F5 HEX 02
+ HEX 0A
+ HEX 11
+ HEX 13
+
+H37F9 HEX 01 ;start of RWTS parm table
+H37FA HEX 60 ;slot * 16
+H37FB HEX 01 ;drive
+H37FC HEX 00 ;volume
+
+H37FD HEX 00 ;track
+H37FE HEX 00 ;sector
+
+ HEX 0A ;address of device char table
+ HEX 38 ;in this case, $380A
+
+H3801 HEX 00 ;address of sector buffer lo
+H3802 HEX 00 ;address of sector buffer hi
+
+ HEX 00 ;not used
+ HEX 00 ;byte count for partial sector
+
+H3805 HEX 00 ;type of operation,$01=read
+   ;$02=write,$03=seek,$04=format
+
+H3806 BRK  ;return code [error #]
+
+H3807 HEX FE6001 ;last used volume, slot, drive
+ BRK
+ HEX 01EFD8 ;device chars table
+
+H380E LDA #$11 ;operation done to track $11
+ STA H37FD
+ LDA #0 ;sector $0
+ STA H37FE
+ LDA #$B5
+ STA H3802 ;buffer is at $B500
+ JMP H3820 ;go do it.
+H3820 LDY #H37F9 ;pointers to start of RWTS table
+ LDA #>H37F9
+H3824 JSR RWTS ;go do it with RWTS
+ LDA #0
+ STA $48
+ BCC H3883 ;was there an error? no, return
+
+ JSR H38F4 ;switch in main memory
+ JSR DISPLAY
+ HEX 810C00
+ ASC "  "
+ INV 'RWTS ERROR'
+ ASC " "
+ HEX 87
+ BRK
+ LDA H3806 ;kind of error (return code)
+ JSR PRBYTE ;go print it
+ JSR DISPLAY
+ ASC " on Track "
+ BRK
+ LDA H37FD ;occurring on track #XX
+ JSR PRBYTE
+ JSR DISPLAY
+ ASC ", Sector "
+ BRK
+ LDA H37FE
+ JSR PRBYTE ;sector #YY
+ JSR CLRCR
+ JSR CLRCR
+ JSR H45BE ;ask them to press a key...
+ LDA #0 ;reset lo byte of sector buffer
+ STA H3801
+ JMP START ;go restart
+
+H3883 RTS
+
+H3884 LDA #0 ;set up pointer to $2000
+ STA $F5 ;otherwise known as the
+ LDA #$20 ;track buffer...
+ STA $F6
+ RTS
+
+H388D LDA #4 ;entry here-$F7 points to $804
+ BNE H3893
+H3891 LDA #0 ;entry here-$F7 points to $800
+H3893 STA $F7
+ LDA #8
+ STA $F8
+ LDA #0
+ STA H3907 ;reset memory mode to 0
+ STA H3908
+ RTS
+
+H38A2 INC $F7
+ BNE H38DB
+H38A6 INC $F8
+ LDA $F8
+ LDX H3908
+ CMP H390B,X
+ BNE H38DB
+H38B2 INX
+ INX
+ INX
+ CPX #$12
+ BEQ H38DD
+ LDA H3909,X
+ BMI H38B2
+ STA H3907
+ LDA H390A,X
+ STA $F8
+ STX H3908
+
+H38C9 JSR H38F4 ;set proper memory
+ LDA H3907 ;get "mode"?
+ BEQ H38DB ;is it a 0? yes...
+ CMP #1 ;is it a 1?
+ BNE H38DE ;no, go check for 2
+ BIT $C08B ;read and write ram $D000
+ BIT $C08B ;bank 1
+H38DB LDA #1 ;set mode to 1?
+H38DD RTS
+
+H38DE CMP #2 ; is it a 2?
+ BNE H38EB ;no, go set aux
+ BIT $C083 ;if = 2 then read ram, $D000
+ BIT $C083 ;bank 2
+ LDA #1
+ RTS
+
+H38EB STA $C003 ;read and write aux mem if
+ STA $C005 ;<> 2 and <> 1 and <> 0
+ LDA #1
+ RTS
+
+H38F4 STA $C001 ;80Store is on
+ BIT $C054 ;turn off page 2
+ BIT $C057 ;Turn on Hires
+ STA $C002 ;read main 48k
+ STA $C004 ;write main 48k
+ BIT $C082 ;read ROM
+ RTS
+
+H3907 BRK
+H3908 BRK
+H3909 BRK
+H390A HEX 08
+H390B HEX 20
+ HEX 00
+ HEX 48 ;$4800 to $B4FF-packed stuff
+ HEX B5
+
+H390F HEX 01
+ HEX D0 ;16k ramcard bank2
+ HEX E0 ;$D000 to $DFFF-packed stuff
+
+H3912 HEX 02
+ HEX D0 ;16kramcard bank1
+ HEX 00 ;$D000 to $FFFF-packed stuff
+
+H3915 HEX 03
+ HEX 08 ;aux memory
+ HEX 20 ;$800 to $1FFF-packed stuff
+
+H3918 HEX 03
+ HEX 40 ;aux memory
+ HEX B7 ;$4000 to $B6FF-packed stuff
+
+H391B HEX FF
+
+H391C JSR H38F4
+ JSR H3CF2
+ JSR H4690
+ LDA #1
+ STA H3805
+ LDA #0
+ JSR H4630
+ JSR H3891
+H3932 JSR H38F4
+ INC H399B
+ INC H399B
+ BNE H395B
+ LDA $B600+1
+ BEQ H3980
+ STA H37FD
+ LDA $B600+2
+H3948 STA H37FE
+ LDA #$B6
+ STA H3802
+ JSR H3820
+ JSR H3C66
+ LDA #$0C
+ STA H399B
+H395B LDX H399B
+ LDA $B600,X
+ BEQ H3980
+ STA H37FD
+ INX
+ LDA $B600,X
+ STA H37FE
+ LDA $F8
+ STA H3802
+ JSR H38C9
+ JSR H3820
+ JSR H3C66
+ JSR H38A6
+ BNE H3932
+H3980 JSR H3891
+ LDA #1
+ STA H373C
+ LDA #2
+ STA H3805
+ LDA $FA
+ STA H37FC
+ JSR H38F4
+ LDA #1
+ JSR H4630
+ RTS
+
+H399B BRK
+
+H399C STY H3526
+ JSR H38F4
+ JSR H3CF2
+ LDA #1
+ JSR H4630
+ JSR H46B2
+ LDA $F8
+ STA H3B6F
+ LDA H3907
+ STA H3B70
+ JSR H3891
+ LDA H3B6E
+ BNE H39F4
+ INC H3B6E
+ JSR H380E
+ LDA #$12
+ STA H3B71
+ STA HB530
+ STA H3B68
+ LDA #1
+ STA HB530+1
+ LDA HB535
+ STA H3B72
+ JSR H3A7F
+ JSR H3AA5
+ LDA H3B71
+ STA H3B6A
+ STA H3B6C
+ LDA H3B72
+ STA H3B6B
+ STA H3B6D
+H39F4 JSR H3AA5
+ INC H3B73
+ INC H3B73
+ BNE H3A39
+ LDA #2
+ STA H3805
+ LDA H37FD
+ STA $B600+1
+ LDA H37FE
+ STA $B600+2
+ LDA #$B6
+ STA H3802
+ LDA H3B6A
+ STA H37FD
+ LDA H3B6B
+ STA H37FE
+ JSR H3820
+ LDA $B600+1
+ STA H3B6A
+ LDA $B600+2
+ STA H3B6B
+ JSR H3A7F
+ JSR H3C66
+ JMP H39F4
+
+H3A39 JSR H3C66
+ LDX H3B73
+ LDA H37FD
+ STA $B600,X
+ LDA H37FE
+ STA $B600+1,X
+ LDA $F8
+ STA H3802
+ LDA #2
+ STA H3805
+ JSR H38C9
+ JSR H3820
+ JSR H38A6
+ JSR H38F4
+ LDA $F8
+ CMP H3B6F
+ BNE H39F4
+ LDA H3907
+ CMP H3B70
+ BNE H39F4
+ JSR H3891
+ LDA #0
+ JSR H4630
+ JSR H38C9
+ LDY H3526
+ RTS
+
+H3A7F LDA #0
+ TAX
+H3A82 STA $B600,X
+ INX
+ BNE H3A82
+ LDA H3C92
+ STA $B600+5
+ CLC
+ ADC #$7A
+ STA H3C92
+ LDA H3C93
+ STA $B600+6
+ ADC #0
+ STA H3C93
+ LDA #$0A
+ STA H3B73
+ RTS
+
+H3AA5 DEC H3B72
+ BPL H3AAD
+ JSR H3B20
+H3AAD LDA H3B72
+ JSR H3B78
+ LDA H3B71
+ ASL
+ ASL
+ ADC #$38
+ TAX
+ LDA HB500,X
+ AND H3B74
+ STA H3B69
+ LDA HB500+1,X
+ AND H3B75
+ ORA H3B69
+ STA H3B69
+ LDA HB500+2,X
+ AND H3B76
+ ORA H3B69
+ STA H3B69
+ LDA HB500+3,X
+ AND H3B77
+ ORA H3B69
+ BEQ H3AA5
+ LDA H3B74
+ EOR #$FF
+ AND HB500,X
+ STA HB500,X
+ LDA H3B75
+ EOR #$FF
+ AND HB500+1,X
+ STA HB500+1,X
+ LDA H3B76
+ EOR #$FF
+ AND HB500+2,X
+ STA HB500+2,X
+ LDA H3B77
+ EOR #$FF
+ AND HB500+3,X
+ STA HB500+3,X
+ LDA H3B71
+ STA H37FD
+ LDA H3B72
+ STA H37FE
+ RTS
+
+H3B20 CLC
+ LDA HB530
+ ADC HB530+1
+ BNE H3B32
+ LDA #1
+ STA HB530+1
+ LDA #$12
+ BNE H3B3E
+H3B32 CMP HB534
+ BCC H3B3E
+ LDA #$FF
+ STA HB530+1
+ LDA #$10
+H3B3E CMP H3B68
+ BEQ H3B9B
+ STA HB530
+ STA H3B71
+ ASL
+ ASL
+ ADC #$38
+ TAX
+ LDA HB500,X
+ ORA HB500+1,X
+ ORA HB500+2,X
+ ORA HB500+3,X
+ BEQ H3B20
+ LDA HB535
+ STA H3B72
+ DEC H3B72
+ RTS
+
+ BRK
+ BRK
+H3B68 BRK
+H3B69 BRK
+H3B6A BRK
+H3B6B BRK
+H3B6C BRK
+H3B6D BRK
+H3B6E BRK
+H3B6F BRK
+H3B70 BRK
+H3B71 BRK
+H3B72 BRK
+H3B73 BRK
+H3B74 BRK
+H3B75 BRK
+H3B76 BRK
+H3B77 BRK
+
+H3B78 TAX
+ LDA #0
+ STA H3B74
+ STA H3B75
+ STA H3B76
+ STA H3B77
+ SEC
+H3B88 ROR H3B74
+ ROR H3B75
+ ROR H3B76
+ ROR H3B77
+ INX
+ CPX HB535
+ BLT H3B88
+ RTS
+
+H3B9B JSR H38F4
+ JSR DISPLAY
+ HEX 810F00
+ INV 'ERROR!'
+ ASC "  Disk Full."
+ HEX 878D8D
+ BRK
+ JSR H45BE
+ JMP H30E0
+
+H3BC0 LDA HB500+1
+ STA H37FD
+ LDA HB500+2
+ STA H37FE
+ LDA #$B6
+ STA H3802
+ LDA #1
+ STA H3805
+H3BD6 JSR H3820
+ LDX #$0B
+H3BDB LDA $B600,X
+ BMI H3BFD
+ BEQ H3BFD
+ TXA
+ CLC
+ ADC #$23
+ TAX
+ BNE H3BDB
+ LDA $B600+1
+ BNE H3BF1
+ JMP H3B9B
+
+H3BF1 STA H37FD
+ LDA $B600+2
+ STA H37FE
+ JMP H3BD6
+
+H3BFD LDA H3B6C
+ STA $B600,X
+ INX
+ LDA H3B6D
+ STA $B600,X
+ INX
+ LDA #4
+ STA $B600,X
+ LDY #0
+H3C12 INX
+ INY
+ LDA H470D+2,Y
+ BEQ H3C1E
+ STA $B600,X
+ BNE H3C12
+H3C1E LDA #$0C
+ JSR H3C5D
+ LDA $0573
+ JSR H3C60
+ LDA $0574
+ JSR H3C60
+ LDA $0575
+ JSR H3C60
+ LDA #$0E
+ JSR H3C5D
+ LDA #SPC
+H3C3C CPY #$1F
+ BEQ H3C47
+ STA $B600,X
+ INX
+ INY
+ BNE H3C3C
+H3C47 LDA H3C90
+ STA $B600,X
+ INX
+ LDA H3C91
+ STA $B600,X
+ LDA #2
+ STA H3805
+ JSR H3820
+ RTS
+
+H3C5D CLC
+ ADC #$B0
+H3C60 STA $B600,X
+ INX
+ INY
+ RTS
+
+H3C66 INC $0575
+ LDA $0575
+ CMP #$BA
+ BLT H3C87
+ LDA #$B0
+ STA $0575
+ INC $0574
+ LDA $0574
+ CMP #$BA
+ BLT H3C87
+ LDA #$B0
+ STA $0574
+ INC $0573
+H3C87 INC H3C90
+ BNE H3C8F
+ INC H3C91
+H3C8F RTS
+
+H3C90 BRK
+H3C91 BRK
+H3C92 BRK
+H3C93 BRK
+
+H3C94 JSR H38F4 ;start off 80Store = on
+ JSR H44F8 ;was any key pressed?
+ BCC H3C9F ;no, keep going...
+ JSR H3CC1 ;check what type of key pressed
+H3C9F LDA $F9
+ STA H37FD ;current track in RWTS table
+ LDA #$0F ;current sector in RWTS table
+ STA H37FE
+H3CA9 LDA H37FE
+ CLC
+ ADC #$20 ;add $20 to current sector
+ STA H3802 ;becoming hi byte for file buff
+ JSR H3820 ;go read or write it
+ DEC H37FE ;do next sector
+ BPL H3CA9 ;did we do downto $0? no, go on
+ JSR H3CEB ;yes, keep the drive running
+ JSR H38C9 ;return us to the proper memory
+   ;"mode"
+ RTS
+
+H3CC1 CMP #ESC ;was the key <ESC>?
+ BNE H3CD1 ;no, go back, whew
+ JSR H3CF2 ;yes, nuts, shut off the drive
+ LDX #$FF
+ TXS  ;reset the stack
+ JSR FIXRESET ;reset the reset vector
+ JMP H30E0 ;start almost from scratch
+
+H3CD1 RTS
+
+H3CD2 JSR H38F4 ;put us in main memory
+ STA H3CE6 ;put the character to be printed
+ LDA $F9
+ CLC
+ ADC #4
+ STA H3CE5 ;current track+4 = htab of print
+ JSR DISPLAY
+ HEX 8116
+H3CE5 BRK  ;htab to be modified
+H3CE6 HEX AE00 ;single character to be printed
+ JMP H38C9 ;go exit through mem bnk switches
+
+H3CEB LDX H37FA ;get current slot
+ STA $C089,X ;turn on the motor
+ RTS
+
+H3CF2 LDX H37FA ;get current slot
+ STA $C088,X ;turn on the motor
+ RTS
+
+H3CF9 LDA $FBB3 ;machine ID routine: get machID
+ CMP #6 ;is it a //e or //c?
+ BNE H3D17 ;no, clear carry, no 128k
+ LDA $C017 ;completely undocumented.
+ BMI H3D17 ;nope, no 128k
+ STA $C005 ;we seem to have 128k, but we're
+ STA $C003 ;still not sure, switch in aux
+ INX
+H3D0C STX H0800
+ CPX H0C00 ;if they don't match, have 128k
+ BNE H3D1A
+ DEX
+ BPL H3D0C ;else, keep trying like crazy...
+H3D17 CLC
+ BCC H3D1B ;nope, sorry, no 128k
+H3D1A SEC  ;yep, 128k
+H3D1B STA $C004 ;switch in main memory
+ STA $C002
+ RTS
+
+*-------------------------------
+
+FORMAT LDX #1 ;which to format?:src or target
+ JSR H3221
+ JSR H4630 ;choose
+ JSR HOME
+ JSR DISPLAY ;stick the following on screen
+ HEX 810D00
+ ASC "  Insert disk. "
+ ASC "Press <space> to format"
+ HEX 810E0A
+ ASC "or <esc> to abort."
+ BRK
+
+H3D6F JSR H44D7 ;check for keypress & scroll >'s
+ JSR H3CC1 ;check for <esc>, if so, leave...
+ CMP #SPC ;is it a space?
+ BNE H3D6F ;no, go check for one again...
+ JSR HOME ;clear the screen
+ JSR DISPLAY ;put this up...
+ HEX 810D0C
+ ASC "Formatting..."
+ BRK
+
+ LDA #4 ;send format request to IOB table
+ STA H3805
+ LDA #$FE ;volume 254
+ STA H37FC
+ JSR H3820 ;format it
+ JSR H3E1C ;fill up $b500 with zeros
+ LDA #$11 ;track of first catalog sector
+ STA HB500+1 ;(building vtoc)
+ LDA #$0F ;sector of first catalog sector
+ STA HB500+2
+ LDA #3 ;version of dos used (3.3)
+ STA HB500+3
+ LDA #$FE ;volume #
+ STA HB500+6
+ LDA #$7A ;122 T/S pairs in a T/S list
+ STA HB527
+ LDA #$12 ;next track to allocated is $12
+ STA HB530
+ LDA #1 ;next track to be allocated = +1
+ STA HB530+1
+ LDA #$23 ;$23 tracks/disk = 35
+ STA HB534
+ LDA #$10 ;sectors per track = 16
+ STA HB535
+
+ LDA #$FF ;now build the free space
+ LDY #$3C ;bit map...
+H3DD1 STA HB500,Y
+ STA HB500+1,Y
+ INY
+ INY
+ INY
+ INY
+ CPY #$C4
+ BLT H3DD1
+
+ LDA #0 ;mark $11 as being used
+ STA HB57C
+ STA HB57C+1
+
+ LDA #2 ;next operation is write (RWTS)
+ STA H3805
+ LDA #$11 ;done to track $11
+ STA H37FD
+ LDA #0 ;sector $0
+ STA H37FE
+ LDA #$B5 ;using the buffer at $b500
+ STA H3802
+ JSR H3820 ;go do it
+
+ JSR H3E1C ;fill up $b500 with zeros (again)
+ LDA #$11 ;track $11
+ STA HB500+1
+ LDA #$0E ;sector $e is next catalog sector
+ STA HB500+2
+ LDA #$0F ;written to track $11, sector $F
+ STA H37FE
+H3E10 JSR H3820 ;build catalog sectors
+ DEC H37FE ;do next in sequence
+ DEC HB500+2
+ BNE H3E10 ;have we done all? no, loop...
+ RTS
+
+H3E1C LDY #0 ;fill $B500 -$B5FF with zeros...
+ TYA
+H3E1F STA HB500,Y
+ INY
+ BNE H3E1F
+ RTS
+
+*-------------------------------
+
+NEWSLOT LDX #0 ;routine to get new slot-drv-vol
+H3E28 LDA H3EA5,X
+ STA CV
+ JSR VTAB
+ LDA #10
+ STA CH
+ LDA H4684,X
+ JSR H3E84
+ STA H4684,X
+ LDA #13
+ STA CH
+ LDA H4687,X
+ JSR H3E84
+ STA H4687,X
+ LDA #16
+ STA CH
+ LDA H468A,X
+ JSR H3EA7
+ STA H468A,X
+ INX
+ CPX #2
+ BLT H3E28
+H3E5C LDX #0
+ LDA H4684
+ CMP H4685
+ BNE H3E78
+ LDA H4687
+ CMP H4688
+ BNE H3E78
+ LDA H468A
+ CMP H468B
+ BNE H3E78
+ LDX #$FF
+H3E78 STX H468D
+ RTS
+
+H3E7C JSR H3E5C
+ PLA
+ PLA
+ JMP H30E0
+H3E84 STA H3EA4
+H3E87 JSR H44DD
+ CMP #ESC
+ BEQ H3E7C
+ CMP #CR
+ BEQ H3EA0
+ CMP #"1"
+ BLT H3E87
+ CMP #"9"+1
+ BGE H3E87
+ JSR H44CD
+ AND #$0F
+ RTS
+
+H3EA0 LDA H3EA4
+ RTS
+
+H3EA4 BRK
+
+H3EA5 ORA ($12),Y
+H3EA7 STX H4384
+ STA H3EA4
+ LDA CH
+ STA H3F52
+H3EB2 LDA H3F52
+ STA CH
+ LDY #3
+ LDA #SPC
+H3EBB JSR H44CD
+ DEY
+ BNE H3EBB
+ LDA H3F52
+ STA CH
+H3EC6 JSR H44DD
+ CMP #CR
+ BEQ H3F05
+ CMP #ESC
+ BNE H3ED7
+ JSR H3F2F
+ JMP H3E7C
+H3ED7 CMP #BS
+ BNE H3EF0
+ CPY #0
+ BEQ H3EC6
+ DEY
+ JSR H44CD
+ LDA #SPC
+ JSR H44CD
+ LDA #BS
+ JSR H44CD
+ JMP H3EC6
+
+H3EF0 CMP #"0"
+ BLT H3EC6
+ CMP #"9"+1
+ BGE H3EC6
+ JSR H44CD
+ AND #$0F
+ STA H3F4B,Y
+ INY
+ CPY #3
+ BLT H3EC6
+H3F05 CPY #0
+ BEQ H3F2F
+ DEY
+ LDX #0
+ STX H3F51
+H3F0F LDA H3F4B,X
+ BEQ H3F25
+H3F14 CLC
+ LDA H3F4E,Y
+ ADC H3F51
+ BCS H3EB2
+ STA H3F51
+ DEC H3F4B,X
+ BNE H3F14
+H3F25 INX
+ DEY
+ BPL H3F0F
+ LDA H3F51
+ STA H3EA4
+H3F2F LDA H3F52
+ STA CH
+ LDA H3EA4
+ PHA
+ STA H461F
+ LDA #0
+ STA H4620
+ JSR H45DA
+ JSR H4621
+ PLA
+ LDX H4384
+ RTS
+
+H3F4B BRK
+ BRK
+ BRK
+H3F4E HEX 01 ;1
+ HEX 0A ;10
+ HEX 64 ;100 -used to hex to dec convert
+H3F51 BRK
+H3F52 BRK
+
+*-------------------------------
+
+RECONFIG JSR HOME ;start of reconfigure routine
+H3F56 JSR H403B ;put the stuff on the screen
+ LDX #2
+ JSR H3221 ;go manage the screen & keypress
+ CMP #0 ;change lowercase?
+ BNE H3F75 ;no go check the other stuff
+ LDA H391B
+ CMP #$FF ;is it off?
+ BEQ H3F6D ;yes, change it to "on"
+ LDA #$FF ;no, keep it as "off"
+ BNE H3F6F ;go store it
+H3F6D LDA #$DF ;flag to be and'ed to output
+H3F6F STA H391B ;go store the flag then return
+ JMP H3F56
+
+H3F75 CMP #1 ;is it a call to change lang card
+ BNE H3F97 ;no, go check the next option
+ LDA H390F
+ CMP #$FF ;is it already disabled?
+ BEQ H3F8B ;yes, then enable it
+ LDA #$FF ;no, disable it by replacing
+ STA H390F ;these two flags...
+ STA H3912
+ JMP H3F56 ;return
+
+H3F8B LDX #1 ;store a 1 at first flag position
+ STX H390F ;enable $D000-$FFFF alt bank 1
+ INX
+ STX H3912 ;enable $D000-$FFFF alt bank 2
+ JMP H3F56 ;return
+
+H3F97 CMP #2 ;is it a call to aux mem?
+ BNE H3FB8 ;no, go on to next...
+ LDA H3915
+ CMP #$FF ;is it already disabled?
+ BEQ H3FAD ;yes, go enable it
+ LDA #$FF ;no, disable it
+ STA H3915 ;reset flag ($900-$1FFF) *
+ STA H3918 ;reset flag ($400-$B6FF)
+ JMP H3F56 ;return
+
+H3FAD LDX #3 ;enable it
+ STX H3915 ;set flag ($900-$1FFF) *
+ STX H3918 ;set flag ($900-$1FFF)
+ JMP H3F56 ;return
+
+H3FB8 JSR HOME ;it HAS to be this option!
+ JSR DISPLAY ;go stick this on screen
+ HEX 810A00
+ ASC "Insert DDD 2.1 enhanced into "
+ BRK
+
+ LDX #2 ;stick slot, drive, vol on scrn
+ JSR H31EE
+ JSR H44D7 ;go check for keypress...
+ CMP #ESC ;is it <esc>?
+ BEQ H4035 ;yes, just exit...
+ LDA #2 ;go get right slot and volume...
+ JSR H4630
+ LDA #1 ;next operation to RWTS is read
+ STA H3805
+ LDA H468E ;get the proper track and sector
+ STA H37FD ;to read (this was stored when
+ LDA H468F ;the program initially started)
+ STA H37FE
+ LDA #$B5 ;buffer is at $B500
+ STA H3802
+ JSR H3820 ;go do it!
+
+ LDA HB500 ;look for the pattern:
+ CMP #$38 ;$38 $20 $DA at the front of
+ BNE H3FB8 ;the buffer. These values change
+ LDA HB500+1 ;as the program is reassembled
+ CMP #$20 ;it is also a pain if one wants
+ BNE H3FB8 ;to convert this to ProDOS or
+ LDA HB500+2 ;add functions of one's own.
+ CMP #$DA ;These bytes are in the front
+ BNE H3FB8 ;of the 10th sector
+
+ LDA #2 ;next operation is write
+ STA H3805
+ LDA #$41 ;point the RWTS buffer to $3841
+ STA H3801
+ LDA #$38
+ STA H3802
+ JSR H3820 ;go write it out
+ LDA #0 ;zero the lo byte of the buffer
+ STA H3801
+H4035 JSR HOME ;clear the screen, redo screen
+ JMP H3F56
+
+H403B JSR DISPLAY
+ HEX 81091C ;display message #9 in mess table
+ BRK
+ LDA H391B ;is it off or on?
+ CMP #$FF
+ BNE H404B ;no, go show it as "off"
+ LDA #0 ;yes, show it as "on"
+H404B JSR H4069 ;go display either "on" or "off"
+
+ JSR DISPLAY
+ HEX 810A1C ;display #10 - "Language Card"
+ BRK
+ LDA H390F ;is it off or on?
+ JSR H4069 ;go print its status
+ JSR DISPLAY
+
+ HEX 810B1C ;display #11 - "//e Aux Mem"
+ BRK
+ LDA H3915
+ JSR H4069 ;show either "off" or "on"
+ RTS
+
+H4069 BMI H4076 ;is it $80-$FF? yes, show "off"
+ JSR DISPLAY ;no, $00-$7F, show "on"
+ INV 'ON'
+ ASC "/OFF"
+ BRK
+ RTS
+
+H4076 JSR DISPLAY ;show "off" in inverse
+ ASC "ON/"
+ INV 'OFF'
+ BRK
+ RTS
+
+*-------------------------------
+
+QUIT LDX #1  ;select source or target
+ JSR H3221
+ TAX
+ LDA H4684,X ;get slot to boot from
+ ORA #$C0 ;make a slot address from it
+ STA H40CA+2 ;make sure we boot from that
+ JSR HOME ;slot...
+ JSR DISPLAY ;stick this on screen
+ HEX 810906
+ ASC "Another fine program from:"
+ HEX 810B0A
+ ASC "The Assembly Line..."
+ BRK
+H40CA JMP $C600 ;go boot-Holy Smoke we're done!
+
+H40CD LDA #0 ;get the target slot
+ JSR H4630
+ LDA #24 ;bottom of screen is true bott
+ STA WNDBTM
+ JSR HOME
+ JSR DISPLAY ;stick this on screen
+ HEX 810611
+ ASC "Unpack"
+ HEX 810711
+ ASC "------"
+ HEX 810C00
+ HEX 82AD28 ;line of $28 dashes ($AD)
+
+ HEX 811600
+ HEX 82AD28 ;'nother line of $28 dashes
+ ASC "   Use arrows and "
+ ASC "<cr> to select file"
+ BRK
+
+ JSR H4279 ;read catalog into $800,$900...
+ BNE H4153 ;there ARE file, go do routine
+ JSR DISPLAY ;hurray! no files!
+ HEX 811004
+ ASC "There are no files on this disk"
+ HEX 8D8D ;(add 2 cr's for emphasis)
+ BRK
+ JSR H45BE ;check for keypress
+H4150 JMP H30D6 ;leave
+
+H4153 LDA #0
+ STA CH
+H4157 STA H4194 ;first filename to be inverted
+ JSR H4386 ;draw entire screen
+H415D JSR H44D7 ;wait for keypress
+ CMP #FA ;is it a forward arrow?
+ BEQ H417C ;yes, move highlight down
+ CMP #CTRLJ ;is it a down arrow?
+ BEQ H417C ;yes, move highlight down
+ CMP #BS ;is it a backspace?
+ BEQ H4188 ;yes, move the highlight up
+ CMP #CTRLK ;is it an up arrow?
+ BEQ H4188 ;yes, move the highlight up
+ CMP #ESC ;is it <esc>?
+ BEQ H4150 ;yes, leave
+ CMP #CR ;is it a <cr>?
+ BNE H415D ;no, keep looking for keys
+ LDA H4194 ;get current file highlighted
+ RTS
+
+H417C LDX H4194 ;which 1 is highlighted?
+ INX  ;increment it (next down)
+ CPX $F2 ;are we about to hl the last 1?
+ BGE H415D ;yes, don't touch it, go back
+ TXA  ;retain file # highlighted, ret
+ JMP H4157 ;go back, redraw ENTIRE screen
+H4188 LDX H4194 ;get current file #
+ DEX  ;decrement it (next up)
+ CPX #$FF ;have we gone back to the first?
+ BEQ H415D ;yes, don't touch it, just exit
+ TXA  ;retain file highlighted
+ JMP H4157 ;redraw the ENTIRE screen
+
+H4194 BRK  ;current file highlighted
+
+*-------------------------------
+
+CATALOG LDX #1 ;go get source or target
+ JSR H3221
+ JSR H4630
+ LDA #6
+ STA WNDTOP
+ LDA #24
+ STA WNDBTM
+ JSR HOME
+ JSR H4279
+ JSR DISPLAY
+ ASC "Catalog of S"
+ BRK
+ LDA H37FA
+ LSR
+ LSR
+ LSR
+ LSR
+ ORA #$B0
+ JSR H44CD
+ JSR DISPLAY
+ ASC ",D"
+ BRK
+ LDA H37FB
+ ORA #$B0
+ JSR H44CD
+ JSR DISPLAY
+ ASC ",V"
+ BRK
+ LDA #0
+ STA H4620
+ LDA H3807
+ STA H461F
+ JSR H45DA
+ JSR H4621
+ JSR DISPLAY
+ HEX 8D8D
+ BRK
+ LDA #$0F
+ STA H4445
+ LDA #0
+ STA H4194
+H41FC CMP $F2
+ BEQ H422B
+ ASL
+ TAX
+ LDA H0900,X
+ STA IOB
+ LDA H0900+1,X
+ STA IOB+1
+ JSR H44A7
+ JSR CLRCR
+ DEC H4445
+ BNE H4223
+ JSR H44D7
+ CMP #ESC
+ BEQ H422B
+ LDA #$0F
+ STA H4445
+H4223 INC H4194
+ LDA H4194
+ BNE H41FC
+H422B JSR DISPLAY
+ HEX 8D
+ ASC "Free sectors: "
+ BRK
+ LDA H4277
+ STA H461F
+ LDA H4278
+ STA H4620
+ JSR H45DA
+ JSR H4625
+ JSR H45BE
+ JMP H30D6
+
+H4256 LDA #0
+ STA H4277
+ STA H4278
+ LDY #$38
+H4260 LDA HB500,Y
+ LDX #8
+H4265 ASL
+ BCC H4270
+ INC H4277
+ BNE H4270
+ INC H4278
+H4270 DEX
+ BNE H4265
+ INY
+ BNE H4260
+ RTS
+
+H4277 BRK
+H4278 BRK
+
+H4279 LDA #1 ;next operation by RWTS is read
+ STA H3805
+ LDA #0
+ STA IOB
+ LDA #$0A
+ STA IOB+1
+ LDA #0 ;pointer
+ STA $F2
+ JSR H380E ;read vtoc into $B500
+ JSR H4256 ;calculate # of free sectors
+H4290 LDA HB500+1 ;track # of first catalog sector
+ BEQ H42DB ;is it a zero (yes! got problems)
+ STA H37FD ;store it here (IOB table)
+ LDA HB500+2 ;sector # of first catalog sector
+ STA H37FE ;store it in IOB table
+ JSR H3820 ;go get the sector
+ LDX #$0B ;get file descriptive entry
+H42A3 STX H4383 ;store it for future fooling
+ LDA HB500,X ;get the track of first T/S list
+ BMI H42D0 ;greater than $7F, then deleted file
+ BEQ H42DB ;empty file entry (must be last file!)
+ JSR H42E1 ;go create entry in $A00 table
+ LDX $F2
+ LDA IOB
+ STA H0900,X
+ LDA IOB+1
+ INX
+ STA H0900,X
+ INX
+ STX $F2
+ TYA
+ CLC
+ ADC IOB
+ STA IOB
+ LDA IOB+1
+ ADC #0
+ STA IOB+1
+ LDA $F2 ;are we done?
+ BEQ H42DB ;yes, goto the end
+H42D0 LDA H4383
+ CLC
+ ADC #$23 ;set up the pointer to next file
+ TAX  ;description
+ BCC H42A3 ;everything is OK, get next FDE
+ BCS H4290 ;everything is NOT OK, reread
+H42DB LDA $F2
+ LSR  ;multiply by dec 10
+ STA $F2
+ RTS
+
+H42E1 LDY $F2 ;file #
+ STA H0800,Y ;store it someplace safe
+ LDA HB500+1,X ;get sector of first t/s list
+ STA H0800+1,Y ;store it at $801, indexed with Y
+ LDA #$AA ;char for "*"
+ LDY HB500+2,X ;get file type and flags
+ BMI H42F5 ;oops, must be locked, use a "*"
+ LDA #SPC ;a space will do...(unlocked)
+H42F5 LDY #0 ;store it in the $A00 buffer
+ STA (IOB),Y
+ INY
+ LDA HB500+2,X ;get the filetype & flags
+ AND #$7F ;chop off locked flag if set
+ LDX #$18 ;index to length of file type t
+H4301 ASL  ;shift, is it that type of file?
+ BCS H4309 ;yes, go label it in $A00
+ DEX  ;nope, make the x-reg point at
+ DEX ;the next 3 letter file type
+ DEX
+ BNE H4301 ;if tried all, loop back...
+H4309 LDA TYPES,X ;now, move the 3 letter descr
+ STA (IOB),Y ;downto the catalog buffer
+ INX
+ INY
+ CPY #4
+ BLT H4309
+
+ LDA #SPC
+ STA (IOB),Y ;put a space in buffer after
+ INY  ;the file type (whew!)
+ LDX H4383 ;get multiple of this file
+ LDA HB521,X ;get lo byte of file length
+ STA H461F ;store it here
+ LDA HB521+1,X ;get hi byte of file length
+ STA H4620 ;store it here
+ JSR H45DA ;break up the file length into
+   ;decimals in $6F,X
+ LDX #2
+H432D LDA $6F,X
+ ORA #$B0
+ STA (IOB),Y ;put broken up file length into
+ INY  ;$A00 buffer as decimal file
+ DEX  ;length
+ BPL H432D
+
+ LDX H4383 ;get multiple of file we're on
+ INX
+ INX
+ INX
+ STX H4384
+ TXA
+ CLC
+ ADC #$1D
+ TAX
+ LDA #SPC
+ STA (IOB),Y ;put another space before file name
+ INY
+H434A CMP HB500,X ;do we have a spc at the end of
+ BNE H4352 ;the filename? no, part of filenme
+ DEX  ;no, decrement it, keep looking for
+ BNE H434A ;length of filename
+H4352 INX
+ STX H4385 ;x is the length of filename
+ LDX H4384
+H4359 LDA HB500,X ;now, fetch chars to $A00 until
+ STA (IOB),Y ;you reach the length of the
+ INY  ;filename
+ INX
+ CPX H4385 ;have we reached the end?
+ BLT H4359 ;no, go get another char
+
+ LDA #0
+ STA (IOB),Y ;store a $00 as a marker...
+ INY  ;return to sender
+ RTS
+
+TYPES ASC "TXTINTBASBIN S  R  A  B "
+
+H4383 BRK
+H4384 BRK
+H4385 BRK
+
+H4386 STA H4444 ;current highlighted file here
+ LDA #0 ;zero this out
+ STA H4443
+ LDA $F2 ;how many files do we have?
+ CMP #9
+ BLT H43B2 ;less than 9! don't bother with
+   ;scrolling...
+ LDA H4444 ;is the highlighted item < 5?
+ CMP #5
+ BLT H43B2 ;yes, go print 'em
+ SEC
+ SBC #4 ;no subtract 4 to find #'s of the
+ STA H4443 ;filenames to be on screen
+
+ CLC  ;is the next filename at the bottom?
+ ADC #9
+ CMP $F2
+ BLT H43B2 ;yes, print 'em
+ BEQ H43B2 ;yes, print 'em
+ LDA $F2 ;no, print the last 9 files.
+ SEC
+ SBC #9
+ STA H4443
+H43B2 LDA H4444 ;# of file to be highlighted * 2
+ ASL
+ STA H4444 ;store it
+ LDA #9 ;file count starts at 9 works down
+ STA H4445
+ LDA H4443 ;are there any files above display?
+ BNE H43D0 ;yes, print "[more]"
+ JSR DISPLAY ;no, dash out the [more] if there
+ HEX 810C11
+ HEX 82AD06 ;print 6 dashes
+ BRK
+ JMP H43DD
+
+H43D0 JSR DISPLAY ;stick it onscreen...
+ HEX 810C11
+ ASC "[more]"
+ BRK
+
+H43DD LDA #13
+ STA CV
+ JSR VTAB
+ LDA #0
+ STA CH
+H43E8 LDA H4443 ;get the # above the screen
+ ASL  ;multiply by 2
+ TAX
+ LDA H0900,X
+ STA IOB
+ LDA H0900+1,X
+ STA IOB+1
+ CPX H4444 ;is this the one? (highlighted?)
+ BNE H43FF ;no, don't set inverse
+ JSR SETINV ;yes, invert it
+H43FF JSR H44A7 ;print the file description!
+ JSR SETNORM ;normsl printing
+ JSR CLRCR
+ DEC H4445 ;the number to print becomes -1
+ BEQ H4422 ;down to 0? yes, go check [more]
+ INC H4443
+ LDA H4443 ;have we done the last filename?
+ CMP $F2
+ BLT H43E8 ;no, go print another
+ LDX H4445 ;have we printed last 9 filenames?
+ BEQ H4422 ;yes, write [more] if needed
+H441C JSR CLRCR
+ DEX
+ BNE H441C
+H4422 LDX H4443 ;how many filenames above display
+ INX
+ CPX $F2 ;if less than total # of files,
+ BLT H4435 then print [more]
+ JSR DISPLAY
+ HEX 811611 ;vtab 22, htab 17
+ HEX 82AD06 ;print 6 dashes over [more]
+ BRK
+ RTS
+
+H4435 JSR DISPLAY
+ HEX 811611 ;vtab 22, htab 17 print "[more]
+ ASC "[more]"
+ BRK
+ RTS
+
+H4443 BRK
+H4444 BRK  ;current highlighted file #
+H4445 BRK  ;9 downto 0 # of filnames so far
+
+DISPLAY PLA  ;get where we came from
+ STA IOB ;put it in there
+ PLA  ;hi byte of where we were
+ STA IOB+1
+ TYA
+ PHA  ;save the y-reg as well
+H444E LDY #1
+H4450 LDA (IOB),Y ;get next character in sequence
+ CMP #0 ;is it a $0?
+ BEQ H4494 ;yes, leave print routine
+ CMP #$81 ;is it a $81?
+ BEQ H4467 ;yes, continue normally
+ CMP #$82 ;is it an $82?
+ BEQ H447B ;yes, print a lot o them
+ JSR H44CD
+H4461 JSR H44A0 ;increment the return pointer
+ JMP H4450 ;go get the same char, print it
+
+H4467 JSR H44A0 ;increment the return pointer
+ LDA (IOB),Y ;next char is vert cursor pos
+ STA CV
+ JSR H44A0 ;increment the return pointer
+ LDA (IOB),Y ;next char is htab
+ STA CH
+ JSR VTAB ;go set the vtab
+ JMP H4461 ;check the next sequence of chars
+
+H447B JSR H44A0 ;inc pointer to next character
+ LDA (IOB),Y ;grab next char-save it on stack
+ PHA
+ JSR H44A0 ;increment the pointer
+ LDA (IOB),Y ;get the next char
+ TAY  ;# of these chars to print
+ PLA  ;get the char to print
+H4488 JSR H44CD ;mask it, then print it
+ DEY  ;clear from right to abs left
+ BNE H4488 ;are we done? no, do another...
+ JSR H44A0 ;increment the pointer again
+ JMP H444E ;reset the y-reg, keep moving...
+
+H4494 JSR H44A0 ;set it to go past the zero...
+ PLA  ;get the y-reg off the stack
+ TAY
+ LDA IOB+1 ;get high byte of where we must
+ PHA  ;return to, push it
+ LDA IOB ;get lo byte of return address,
+ PHA  ;push it (becomes return address)
+ RTS  ;go to the address we just pushed
+   ;in this case, address after the
+   ;00 end-of-message marker
+
+H44A0 INC IOB ;increment the next character
+ BNE H44A6 ;pointer so we get the right
+ INC IOB+1 ;chars and return properly to
+H44A6 RTS  ;right after the hex 00.
+
+H44A7 LDY #0
+H44A9 LDA (IOB),Y ;get another character to print
+ BEQ H44B3 ;have we reached the $00 yet?
+   ;if so, print it...
+ JSR H44CD ;mask it, then print it
+ INY  ;get next character to print
+ BNE H44A9 ;go print it
+H44B3 RTS  ;leave
+
+H44B4 ASL
+ TAY
+ LDA H32D1,Y
+ STA IOB
+ LDA H32D1+1,Y
+ STA IOB+1
+ LDY #0
+H44C2 LDA (IOB),Y
+ BEQ H44CC
+ JSR H44CD
+ INY
+ BNE H44C2
+H44CC RTS
+
+H44CD CMP #$E0 ;is it already capital?
+ BLT H44D4 ;yes, go print it
+ AND H391B ;no, hopefully make it caps...
+H44D4 JMP COUT ;gp print it!
+
+H44D7 JSR H44F8 ;wait for a key press...
+ BCC H44D7 ;nope, none pressed...
+ RTS  ;yes! wow!
+
+H44DD TYA
+ PHA
+ LDY CH
+ LDA (BAS),Y
+ PHA
+ AND #$3F
+ STA (BAS),Y
+ JSR H44D7
+ STA H44F7
+ PLA
+ STA (BAS),Y
+ PLA
+ TAY
+ LDA H44F7
+ RTS
+
+H44F7 BRK
+
+H44F8 LDA KEY ;was a key pressed?
+ BMI H4511 ;yes! bly me!
+ INC H4516 ;no...
+ BNE H450F
+ INC H4517 ;every ($FF-$F8)*256 checks,
+ BNE H450F ;flash them symbols...
+ JSR H4564 ;keep flashing those symbols...
+ LDA #$F8 ;reset the counter
+ STA H4517
+H450F CLC
+ RTS
+
+H4511 STA STROBE
+ SEC
+ RTS
+
+H4516 BRK
+
+H4517 SED
+H4518 LDX #0
+H451A JSR H44DD
+ JSR H3CC1
+ CMP #CR
+ BEQ H4549
+ CMP #BS
+ BEQ H454F
+ CPX #$19
+ BGE H451A
+ CMP #CTRLJ
+ BNE H4534
+ LDA #$DB
+ BNE H4540
+H4534 CMP #$8C
+ BNE H453C
+ LDA #$DC
+ BNE H4540
+H453C CMP #SPC
+ BLT H451A
+H4540 STA H4710,X
+ JSR H44CD
+ INX
+ BNE H451A
+H4549 LDA #0
+ STA H4710,X
+ RTS
+
+H454F CPX #0
+ BEQ H451A
+ JSR H44CD
+ LDA #SPC
+ JSR H44CD
+ LDA #BS
+ JSR H44CD
+ DEX
+ JMP H451A
+
+H4564 PHA  ;here begins the routine central
+ TXA  ;to the moving of characters
+ PHA  ;across the screen...
+ LDX #$10
+H4569 LDA $0401,X
+ STA $0402,X
+ LDA $0601,X
+ STA $0602,X
+ DEX
+ CPX #1
+ BNE H4569
+ LDA #":" ;left scrolling character
+ LDX H45BD
+ CPX #3
+ BLT H4585
+ LDA #SPC
+H4585 STA $0403
+ STA $0603
+ LDX #$16
+H458D LDA $0400,X
+ STA $03FF,X
+ LDA $0600,X
+ STA $05FF,X
+ INX
+ CPX #$26
+ BNE H458D
+ LDA #":" ;right side scrolling character
+ LDX H45BD
+ CPX #3
+ BCC H45A9
+ LDA #SPC
+H45A9 STA $0424
+ STA $0624
+ DEC H45BD
+ BPL H45B9
+ LDA #3
+ STA H45BD
+H45B9 PLA
+ TAX
+ PLA
+ RTS
+
+H45BD HEX 03
+
+H45BE JSR DISPLAY ;put this on screen
+ ASC "       <press a key>"
+ BRK
+ JSR H44D7 ;wait for a keypress,then return
+ RTS
+
+H45DA LDA #0
+ LDX #4
+H45DE STA $6F,X
+ DEX
+ BNE H45DE
+ LDX #4
+ BNE H45E9
+H45E7 INC $6F,X
+H45E9 LDA H461F ;get lo byte
+ STA H461D
+ LDA H4620 ;get hi byte
+ STA H461E
+H45F5 SEC  ;what this routine does is this:
+ LDA H461D ;takes a 2 byte hex # contained
+ SBC H4613,X ;in $461F and $4620 and converts
+ STA H461F ;it to a 5 digit decimal #
+ LDA H461E ;contained in $6F to $73
+ SBC H4618,X ;each hex digit in these memory
+ STA H4620 ;addresses represents a decimal
+ BCS H45E7 ;number, though...
+ DEX
+ BNE H45F5
+ LDA H461D
+ STA $6F
+ RTS
+
+H4613 HEX 01 ;table for hex to dec conversion
+ HEX 0A ;10
+ HEX 64 ;100
+ HEX E8 ;1000
+ HEX 10
+
+H4618 BRK
+ BRK
+ BRK
+ HEX 03
+ HEX 27
+H461D BRK
+H461E BRK
+
+H461F BRK ;lo byte of file length
+H4620 BRK  ;hi byt of file length
+
+H4621 LDX #2
+ BNE H4627
+H4625 LDX #3
+H4627 LDA $6F,X
+ JSR PRHEX
+ DEX
+ BPL H4627
+ RTS
+
+H4630 TAX  ;put device (0 or 1) in A
+ LDA H4684,X ;get the required slot
+ ASL  ;now, multiply our choice by 16
+ ASL
+ ASL
+ ASL
+ STA H37FA ;store in RWTS table for slot
+ LDA H4687,X ;get drive
+ STA H37FB ;store in RWTS table for drive
+ LDA H468A,X ;get volume
+ STA H37FC ;store in RWTS table for volume
+ JSR H466D ;display source over target
+ TXA  ;is it $0 (source) we want?
+ BNE H465B ;no! (rats) go see if it's for
+ JSR DISPLAY ;the target, else display source
+ HEX 811102 ;inverted
+ INV 'SOURCE'
+ BRK
+ RTS
+
+H465B CPX #1 ;is it for the target drive?
+ BNE H466C ;nope, just return
+ JSR DISPLAY ;yes, invert it.
+ HEX 811202
+ INV 'TARGET'
+ BRK
+H466C RTS
+
+H466D JSR DISPLAY ;display "SOURCE:" over "TARGET"
+ HEX 811102
+ ASC "SOURCE"
+ HEX 811202
+ ASC "TARGET"
+ BRK
+ RTS
+
+H4684 HEX 06 ;source slot
+H4685 HEX 06 ;target slot
+ HEX 00
+H4687 HEX 01 ;source drive
+H4688 HEX 02 ;target drive
+ BRK
+
+H468A HEX 00 ;source volume
+H468B HEX 00 ;target volume
+ BRK
+
+H468D BRK  ;1=one drive - 0=more than one
+H468E BRK
+H468F BRK
+
+H4690 LDA H468D ;do we have more than 1 drive?
+ BEQ H46B1 ;yes, return
+ JSR DISPLAY ;no, display this...
+ HEX 810C0A ;htab 12, vtab 10
+ ASC "Insert "
+ INV 'SOURCE'
+ ASC " disk"
+ BRK
+ JMP H46D0 ;go get a keypress, then return
+
+H46B1 RTS
+
+H46B2 LDA H468D ;do we have more than 1 drive?
+ BEQ H46B1 ;yes, just return
+ JSR DISPLAY ;nope, display this on screen
+ HEX 810C0A
+ ASC "Insert "
+ INV 'TARGET' ;next, get a keypress,
+ ASC " disk"00 ;continue on, then return
+
+H46D0 JSR H3CF2 ;go turn off the drive
+ JSR H44D7 ;check for keypress, move stuff
+ JSR H3CC1 ;check for escape, if so, menu
+ JSR DISPLAY
+ HEX 810C05 ;vtab 12, htab 5, print
+ HEX 82 ;39 spaces to wipe out the line
+ DCI " '"
+ BRK
+ RTS
+
+H46E4 LDA H468D
+ BNE H4690
+ JSR DISPLAY ;stick this on the screen
+ HEX 810C05
+ ASC "Insert "
+ INV 'SOURCE'
+ ASC " and "
+ INV 'TARGET'
+ ASC " disk"
+ BRK
+H470D JMP H46D0
+
+H4710 HEX 0000000000000000
+ HEX 0000000000000000
+ HEX 000000000000000000
+
+ LST OFF
+
+

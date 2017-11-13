@@ -1,0 +1,247 @@
+AppleLink
+APPLE II DEVELOPMENT FORUM CONFERENCE LOG
+November 22, 1988  10:00 pm Eastern
+Topic: Apple IIGS Toolbox
+Forum Leader: James Luther (AFL Jim)
+
+AFL Jim    Welcome to the Apple II Development Forum. Tonight, our scheduled
+           topic is the Apple IIGS Toolbox, but feel free to bring up anything
+           else that's on your mind. I'm Jim Luther, the Forum Leader of this
+           forum and will try to control traffic during this meeting along
+           with Gary Jacobson (AFA GaryJ) Does anyone have any questions to
+           start things off tonight?
+Matt DTS   Please try not to be so exciting guys.  My heart can't take it.
+AFL Jim    While we wait for a question, I'll take this time to remind you
+           that in two weeks, on Dec 6th, we'll meet in the Pippin Auditorium
+           for a conference with Tom Leonard of TML Systems. Tom will be here
+           to either announce a great new product or.... to not announce one
+           :)
+JSchober   That about covers it... ;)
+AFL Jim    yep
+DwightW1   how do you use the scheduler?
+Dave Lyons Scheduler!  (Fun.)  You notice that the BUSY flag is nonzero, and
+           then you call SchAddTask with a pointer to a routine that will be
+           called when the BUSY flag gets down to 0 (your routine will be
+           called when somebody calls DECBUSY, before DECBUSY returns to the
+           caller).  The BUSY flag is hard-wired at E100FF, if I remember
+           correctly (I don't think there is a GetAddr(n) for that, is
+           there?).
+AFL Jim    The scheduler is used mostly to keep programs from running code
+           that can't be reentered (can't be started again until it has
+           finished executing from the last time it was called).
+DwightW1   but where is it inserted... in the interrupt itself or the main
+           code?
+Dave Lyons Where is _what_ inserted, Dwight?
+DwightW1   the toolcall 'schaddtask?
+Dave Lyons You call SchAddTask whenever you realize you need a particular
+           routine to be called, but when you can't call it immediately
+           because the BUSY flag is non 0. (Often that would be inside an
+           interrupt routine of some sort, but it isn't required to be.)
+DwightW1   thanks dave, that is helpful :)
+JSchober   Are there any m-tasking possibilities in there?? <haven't played
+           with it much>
+Dave Lyons I remember a note in the docs somewhere saying that SchAddTask was
+           _not_ intended to be used to implement multi-tasking.  They
+           purposely limited the task queue size to 4 to discourage you from
+           abusing it in that way, too.
+JSchober   Awwww... Apple's no fun. :( Ok, thanks.
+AFL Jim    Programmers use to have to do alot of this stuff themselves under
+           ProDOS-8 to interrupt routines from messing up ProDOS.
+DwightW1   another question... does one increment the 'busy' flag just before
+           a toolcall
+Dave Lyons Generally tool calls take care of calling INCBUSY and DECBUSY by
+           themselves when it is necessary.  You don't need to do it yourself
+           except when your own program is entering a routine that is not
+           re-entrant, when there is the possibility that you'd try to call
+           yourself.  I'm saying this very badly, but generally you don't need
+           to call it from an application.
+AFL Jim    It makes sense to me, Dave :)
+DwightW1   i guess i understand... will have to work with it
+AFL Jim    Dwight, have you read chapter 19 in the Toolbox reference?
+DwightW1   yes, but it seems details are missing..... ....the literature seems
+           (to me) conflicting
+Dave Lyons By the way, while the Event Manager is _not_ turned on, the
+           Apple-Ctrl-ESC handler checks the busy flag; if it's nonzero, it
+           uses SchAddTask so that the CDA menu will be called the next time
+           the busy flag reaches zero.  (With the event manager _on_, the
+           Apple-C-E handler calls PostEvent with a DeskAcc event instead,
+           which causes the CDA menu to appear next time GetNextEvent is
+           called.)
+AFL Jim    What part of it seems conflicting?  maybe we can help you
+           straighten it out.
+DwightW1   as an example, the literature seems to suggest the interrupt is
+           placed in the toolcall 'schaddtask' also, the interrupt itself is
+           suppose to check the busy flag to see if  itself may execute when i
+           did this my program crashed
+AFL Jim    schAddTask is called *by* your interrupt routine if it finds the
+           busy flag  non-zero.
+DwightW1   if the interrupt finds the busy flag nonzero, then it adds ITSELF
+           to the quere?
+SEGlass    The scheduler is designed to help programs share scarce resources.
+           For example, a CDA may want to use the OS. But if the OS is busy,
+           when the CDA interrupt occured, it would not  be safe to use it.
+           The same is true of other processes in the system. The idea is that
+           if an independant process needs a resource that could be in use, it
+           looks at the busy flag.
+DwightW1   so the CDA places itself in "schaddtask?
+SEGlass    If the busy flag is zero, it is safe to use the resource. If the
+           busy flag is non-zero, it is not safe to use the resource at this
+           time. The independant task calls the scheduler to put a routine in
+           the queue. The next time the busy flag reaches zero, the tasks in
+           the queue  are run. The routine that the independant process puts
+           into the scheduler's queue is ususally different from the main
+           entry point to independant process.
+DwightW1   that would be the CDA you mentioned for example?
+SEGlass    (yes)
+DwightW1   got it.... thanks a million!!!!
+SEGlass    Does this clear things up for everyone?
+AFL Jim    Thanks, Steve - good explanation.
+DwightW1   for me ....YES!
+SEGlass    Sorry the ref manual wasn't clearer.  Its easy in hindsight to see 
+           it could have been a little better.
+Tim Gross  I have the McGraw Hill IIGS tech ref.  but seem to say little about
+           picture  calls to Quickdraw.  can any on fill me in on the basics
+           of picture commands
+AFL Jim    OK, Tim, about your question... The picture routines are in the
+           QuickDraw II Auxilary routines toolbox which wasn't available when
+           Michael Fischer wrote his book.  They are documented in the IIGS
+           Reference Manual Volume 2. Dave, a comment?
+Dave Lyons You need to load and start the QD AUX toolset to use even the
+           Picture routines that have function numbers in toolset 4 (regular
+           quickdraw).  They go thru "hooks" that are setup by starting QD
+           AUX. -- Basically, a "picture" is a recorded sequence of QuickDraw
+           calls that can be played back later, possibly with scaling and
+           other effects.
+Tim Gross  ok.  Look like I'll have to get volume 2.
+AFL Jim    To use the calls (after you start the tools, of course), you just
+           call OpenPicture, then make your Quickdraw calls to draw, then call
+           CLosePicture to end the process. Jeff, GA with your comment
+JeffDWoods You should get BOTH volumes of the Toolbox Ref. mnls.  They are
+           much more complete than the book by Fischer.  (probably due to
+           available info) You won't regret it.
+AFL Jim    Very true, Jeff.
+Tim Gross  Jeff I do have Volume 1.  Have Volume 2 on my wish list ;)
+AFA Gary J (Besides, volume two has the index to both manuals!)
+Matt DTS   Trying to use the Toolbox without both volumes of the TB Reference
+           is kind of.. ...like trying to describe something really bad when a
+           good analogy fails you.
+Dave Lyons :)
+Matt DTS   <sheepish grin>  They're really tools of the trade that you
+           shouldn't... ...be without.
+JeffDWoods (Like the definition of "bad" in the movie "Ghost Busters"!
+AFL Jim    Can we go on, Tim?
+Tim Gross  Ya,  thanks much!
+DwightW1   does the 'QD' toolcall 'MoveTo' and 'LineTo' use global or local
+           coordinates
+Dave Lyons Local
+DwightW1   i thought so... error in the reference volume
+AFL Jim    OK, Parik, you're on!
+AFA Parik  Does anyone know why APDA has got "No longer available" on the
+           Toolbox  Quick Refs? (October issue)
+SEGlass    There was a slight screw up in these documents. The few people who
+           got copies pointed out that they were useless, due to a problem in
+           our production process.
+AFA Parik  <--- got a copy...wahhhh.... :)
+SEGlass    We are trying to work that out now and will make it available again
+           as soon as possible.  We're really sorry for the trouble we may
+           have caused.  They looked real good when we made our last set of 
+           reviews, but after we saw them last, something happened...
+Dave Lyons (So do I get my money back?)
+AFA Parik  :)
+Matt DTS   I think we are doing some kind of customer satisfaction thing for
+           people... ...who already purchased them, but details are still
+           sketchy at this point.
+AFL Jim    a T-shirt :)
+SEGlass    I don't know the details of what APDA will do, but you should get
+           info on that soon. Is Tim S on line tonight, he might know?
+Matt DTS   Neither Tim nor Tom Chavez seems to be present right now.  Maybe
+           later (I hope)
+AFL Jim    Nope, Tim S isn't online.
+AFA Parik  (maybe my reference will become a collectors item :)
+AFL Jim    Tom should be on in about 15 minutes for his weekly meeting.
+JSchober   <Tom should be around by 11... for HIS CO... :) > GMTA Jim...
+AFL Jim    This is kind of a comment, but... I noticed that IIGS BASIC is now
+           in APDA's Curiosity Shop section along with the DOS 3.3 manuals.
+           Does this mean it's a dead product?
+SEGlass    Looks like another good question for Tom or Tim.  Sorry I don't
+           have details.
+DwightW1   i have another question....how to use the note synthesizer? i
+           literaly copied the material from Bond's "inside the apple IIgs...
+           and still no music?
+Dave Lyons (Crash?  Error codes?  etc?)
+DwightW1   i don't know only a periodic sputter is heard
+AFA Parik  Have you looked at the System Disk v3.2 documentation Dwight?
+DwightW1   no...i'm only up to v3.1..... where can i get the v3.2?
+AFL Jim    You can get it from APDA Apple Programmer's and Developer's
+           Association
+DwightW1   will do...again many thanks!
+SEGlass    Better than the 3.2 notes is the Toolbox Update manual from APDA.
+           It has chapters on all the sound tools that have not been part of
+           other documentation and were sort of used by the select few who had
+           early copies of our internal documation. This manual is the first
+           time this information has been generally available. GA
+AFL Jim    GA Steve The Toolbox Reference Update is only $14.95 + shipping
+           from APDA.
+DwightW1   i'll definitely make a point of getting it!  
+AFL Jim    Does anyone need more information on APDA?
+Dave Lyons Yes...what's happening to it? :)
+AFL Jim    It's going to be run by Apple starting in January. All memberships
+           will be transfered and honored. TechAlliance (formerly Call-APPLE)
+           is giving free memberships to TechAlliance to all APDA members,
+           too.
+Matt DTS   The A.P.P.L.E. Co-Op is changing their name to TechAlliance, but
+           the magazine "Call-A.P.P.L.E" will probably keep the same name.
+AFL Jim    Right, I've posted a complete message about that in the Misc.
+           Topics category. Gary, a comment?
+AFA Gary J Does anyone here know if there is any intention to release the
+           Toolbox Ref. Update as a Addison Wesley hardbound manual?
+AFL Jim    Go ahead with your comment, Joe.
+JSchober   Last time I checked, there's information on APDA in (hoping I get
+           this right!) Apple Community/Technical Library/APDA, here on
+           AppleLink. I dunno if it's still there, tho, now that Apple's taken
+           in APDA... worth checking, tho.
+Matt DTS   Apple Headquarters too, I think.
+AFA Gary J It's still there, Joe
+JSchober   Thanks.  :)
+AFL Jim    OK, Phil. Go ahead with your question.
+Phil Doto  Some people seem to have the Oct APDAlog, should I have received
+           mine by now?
+AFL Jim    I received mine today, Phil
+AFA Gary J I just got mine today too.
+AFL Jim    They must get to the locals last or something :)
+Phil Doto  right Thanks I won't panic. :-)
+AFL Jim    It looks like our scheduled hour is up. Thanks for coming tonight
+           and I hope you'll come back next week. Our topic then will be
+           Programming Environments. I'm releasing the MicroEMACS editor in
+           the libaries tommorrow, so maybe there'll be some discussing on it.
+DwightW1   thank you all for helping me!
+Dave Lyons You're welcome, Dwight.
+AFL Jim    You're free to stick around and chat.
+Matt DTS   I just got a flashnote from Tom Chavez... ...who says that we
+           currently plan to send new copies of the Toolbox Quick...
+           ...reference to those who've already purchased them.  Thought you'd
+           liketa know
+Dave Lyons Neat...thanks, Matt.
+AFA Parik  Thanks Matt!  
+Matt DTS   You're welcome.  (Like *I* did anything...)
+Dave Lyons Fine, Matt...thanks for TELLING us about it then, but _not_ thanks
+           for making it happen. :-)
+AFL Floyd  Matt:  Where are the A2 tech notes?  (ducking) :)
+JSchober   ^^^ ditto that! :)
+Dave Lyons We got the October mailing in November, so when do we get the
+           November
+Matt DTS   Gee, Floyd, everyone ELSE got them!
+Dave Lyons mailing?  [October, of course! :) ]
+AFL Jim    Matt, I didn't bribe him to say that :)
+AFL Floyd  Ha ha, very funny, Matt.
+JSchober   October of which year??
+Matt DTS   (They're in duplication currently)
+AFL Floyd  Jim: I thought EMACS was commercial?
+JSchober   (JIM is releasing it tomorrow... but when is APPLELINK releasing
+           it?!)
+AFL Jim    Floyd, this is a PD version that Morgan Davis came up with.
+AFL Floyd  Oh, great.  Source code?
+AFL Jim    Yep
+AFA Gary J To anyone that might be interested in downloading EMACS... one of
+           the files says that it takes <68 minutes to download.  It REALLY
+           only takes <30 minutes. (Don't let the 68 give you a heart attack!)

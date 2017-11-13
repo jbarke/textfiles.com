@@ -1,0 +1,196 @@
+#########################              Config file parsing routine written by
+#- Modplay Config file -#              Paul Sutton (P.C.Sutton@bradford.ac.uk)
+#########################
+
+# The Modplay config file must be called      Modplay.cfg
+# If no file matching modplay.cfg is found in the current directory when
+# you run MP then modplay will look at the directory in which the copy of
+# mp.com being run is in (So if you put mp.com in c:\bin put modplay.cfg
+# in there as well). 
+#
+# All commands must be in lower case (that includes hex digits like 0ff2)
+# Where a number is required the default is decimal unless preceeded by a $
+
+# Lines preceeded by '#' are comments.  Remove the # from a command to
+# make it active
+
+# Colours may be
+# Black Blue Green Cyan Red Magenta Yellow Gray
+# Any of the colours can be preceeded by  light  or  flashing
+# i.e.  flashing red on blue, green,  black on yellow, 
+#       flashing light red on blue  etc.
+
+##############################################################################
+#
+#    Mixing Speed - 6000 (6kHz) to 30000 (30kHz)
+#    16kHz is normal for a 286 12Mhz + and not much is to be gained
+#    by going higher
+#
+#    8Mhz     - use 6000 for a mixing speed and it will just work!
+#   10Mhz     - try around 10000
+#   12Mhz     - try around 15000
+#   Better    - 15909 is Ok, or 22000 for bit better quality
+
+mixing-speed    15909   # 15909 normal mixing speed
+
+##############################################################################
+#
+#    Mixing Speed - 6000 (6kHz) to 30000 (30kHz)
+#    When running a shell to DOS.  If commented out then Modplay
+#    just does 6kHz less than the mixing_speed above.  Lower this if Modplay
+#    struggles when you shell to DOS
+#
+
+shell-mixing-speed 10000        # 10000 normal
+
+##############################################################################
+#
+#   Default Output Device - the one Modplay starts up with.  If you select
+#   a device that isn't available then Modplay will choose the next avaiable
+#   one.   Output devices are from the list:
+#
+#   speaker                                     PC Internal Speaker
+#   lpt1     lpt2      lpt3                     D/A on parallel ports
+#   disney1  disney2   disney3                  Disney sound source on LPT
+#   lpts                                        Stereo on 1&2
+#   lptm                                        Mono on 1&2
+#   asm                                         Assembler routine (see below)
+#   blaster                                     Sound Blaster
+#   ston1                                       Stereo-on-1 board
+#   user-mono                                   User defined mono
+#   user-stereo                                 User defined stereo
+#   user-quad                                   User defined quadrophonic
+
+output-device           speaker
+
+##############################################################################
+#
+#   Protracker mode - If set to on then old mods (like Run The Gauntlet) will
+#   sound better, but the protracker mods will then sound wrong. 
+#
+
+protracker      off
+
+##############################################################################
+#
+#     Default .GIF filename for background screen
+#     (otherwise assumes .\MODPLAY.GIF)
+#
+
+#gif-filename   c:\gif\mwc\kelly.gif
+
+##############################################################################
+#
+#    Spectrum Analyser Colour
+#
+
+#spectrum-colour         blue on black       # flashing light green on blue
+
+##############################################################################
+#
+#    Specturm Analyser Character
+#
+
+#spectrum-bar-char       Ü      
+
+##############################################################################
+#
+#    Spectrum Analyser - Colour of end of bar
+#
+
+#spectrum-end-colour     red on black           # flashing red on black
+
+##############################################################################
+#
+#   Bar LED colour
+#
+
+#bar-colour              black on blue
+
+##############################################################################
+#
+#   Bar LED character
+#
+
+#bar-character           =
+
+##############################################################################
+#
+#   Ignore Archives - If yes then don't look for MOD files in ZOO ZIP etc.
+#
+
+ignore-archives         no
+
+##############################################################################
+#
+#   User Defined D/A mono port.  Use instead of -xm
+#
+
+#defined-mono            $022f
+
+##############################################################################
+#
+#   User Defined D/A stereo port.  Use instead of -xs
+#
+
+#defined-stereo-l       $0300
+#defined-stereo-r       $0301
+
+##############################################################################
+#
+#   User Defined D/A quadrophonic port.  Use instead of -xq
+#
+
+#defined-quad-1         $030c
+#defined-quad-2         $030d
+#defined-quad-3         $030e
+#defined-quad-4         $030f
+
+##############################################################################
+#
+#   Playback display - the default display when playing a MOD
+#   Can be one of:  blobs   spectrum   scroll  vga-scope  none
+#
+
+playback-display       blobs
+
+##############################################################################
+#
+# What order should Modplay present the directories and mods?  For each
+# type of file give a priority.  Default is
+# 1 0 3 1 1 1 1 1 1 1 2 meaning that 
+# directories first
+# then (mod/lha/arj/zoo) sorted by filename
+# then GIF
+# then drives.
+# 0 0 0 0 0 0 0 0 0 0 0 would give equal priority to all (try it!)
+# (?) not used.
+#                 MOD DIRs DRIVE ZIP LHA ARJ ZOO (?) (?) (?) GIF
+
+#  sort-priority    1   0    3     1   1   1   1    1   1   1  2
+
+##############################################################################
+#
+#    Make your own assembler code for driving your own hardware
+#
+#    A name for the defined output device - maximum 21 characters - no spaces
+#    allowed :-(  [defining a name here enables the asm code given later]
+#
+
+#asm-name Pro-Gold-Whatsit+
+
+#
+#    Actual machine code for stereo playback to the output device.   Samples
+#    are given in signed format in AL (left) and AH (right).  First convert
+#    to unsigned format before outputing (something like  SUB AL,80, SUB AH,80)
+#    You can use registers  AX  DX  BX  only and any relative jumps you
+#    might need.  All numbers must be in hexidecimal and you have a maximum
+#    of forty bytes. (Dont forget to remove the #'s!)
+
+#asm ba 01 03         # mov dx,0300
+#asm 2c 80            # sub al,080 - convert to signed
+#asm ee               # out dx,al
+#asm ba 2f 02         # mov dx,022f
+#asm 88 e0            # mov al,ah
+#asm 2c 80            # sub al,080 - convert to signed
+#asm ee               # out dx,al

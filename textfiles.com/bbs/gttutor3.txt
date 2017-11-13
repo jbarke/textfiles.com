@@ -1,0 +1,208 @@
+*****************************************************************
+This  is the third in a series of tutorials that I hope  will  be 
+found  to  be  useful  to  both  new  and  experienced  users  of 
+communications  facilities.
+*****************************************************************
+
+Q:  Why is it that I experience so much more line noise than  the 
+people I call?  It seems that I see noise on my screen with  some 
+frequency,  but if I ask the party that I have called if he  sees 
+it too, I'm usually told his screen is clean.  Is there something 
+wrong with my system?
+
+A:  The odds are twice as great that you will have line noise  if 
+you  place a call to a computer than if a computer were  to  call 
+you.  It is normal and easily explainable.
+
+While  it is true that the odds are twice as great that you  will 
+experience  or  know  about  noise in the  case  where  you  have 
+initiated the call, the incidence of noise is the same regardless 
+of who places that call (assuming the same lines and circuits are 
+being used in both cases).  The reason for this is that when  you 
+are  in Terminal mode (placing the call), your system is  set  to 
+full-duplex operation and when it is in Host mode (auto  answer), 
+it is in half duplex.
+ 
+Full  duplex means that whatever you type on your  keyboard  does 
+not  get  sent  to  your screen.  It is  sent,  instead,  to  the 
+communications port and from there it travels through your modem, 
+along  the telephone lines to an answering modem, and then  to  a 
+host sytem.  The host system then sends it back to you.  In  half 
+duplex, on the other hand, whatever you type is sent to both your 
+communications port and to your screen.  From this it is  obvious 
+that  every character seen on your screen when you have placed  a 
+call  has  gone through the telephone system while only  half  of 
+what  is  seen  on  the host system's  screen  has  been  on  the 
+telephone circuit before it got there. 
+
+Further,  line  noise  can be unidirectional.  That  is,  it  may 
+appear  as  data  travels in only one  direction  or  the  other.  
+Regardless  of  that fact, it will be seen by the  terminal  mode 
+user (data must go both ways before it reaches the screen) and if 
+it appears only on the link from the host to the terminal user it 
+will never be seen by the host.
+
+Q:  The last tutorial you wrote told us about MNP and ARQ  modems 
+being able to eliminate most line noise.  How do they do that?
+
+A:  Part of that answer is still a mystery to me, but I know  how 
+it  does it in theory at least.  I will tell you why part of  the 
+answer  remains  a  mystery  in  a  moment.   First,  recall  the 
+discussion  we  had about file transfer protocols.  All  of  them 
+utilize  some form of CRC mechanism to insure that the  receiving 
+system  had  received  all  of  the  contents  of  a  packet   of 
+information  without  having dropped any bits or  picked  up  any 
+extra  bits.   The CRC is a byte or a word of data  that  is  the 
+result of an algoritm that 'folds' every byte in the data  packet 
+onto itself in such a way as to result in a pattern of bits  that 
+can be calculated by the receiving system as each byte of data is 
+received  and  then compared with the CRC  that  is  subsequently 
+received.  If there is a mismatch then the data (or CRC byte) did 
+not  get  received correctly.  The MNP and ARQ  modems  implement 
+this  strategy within themselves.  All data that  is  transmitted 
+from  one  of  these modems is re-packaged into  what  the  modem 
+manufacturers  call 'frames' (packets) before being  transmitted.  
+Each frame is followed by a CRC byte or word that is stripped off 
+by  the  receiving modem and used to determine if the  frame  was 
+received correctly.  Line noise simply makes that CRC check  fail 
+and the result is an automatic retransmission of the frame.
+ 
+As you can see from the above, the modem is now acting just  like 
+your  computer  does during file transmissions using  a  protocol 
+transfer  method.  This is not done for 'free'.  The overhead  of 
+doing  so results in less than rated speeds in every case.   That 
+is, the theoretical maximum data rate of a 1200 baud modem is 120 
+characters  per second, but MNP and ARQ modems are  sending  more 
+characters between themselves than the sending system itself.  If 
+there  are  errors and, thus, an automatic  retransmission  of  a 
+frame,  the  sending  modem is very likely to  have  to  ask  the 
+sending  computer  to  wait for it.  It is  estimated  that  this 
+overhead (even without errors) results in a degradation of  about 
+12%  in  terms of the maximum possible performance of  the  modem 
+yielding about 106 characters per second possible throughput.  To 
+counter that built in degradation, the modems strip the start and 
+stop bits from each byte and send only 8 bits rather than the  10 
+(or  eleven) that are sent by non-error-correcting modems.   This 
+increases  the efficiency by about 20%.  The net effect is  that, 
+assuming  no  errors,  the possibility of  about  108%  of  rated 
+performance.   (It  is possible to get about 130  characters  per 
+second  rather than 120 if there are no errors - this also  fails 
+to  account for additional 'compression' methods built into  some 
+of these modems).
+
+So,  where is the confusion?  Well, the above assumes there is  a 
+stream  of data being sent that can be 'framed'.  How the  modems 
+function  when a user is merely typing one or two  characters  or 
+words  at  a time before the other side responds  is  a  mystery.  
+Indeed,  as  each  character  is  typed  it  is  sent  down-line.  
+Presumably there is a timeout of some kind in the modem that says 
+that if another character is not entered within x milliseconds it 
+is presumed that the frame is complete and it is sent along  with 
+its  CRC.   However it does it in practice, it does  seem  to  be 
+effective at eliminating line noise.
+
+Q:   So MNP and ARQ modems are faster and eliminate  line  noise.  
+Sounds  like  the way to go.  Are there any  negatives  to  their 
+usage?
+
+A:   Interesting  question.   Assuming  that  you  use   protocol 
+transfer   methods  in  addition  to  the  error  detection   and 
+correction logic of the modems themselves, I can only think of  a 
+couple of negatives at the moment.  The first, of course, is  the 
+lack of standards, particularly at the higher baud rates.  Second 
+is  the  fact that every time you use one to call a  system  that 
+does  not use MNP or ARQ (the vast majority of them do not)  then 
+you automatically lose part of their opening screens.
+
+Let  me  explain that.  When an MNP or ARQ modem  first  connects 
+with  another modem the calling modem issues a sequence of  bytes 
+that  is  asking the answering modem if it is also  MNP  or  ARQ.  
+These bytes include an id and an indication of the level of  MNP, 
+for  example,  that  the  caller is  using.   The  first  set  of 
+characters that come back from the called modem are then consumed 
+by  the  modem rather than passed through to the  user's  screen.  
+Thus,  they are lost to your system.  Very often it is  necessary 
+for  the calling system user to press his Enter key in  order  to 
+cause  subsequent  characters  to be  passed  through  the  modem 
+(telling  it  in  effect, to turn off MNP or ARQ).   This  is  an 
+annoyance  to the terminal mode user but it can be worse for  the 
+host system.
+ 
+With the introduction of release 12.20 of GT PowerComm there  has 
+been  some controversy as to the existence of the opening  prompt 
+that  it issues in which it asks if the caller wants to use  ANSI 
+graphics  or  not.   Many users seem mildly  annoyed  that  their 
+selection is not recorded somewhere so they don't have to  answer 
+that prompt more than once.  What they fail to understand is that 
+the  prompt is there for several reasons.  MNP is a good  example 
+of what I mean as is the possibility of noise on the line.
+ 
+When  an  MNP  call comes in, those  initial  characters  I  just 
+mentioned 'hit' the prompt and result in reissuance of it.  We do 
+not permit a default to that prompt so that we do not go past  it 
+with  noise  or MNP.  By the time a Y or N is  entered,  the  MNP 
+sequence  of  handshake signalling is done.  If we did  not  have 
+that  initial  prompt then the first question the user  would  be 
+asked  would be his first name.  Ask any Sysop how  many  garbage 
+names  he  has  in his user base.  If there are any  then  I  can 
+reasonably  assure  you that his system does not have  a  leading 
+prompt such as ours to protect him from noisy incoming calls  (or 
+MNP).
+
+Q:  Is 9600 baud the theoretical limit to technology in terms  of  
+modems?
+
+A:    Hardly.   It  appears  that  9600  'baud'   stretches   the 
+reliability limits of today's unconditioned telephone system, but 
+modems  exist  that  are much, much  faster  than  that  already.  
+19,200 bits per second modems are functional on conditioned lines 
+even  now.   As  to limits, well, did  you  know  that  satellite 
+communications   capabilities  exist  that  already  permit   the 
+transfer of over a million bits per second?  
+
+Over  the past 20 years there has been a rather constant rate  of 
+improvemnt  in all aspects of data processing technology.   As  a 
+rule  of  thumb that is pretty close consider this:   Every  four 
+years   there   has   been   a   three   fold   improvement    in 
+performance/capacity  for  only  a two fold  increase  in  price.  
+Sometimes  we forget how long this trend has been in effect,  but 
+an  IBM advertisement a few years back made it pretty clear.   At 
+that  time the ad suggested that if the automobile  industry  had 
+enjoyed the same rate of improvements over the past 20 years that 
+the  data  processing industry has enjoyed, then every  adult  in 
+this country could afford to own a Rolls Royce, as it would  cost 
+only  about  $20  and, incidently, it would get  about  2,000,000 
+miles  to  the  gallon  of gasoline.   For  a  more  contemporary 
+example,  we  need only look back at the original IBM  PC.   That 
+machine  had  320K disk drives and a clock speed  of  4.77  micro 
+seconds.  Today you can buy a Compaq 386 that is 17 times  faster 
+than  the  original PC (throughput) and you can get  it  off  the 
+shelf  with  130  megabyte hard disk.  The price  of  this  newer 
+machine is less than three times the original PC, closer to twice 
+the  price.  No, we are not at the limit of technology, not by  a 
+long shot.
+
+
+
+
+
+X-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-X
+
+ Another file downloaded from:                               NIRVANAnet(tm)
+
+ & the Temple of the Screaming Electron   Jeff Hunter          510-935-5845
+ Rat Head                                 Ratsnatcher          510-524-3649
+ Burn This Flag                           Zardoz               408-363-9766
+ realitycheck                             Poindexter Fortran   415-567-7043
+ Lies Unlimited                           Mick Freen           415-583-4102
+
+   Specializing in conversations, obscure information, high explosives,
+       arcane knowledge, political extremism, diversive sexuality,
+       insane speculation, and wild rumours. ALL-TEXT BBS SYSTEMS.
+
+  Full access for first-time callers.  We don't want to know who you are,
+   where you live, or what your phone number is. We are not Big Brother.
+
+                          "Raw Data for Raw Nerves"
+
+X-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-X

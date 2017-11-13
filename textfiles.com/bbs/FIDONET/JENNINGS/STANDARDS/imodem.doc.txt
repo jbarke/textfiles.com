@@ -1,0 +1,45 @@
+
+Heard of this "Imodem" protocol? It's a variant of XMODEM meantç
+for use over really long lines, where the turn around delayç
+(approaching 30 secs!) makes ACK/NAK type things not work.
+
+Basically, it sends a stream of unacknowledged numbered blocks,ç
+and at EOF, issues a list of bad blocks which are then resent.ç
+Very nice idea. Of course we have ZMODEM ...
+
+What if: you make this eensy weensy change to ZMODEM. When youç
+get a bad block, you just remember it (the offset). When you getç
+EOF (ZEOF), you ZRPOS at the lowest remembered bad offset, getç
+the data, ZRPOS at the next highest, then when all blocks are OK,ç
+ZRPOS to EOF or whatever it is that ZMODEM uses.
+
+Only the receiver needs to be changed. The change would still beç
+completely ZMODEM-Forsberg to the letter and spirit correct. Thisç
+relies on the regularity of ZMODEM, plus the fact that the senderç
+issues ZCRCW blocks (wait for ACK) after a ZRPOS, ie. after anç
+error.
+
+For example: you have a 10,240 byte file, to send as ten 1024ç
+byte blocks. Sender whizzes all the data out, then issues a ZEOF.
+
+Now the receiver got CRC errors on blocks 2 (offset 2048) and 7ç
+(offset 7168). When it receives the ZEOF, it does a ZRPOS toç
+2048; the sender will resend starting with that offset. When thatç
+block is received OK, the sender does a ZRPOS from 7168, theç
+sender does it's usual. When all is well, the receiver does aç
+ZRPOS to the previous EOF (or whatever mechanism) and the fileç
+transfer is completed.
+
+	----
+
+The ZMODEM code and spec calls for (under all the right, andç
+usual, circumstances) ZCRCG blocks, ie. fully un-acknowledged,ç
+but that after an error, a ZCRCW block is sent, which requires anç
+ACK. This scheme would work, but be less effecient, if the senderç
+immediately did ZCRCG's after the re-position to the bad part, asç
+data beyond the bad block would be sent, and would probably slowç
+down things when a second (in this example the ZRPOS 7168) re≠
+position were sent. But it should still work.
+
+What you think?
+

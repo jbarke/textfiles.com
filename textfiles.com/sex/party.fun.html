@@ -1,0 +1,295 @@
+                             MIKE01
+
+Mike is somewhat shy and quiet.  He is married to Betty, a
+vivacious, outgoing girl who likes to flirt with other men.  When
+they go to parties together, Mike usually winds up being
+something of a wallflower while Betty disappears into the crowd.
+
+                            THE PARTY
+
+
+     Mike was actually enjoying himself.  He couldn't believe it. 
+Normally, he didn't particularly like parties.  He went because
+his wife liked to go and he usually wound up in a small group
+talking while his wife disappeared on the dance floor.  But
+tonight Mike was enjoying himself.  He was dancing with the
+hostess, June, and he was enjoying every move they made together
+in the crowded den.  He caught sight of his wife across the
+crowded room, dancing with June's husband.  Even seeing the way
+she was molding her body to her partner's didn't upset him
+tonight.  It didn't bother him because June's body was glued to
+his.
+
+     Mike couldn't believe how he and June were dancing.  She had
+her face buried against his neck and he could feel her lips sort
+of nibbling at his throat.  Her body was molded to his own and he
+could feel her ample tits against his chest through the pullover
+shirt which he wore.  He was sure she wasn't wearing a bra.  He
+had been pretty sure before he danced with her, because he could
+see her nipples pressing against the soft thin blouse she wore. 
+Now he was absolutely sure she was braless, because he could feel
+her tits pressing against his chest.  He was amazed at the way
+she was rubbing up against him as they danced.  He could feel her
+crotch against his thigh.  She was actually rubbing her pussy
+against his leg!  And her hip was pressing against his crotch. 
+He knew that his dick was getting hard in his pants as they
+danced.  He wondered if she could feel it.
+
+     "Umm, Mike, you must be enjoying this as much as I am," June
+whispered in his ear.  "You're getting a hard-on."
+
+     "I'm sorry, June," he said, "I just couldn't help it."
+
+     "Don't appologize," she giggled.  "I think of it as a
+compliment."  As she said this, she boldly rubbed her stomach
+against the bulge in his pants.  He gasped with pleasure.
+
+     "Why don't we go out and dance on the patio where it isn't
+so crowded?" June suggested.  "Besides, it's cooler out there."
+
+     June pulled away from him and took his hand.  They threaded
+their way through the swaying couples and went out through the
+sliding glass doors onto the patio.  There were two other couples
+dancing in the semi-darkness away from the light which came
+through the sliding glass door.
+
+     June led him over to a dark corner of the patio and snuggled
+up against him.  He took her in his arms and they began to move
+to the music again.  As they danced, he glanced at the other two
+couples.  He could see that one couple was the gal who lived
+across the street from him and a guy from across town.  He
+suddenly realized that the guy had one hand in the woman's
+blouse!  He was feeling her tits as they danced!
+
+     If he had thought June was dancing close inside, it was
+nothing compared to what was going on now.  She was actually
+rubbing her stomach up against his hard dick!  She seemed to be
+enjoying the feel of it against her belly.
+
+     Mike caught a glimpse of the other couple and suddenly
+realized that it was his wife and June's husband.  They didn't
+seem to realize that Mike and June were there.  He saw that
+June's husband had his hand down on his wife's ass.  He was
+squeezing it and probing between her legs with his fingers from
+behind.  Then he realized that she had her hand down between them
+and was rubbing his dick through his pants.
+
+     "They really seem to be enjoying themselves, don't they?"
+June whispered in his ear.
+
+     "You don't mind?" Mike asked.
+
+     "Oh, no," June chuckled.  "Sam has been wanting to get in
+Betty's pants ever since we met the two of you."
+
+     "What?!" gasped Mike.  He drew back and looked down at her.
+
+     "Oh, don't be like that," she told him.  "Actually, I've
+been wanting to get in your pants ever since Betty told me what a
+big dick you have."  She reached down and boldly grasped his hard
+dick through his pants.
+
+     "Boy, she wasn't lying," June giggled.  She slid her hand up
+and down the length of his big rod, massaging it through his
+pants.
+
+     "Come on, forget them," June whispered to him.  She took one
+of his hands and slid it inside the bottom of her blouse.
+
+     Mike found himself sliding his hand up over her warm flesh
+in spite of himself.  His hand closed on her big tit and he began
+to squeeze and manipulate it.  She gasped into his ear.  Out of
+the corner of his eye, he saw Sam slide the zipper down in the
+back of Betty's pants and slip his hand down inside.  He knew
+that Betty wasn't wearing any panties so he knew that Sam had his
+hand on Betty's bare ass.  He saw that Sam had his other hand up
+inside Betty's blouse, and he knew that she wasn't wearing a bra
+either.  He wondered for a moment if Betty knew he was there,
+then he realized that she had her head buried in Sam's neck, and
+couldn't possibly know who else might be on the patio.  Stangely,
+Mike found himself almost as excited by what Sam and Betty were
+doing as by what he and June were doing.
+
+     "Why don't you pull my skirt up and feel my pussy?"
+suggested June.  "I'm not wearing any panties," she added.
+
+     Without hesitating, Mike pulled her short skirt up in the
+back and slid his hand down over her warm bare ass.  When he
+reached the bottom of her ass, he just slid his hand right in
+between her legs from behind and dipped his middle finger into
+her crack.  He found her pussy flowing with juice!
+
+     Glancing at Sam and Betty again, he saw that Betty was
+unzipping Sam's pants.  Evidently, Sam was not wearing any
+shorts, because his dick sprang right out through the open fly. 
+Mike was a little relieved to see that Sam's dick wasn't quite as
+big as his own.
+
+     Mike felt June's hand pulling his zipper down.  She pushed
+the front of his jockey shorts down and wrapped her hot hand
+around his hard prick.
+
+     "Umm," she purred in his ear.  "That thing is huge."
+
+     Mike removed his hand from June's blouse and boldly began to
+unbutton it.  When he had it unbuttoned all the way, he pulled it
+wide open and palmed one of her big jugs.
+
+     "Why don't we find someplace a little more private?" June
+suggested.  Mike didn't resist when she pulled away from him and
+took him by the hand, leading him towards a gazebo in the back
+corner of the yard.  Boldly, they walked hand in hand towards the
+gazebo, with June's blouse hanging open and Mike's dick sticking
+out of his open fly.  When they reached the gazebo, June led him
+inside and then turned to face him.  She wrapped both her arms
+around his neck and pulled his lips to her own.  Mike palmed both
+of her tits as he kissed her.  He felt her breath quicken in his
+mouth as he pinched her nipples.
+
+     Pulling his lips away from hers, he bent down and took a big
+rubbery nipple in his mouth.  He sucked it in between his lips,
+gently nibbling on it.  While he sucked her tit, he reached down
+and pulled her skirt up, sliding his hand up between her legs. 
+He palmed her pussy, feeling the heat from it against the palm of
+his hand.
+
+     Gently, Mike inserted the tip of his finger between her
+pussy lips, gradually sliding the finger down deeper into her
+slit.  He rolled her clit with his finger, then slid his finger
+farther down and swirled the end of it around in the entrance to
+her pussy hole itself.
+
+     He felt her slowly backing up.  He raised his head from her
+tit to see what she was doing.  Then he realized that she was
+maneurvering them to a table located over against the wall.  He
+followed her, keeping his finger busy in her pussy.  When they
+reached the table, June just reached down and pulled her skirt up
+around her waist and sat her ass up on the edge of the table.
+
+     She reached down and began to unfasten his belt and unfasten
+his pants.  When they were unfastened, she let them slide down
+and pushed his shorts down.  She wrapped her fingers around his
+massive hard-on and slowly slid her hand up and down the length
+of his shaft.  Mike now had his finger buried in her wet pussy. 
+He was sliding it in and out of her, fingerfucking her with the
+entire length of it.
+
+     Suddenly, whe began to pull on his dick, drawing him close
+to her.
+
+     "Fuck me, Mike," she begged him.  "Stick that big dick up my
+hot pussy and fuck my ass off," she told him.  Mike pulled his
+finger out of her pussy and moved up against her.  He reached
+down and took his dick in his hand, sliding the head of it up and
+down in her juicy slot.  He could feel the heat coming from her
+cunt.  It felt like an oven.  She pulled her legs up and spread
+them.  Mike slid the end of his dick down to her cunt hole and
+slowly began to push it up into her.  She groaned as his big dick
+slowly penetrated her hot cunt.
+
+     Mike couldn't believe how hot her pussy felt as it slowly
+engulfed his dick.  He looked down and watched his dick disappear
+up between her legs, sliding right up into the pink opening
+framed by her black cunt hair.
+
+     When he had it all the way up in her, he stood for a moment,
+just feeling the wet heat surrounding his dick.  He reached down
+and hooked his arms under her knees, lifting her legs and
+spreading them wide.  June leaned back on the table and supported
+herself on her hands.
+
+     Mike slowly withdrew his dick until only the end was still
+in her, then slowly pushed it back up into her again.  She
+groaned as he fucked her, slowly and deeply.
+
+     Mike began to pick up speed now, screwing his dick in and
+out of her faster and faster.  She was responding to his thrusts,
+pushing herself up to meet him on every thrust.  Harder and
+harder he fucked her, slamming his dick in her up to the balls on
+every stroke.
+
+     Mike could feel it building up, deep in his balls.  He could
+feel the pressure moving up along the shaft of his dick,
+indicating that he was just on the verge of coming.  He wasn't
+sure he could hold off much longer.
+
+     Suddenly, June let out a little muffled scream, and her legs
+began to jerk and spasm.  Her eyes were shut tight, her face a
+picture of intense pleasure.  Mike groaned and suddenly thrust
+forward hard, burying it as far up in her as it would go.  His
+dick jerked and throbbed as it shot squirt after squirt of his
+hot cum deep into her cunt.  Finally, the spasms of pleasure
+subsided and he just stood there with his dick still buried in
+her cunt.
+
+     After a few moments, he slowly withdrew his prick from the
+juicy hole.  She kind of moaned a little as the end slipped out
+of her.  He lowered her legs and pulled her back up to a sitting
+position.
+
+     "Oh, boy," she smiled at him.  "That was really something
+else!"
+
+     "You can say that again," he agreed with her.  "I can't
+remember when I have come so hard."
+
+     "It's that strange pussy," she told him.  "Getting some that
+you haven't had before will always do that to you, or so Sam
+says."
+
+    " Speaking of Sam, I wonder where he and Betty are," Mike
+said.
+
+     "Why don't we find out?" June suggested, sliding down off of
+the table, letting her skirt fall back down into place and
+beginning to button her blouse.  Mike quickly pulled his shorts
+and pants up and got himself fastened up.
+
+     They moved over to the entrance to the gazebo and June
+peered out.
+
+     "There they are," she said, pointing into the darkness. 
+Mike looked out past her and saw them.  Betty was sitting on a
+bench in the semi-darkness, leaning back in much the same
+position which June had been in.  Her blouse was hanging open and
+her pants were lying on the ground beside her.  Sam was on his
+knees, between her wide-spread legs.  His pants were down to his
+knees and Mike could see his dick, appearing and disappearing
+below Betty's ass as he fucked it in and out of her pussy.  He
+could hear her moaning and groaning, saying "Fuck me, Fuck me"
+the way she always did when she was really getting her ass
+screwed off.  And it was obvious that she was really getting
+herself fucked good.  Sam was banging her as hard as he could.
+
+     As June and Mike watched, the other couple suddenly went
+into orgasm.  Betty was pulling and clawing at Sam, who had his
+dick buried to the hilt in her cunt, pumping load after load of
+cum deep into her spasming twat.  Finally, they raised up and
+separated.  Mike and June watched them rearrange their clothes
+and head back for the house before they themselves left the
+shadow of the gazebo.
+
+     Something suddenly occurred to Mike.  "Why didn't Sam bring
+her to the gazebe?" he asked June.  "They could have walked in on
+us."
+
+     June giggled.  "That happened once," she told him. 
+"Actually, I walked in on him screwing the wife of the guy I was
+about to fuck.  The guy got very upset and was about to try to
+punch Sam's lights out when his wife asked him what he was so
+upset about when he was oviously there to fuck me."
+
+     Mike chuckled.  "What happened?"
+
+     "Well, we wound up watching them fuck, then they watched us
+fuck, but Sam and I decided that people are too unpredictable to
+take a chance on that again.  So we decide ahead of time who is
+going to get the gazebo for a particular party and the other one
+has to find someplace else.  It has worked fine for us ever
+since.  Mike laughed.
+
+--------------------------------------------------
+If you liked this story and would like to hear more about the
+adventures of Mike and Betty, leave a note on this BBS that you
+would like to read Mike02.zip.
+

@@ -1,0 +1,353 @@
+America Online
+APPLE II DEVELOPMENT FORUM CONFERENCE LOG
+Tuesday, October 16, 1990  10:00 p.m. Eastern Time
+Topic:  Programming Environments
+Forum Leader:  Dave Sugar  (AFL Dyfet)
+
+AFL Dyfet  Okay, I guess we are ready to get started...:)...What do you wish
+           to know about
+AFL Dyfet  Shanoj?
+ShanoJ     Anyone here have any Scheduler experience? It's really beginning
+           to annoy me.:(
+ShanoJ     Well, I need to use the Scheduler for Twilight, and it just
+           doesn't seem to
+ShanoJ     work for some people... :( I call _SchAddTask, after checking to
+           make sure the
+ShanoJ     busy flag IS set, and the task never gets called!! :(
+WinkieJim  Shano, BTW, Twilite disables my keyboard from working :)
+ShanoJ     Well, the next version of Twilight (due out for the Twilight Time
+           contest) 
+ShanoJ     should fix ALL of those problems. Thing is, unless I can figure
+           out what's up
+ShanoJ     with the Scheduler, it STILL isn't going to be able to save the
+           screen on some
+ShanoJ     people's GS's.... :(
+Function   Does anyone have any source code for cataloging a disk under
+           GS/OS?
+A2GS       No....but I can get some to you...
+Function   That would be great if you could.
+WinkieJim  Function, all you have to do is use the GEtDirEntry function to
+           get the
+WinkieJim  files in any directory
+Function   Yeah, I know how and have even done it.  I just need to make some
+           things work
+WinkieJim  where are you having problems?
+Function   I need to print all of the info to the screen using the console
+           driver.  The
+Function   console driver is not the problem either.
+Function   Whenever I try to print stuff to the screen it comes out as
+           control chars
+WinkieJim  inverse you mean? 
+Function   yeah
+WinkieJim  Well the filenames and pathnames GS/OS gives, has the high bit
+           clear.
+Dave Lyons (Not necessarily!  Standard legible characters have their high
+           bits clear, but high-ascii is
+Dave Lyons permissible in some file systems, like AppleShare.)
+WinkieJim  Ok, well standard ProDOS names then. 
+Function   I can print the names fine, just not the blocks, filenames and
+           mod/creation dat
+WinkieJim  you either want to try setting the high bit or set the output
+           filter to do it 
+WinkieJim  for you.
+AFA Gary J You're using GetDirEntry, right Function?  
+Function   yes
+AFA Gary J Are you converting the mod/creation date, etc. to ASCII
+           characters before 
+AFA Gary J trying to print them?  (Function)
+Function   no.  I have no idea how
+AFA Gary J That's why they're inverse, etc. then.
+Function   I know.  I just don't know what to do
+WinkieJim  First byte= Seconds
+WinkieJim  2=Minutes
+WinkieJim  3=Hour
+WinkieJim  4=Year
+WinkieJim  5=day
+WinkieJim  6=month
+WinkieJim  7=null
+WinkieJim  8=weekday
+WinkieJim  just turn it in the appropriate number or word (month 1= January
+           12 Dec...)
+AFA Gary J Most of the dir info stuff comes back as pure hex values.  Some
+           things like
+AFA Gary J dates/time is in a format like WinkieJim is displaying :)
+AFA Gary J You can use the Integer Math toolset to do the conversion to
+           ASCII for you.
+
+WinkieJim  Ok big question for you all:
+WinkieJim  I have a NDA with a menu bar in it's info bar.
+WinkieJim  The menus come from resources.
+WinkieJim  When I resize the window or move some thing in front of it (not
+           when I move it
+WinkieJim  around the screen) it will freeze at the DrawMenu call.
+WinkieJim  The resource file is available (I know this due to NL 3.0 :)
+WinkieJim  (before when the rescource file wasn;'t avail it would crash, but
+           now it freezes up)
+WinkieJim  I've followed TEch Note #3 to the letter and still can't see where
+           it is
+WinkieJim  messing up.
+Dave Lyons WJ, how do you know it's available *during* the info bar draw
+           call?
+Dave Lyons You *do* have to do the Get/SetCurResourceApp bit in your info bar
+           defproc.
+WinkieJim  I call SetResourceApp with my user ID in the info bar defProc. 
+WinkieJim  I also put a break in just before the DrawMenu call and went to NL
+           and saw
+WinkieJim  the resource file was available.
+Dave Lyons Oh, okay.  How 'bout the port?  Did you do a SetPort to anything? 
+           I believe DrawMenu/etc will
+Dave Lyons toast if the current port is invalid.
+WinkieJim  And as I said, it will work if I don't cover the menu bar with
+           something else
+WinkieJim  or resize the window
+WinkieJim  Wouldn't a call to set the window's port in a info draw cause
+           problems?
+WinkieJim  (i.e. doesn't the window manager call StartInfoDraw and doesn't
+           that set the
+WinkieJim  current port corectly?
+Dave Lyons (Good point...I think you're right)
+WinkieJim  (TechNote #3 doesn't do any port setting)
+AFA JoeyS  (technotes can't set ports)
+WinkieJim  Ha Ha Joey  :)
+Dave Lyons Still, check in Nifty List right before it fries & see what the
+           port is set to (it's probably the
+Dave Lyons window manager's port, which should be okay).
+WinkieJim  :) Tech nbote #3 states: Do not switch to the windows port for
+           drawing :)
+WinkieJim  The things that gets me is that it doesn't freze if I just move
+           the window a 
+WinkieJim  little around the screen.
+Dave Lyons WJ, if you just move the window around it's just copying the
+           picture of your window, not calling
+Dave Lyons your info bar defproc or content defproc to draw anything.
+WinkieJim  But will if I resize the window or move it so the info bar is
+           obscured by 
+WinkieJim  something.
+WinkieJim  that' pretty much what I assumed, but it still leaves with me
+           wondering, why?
+WinkieJim  :/
+WinkieJim  I don't suppose adding menu items to the bar after creating it
+           would cause 
+WinkieJim  problems?
+Matt DTS   (To the bar, yes.  To menus in the bar, no.  :)
+WinkieJim  nope the menu titles remain the same...I just add menu items to
+           the end of two
+Dave Lyons Does your menu pull down okay?
+WinkieJim  of the menus and call calc menu size right after.
+WinkieJim  It pulls down, selects and works perfectly otherwise.
+Dave Lyons And the newly-added items are in there, right?
+WinkieJim  Yup. (originaly off the menu area until I figured out to call
+           CalcMenuSize, but
+WinkieJim  they are there and work perfectly.)
+Dave Lyons I dunno...send me the object & I'll see what I can do.
+WinkieJim  Thanks, dave. I'll get it out asap. dang thing is driveing me
+           batty and is 
+WinkieJim  preventing me from going to beta test stage.
+AFA Gary J Programming environments tonight...uh.. let's see.  Anyone here
+           using the
+AFA Gary J MAX/Edit editor?
+AFA Gary J I actually like the Orca editor well enough, but I need the
+           ability to edit
+AFA Gary J more than one file at a time (and it would also be nice to be
+           able to edit
+AFA Gary J files > 64K).  Would MAX/Edit be overkill for such miniscule
+           wants?
+Matt DTS   I have a problem with MAX/Edit (and it's ancestor, the SDE editor)
+           in that...
+Matt DTS   ...it uses new user IDs for each file it edits and does NOT
+           dispose of them when you quit the editor.
+Matt DTS   This is how it does the "You can switch from Merlin to APW with
+           your files intact" bit.  The memory is
+Matt DTS   not purgeable, either.
+AFA Gary J Hmmm.  That's not good.
+Matt DTS   If keeping files in memory is really that important to you, this
+           is the way to do it, but I'd rather
+Matt DTS   use the memory in my current application and do a bit of disk
+           access when I reenter the editor instead
+Matt DTS   of having to explictly unload files I'm editing before quitting to
+           free their memory.
+Matt DTS   GA.
+AFA Gary J I'm not really concerned about the source staying in memory.  I
+           just want to
+AFA Gary J switch between multiple files while editing.  <done>
+AFL Dyfet  Okay, who wishes to inject a new question at this point??
+ShanoJ     APW 2.0? ZapLink?
+AFL Dyfet  Go ahead Jonah...
+ShanoJ     Welp, does anyone know how APW 2.0 is coming along, and whether
+           there are plans
+ShanoJ     to add the ability to set the OMF bits with ZapLink?
+AFA Gary J That would be a nice addition, Jonah.
+ShanoJ     Hell, that would be a NECESSARY addition. With all of the 3200
+           color stuff I
+ShanoJ     do, ZapLink is basically useless to me without it. :(
+AFA Gary J Must be bank aligned, etc., eh?
+DVS Softwr Would my OMF program in the libraries do the trick?
+ShanoJ     Actually, it's the nospecial bit that's important. I need to get a
+           lot of $01
+ShanoJ     space, and I can't have my program loaded there... :(
+AFA Gary J Your OMF program sets the KIND field, correct?
+DVS Softwr what does he need?
+ShanoJ     Dunno, DVS, what does your program do (I haven't seen it, sorry...
+           :)
+AFA Gary J That would work for you then, Jonah.  That's in the KIND field.
+AFA Gary J Jonah, do you really have trouble with your program trying to
+           grab $01 if you
+AFA Gary J don't set the KIND field to not load in $01?
+ShanoJ     Well, I do SOMETIMES. It shouldn't be a problem much, because it
+           tries to grab
+ShanoJ     $012000, which should be pretty much reserved for QDII Shadowing,
+           but I thought
+ShanoJ     I should be safe and make sure that it can't be loaded there....
+AFA Gary J Is your program an EXE file or a S16 file (when you're developing
+           it)?
+ShanoJ     S16. Has to be, or else APW uses that memory and I'm screwed. :(
+AFA Gary J Yes.
+AFA Gary J I was just wondering.  I have some programs that use $012000, and
+           as long as
+AFA Gary J they're S16 files, I don't have trouble with them trying to
+           reside in $01.  But
+AFA Gary J the main segment is rather large.  That probably makes a
+           difference.
+ShanoJ     Matt, Dave, what's the official position on that? If you HAVE to
+           use the
+ShanoJ     $012000 space, should you set the nospecial bit in the KIND field,
+           or is that
+ShanoJ     only extra work?
+WinkieJim  If you don't set it does it usaly load there?
+AFA Gary J I would tend to want to do it before releasing the program upon
+           the world, just
+AFA Gary J to be safe.
+WinkieJim  gary...that's what I was just thinking of :)
+Matt DTS   If you "have" to use any specific address, you have to be prepared
+           that you can't get it.
+Matt DTS   Just because you didn't load there doesn't mean that some DA or
+           INIT didn't.  You can try for it
+Matt DTS   but you have to handle it gracefully if you can't get it.
+AFA Gary J What, Matt??  No SysFailMgr call?  :)
+WinkieJim  I usually just crash into the monitor...no system errs for me :)
+Dave Lyons I believe when GQUIT loads applications it asks the loader *not*
+           to use special memory--and then if
+Dave Lyons that fails it trying loading again, with no restrictions.
+ShanoJ     Ya, but the $012000 space should be fairly safe, as if a DA or INIT
+           was loaded
+ShanoJ     there, P8 is screwed, too...
+Matt DTS   Maybe no one's tried to launch P8 on that system in a while.  Be
+           prepared for when you can't get it.
+Dave Lyons Properly-loaded DAs don't have code in special memory--but they
+           might allocate non-special memory,
+Dave Lyons so grab $012000 before you call DeskStartUp.
+ShanoJ     Heh, I actually AM prepared, Matt! For once in my life I checked
+           for a valid
+ShanoJ     handle. See, I'm learning. Slowly but surely... :)
+AFA Gary J I have a CDA that does NOTHING but grab $012000, just so I can
+           test my 
+AFA Gary J software :)
+AFA Gary J (It's also fun to see how other software products handle the
+           situation too :)
+
+ShanoJ     Anyone have any thoughts on how to display 3200 color pictures
+           from an NDA?
+ShanoJ     I need to shut down all of the interrupt sources, but that's a
+           no-no when the
+ShanoJ     main program isn't the one doing it.... :(
+Matt DTS   Jonah:  There are some tasks desk accessories should just leave
+           alone.
+
+ShanoJ     Does Prizm work well/reliably for anyone here?
+AFL Dyfet  (I don't use Prizm myself..prefer the shell)
+AFA Gary J (same here)
+ShanoJ     Ya, me too. That's why. :(
+AFL Scott  Prizm is very unreliable, IMHO. I have it crash or trash the
+           target volume 
+AFL Scott  regularly.
+AFL Dyfet  I never found problems with Prizm simply because I never really
+           used it :)
+AFA Gary J (trash the target volume?  ugh.  That's serious)
+AFL Dyfet  I had to re-construct my hd recently, Scott...What a pain :(...
+AFL Scott  (that's why I don't use it! :))
+ShanoJ     Ya, I had it erase source files, refuse to compile stuff, etc,
+           etc, etc.
+ShanoJ     Too bad, too, it COULD be really nice. :(
+
+Nuzz       is it too late for a question?
+AFL Dyfet  No Nuzz...ga...
+Nuzz       I'd like to know how GSOS formats the Text in the ClipBoard
+           window
+Dave Lyons Well, GS/OS doesn't have anything to do with the clipboard.
+Dave Lyons Are you asking about the Finder's "Show Clipboard" window?
+Nuzz       Yes, finder, sorry
+Dave Lyons I believe it just calls LETextBox2 with all the text, and with a
+           rectangle the width of
+Dave Lyons the Clipboard window.  LETextBox2 is doing the word wrapping.
+Nuzz       is Scrap type 64 a line edit scrap?
+Dave Lyons Scrap type $0064 is Text Edit style information--goes along with a
+           Text scrap.
+Nuzz       If there is style info, does the finder use this when showing
+           clipboard?
+Dave Lyons Nope, the Finder only uses the Text and Picture scraps ($0000 and
+           $0001).
+Nuzz       Dave, just so I have it straight, you're saying that Finder will
+           word wrap to
+Nuzz       the size of the window (Horz), irregeardless of how the text was
+           "cut"
+Nuzz       <bad spelling>
+Dave Lyons Yes, I think that's what it does.  Carriage returns still force
+           new lines, but so does wrapping.
+Nuzz       Hmm, I've cut some TextEdit stuff and the finder seems to respect
+           the original
+Nuzz       word wrap.
+Nuzz       <without a CR>
+WinkieJim  it might just be luck...
+WinkieJim  (i.e. both windows the same width)
+Nuzz       Nope, the TE lines are much narrower than the Clip window
+Dave Lyons Are there any carriage returns in the text you cut?
+Nuzz       Not on all lines
+Nuzz       I looked at the lines in question and there are no CR's at the
+           wrap point
+Nuzz       yet the clip window is just as the TE
+Dave Lyons Looked at the text in Text Edit, or the $0000 Scrap on the
+           clipboard?
+Nuzz       The $0 Scrap type
+Nuzz       I looked at it with NL
+Dave Lyons That's strange.  I'm sure it's not using the $64 scrap...the
+           Finder doesn't even start up TE.
+Nuzz       I am trying to duplicate this. 
+Nuzz       Right now, MY Clipview window only wraps at CR's. Cuts off words
+           that are wider
+Nuzz       than the window
+Dave Lyons I just tried it (Copy from a Text Edit control) and it shows up
+           with no wrapping in the Finder.
+Dave Lyons (Oops, I take back the part about the Finder using the *current*
+           width of the Clipboard window--
+Dave Lyons it seems to have a hard-coded width.)
+Nuzz       I'll try it again, and get back to you on it Dave. Thanks for the
+           help
+
+WinkieJim  SPeaking of LETExtBox...anyone know how to find out how high in
+           pixels the text
+WinkieJim  in a LETextBox2 is? 
+Dave Lyons WJ, I don't know of a way (that would be too easy).
+WinkieJim  :/
+Dave Lyons If you have a *lot* of text, I don't recommend using LETextBox/2
+           anyway--they aren't very fast.
+WinkieJim  I hate to have to have a super long vertical data area with only
+           2 lines of
+WinkieJim  text :)
+Dave Lyons You don't *have* to, WJ...look at the Macintosh Finder's
+           solution--the scroll bars are never active!
+Dave Lyons (Good solution, eh?)
+WinkieJim  I know I don't have to and don't want to, but if I can't find the
+           length of
+WinkieJim  a LETextBox2..I have no choice
+WinkieJim  because the information displayed can be almost anylength (well up
+           to $FFFF)
+WinkieJim  and with word wrapping it could end up anywhere in hight.
+Dave Lyons I don't think the height can exceed $3fff, or QD would crash.
+WinkieJim  ($FFFF in size of the text data)
+Dave Lyons (By the way, don't call LETextBox with length=0.  It'll toast on
+           you.)
+WinkieJim  I'll put a check in for that one...
+
+
+
+

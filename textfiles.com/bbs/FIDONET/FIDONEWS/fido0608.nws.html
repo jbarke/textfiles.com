@@ -1,0 +1,1380 @@
+     Volume 6, Number  8                              20 February 1989
+     +---------------------------------------------------------------+
+     |                                                  _            |
+     |                                                 /  \          |
+     |                                                /|oo \         |
+     |        - FidoNews -                           (_|  /_)        |
+     |                                                _`@/_ \    _   |
+     |        International                          |     | \   \\  |
+     |     FidoNet Association                       | (*) |  \   )) |
+     |         Newsletter               ______       |__U__| /  \//  |
+     |                                 / FIDO \       _//|| _\   /   |
+     |                                (________)     (_/(_|(____/    |
+     |                                                     (jm)      |
+     +---------------------------------------------------------------+
+     Editor in Chief                                       Dale Lovell
+     Editor Emeritus:                                   Thom Henderson
+     Chief Procrastinator Emeritus:                       Tom Jennings
+     Contributing Editors:                                   Al Arango
+     
+     FidoNews  is  published  weekly  by  the  International   FidoNet
+     Association  as  its  official newsletter.  You are encouraged to
+     submit articles for publication in FidoNews.  Article  submission
+     standards  are contained in the file ARTSPEC.DOC,  available from
+     node 1:1/1.  1:1/1 is available  for network  mail between  NMH-1
+     hour to NMH+1 hour.  At all other times,  netmail is not accepted
+     although submissions can be uploaded.
+     
+     Copyright 1989 by  the  International  FidoNet  Association.  All
+     rights  reserved.  Duplication  and/or distribution permitted for
+     noncommercial purposes only.  For  use  in  other  circumstances,
+     please contact IFNA at (314) 576-4067. IFNA may also be contacted
+     at PO Box 41143, St. Louis, MO 63141.
+     
+     Fido  and FidoNet  are registered  trademarks of  Tom Jennings of
+     Fido Software,  164 Shipley Avenue,  San Francisco, CA  94107 and
+     are used with permission.
+     
+     The  contents  of  the  articles  contained  here  are  not   our
+     responsibility,   nor   do   we   necessarily  agree  with  them.
+     Everything here is  subject  to  debate.  We  publish  EVERYTHING
+     received.
+
+
+                        Table of Contents
+     1. ARTICLES  .................................................  1
+        Adding GroupMail to a BinkleyTerm/ConfMail System  ........  1
+        SEA Letter: XlatList  ..................................... 14
+        New Echo for WATSON Users  ................................ 17
+     2. COLUMNS  .................................................. 18
+        The Old Frog's Almanac - Part the Three (and last)  ....... 18
+     3. LATEST VERSIONS  .......................................... 21
+        Latest Software Versions  ................................. 22
+     4. NOTICES  .................................................. 23
+        The Interrupt Stack  ...................................... 23
+     5. REPORTS  .................................................. 24
+     And more!
+     FidoNews 6-08                Page 1                   20 Feb 1989
+
+
+     =================================================================
+                                 ARTICLES
+     =================================================================
+
+     Jack Decker
+     Fidonet 1:154/8  LCRnet 77:1011/8  NetWork 8:70/8
+
+
+     ADDING GROUPMAIL TO A BINKLEYTERM/CONFMAIL SYSTEM
+
+     [This article is NOT copyrighted and may be freely distributed.
+     Use of the information contained herein is at your own risk,
+     and just might cause your hard drive to be reformatted, your
+     modem to transfer the contents of your bank account to the
+     Gnomes of Zurich (whoever they are), or your dog to meet up
+     with a family of skunks underneath your computer room window,
+     or even worse.  What you see here is the result of a few days
+     of intense hacking (I'm using the original meaning of that
+     noble word), which may or may not have led me to accurate and
+     insightful conclusions.  Don't say I didn't warn you...]
+
+     Lots of misinformation has been going around in regard to
+     GroupMail, and the considerations involved in making GroupMail
+     coexist on the same system with BinkleyTerm and ConfMail.  I
+     suspect that much of this has nothing to do with GroupMail per
+     se, but rather with emotions and personal feelings about the
+     developers of GroupMail.  I won't even attempt to speak to
+     those, but I can at least give you some solid information on
+     how to implement GroupMail on a system that is already
+     successfully running BinkleyTerm and confmail.
+
+     This information is going to be presented more or less in
+     "cookbook" format.  I am going to make a few assumptions to
+     start with... that you are not a "top star" for any conference,
+     that you're not going to feed GroupMail conferences to any
+     non-MSDOS systems that can't run the GroupMail software, and
+     that you're not going to try and convert any GroupMail
+     conference to Echomail or vise-versa.  If any of these
+     assumptions don't apply to you, read on anyway, I'll cover one
+     of the exceptions later, and the rest of the information will
+     still be useful to you.
+
+     This is NOT a substitute for the GroupMail documentation.  Read
+     it, too!  Also, please count on this information containing at
+     least one glaring error and at least a couple of things that
+     could have been done more easily in some other way.  I don't
+     claim to be perfect.  But I would like to know of any errors
+     that you do find.
+
+     Here are the changes you will need to make to your system:
+
+     1) CONFIG.SYS - Group requires some new environment variables
+     to be set.  If you haven't already done so, you can reserve
+     extra space for environment variables by inserting the
+     following line into your CONFIG.SYS file:
+
+     FidoNews 6-08                Page 2                   20 Feb 1989
+
+
+          shell=command.com /p /e:512
+
+     2) AUTOEXEC.BAT - Here is where you add some lines to set the
+     new environment variables that will be used by GroupMail:
+
+          SET GROUP=C:\GROUP
+          SET GRPHOLD=C:\GRPHOLD
+          SET SEADOG=C:\OPUS
+
+     If you want your GroupMail message areas on a different drive,
+     change the drivespec for the GROUP variable.  If you are going
+     to hold GroupMail bundles for pickup by other nodes, and want
+     those on a different drive, change the drivespec for the
+     GRPHOLD variable.  The SEADOG variable should point to the
+     directory that you normally run BinkleyTerm from.
+
+     3) BBS.BAT - Your batch file that runs Binkley, ConfMail, etc.
+     Here are the changes you need to make:
+
+     a) If you test for the existence of mail bundles in your net
+     files area before running ConfMail Import, either delete these
+     tests (you don't really need them anyway) or add tests for the
+     GroupMail bundles you expect to receive.  GroupMail bundles are
+     named with the area name (up to eight characters) plus an
+     unpredictable three-character extension.  So, for example, if
+     you are expecting to receive GroupMail bundles for the COOKING
+     area, you could test for files named COOKING.* (or COOKING.???)
+     in your net files area.  I again emphasize that such tests are
+     normally not necessary, but some people like to use them to
+     shave a few seconds off of batch file processing time.
+
+     b) your line that calls ConfMail Import should *NOT* include
+     the -M option, but *SHOULD* include the -K option.  I use the
+     following line:
+
+          confmail import areas.bbs -K -N -F confmail.out
+
+     Now a bit of explanation... if you really want to use the -M
+     option, you can probably do so as long as you are not
+     converting any GroupMail bundles to echomail prior to passing
+     them downstream.  I suggest removing the -M option now (if you
+     have been using it) because sooner or later you may wish to
+     convert a GroupMail conference to echomail, and it won't work
+     if -M is set.
+
+     The -K option will automatically kill all the null file attach
+     messages that your GroupMail feed generates.  If you don't mind
+     skipping through all the null file attach messages when you
+     read your netmail (you WILL mind eventually), leave out the -K.
+
+     c) You should place the following line immediately AFTER your
+     call to ConfMail Import, BEFORE you do anything else:
+
+          GROUP IN /L
+
+     This does two things... first, it unpacks any GroupMail bundles
+     FidoNews 6-08                Page 3                   20 Feb 1989
+
+
+     you may have received, and second, it scans your netmail area
+     for any GroupMail messages that need to be readdressed to your
+     uplink.  That is why it needs to be run AFTER ConfMail
+     Import... if you run it BEFORE ConfMail Import, any messages
+     you've received from your downstream nodes may not get properly
+     forwarded to the Top Star via your GroupMail feeds.  And you
+     need to run Group In BEFORE running ReMapper, oMMM, or any
+     other program that may change the headers of those messages.
+     So play it safe, and run Group In right AFTER ConfMail Import.
+
+     By the way, the /L tells GROUP to relink the message threads.
+     It does basically the same thing for GroupMail conferences that
+     ReplyLnk (or ConfMail Maint in older versions of ConfMail) does
+     for your echomail conferences.
+
+     d) Just prior to calling oMMM, you should place the following
+     line:
+
+          GROUP OUT
+
+     This will check all your GroupMail areas for new messages, and
+     send out anything you have waiting.
+
+     Now, if you have read the GroupMail documentation, you may be a
+     little confused at this point, since the docs tell you to run
+     GROUP on certain schedules (GROUP OUT in the evening before
+     your mail hours, and GROUP IN in the morning after all mail has
+     been received).  But keep in mind that the folks writing the
+     documentation are using SEADOG, which runs on schedules.  You
+     probably aren't running schedules in that way.  If by chance
+     you do run ConfMail Import only at certain specified times,
+     just do GROUP IN immediately afterward.  But, if like most of
+     us, you run ConfMail Import every time mail is received, you
+     should run GROUP IN immediately afterward.  If you then do a
+     ConfMail Export, you should run GROUP OUT prior to calling
+     oMMM.  GROUP runs very fast (faster than ConfMail when tossing
+     messages, in my opinion) so you needn't worry about it
+     consuming an inordinate amount of time while executing on your
+     system.
+
+     4) AREAS.BBS - There are two important considerations here.
+     First, if you are using a BAD_MSGS area, GET RID OF IT NOW!!!!
+     This is *EXTREMELY* important.  If you don't do this, some or
+     all of the GroupMail messages originating on your system (or on
+     systems that you feed) will be tossed to the BAD_MSGS area by
+     ConfMail, and will never leave your system.  Second, make sure
+     you don't have any echo area names that duplicate GroupMail
+     areas, for the same reason (ConfMail will toss any messages
+     that are supposed to go to your uplinks to those areas instead.
+     The exception to this is if you're converting a GroupMail
+     conference to Echomail, but right now we're assuming you aren't
+     doing that, remember?).
+
+     Of course, someone will say that if you are VERY careful about
+     how you write your batch file, you can get around these
+     problems.  That may be true (although I have my doubts!), but
+     FidoNews 6-08                Page 4                   20 Feb 1989
+
+
+     in any event I don't feel like giving a short course in writing
+     batch files here.  I'm simply taking the safe road by saying
+     "don't do these things."
+
+     5) CONFIG.DOG - You need one of these, even though the
+     GroupMail documentation says that a Mail.Sys file will do (it
+     won't, at least not with GroupMail versions through 2.04).
+     Fortunately, a Config.Dog file is simple to make... you just
+     use any text editor.  Mine looks like this:
+
+          name Jack Decker
+          node 1:154/8
+          aka 77:1011/8
+          aka 8:70/8
+          mail C:\MSG\NET
+          files C:\FILE\NET
+
+     "Name" is the name of the Sysop, "Node" is your primary
+     address, "Aka" lines contain any other addresses you use (in
+     the same net or in other nets), "Mail" is the path to your
+     netmail area, and "Files" is the path to your incoming net
+     files area (which is what GROUP can't find if you only have a
+     Mail.Sys file).
+
+     6) OMMM.CTL (or ROUTE.CTL or whatever you call it on your
+     system).  Be sure to put a poll statement in for each system
+     you pick up GroupMail from (unless you are using some other
+     method for doing polls, or your feed is calling you).
+
+     7) DELIVER.GRP - You need this file if you are feeding
+     GroupMail to any other BinkleyTerm systems, or any other system
+     that can't generate File Update Requests.  Note that future
+     versions of BinkleyTerm will supposedly include the capability
+     to do File Update Requests, but present versions of Binkley do
+     not.  DELIVER.GRP is simply a list of systems that are to
+     receive any given GroupMail area from you.  I quote from SEA
+     Technical Memorandum #0302:
+
+     "The group mail conferencing system is, by design, a pickup
+     system instead of a delivery system.  If at all possible, it
+     should be used as such, because that is how group mail avoids
+     the bulk of the technical problems with echomail.
+
+     "However, at least one popular network mailer is not capable of
+     properly negotiating a file update request, which is the
+     mechanism by which group mail functions.  Until that can be
+     rectified, GROUP requires some sort of delivery mechanism in
+     order to link such systems into group mail.
+
+     "If a file named 'DELIVER.GRP' is placed in the SEAdog
+     directory, then GROUP 2.03 will use it as a delivery list, and
+     create file attach messages for each new group mail archive as
+     it is posted by GROUP PACK (for a top star) or GROUP IN (by a
+     middle star).  The format of the DELIVER.GRP file will look
+     very familiar to those acquainted with echomail.
+
+     FidoNews 6-08                Page 5                   20 Feb 1989
+
+
+     "The DELIVER.GRP file is a normal ASCII text file.  Each line
+     begins with the name of a group conference, with the remainder
+     of the line being a list of network addresses to which it
+     should be delivered.  A conference may be listed more than
+     once, in which case it is addative.
+
+     "For example, a possible DELIVER.GRP file might be:
+
+         BLATZ 520/1015 107/528
+         GNORF 107/528
+
+
+     "By adding support of a delivery mechanism, we open the door to
+     all the troubles echomail is heir to.  However, the door is
+     open only a tiny crack at this time.  The single biggest
+     problem with a delivery system is that of faulty topologies
+     that cause duplicate messages.  This is largely avoided from
+     the start because all duplicate group mail archives have the
+     same name.  The remaining opportunities for duplicate messages
+     to be generated are avoided because GROUP 2.03 refrains from
+     unpacking any group mail archive that is older than the 'update
+     marker' for that conference."
+
+     [end quote]
+
+     Two notes about DELIVER.GRP... first, you DON'T put the node
+     number of YOUR feed in it, only of those systems that are fed
+     BY YOU (this differs from an AREAS.BBS file, which must contain
+     the node number of your feed and of those system that you
+     feed).  Second, if you aren't feeding a particular GroupMail
+     conference to anyone else, it doesn't have to be listed at all.
+
+     8) OKFILE.LST - Your "requestable files" list for BinkleyTerm.
+     Add the following line:
+
+          C:\GRPHOLD\*.*
+
+     (or whatever path you specified for your GRPHOLD directory in
+     the SET command in AUTOEXEC.BAT).  I'm assuming that you
+     already have such a list.  If not, you'll also need to
+     uncomment the following line in your Binkley.Cfg file:
+
+          Okfile     c:\opus\okfile.lst
+
+     (of course you should change the path if the subdirectory
+     you're running Binkley out of is not called OPUS).
+
+     This should allow other systems to obtain any GroupMail areas
+     that you carry on your system.
+
+     9) \GROUP\ORIGIN - A file called "Origin" that sits in your
+     GROUP directory.  For starters, this can be the same as the
+     first line of your "AREAS.BBS" file up to the exclamation
+     point.  You can use custom origin lines for individual
+     conferences by creating a file called "Origin" in individual
+     Group areas, in the same manner in which you create custom
+     FidoNews 6-08                Page 6                   20 Feb 1989
+
+
+     origin lines for individual message areas using ConfMail.  See
+     the GroupMail documentation for more information.
+
+     10) System files.  You'll need to provide your BBS program
+     and/or message reader/editor with the paths to your GROUP mail
+     areas.  Ditto with your message cleanup routine (that calls
+     RENUM or some other message renumberer).  This will vary from
+     system to system, but should not be too difficult to figure
+     out.
+
+     11) ARCE.COM - This one threw me at first, and is the one
+     drawback I found in GroupMail.  GroupMail wants to use either
+     ARC.EXE or ARCE.COM when unpacking mail, and any other filename
+     just won't do.  I've been running PAK10 (and/or another popular
+     program which shall remain nameless) to extract mail archives
+     and had to scrounge through my piles of floppies to find a copy
+     of ARCE.COM.  If you are a Top Star for any conference, you'll
+     also have to have either ARC.EXE or ARCA.COM.  I wish these
+     filenames weren't hardcoded in the GroupMail program, because I
+     use PAK10 to move echomail around (with the help of a program I
+     wrote called PAKIT101.ARC, which lets "consenting Sysops" use
+     any of the "big three" methods of file compression for their
+     mail archives), and could at least use PAK.EXE to extract
+     GroupMail bundles.  I guess it just bugs me that GroupMail
+     won't let you use anything other than the most inefficient
+     method of file compression around.  If anything hinders the
+     acceptance of GroupMail, this will be it, because some folks
+     will see this as an effort of SEA to force people to use ARC.
+     (Sorry, Thom, I like GroupMail but I don't care much for ARC,
+     or I should say, ARC's "crunching" method of compression, which
+     is rather inefficient by today's standards.  What can I say?).
+
+     12) GROUP.EXE - The central program of GroupMail, and the one
+     that does most of the work for you.  If you've set up echomail
+     conferences in the past, you'll appreciate the ease with which
+     GROUP takes care of many of the little details of adding or
+     deleting conferences for you.  For example, it creates all
+     necessary subdirectories for you, creates and maintains the
+     AREAS.DOG file for you, etc.
+
+     Now, if you are not a Top Star, you can basically get by using
+     only three basic GroupMail commands (quoted from the GroupMail
+     documentation):
+
+     GROUP ADD <conference> <description> ;<uplink>
+
+          This is the command you use to add a new conference.
+          Suppose, for example, that you would like to get the BLATZ
+          conference from 520/542.  You would type:
+
+              GROUP ADD BLATZ Gzorniblatz forum ;520/542
+
+          GROUP will take care of the details, like creating the
+          proper directories and updating your AREAS.DOG file.  If
+          you run a BBS and you want the conference to be available
+          on your system you will need to add the directory to your
+     FidoNews 6-08                Page 7                   20 Feb 1989
+
+
+          message areas.  The message directory that GROUP creates
+          will (by default, see later) be a subdirectory of the
+          GROUP subdirectory, or in this case it would be
+          "GROUP\BLATZ".
+
+          If you are running a mailer other than SEAdog, then you
+          may need to add the directory to your areas list also.  In
+          any event, DO NOT delete the AREAS.DOG file, as that is
+          used by GROUP to keep track of your conferences.
+
+          If you want to import group mail into a BBS that uses a
+          different message base format, you'll need to do a bit
+          more work.  See the section on this below.
+
+     [You might imply from the above that you should add GroupMail
+     areas to your AREAS.BBS file.  That is NOT the case, however,
+     unless you are converting a GroupMail conference to echomail,
+     which we're assuming that you're not doing right now!]
+
+
+     GROUP DEL <conference> . . .
+
+          This is used to remove one or more conferences.  For
+          example, if you wanted to remove the BLATZ conference you
+          would type:
+
+              GROUP DEL BLATZ
+
+          If you wanted to remove both the BLATZ conference and the
+          GNORF conference, you would type:
+
+              GROUP DEL BLATZ GNORF
+
+          Again, GROUP will take care of the housekeeping details,
+          such as deleting any messages and removing the
+          subdirectory.
+
+
+
+     GROUP EDIT <conference> <description> ;<uplink>
+
+          This is used to change an existing conference.  For
+          example, if you wanted to change your uplink on the BLATZ
+          conference to 440/1, you would type:
+
+              GROUP EDIT BLATZ Gzorniblatz forum ;440/1
+
+          As always, GROUP takes care of any housekeeping details.
+
+
+     [end of quoted material]
+
+     Since Binkley can't do File Update Requests, you do NOT use the
+     GROUP ASK command.  We've already covered the use of GROUP IN
+     and GROUP OUT in the batch file.  You don't use GROUP PACK
+     unless you're a top star for a conference.  I don't know why
+     FidoNews 6-08                Page 8                   20 Feb 1989
+
+
+     you'd want to use GROUP KILL, but I've not yet found a reason
+     to do so (it looks like a somewhat dangerous command!)
+
+     There are several option switches that you can use to modify
+     how GROUP works, and most are described in the GROUP
+     documentation.  The one that you will probably want to use is
+     the /R switch:
+
+     /R<x>  Retention;  This tells GROUP that any group mail
+          archives that you are holding (if you are a star) should
+          be deleted after <x> days (default is 30 days).  For
+          example, you would use "/R5" to retain archives for five
+          days.
+
+     For example, if you wanted to add the BLATZ conference with
+     yourself as a middle star retaining group mail archives for
+     three days, you would type:
+
+         GROUP ADD BLATZ Gzorniblatz forum ;* 520/542 /r3
+
+     Also, because Binkley cannot generate File Update Requests,
+     you'll want to use the /X switch when adding new conferences,
+     as described in SEA Technical Memorandum #0302:
+
+
+     /X   In ADD or EDIT only.  This switch indicates that the
+          designated conference should not be requested.  The GROUP
+          ASK command will not generate an update request for any
+          conference that carries this switch.  This is intended
+          mainly for use with conferences which are delivered or
+          which are obtained via a GROUP GET (see above).
+
+     The bottom line is that when you add a new GroupMail
+     conference, your GROUP ADD line will most likely appear
+     something like this:
+
+         GROUP ADD BLATZ Gzorniblatz forum ;* 520/542 /X /r7
+
+     (assuming you want to retain conference archives for seven days
+     in this case).
+
+     If you are a leaf node (that is, you don't hold a particular
+     conference for anyone else to pick up), omit the asterisk and
+     the /r7 in the above line.  In this case, the GroupMail bundle
+     will be deleted after it has been tossed.  The command line
+     would then look like this:
+
+         GROUP ADD BLATZ Gzorniblatz forum ;520/542 /X
+
+     When you use the GROUP EDIT command, it should be in exactly
+     the same format as the GROUP ADD command.  In other words, if
+     you are adding switches, you must also re-enter all of the
+     original switches.  The word EDIT simply tells Group that you
+     are modifying the particulars of an existing conference, rather
+     than creating a new one.
+
+     FidoNews 6-08                Page 9                   20 Feb 1989
+
+
+     EXCEPTIONS AND SPECIAL CIRCUMSTANCES
+
+     The GroupMail manual tells you how to import GroupMail into
+     non-compatible message base formats (such as QuickBBS or TBBS).
+     In this case you use the /N flag in your GROUP ADD statement.
+     Since most such systems don't use ConfMail, this type of setup
+     is a bit beyond our discussion.  I would only caution you to be
+     careful about the sequence in which you run you mail import
+     routine and GROUP IN.  You may have to run your import routine
+     twice... once to toss incoming mail, then GROUP IN to toss
+     incoming GroupMail bundles to the netmail area (and to
+     readdress any GroupMail messages destined for your uplinks),
+     and once more to import any GroupMail messages tossed to your
+     netmail area by GROUP.  This is just guessing on my part, since
+     I don't have any actual experience with such systems.
+
+     However, a similar technique is used to convert GroupMail to
+     Echomail.  You might want to do this if you are receiving a
+     GroupMail conference and want to pass it on to another system
+     that cannot run the GroupMail software.
+
+     Now, I would suggest that you DON'T do this unless absolutely
+     necessary.  If it's just a case of one of the nodes you feed
+     objecting to having to put up the GroupMail software (although
+     they are perfectly capable of doing so), I would invite them to
+     seek a feed elsewhere.  Converting a conference from GroupMail
+     to Echomail introduces several possible headaches, not the
+     least of which is that you could be the source of duplicate
+     messages entering the conference.
+
+     On the other hand, it's not something that's terribly difficult
+     to do if you have to.  SEA Technical Memorandum #0303 describes
+     the process, but in my opinion makes the process unnecessarily
+     complicated.  So, I will give a couple of examples specifically
+     for BinkleyTerm/ConfMail users.
+
+     The assumption here is that you are a middle star that is
+     receiving the conference in question as GroupMail, and feeding
+     it to some other nodes as GroupMail while feeding still other
+     nodes as Echomail.
+
+     Your GROUP ADD line would be the same as usual, with the
+     addition of the /N switch... for example:
+
+         GROUP ADD BLATZ Gzorniblatz forum ;* 520/542 /N /X /r7
+
+     If you are not sending the conference to any other nodes AS
+     GROUPMAIL, you can omit the asterisk and the "/r7" switch.
+
+     Next, you ADD this area to your AREAS.BBS file, just like you
+     would any normal echo.  On your system, you will treat this
+     conference as an echomail area rather than a GroupMail area.
+     The /N option that you used in your GROUP ADD statement causes
+     GROUP to add an "AREA:" field and a "SEEN-BY:" field listing
+     the address of the uplink to any conference that you're
+     converting to echomail.
+     FidoNews 6-08                Page 10                  20 Feb 1989
+
+
+     In your batch file, you will probably want to run ConfMail
+     Import (WITH the -M option), THEN Group In, and THEN a second
+     run of ConfMail Import (WITHOUT the -M option).  This will make
+     sure that any GroupMail received from your downstream nodes
+     gets properly readdressed to your uplinks, and that any Group
+     conferences that GroupMail tosses to your netmail area get
+     properly tossed (by ConfMail) to the Echomail area you've set
+     up for that conference.  For example:
+
+          confmail import areas.bbs -M -N -F confmail.out
+          group in /L
+          confmail import areas.bbs -K -N -F confmail.out
+
+     The only other items you have to worry about are how the area
+     is defined in your DELIVER.GRP and AREAS.BBS files.  As usual,
+     your DELIVER.GRP file should contain ONLY a list of nodes
+     receiving the conference from you AS GROUPMAIL.  Your AREAS.BBS
+     entry for the conference in question should contain a list of
+     the nodes receiving the conference from you AS ECHOMAIL, plus
+     YOUR FEED of the conference.  The reason for including your
+     feed is so that any messages entered on your system, or sent to
+     you by your downstream links, will be exported to your upstream
+     feed.
+
+     You may wonder what will happen to an echomail message sent
+     upstream in such a manner to your GroupMail feed.  If he is
+     running that area strictly as GroupMail, the message will be
+     tossed into his netmail area (so long as he does not have a
+     BAD_MSGS area... this is why you CANNOT use a BAD_MSGS area
+     with GroupMail!!!), where (hopefully) GROUP IN will find it and
+     readdress it to his uplink, and so on.  If he is also operating
+     the area as both echomail and GroupMail, the message will get
+     tossed into the echo area on his system, and then exported to
+     his upstream feed, and so on.
+
+     Anyway, that's all there is to it... BUT again I ask, "do you
+     REALLY want to convert echomail to GroupMail?"  If you are only
+     feeding one or two nodes that cannot accept GroupMail, there
+     may be a better way:
+
+     SENDING GROUPMAIL TO NON-MSDOS SYSTEMS
+
+     The following information should be considered HIGHLY
+     experimental.  If it works for you, GREAT!  If it doesn't...
+     well, you can always convert your GroupMail conferences to
+     echomail.
+
+     Let's say that you're feeding a point system that's running on
+     a Commodore Amiga (coincidentally, this is what Steve Palm, a
+     point operator off of my system is using).  He has a version of
+     ConfMail and BinkleyTerm that's been ported to the Amiga, as
+     well as a message reader/editor, but there is no way he can run
+     the GroupMail software.
+
+     But, he is a leaf node.  That means he doesn't have to worry
+     about forwarding the conference to anyone else.  All he needs
+     FidoNews 6-08                Page 11                  20 Feb 1989
+
+
+     to be able to do is to read the messages he receives, and send
+     replies.
+
+     We already know (from the above discussion) that if he creates
+     an echo area with the same name as a GroupMail area on my
+     system, and puts my node in his AREAS.BBS list, that any
+     messages he enters in that area will be exported to my system,
+     where GROUP IN will find them and readdress them to my feed for
+     the conference.  So as long as he can send me messages with the
+     proper AREA tag (which will be automatically affixed when
+     ConfMail exports the message from the echo area he's created),
+     he will be able to enter messages in a GroupMail conference.
+     So, if he can figure out some way to process an incoming
+     GroupMail bundle (so that he can read incoming messages), I can
+     just put his node in my DELIVER.GRP file and treat him like any
+     other GroupMail delivery point (which means I don't HAVE to
+     convert the GroupMail conference to Echomail!)
+
+     The question is, can he unpack a GroupMail bundle?  Well, it
+     turns out that there IS a way this can be done.  Once you unARC
+     a GroupMail bundle, the extracted mail packet has roughly the
+     same format as an Echomail packet, except that it's addressed
+     to -1/0.  At least, it's close enough that ConfMail will unpack
+     and toss it if it thinks it's running on node -1/0
+
+     So, in his CONFIG.DOG file, Steve inserts the address -1/0 as
+     an AKA address.  Then, in his batch file, he has to put a
+     command to look for and unARC any GroupMail bundles he might
+     receive.  For example, if he's getting COOKING and SHORTWAV
+     from me, he'd put in the following lines (note these are MS-DOS
+     batch file lines for illustrative purposes only, not what Steve
+     is actually using on his Amiga):
+
+          PKXARC \FILE\NET\COOKING.*
+          DEL \FILE\NET\COOKING.*
+          PKXARC \FILE\NET\SHORTWAV.*
+          DEL \FILE\NET\SHORTWAV.*
+          CONFMAIL IMPORT AREAS.BBS -N -A PKXARC
+
+     ConfMail will find the bundles (addressed to -1/0, but the AKA
+     takes care of that) and unpack them.  Next... and this is
+     important... he must do a CONFMAIL EXPORT using an alternate
+     AREAS.BBS format file that contains the following:
+
+          Origin Line ! Sysop Name
+          \MSG\COOKING COOKING -1/0
+          \MSG\SHORTWAV SHORTWAV -1/0
+
+     Why are we exporting to -1/0?  Well, since GroupMail uses that
+     address, I thought I would, too... actually, we could export to
+     ANY phony node, but the idea is to make ConfMail do an export
+     operation on the newly-imported GroupMail messages.  Why?
+     Well, keep in mind that GroupMail messages don't have an origin
+     or SEEN-BY lines.  Thus, if we simply allow them to be
+     rescanned in the normal manner, we've created an instant dupe
+     loop, since they will all get sent back to the source.  So, we
+     FidoNews 6-08                Page 12                  20 Feb 1989
+
+
+     do a "dummy" export operation in order to reset the "high water
+     mark" past the last new message that we have just received in
+     the area.  This may create an unwanted ".OUT" file for -1/0,
+     but we can always delete that as the next operation in the
+     batch file
+
+     So, the complete batch file segment would look something like
+     this:
+
+          PKXARC \FILE\NET\COOKING.*
+          DEL \FILE\NET\COOKING.*
+          PKXARC \FILE\NET\SHORTWAV.*
+          DEL \FILE\NET\SHORTWAV.*
+          CONFMAIL IMPORT AREAS.BBS -N -A PKXARC
+          CONFMAIL EXPORT ALTAREAS.BBS {options}
+          DEL \OUTBOUND\FFFF0000.OUT
+
+     ...where ALTAREAS.BBS is the alternate AREAS.BBS with the dummy
+     -1/0 net/node numbers, and FFFF0000.OUT is the name of the mail
+     packet (for -1/0) created by the dummy export operation.
+
+     Of course, when messages are entered using the message
+     reader/editor, we have to run ConfMail Export using the "real"
+     AREAS.BBS file that contains the same entries, but with the
+     real net/node numbers for the GroupMail feed(s) from which the
+     conferences are received:
+
+          Origin Line ! Sysop Name
+          \MSG\COOKING COOKING 154/8
+          \MSG\SHORTWAV SHORTWAV 154/8
+
+     Now, all of the above will work BUT there is one MAJOR problem.
+     It turns out that while each GroupMail bundle has a unique
+     filename, two or more GroupMail bundles for the same conference
+     can contain .PKT files that have exactly the SAME names.  Thus,
+     there is a very good chance that the above batch file segment
+     would fail whenever more than one mail bundle is received for
+     the SAME GroupMail area in the same transmission (it would most
+     likely stop and ask the user whether to overwrite the the .PKT
+     file from the first mail bundle with the .PKT file from the
+     second... or on some systems, it might just go ahead and
+     overwrite the file without asking, an even less desirable
+     situation!).  On an MSDOS machine, you could use a FOR-DO loop
+     in the batch file to unarc each GroupMail bundle and then have
+     ConfMail toss (import) the contents of that mail bundle before
+     unarcing and tossing the next GroupMail bundle (but then, on an
+     MSDOS machine you could just run the GroupMail software).
+     There are probably ways to accomplish the same thing on other
+     systems, but the actual method would depend on the commands
+     available in the batch file language, and/or the availability
+     of external utilities that might aid in the process.  Or, you
+     could just run the batch file manually (when an operator is
+     present to watch and resolve any such conflicts that might
+     occur)... that might be the most expiditious method at present
+     for point system operators.  Note to the developers of
+     GroupMail:  It would sure be nice if future versions did not
+     FidoNews 6-08                Page 13                  20 Feb 1989
+
+
+     create duplicate .PKT names within different mail bundles for
+     the same GroupMail conference.
+
+     The method I've shown for preventing the imported GroupMail
+     messages from being rescanned back to the GroupMail feed is not
+     real elegant, and begs for a simple utility that would either
+     a) reset the "high water mark" (the number of the last message
+     scanned by ConfMail Export) to that of the highest message in
+     the area, or b) append an Origin line and SEEN-BY lines to any
+     messages that don't already have them in the specified area,
+     and place the net/node number of the feed for the area in all
+     messages currently in that area.  Such a utility could be run
+     every time messages have been tossed to the specified area, and
+     would eliminate the need for the dummy ConfMail Export
+     operation.  Yet another (better) option would be to forget the
+     alternate AREAS.BBS file and the dummy ConfMail Export option,
+     but instead use only the regular AREAS.BBS file with NO
+     net/node number following the Group conference area names, so
+     that messages in Group areas would NEVER be exported by
+     ConfMail.  Then use a separate utility that would search
+     through Group conference areas for locally-originated messages
+     (messages containing the node's primary net/node number in the
+     FROM field of the message header) and move those TO the netmail
+     area, at the same time readdressing them to the feed for the
+     GroupMail conference and flagging them as Kill/Sent.  Such a
+     utility would be relatively easy to create, and would allow
+     non-MSDOS systems to handle GroupMail in a way that more
+     closely resembles the way GroupMail is supposed to operate
+     (that is, a locally-entered message disappears from your BBS
+     until such time as it comes back as part of a GroupMail
+     packet).
+
+     But, at this point, the fact that a non-MSDOS system can import
+     and process GroupMail is a bit akin to the dancing bear... the
+     wonder is not how well it's done, but that it can be done at
+     all.
+
+     I hope that these hints prove helpful to you in setting up
+     GroupMail on BinkleyTerm/ConfMail and other types of systems.
+     Please let me know if you find any glaring errors in the above
+     information, or if you can add anything that might simplify the
+     process or make it more understandable.
+
+     Jack Decker (Fidonet 1:154/8, LCRnet 77:1011/8, NetWork 8:70/8)
+
+     -----------------------------------------------------------------
+     FidoNews 6-08                Page 14                  20 Feb 1989
+
+
+                          What's Happening at SEA?
+
+
+     SEAdog 4.50 added many new capabilities and features, and some of
+     them  required more data from the node list than we were getting.
+     So we've upgraded XlatList to support those features.  Along  the
+     way we added some other things people have asked for.
+
+     First,  we expanded the OZONE statement.  You may be aware of the
+     earlier form:
+
+         ozone 1:107
+
+     which would import the data for net 107 of zone 1 into your  node
+     list.  That still works, of course, but now you can also say:
+
+         ozone 1:all
+
+     which  will  import  ALL  of  zone  1  into your node list.  This
+     defeats the purpose of zones to some extent, but many people felt
+     a need for it.
+
+
+     Speaking of zones: When zones were first designed, there was only
+     the one network, with no hint that other networks would ever form
+     and want to  exchange  network  mail.  Hence,  the  zone  concept
+     asumes one central authority to assign zone numbers, oversee zone
+     gates,  and  so  on.  As  we all know,  that isn't quite the case
+     today.
+
+     To address the current world  of  multiple  independent  networks
+     (pun  unintentional),  Jim Nutt came up with the idea of domains,
+     domain addressing,  and domain gates.  We wholeheartedly  endorse
+     Jim's  domain  concept,  and  we support it in SEAdog 4.50 and in
+     XlatList.
+
+     SEAdog 4.50 contains the mechanisms for turning a domain  address
+     into the appropriate extended address via your local domain gate,
+     but  you still have to get the domain address from somewhere.  Of
+     course, you could just remember it and type it in as needed,  but
+     we  wanted  to find an easier way.  We turned to XlatList for the
+     answer.
+
+     XlatList 2.90 implements a  new  command,  "DOMAIN".  This  works
+     like  the  older  PUBLIST  command,   except  that  the  list  is
+     designated as being part of a domain.  Here's how it works:
+
+     Suppose you're node 520/1015 in AlterNet,  and you'd like  to  be
+     able to send mail to people in FidoNet.  Net 107,  in particular,
+     has several people in it you send mail to  regularly,  but  you'd
+     like  to be able to reach the rest should the mood strike you.  A
+     system near you (let's say 520/16,  for example) has  volunteered
+     to be your domain gate into FidoNet.  In your CONFIG.DOG file you
+     would put the statements:
+
+         node 520/1015@AlterNet
+     FidoNews 6-08                Page 15                  20 Feb 1989
+
+
+         domain FidoNet 520/16
+
+     That  tells SEAdog what to do.  Now in your XLATLIST.CTL file you
+     put:
+
+         node 520/1015@AlterNet
+         domain AlterNet anetlist anetdiff
+         domain FidoNet nodelist nodediff
+         ozone 1:107
+
+     What does this do?
+
+      o  The NODE statement tells XlatList who you are, including what
+         domain you are in.
+
+      o  The first DOMAIN statement pulls in the node  list  data  for
+         AlterNet.  Since that's your own domain, it works just like a
+         PUBLIST statement.
+
+      o  The  second  DOMAIN statement pulls in the node list data for
+         FidoNet.  Since this is NOT your own domain,  then  the  data
+         won't  appear  in your NODELIST.BBS unless you say otherwise.
+         Instead,  it's used to create interdomain address entries  in
+         your FIDOUSER.LST user index.
+
+      o  The OZONE statement says otherwise, telling XlatList that net
+         107  in  zone 1 should be incorporated into your NODELIST.BBS
+         just as if they were in your own domain and zone.
+
+
+     So what happens now?
+
+      o  Say you enter a message to Karl Wong,  who  is  in  net  107.
+         Since you have the data for net 107 ready to hand, it goes as
+         normal network mail.
+
+      o  Say  you enter a message to Vince Hartman,  who is in net 199
+         in  FidoNet.  SEAdog  will  pick  his  address  out  of  your
+         FIDOUSER.LST  and,  finding  it to be an interdomain address,
+         ruote it via your FidoNet gateway at 520/16.
+
+
+     What does all this get you?
+
+      o  Direct access to the systems you normally deal with, and
+
+      o  The ability to send mail to any system anywhere in the  world
+         WITHOUT  having  to carry around megabytes of data on systems
+         you never call.
+
+
+
+     XlatList 2.90 also adds support for the new SEAdog routing  class
+     capability.  Systems  with  high  speed  modems are predefined by
+     XlatList as being in routing class "F" (for Fast),  and  you  can
+     define your own routing classes based on node list comments.  For
+     FidoNews 6-08                Page 16                  20 Feb 1989
+
+
+     example,  if  you wanted everyone with a "CM" flag to be in class
+     C, everyone with "XP" to be in class X, and everyone with "MO" to
+     be in class  "M",  you  can  make  it  happen  by  putting  these
+     statements in your XLATLIST.CTL file:
+
+         class CM C
+         class XP X
+         class MO M
+
+     This let's you use routing commands like:
+
+         Send-to class-C
+
+     to say "send mail to anyone with a CM flag."
+
+
+     Our intent was to do away with the need for RouteGen, while still
+     giving  you  the  flexibility  and routing control you've come to
+     expect.  We think we've succeeded.
+
+
+     Files mentioned this week:
+
+                   XLATRGEN.ARC        XlatList 2.90, and RouteGen
+
+     XLATRGEN.ARC  may  be  downloaded  from  our  technical   support
+     bulletin  board at (201) 473-1991,  or may be file-requested from
+     either 520/1015@AlterNet or 1:107/1015@FidoNet.
+
+
+     Next week:  A sample SEAdog script
+
+     -----------------------------------------------------------------
+     FidoNews 6-08                Page 17                  20 Feb 1989
+
+
+     Gordon T. Gattone, moderator
+     18/8
+
+
+                             The Watson Echo Conference
+
+          The WATSON board is a modem that has many additional
+     capabilities such as the ability to record speech on a hard drive
+     and to interact with its callers via touch tones.  According to
+     the manufacturer, Natural Microsystems in Natick, MA there have
+     been over 25,000 of them sold.
+
+          The new WATSON echo is an attempt to bring together those of
+     us who program WATSON and VIS (Voice Information Systems)
+     sequences.  Natural Microsystems has agreed to participate and in
+     fact, has allocated funds for equipment purchases to dedicate to
+     the echo.
+
+          The echo is available from 18/8, 151/1000, 151/100, and
+     151/2 so far. With so many WATSON modems out there, I would
+     expect the growth rate to be rather rapid.
+
+          Please contact me at 18/8 if you have any questions or would
+     like a feed.
+
+     -----------------------------------------------------------------
+     FidoNews 6-08                Page 18                  20 Feb 1989
+
+
+     =================================================================
+                                  COLUMNS
+     =================================================================
+
+          The Old Frog's Almanac - Part the Three (and last)
+
+     I've  explained, in previous columns, how I came to  develop  the
+     system  which  I  chose to call The Old Frog's  Almanac.  What  I
+     haven't  told  you  is perhaps the most important  factor:  I  am
+     having a BALL!
+
+     Every  morning,  when  I check my morning  mail,  I  find  myself
+     scanning HDCONF, TELIX, DBASE and other conferences to see what's
+     left after Sirius gets through....and every time I come across  a
+     new  thread  -  one which shows real potential -  I  find  myself
+     adding it to the Sirius/EGREP system, and The Almanac grows a tad
+     bit  larger...I have, to put things in  perspective,  accumulated
+     approximately  3.5 MEGS of archived topical extracts, all in  the
+     space  of  five weeks. There seems to be a compulsion  within  to
+     initiate  more  and  more files, and eat up more  and  more  disk
+     space,  just to provide my users with a massive amount of  USEFUL
+     information.....let's face it - no matter how many message  areas
+     your  system  carries, there isn't a user born who  can  possibly
+     keep  up with the unbridled flood of  information....providing  a
+     painless and exciting means by which those thousands of  messages
+     can continue to provide value to the users is proving to be FUN.
+
+     How  addictive  can this system be? Let's put it  this  way....my
+     SEAdog  batch  file,  which once stood at a  contented  28K,  now
+     exceeds  100K; it now processes and maintains over  200  specific
+     topical  files,  and more are added daily. God  knows  what  will
+     happen when another 200 topics are added...(now, if someone would
+     show me a way to compile the sucker, I'd die happy:-))
+
+     I  thought  I would close this series by offering you  a  partial
+     list of the files now available on The Almanac - while the 50  or
+     so files represent but 20% of those now extracted and  maintained
+     without operator intervention, they are more than enough to  give
+     you a clear idea of the scope of the system.
+
+     - BBS-related Extracts (MEADOW & PNW_MEADOW)
+
+     95% of the information contained in these files is extracted from
+     MEADOW....It's reassuring to think that a sysop having a  problem
+     with  LASTUSER.BBS can request specific files which contain  ONLY
+     messages  related  to LASTUSER.BBS for any given  month,  without
+     having to wade through the SEA vrs. PKWare wars, or the arguments
+     about PAK's latest version :-)
+
+     BMDM*.PAK Opus/BiModem Extracts, 02/89
+     EGRD*.PAK ECHOGUARD Extracts, 02/89
+     EMBD*.PAK OECC/Embedded Commands MEADOW Extracts, 01/89
+     JMDM*.PAK JMODEM MEADOW Extracts, 01/89
+     LUSR*.PAK LASTUSER.BBS Extracts, 01/89
+     MCHK*.PAK MAILCHECKING Extracts, 01/89
+     MODM*.PAK MODEM SETUP Extracts, 01/89
+     FidoNews 6-08                Page 19                  20 Feb 1989
+
+
+     NORG*.PAK Opus/NoOrigin Extracts, 02/89
+     ODOS*.PAK Opus - DoubleDOS Extracts, 02/89
+      ODV*.PAK Opus & DesqView, 02/89
+     OKFL*.PAK OFILE Extracts, 01/89
+     OKFL*.PAK OFILE Extracts, 02/89
+     OMMM*.PAK OMMM Extracts, 01/89
+     OMMM*.PAK OMMM Extracts, 02/89
+     OPXP*.PAK Opus Express Extracts, 01/89
+     OPXP*.PAK Opus Express Extracts, 02/89
+     OREG*.PAK REGISTER Extracts, 01/89
+     OREG*.PAK REGISTER Extracts, 02/89
+     OTWR*.PAK Opus - TradeWars Extracts, 01/89
+     OTWR*.PAK Opus - TradeWars Extracts, 02/89
+     OWIN*.PAK Opus/Windows Extracts, 02/89
+     OZMD*.PAK Opus & ZModem, 02/89
+     PRIV*.PAK PRIV File Extracts, 02/89
+     PSIG*.PAK PC-SIG CDROM, 02/89
+     RASM*.PAK RASMAM, 02/89
+     STCK*.PAK STACK Extracts (MEADOW) 02/89
+     XLAX*.PAK NODELIST Processing, 02/89
+
+     - DeskTop Publishing Extracts
+      APM*.PAK PAGEMAKER, 02/89
+     DPUB*.PAK DeskTop Publishing extracts, February 1989
+     DQ&A*.PAK DPUB-Q&A, 02/89
+     FONT*.PAK FONTS, 02/89
+      GEM*.PAK GEM, 02/89
+     GLYP*.PAK GLYPHIX Font Mgr., 02/89
+     LOGI*.PAK DPUB-LOGITECH Mouse, 02/89
+     LPTR*.PAK LASER PRINTERS, 02/89
+     PBIT*.PAK Publish It! Extracts, 02/89
+     PFSF*.PAK PFS FIRST PUBLISER, 02/89
+     PIRC*.PAK Pirated ClipArt Extracts, 02/89
+     PSCR*.PAK PostScript Extracts, 02/89
+     TOPS*.PAK TOPS, 02/89
+     VENT*.PAK VENTURA, 02/89
+
+     - Hard Drives-related Extracts (HDCONF)
+
+     HDCONF  has always been a rich source for technical  information,
+     and  the Almanac's extracts reflect that in spades...in  addition
+     to  the files listed below, I also carry a file specific to  each
+     Seagate and Miniscribe drive discussed in the conference....
+
+     ADAP*.PAK Adaptec Controller Extracts, 02/89
+     BKUP*.PAK BACKUP UTIL'S, 02/89
+     BUER*.PAK Bulk Erasure, 01/89
+     CDCW*.PAK CDC Wren Drives, 01/89
+     CMOS*.PAK CMOS, 02/89
+     CORE*.PAK CORETEST, 02/89
+     CPMQ*.PAK Compaq Drives, 02/89
+      D33*.PAK DOS 3.3 Extracts, 02/89
+     ESDI*.PAK ESDI Drives/Controllers, 02/89
+      FAT*.PAK FAT Extracts, 02/89
+     FLPY*.PAK Floppy Drive-related Extracts, 02/89
+     FUJT*.PAK FUJITSU Drives, 02/89
+     FidoNews 6-08                Page 20                  20 Feb 1989
+
+
+       HD*.PAK  Hard Drive Conference extracts, 02/89
+     INLV*.PAK INTERLEAVE, 02/89
+     MAXT*.PAK MAXTOR Hard Drives, 02/89
+     MCRP*.PAK MICROPOLIS HD Extracts, 02/89
+     MIHD*.PAK MicroScience Drives, 02/89
+     MITS*.PAK Mitsubishi Drives, 02/89
+     MSHD*.PAK MicroScience Drives, 02/89
+     OPTI*.PAK Omptimizing/Optimizers, 02/89
+     PARK*.PAK HD PARK Extracts, 02/89
+     PERS*.PAK PERSTOR Controller, 02/89
+     PRIM*.PAK Priam Drives, 02/89
+      RLL*.PAK RLL, 02/89
+     RODI*.PAK RODIME Drives, 02/89
+     SCSI*.PAK SCSI Drives/Controllers, 02/89
+     SDCH*.PAK Static Discharge extracts, 02/89
+     SPIN*.PAK SpinRite HD Management, 02/89
+     SQHD*.PAK Syquest Drives, 02/89
+     TAPE*.PAK Tape Backup Systems, 01/89
+     TDHD*.PAK Tandon Drive Extracts, 02/89
+      THD*.PAK Tandy Hard Drive Extracts, 01/89
+     TOSH*.PAK Toshiba Drives, 02/89
+     VRTX*.PAK Vertex Drives, 01/89
+     WDHC*.PAK Western Digital Controllers, 02/89
+     OPTN*.PAK OPTUNE, 02/89
+     VIRU*.PAK VIRUS, 02/89
+
+     Just  one  last reminder....the asterisk in the  filenames  above
+     represents  a  four-digit  number, in the format  "mmyy"  -  ergo
+     requesting   TDHD*.PAK   will   get   you   one   complete   file
+     (TDHD0189.PAK) now, and one partial file (TDHD0289.PAK) -  Should
+     you request it next January, it'll get you twelve files - one for
+     each month. (A complete list of all Almanac files is available as
+     ALMANAC.LST - the system I use is available as ALMANAC.PAK, which
+     includes the morning's updated ALMANAC.LST)
+
+     Ain't life GRAND?
+
+     -----------------------------------------------------------------
+     FidoNews 6-08                Page 21                  20 Feb 1989
+
+
+     =================================================================
+                              LATEST VERSIONS
+     =================================================================
+
+                               GMAIL 1.10
+
+     The first verison of GMail, a QuickBBS Group Mail processor has
+     been released, and is available from 1:266/15, or 7:520/911.
+
+     GMail is a fully functional Group Mail processor, with the
+     ability to import and export directly to/from the QuickBBS
+     message base, as well as functioning as a top or mid-level star.
+     GMail is also fast, on the development system, a 12MHZ AT, with a
+     28ms HD, it imports almost 3 messages per second.
+
+     The release archive is available as GMAIL110.ARC, and is
+     file-requestable of downloadable from 7:520/911, or 1:266/15.  A
+     support conference, with the name of GMAIL, is also available
+     from the same system.
+
+
+     -----------------------------------------------------------------
+     FidoNews 6-08                Page 22                  20 Feb 1989
+
+
+                          Latest Software Versions
+
+                           Bulletin Board Software
+     Name        Version    Name        Version    Name       Version
+
+     Fido            12K*   Opus          1.03b    TBBS           2.1
+     QuickBBS       2.03    TPBoard         5.0    TComm/TCommNet 3.2
+     Lynx           1.10    Phoenix         1.3    RBBS         1.71C
+
+
+     Network                Node List              Other
+     Mailers     Version    Utilities   Version    Utilities  Version
+
+     Dutchie       2.90C*   EditNL         4.00    ARC           5.32
+     SEAdog         4.50*   MakeNL         2.12    ARCmail        2.0*
+     BinkleyTerm    2.00    Prune          1.40    ConfMail      4.00
+     D'Bridge       1.10    XlatList       2.90*   TPB Editor    1.21
+     FrontDoor       2.0    XlaxNode       2.31    TCOMMail       2.0
+     PRENM          1.40    XlaxDiff       2.31    TMail         8901*
+                            ParseList      1.30    UFGATE        1.02*
+                                                   GROUP         2.04*
+                                                   EMM           1.40
+                                                   MSGED         1.96
+
+     * Recently changed
+
+     Utility authors:  Please help  keep  this  list  up  to  date  by
+     reporting  new  versions  to 1:1/1.  It is not our intent to list
+     all utilities here, only those which verge on necessity.
+
+     -----------------------------------------------------------------
+     FidoNews 6-08                Page 23                  20 Feb 1989
+
+
+     =================================================================
+                                  NOTICES
+     =================================================================
+
+                          The Interrupt Stack
+
+
+     19 May 1989
+        Start of EuroCon III at Eindhoven, The Netherlands
+
+     24 Aug 1989
+        Voyager 2 passes Neptune.
+
+     24 Aug 1989
+          FidoCon '89 starts at the Holiday Inn in San Jose,
+          California.  Trade show, seminars, etc. Contact 1/89
+          for info.
+
+      5 Oct 1989
+        20th Anniversary of "Monty Python's Flying Circus"
+
+     If you have something which you would like to see on this
+     calendar, please send a message to FidoNet node 1:1/1.
+
+     -----------------------------------------------------------------
+
+     FidoNews 6-08                Page 24                  20 Feb 1989
+
+
+     =================================================================
+                                  REPORTS
+     =================================================================
+
+                          IFNA Treasurer's Report
+                               January, 1989
+                           Steve Bonine   115/777
+
+
+     IFNA Treasurer's report for January, 1989
+
+     RECIEPTS & DEPOSITS
+        Membership fees                          150.00
+        FidoCon '88                             1200.00
+
+     TOTAL RECEIPTS                                          $1350.00
+
+     DISBURSEMENTS
+        Postage                                   12.65
+        Professional services (Marc Rubin)        34.00
+        Bank charges                              17.40
+
+     TOTAL DISBURSEMENTS                                        63.79
+
+     EXCESS RECEIPTS OVER DISBURSEMENTS                       1286.21
+
+     ADD BEGINNING BALANCE                                    6082.72
+
+     BALANCE IN ACCOUNT                                       7368.93
+
+     Note:  The $1200 item is a payment from the FidoCon 88 sponsors.
+     I have received no financial statement from this group which
+     details any of their expenditures.
+
+     This is my last monthly IFNA treasurer's report, as I will resign
+     as IFNA treasurer at the Board meeting on February 17-19.  Until
+     February 20, full IFNA financial data will be available for file-
+     request from 115/777 using the magic filename of IFNA$.  After
+     that date, requests for information should be submitted to the
+     new treasurer.
+
+
+     -----------------------------------------------------------------
+     FidoNews 6-08                Page 25                  20 Feb 1989
+
+
+            OFFICERS OF THE INTERNATIONAL FIDONET ASSOCIATION
+
+     Hal DuPrie     1:101/106  Chairman of the Board
+     Bob Rudolph    1:261/628  President
+     Matt Whelan    3:3/1      Vice President
+     Ray Gwinn      1:109/639  Vice President - Technical Coordinator
+     David Garrett  1:103/501  Secretary
+     Steve Bonine   1:115/777  Treasurer
+
+
+
+                         IFNA BOARD OF DIRECTORS
+
+         DIVISION                               AT-LARGE
+
+     10  Courtney Harris   1:102/732?    Don Daniels     1:107/210
+     11  Bill Allbritten   1:11/301      Hal DuPrie      1:101/106
+     12  Bill Bolton       3:711/403     Mark Grennan    1:147/1
+     13  Rick Siegel       1:107/27      Steve Bonine    1:115/777
+     14  Ken Kaplan        1:100/22      Ted Polczyinski 1:154/5
+     15  Larry Kayser      1:104/739?    Matt Whelan     3:3/1
+     16  Ivan Schaffel     1:141/390     Robert Rudolph  1:261/628
+     17  Rob Barker        1:138/34      Steve Jordan    1:102/2871
+     18  Christopher Baker 1:135/14      Bob Swift       1:140/24
+     19  David Drexler     1:19/1        Larry Wall      1:15/18
+      2  Henk Wevers       2:500/1       David Melnik    1:107/233
+
+     -----------------------------------------------------------------
+     FidoNews 6-08                Page 26                  20 Feb 1989
+
+
+                                      __
+                 The World's First   /  \
+                    BBS Network     /|oo \
+                    * FidoNet *    (_|  /_)
+                                    _`@/_ \    _
+                                   |     | \   \\
+                                   | (*) |  \   ))
+                      ______       |__U__| /  \//
+                     / Fido \       _//|| _\   /
+                    (________)     (_/(_|(____/ (tm)
+
+            Membership for the International FidoNet Association
+
+     Membership in IFNA is open to any individual or organization that
+     pays  a  specified  annual   membership  fee.   IFNA  serves  the
+     international  FidoNet-compatible  electronic  mail  community to
+     increase worldwide communications.
+
+     Member Name _______________________________  Date _______________
+     Address _________________________________________________________
+     City ____________________________________________________________
+     State ________________________________  Zip _____________________
+     Country _________________________________________________________
+     Home Phone (Voice) ______________________________________________
+     Work Phone (Voice) ______________________________________________
+
+     Zone:Net/Node Number ____________________________________________
+     BBS Name ________________________________________________________
+     BBS Phone Number ________________________________________________
+     Baud Rates Supported ____________________________________________
+     Board Restrictions ______________________________________________
+
+     Your Special Interests __________________________________________
+     _________________________________________________________________
+     _________________________________________________________________
+     In what areas would you be willing to help in FidoNet? __________
+     _________________________________________________________________
+     _________________________________________________________________
+     Send this membership form and a check or money order for $25 in
+     US Funds to:
+                   International FidoNet Association
+                   PO Box 41143
+                   St Louis, Missouri 63141
+                   USA
+
+     Thank you for your membership!  Your participation will help to
+     insure the future of FidoNet.
+
+     Please NOTE that IFNA is a general not-for-profit organization
+     and Articles of Association and By-Laws were adopted by the
+     membership in January 1987.  The second elected Board of Directors
+     was filled in August 1988.  The IFNA Echomail Conference has been
+     established on FidoNet to assist the Board.  We welcome your
+     input to this Conference.
+
+     -----------------------------------------------------------------
+

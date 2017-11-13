@@ -1,0 +1,2164 @@
+               Ú¿Ú¿Ú¿Ú¿Ú¿Ú¿ÚÄÄÄÄ¿Ú¿  Ú¿ÚÄ¿ Ú¿ÚÄÄÄÄ¿Ú¿Ú¿Ú¿ÚÄÄÄÄ¿
+  ÉÍÍÍÍÍÍÍÍÍÍÍÍ³³³³³³³³³³³³ÀÄ¿ÚÄÙ³³  ³³³ À¿³³³ÚÄÄÄÙ³³³³³³³ÚÄÄÄÙÍÍÍÍÍÍÍÍÍÍÍÍ»
+  º  Volume 4  ³³³³³³³³³³³³  ³³  ÀÅ¿ÚÅÙ³  ÀÙ³³ÀÄÄÄ¿³³³³³³³ÀÄÄÄ¿ April/May  º
+  º   Issue 1  ³³³³³³³³³³³³  ³³   ³³³³ ³Ú¿  ³³ÚÄÄÄÙ³³³³³³ÀÄÄÄ¿³    1993    º
+  ÈÍÍÍÍÍÍÍÍÍÍÍÍ³ÀÙÀÙ³³ÀÙÀÙ³ÚÄÙÀÄ¿ ÀÅÅÙ ³³À¿ ³³ÀÄÄÄ¿³ÀÙÀÙ³ÚÄÄÄÙ³ÍÍÍÍÍÍÍÍÍÍÍÍ¼
+               ÀÄÄÄÄÙÀÄÄÄÄÙÀÄÄÄÄÙ  ÀÙ  ÀÙ ÀÄÙÀÄÄÄÄÙÀÄÄÄÄÙÀÄÄÄÄÙ               
+                          ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+                          ³This Month's Features³
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³ Random Factors...................................Wayne Bell (1@1)         ³
+³                                                                           ³
+³ WWIV in the Courtroom............................Polekat (1@5285)         ³
+³                                                                           ³
+³ TechnOTES........................................WWIVnews Staff           ³
+³                                                                           ³
+³ Playing Ping-Pong with 1@1.......................Star Gazer (1@3101)      ³
+³                                                                           ³
+³ Filo's Mod of the Month..........................Filo (1@2050)            ³
+³                                                                           ³
+³ WWIV on Internet and Usenet......................Jay Walker (1@7659)      ³
+³                                                                           ³
+³ Type 0 Forum.....................................Omega Man (1@5282)       ³
+³                                                                           ³
+³ @506 Usenet Gateway Policy Changes...............Zaphod Beeblebrox (1@506)³
+³                                                                           ³
+³ WWIV-Compatible Networks List....................Red Dwarf (1@6264)       ³
+³                                                                           ³
+³ Dateline: @#$*()#!...............................Omega Man (1@5282)       ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+               ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+               ³               Random Factors                ³
+               ³   Creative Commentary by Wayne Bell (1@1)   ³
+               ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+v4.22 QSCAN POINTER PROBLEMS:
+
+If your Quickscan is not working correctly, install that, compile & run, and 
+do a //RESETQSCAN from the main menu. It will reset all quickscan and newscan
+info for every user.
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+In BBS.C, function mainmenu():
+
+    /* existing code */
+    if (strcmp(s, "CHAT")==0) {
+      nl();
+      pl(((*(char far *)0x00000417L ^= 0x10) & 0x10) ?
+                       get_string(21) :
+                       get_string(22));
+      sysoplog(get_stringx(1,9));
+      topscreen();
+    }
+    /* new code starts here */
+    if (strcmp(s, "RESETQSCAN")==0) {
+      memset(qsc, 0, syscfg.qscn_len);
+      *qsc=999;
+      memset(qsc_n,0xff,((max_dirs+31)/32)*4);
+      memset(qsc_q,0xff,((max_subs+31)/32)*4);
+      close_qscn();
+      sprintf(s1,"%sUSER.QSC", syscfg.datadir);
+      unlink(s1);
+      for (i=0; i<=number_userrecs(); i++) {
+        write_qscn(i, qsc, 1);
+      }
+      close_qscn();
+      close_user();
+    }
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+This recently-posted qscan fix is for people who have qscan pointers really 
+screwed up (you'll know it if you do). The routine, most of which was stolen 
+out of the newuser qscan initialization, goes through and resets the entire
+user.qsc file to look as if every user had just logged on as new (from the
+nscan/qscan perspective). 
+
+NET33: 
+
+NET33 will be released on June 5th, 1993. It will be available on most SDS's at
+that time, as well as on my system, Amber. It will NOT support multiple nets 
+per xfer. It will have the subs.lst description-length bug fixed, in addition 
+to supporting network2 preprocessors, a new type of external net messages, and
+re-written docs, with the sections covering WWIVNet software separated from 
+those covering WWIVNet Network Policy. 
+
+
+SUBS.LST:
+
+A CATEG.NET file was been sent out along with the last mail_to_all_sysops. If
+you're using WWIV v4.22 and net32 (or later), you can now select a category for
+your sub to be listed under, in the SUBS.LST file. To pick a category, do
+the following:
+
+1) Go into //BOARDEDIT, 
+
+2) For each sub you host (on WWIVNet), select option J (Net info)
+
+3) M)odify the line for the sub you host, and re-enter the information. 
+
+4) When you get to the "Allow auto sub info?" question, select Y)es. You will 
+   be presented with the list of categories. Select the correct category (or
+   the closest to it). The next SUBS.LST update will then list your sub in the
+   correct category.
+
+Finally, if you're short on memory for DSZ or HSLINK, you'll have about 90k 
+more free to run those using net33.
+
+NET34: 
+
+No, I haven't started on it yet, but I am hoping for multi-nets-per-call in
+net34. Wanted to get out net33 with the subs.lst description length fix before
+I started on the MNPC stuff.
+
+
+WWIV 4.23: 
+
+The multi-language extensions seem to be working smoothly, and I've added many
+other minor enhancements - and yes, bug fixes - to the stock version. 
+Currently, Tolkien (1@3456) is helping with the implementation of a few other 
+new features for v4.23, so I think you'll see a wider selection of upgrades 
+with this version. More on this in the future, as things develop.
+
+
+WWIV/FIDONET:
+
+Yes, we are looking to have FidoNet support in v4.23, most of which will not be
+written by me. It is still in the design phase for the time being.
+
+
+NET UPDATES:
+
+The schedule for sending net updates has changed. Updates will now go out on
+Wednesday and Saturday evenings (instead of Thursday and Sunday, as done
+previously). The current update schedule looks like this:
+
+Jun 2 (time of this writing)
+Jun 5
+Jun 9
+Jun 12
+...
+
+
+.UUE FILES:
+
+UUEncoded files should not be sent over WWIVNet, other than between directly 
+connected systems. You may send small (<4k) UUE's sometimes (once a week or 
+so) if it is necessary, but do not send large files, or send them too often. 
+Sending files costs people LD charges, and ties up BBS's and net servers.
+
+If you do send UUE files, you may find that they are blocked by a server. You
+may also find yourself removed from the network.
+
+In the somewhat near future, there will be a utility available to send files
+between BBS's. This will go directly between BBS's, not through the net, and
+will hence not cost anyone else any money. We are working on a program to be
+called WW4-FREQ which will enable a sysop to request files from or send files
+to another WWIV BBS. 
+
+The program will work similar to WWIVNet in some ways; that is, you can specify
+the time parameters that you wish for your board to use in calling the other
+board and you can use macros if you wish. If the other sysop has setup the
+program on his end, you will be able to request files from those directories
+that he has specified as permitting file requests. Once the program is 
+developed and working well, we will address methods of identifying boards that
+utilize this feature.
+
+Again, this program is only in the development stage right now. For the time
+being, any specific questions regarding WW4-FREQ should be forwarded to Filo
+(1@2050). In the meantime, please follow the above guidelines regarding the
+transmission of .UUE'd files across WWIVNet.
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+               ³           WWIV in the Courtroom:            ³
+               ³  How Wayne Bell & WWIV Helped Steve Jackson ³
+               ³         Beat the US Secret Service          ³
+               ³             by Polekat (1@5285)             ³
+               ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+Editor's Note: While every sysop in the country is familiar with the case of
+Steve Jackson vs The United States Secret Service, and is now well aware of the
+outcome, not everyone is aware of a major role Wayne Bell played in the
+decision. Wayne, as you'll see, was very instrumental in proving that Secret
+Service agents did in fact read private E-Mail prior to deleting it, which in
+turn helped to render a decision in favor of Steve Jackson and the EFF.
+
+The following article by 1@5285, printed here for the first time in WWIVNews
+with the author's permission, gives the most complete overview of the events
+leading up to the Secret Service raid on the Illuminati BBS in March 1990, and
+the consequences of these actions. It should be noted that the article is
+copyrighted (C)1993 Ed Cavazos, and should not be reprinted without his express
+permission. Otherwise his publisher will have a hissy-fit and Ed'll send me 
+lots of nasty E-Mail :-)
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+In March of 1990, the United States Secret Service raided an Austin, Texas
+company called Steve Jackson Games (SJG). The raid was the culmination of a
+complex series of events involving a government investigation into a computer
+hacking group known as The Legion of Doom, and an allegedly valuable text file
+detailing some obscure facts about the Emergency 911 system, which members of
+the group copied from a phone company computer. Like they had done countless
+times before with other targets, the Secret Service busted into the offices of
+the Austin roleplaying games publisher and seized several computers and 
+hundreds of floppy disks. Without any explanation of the charges involved, 
+or any indication as to whether the company itself was somehow suspected of 
+wrongdoing, the government carried off the hardware, leaving Jackson's company
+crippled. 
+
+Unlike those before it, this raid would prove to cause quite a stir and have
+long lasting ramifications for the computer and law enforcement communities.
+What started out as just another chapter in the continuing saga of law
+enforcement's bumbling effort to battle computer crime ended up helping to 
+establish the rights of sysops and users everywhere, and it did so with the
+help of the WWIV software and its author Wayne Bell.                               
+      
+The SS Comes To Austin
+
+One of Jackson's employees, Loyd Blankenship (aka "The Mentor") had long been
+involved in the computer underground as a member of the notorious Legion of
+Doom (LoD). Blankenship was writing a game called GURPS Cyberpunk for SJG. 
+Cyberpunk was set in the classic Gibsonian setting of a future world dominated
+by computer networks and hackers swiping data for the large corporations who 
+ruled the planet. In his spare time, Blankenship and another LoD member Chris 
+Goggans (aka "Erik Bloodaxe") ran an "elite" board from home. The board ("The 
+Phoenix Project") catered to hackers and others interested in computer 
+security. It had an active user base of well known underground celebrities, 
+and offered a decent collection of text files and 'zines dealing with hack/
+phreak issues.
+
+The Secret Service took an interest in the activities of the Legion of Doom
+after it was alerted to the existence of a document which had been pilfered 
+from a telephone company computer by some of its Atlanta members ("Prophet" 
+"Urvile" and "Leftist"). The text file which dealt with the E911 system, was 
+being edited for inclusion in a popular 'zine called PHRACK, published by 
+Craig Neidorf (aka "Knight Lightning"). PHRACK had a fairly large subscription
+list, and was archived on hundreds of BBS' all over the country. 
+
+Unfortunately for him, Blankenship was on that list. He received an advance 
+copy of PHRACK Issue #24's table of contents through an Austin Internet 
+address. This led the law to Austin in late February and early March of 1990, 
+hot on the trail of the evil document and anyone even remotely associated 
+with it.
+
+The Secret Service, under the leadership of Agent Tim Foley and Assistant 
+US Attorney William Cook, acquired a search warrant to search the homes of 
+Blankenship and Goggans. In what has since been revealed as a hasty last minute
+decision, they also convinced a US Magistrate to allow them to search the 
+premises of Steve Jackson Games. On the morning of the search, they 
+simultaneously raided the three locations, and carted off vans full of computer
+equipment. 
+
+Jackson was shocked. He had no idea why his company was the target of any kind
+of investigation, and the Secret Service weren't talking. The warrant was
+"sealed," they told him, and he would just have to wait until they were done
+with their investigation before he could find out any more, much less have his 
+company's computers returned. The government had seized all of the existing
+copies of the almost completed GURPS Cyberpunk as well as countless other 
+files. Without computers, many of Jackson's employees couldn't work. 
+Publication dates were immediately pushed back for some products and canceled
+for others. In desperation, Jackson was forced to lay off a large percentage 
+of his employees.
+
+News of the Jackson raid began to spread through the BBS and network community.
+It eventually got to Mitch Kapor and John Perry Barlowe. Kapor was the 
+co-author of Lotus 1-2-3 and the founder of Lotus Development. Barlowe was a 
+renegade net personality who wrote lyrics for the Grateful Dead. Jackson's 
+story struck a chord with the duo, who had been following the law enforcement 
+assault on computer users. Together, they formed a non-profit group called the 
+Electronic Frontier Foundation and as one of the group's first official acts 
+supported Jackson in a suit against the US government for damages resulting 
+from the March 1 search and seizure.
+            
+Enter WWIV and Wayne Bell
+
+As interesting as this story is, it soon took an even more interesting turn for
+the WWIVNet community. It turns out that one of the computers seized by the
+government from SJG was a BBS running a registered version of WWIV. The board,
+called "The Illuminati" was used by fans of Jackson's games as well as writers 
+and editors. It had several active subs devoted to various SJG products, a
+transfer section which offered playtest version of yet to be released games and
+a Gfiles section with articles about the company, how to submit freelance
+materials and other related matters. Although it was not a part of WWIVNet,
+Jackson was pleased with WWIV's performance and had happily sent in his 
+registration to Wayne Bell.
+
+Jackson and his attorneys realized that the seizure of the BBS was a crucial
+part of their claim. Three of the boards users joined in the lawsuit claiming
+that the interception of their personal e-mail by the government violated a
+federal statute called the Electronic Communications Privacy Act. The ECPA was
+designed to keep law enforcement types from getting carried away with wiretaps
+and other types of electronic surveillance, but had yet to be applied to 
+e-mail. Jackson also contended that running the BBS qualified his company as a
+publisher under another law called the Privacy Protection Act. The PPA set 
+strict rules for searching people in the business of disseminating information
+to the public, but it too had never been applied to a BBS. Both claims were
+bold attempts to establish protections for a hobby which had been largely 
+ignored by the law up to then.
+
+Early on, Jackson contacted Bell concerning the raid. The government had 
+returned some partial back-ups of the BBS hard drive, and Bell agreed to 
+examine them from an expert perspective. His examination turned up a startling
+fact: not only had their been e-mail on the system at the time of the raid, but
+the government had systematically read and deleted it in its search for any
+incriminating evidence. Armed with this knowledge, Jackson's lawyers asked 
+Wayne to testify as to how he deduced this and as a general expert on BBS's 
+and WWIV in particular.
+
+This is where I became involved in the story. In the summer of 1992, I was 
+about to enter my last year of law school at the University of Texas in 
+Austin. I had been running a WWIV BBS since the days when the source was 
+written in Turbo Pascal and was (and am) a member of WWIVNet (1@5285 - "The 
+Bamboo Gardens North"). My study of the law made me begin to wonder about the 
+legal issues related to running and using a BBS. I even started a network sub 
+on the subject ("The Modem/BBS Lawnet" subtype 25285, AutoReq). I had been
+following the Jackson story with great interest, and the Mentor had been a 
+user on my board several years before all of this. In 1991, I became involved 
+in the Austin chapter of the EFF, which had been founded by Jackson and other 
+net personalities. One of the more active members of the group, science fiction
+author Bruce Sterling was even writing a book about the whole ordeal. The 
+book, entitled "The Hacker Crackdown" presents the complicated story of the 
+raid and the preceding events in detail, and is the best source for a complete 
+and accurate description of what really happened leading up to the trial. 
+
+I received an offer to work as a summer intern at a large Austin lawfirm which
+handled, among other things, media law cases. I was excited to later learn that
+the firm was chosen by the EFF to handle the litigation in the SJG v. US Secret
+Service case. Because of my familiarity with WWIV and with modeming in general,
+I was asked by Pete Kennedy, an associate at the firm to help him and other
+attorneys working on the case to piece together what happened on the technical
+side of things. One of my tasks was to deal directly with Wayne and help him
+prepare for testimony. I was also in charge of setting up a working model of 
+the Illuminati BBS for use in the courtroom during trial.
+
+Although I had never directly corresponded with Wayne before (except by sending
+in my registration check in 1987), I was, like most WWIV sysops are, a big fan
+of his. I felt that WWIV was the best BBS software package available for a
+single line board, and still do. I was pleased to learn that Wayne was a
+friendly and helpful person who was more than willing to lend a hand when I had
+a question about something. He was also patient with my lack of programming
+knowledge (I have only dabbled with the source, and have always run a stock
+version of WWIV).
+
+In several telephone discussions Wayne explained to me how he had come to the
+conclusions about the Secret Service reading the e-mail. It turns out that due
+to a quirk in the mail routines, they left irrefutable evidence of what they 
+had done.
+
+WWIV e-mail information was stored in two files with identical names
+(EMAIL.DAT). One of them, found in the \DATA directory, contains pointers and
+header information. The other, found in the \MSGS directory, contains the
+text of the letter and some other info. 
+
+Granted, this is a simplification, but for our purposes, it was accurate and as
+complicated as we could get with any hope of not losing the judge at trial. 
+When a piece of e-mail is deleted by a user after he or she reads it, WWIV
+places a "0" in the to: field in /data/email.dat (there is no user #0, so this
+serves as a flag that the entry is no longer viable). As part of the log-off
+procedure, all entries with a "0" in the to: field are deleted, and the process
+is complete. If a sysop deletes user e-mail from the Waiting For Caller screen,
+however, the "0" is placed in the to: field, but since there is no log-off
+after this procedure, the system waits for a normal log-on and log-off before 
+it deletes all of the zeroed out entries from email.dat. The files, as they 
+were returned form the Secret Service showed that every entry in the email.dat
+was mailed to user 0. Coupled with the file dates (verified from printouts 
+turned over from the Secret Service investigation), it became evident that 
+someone at the Secret Service sat at WFC, hit "M" to read all the mail, and 
+then systematically deleted every piece after reading it.
+
+Wayne flew into Austin the day before the trial and - after chicken fried steak
+and a couple of beers - we worked on how his testimony would best be presented.
+I had been over this with Pete Kennedy (Jackson's attorney) several times
+without Wayne, and Pete spent time with Wayne on the phone, so Wayne turned out
+to be a very able witness. His testimony would also established that WWIV was
+not, as the government claimed, full of security holes. Hank Kluepfel, a
+government witness who was the Director of Network Security at Belcore, had
+claimed that WWIV e-mail shouldn't be considered private because WWIV had a
+reputation of being lax on security.
+
+At trial, Wayne's testimony was very effective. He really was not challenged by
+the government attorneys, and his conclusions were well established as far as
+the court was concerned. Steve Jackson was able to sit down at a working model
+of the Illuminati BBS during the trial and show the judge exactly what WWIV
+looked and felt like. It was also shown at the trial that there was nothing
+illegal anywhere on the Illuminati BBS. Every piece of software (including
+utilities) was accompanied by a valid ownership. That, and other damaging
+testimony from the Secret Service Agents themselves, along with testimony from
+the other plaintiffs, led US District Judge Sam Sparks to hand down an opinion
+on March 12, 1993 (just over three years after the raid) which held that the
+government violated the statutes in question and awarding Steve and the three
+users of his board damages.The decision was reported in The Wall Street Journal
+and in UPI stories all across the country,
+           
+
+The Aftermath
+
+As positive as it initially appears, the legal significance of the decision is
+still being debated by legal analysts. First, it should be noted that the
+opinion, while clearly important, is of limited precedent because of the way 
+our legal system works. It is only the law in the Southern District of Texas. 
+In theory, other courts might be persuaded by it, but are not bound by its 
+holding. An appeal from the government (there has been no indication thus far 
+that they are planning one) would allow the more influential 5th Circuit Court 
+of Appeals to examine the legal ramifications of the case, but at that point, 
+things are up in the air again as far as the issues are concerned. There are 
+some things, however, which are irrefutable from the opinion.
+
+First, it is clear that, at least in a limited jurisdiction, the Electronic
+Communications Privacy Act applies to electronic e-mail which is stored on a
+BBS. Judge Sparks ruled that each of the three users who had e-mail read by the
+government, yet were not under investigation, were entitled to $1000. While 
+this does not seem like a huge amount, it should be remembered that on a large
+board, paying $1000 to every user could be a big deterrent standing in the way 
+of the government aimlessly reading e-mail where it has no business doing so.
+
+Second, the court held that the government violated the Privacy Protection Act.
+The PPA part of the opinion, does not goes as far as sysops might hope, 
+however, as the judge seemed to base his decision that Jackson qualified as a
+publisher on the nature of his company's games and books and not solely on the
+fact that he ran a BBS. Although it will be helpful for a future plaintiff 
+sysop to rely on the SJG decision when trying to establish that the PPA 
+prevents government seizure of a BBS, it will not be dispositive. Under this 
+claim, Jackson won over fifty thousand dollars.
+
+I haven't had a chance to talk with Wayne since working with him at the trial.
+I am sure he is as pleased as others about the decision, and he should be since
+he was an important part of the victory. In their own way, he and his program
+have a special place in BBS legal history now.
+
+Sysops should be aware that we are all still on thin ice when trying to get the
+legal system to understand our hobby. Although we have been lucky in the past
+(the SJG decision, and other important cases like Cubby v. Compuserve), there
+need to be more judges who are sensitive to the constitutional protections 
+which BBS's deserve. Thanks to the determination of Steve Jackson, his 
+attorneys and people like Wayne Bell who were willing to help, this particular
+story had a happy ending. Not all of them do. Blankenship and Goggans have yet 
+to have any of their equipment returned to them, even though no charges have 
+ever been brought. They are not alone. Since I have become involved in these 
+issues, I have been contacted by several sysops who were raided at one time, 
+had their computers seized and were never charged with a crime. Hopefully, in 
+the future, law enforcement agents will think twice about such shameless 
+activities. Until then, the best that sysops can do is to become aware of the 
+issues, and become active with groups like the EFF that fight to establish 
+sysop and user rights.
+
+                           
+Further Sources:
+
+If you want more information about the facts leading up to the raid on SJG, the
+best source is Sterling's book _The Hacker Crackdown_ ($23.00, Bantam - 1992).
+Boardwatch magazine has provided very good coverage of the more recent
+developments. 
+
+In April,a detailed account of the trial was reported. In May, noted cyber-
+lawyer Lance Rose analyzes the court's opinion in detail and spells out what he
+feels the ramifications are. Rose has also written a book called _SYSLAW_
+($34.95, PC Info Group - 1992 [orders 800-321-8285]) which is a great guide to
+the legal issues involved in running a BBS. 
+
+Pete Kennedy of George, Donaldson & Ford, Jackson's law firm, is working on an
+article for an upcoming issue of Boardwatch, as well. The latest issue of 
+_2600: The Hacker's Quarterly_ has the hacker perspective of the trial reported
+by Paco Xander Nathan, who was present throughout the proceedings. 
+
+Finally, I am writing a book for MIT press called "The Law of Cyberspace: Your
+Rights and Duties in the On-Line World" which should be on the shelves in
+January 1994. I'll be happy to respond to e-mail (1@5285) but please refer 
+legal questions/comments to my WWIVNet sub, The Modem/BBS Lawnet so that 
+others can benefit from the discussion.
+
+The EFF can be contacted by US Mail by writing 666 Pennsylvania Avenue, Suite
+303, Wash. DC 20003. Their phone number is (202) 544-9237, and their e-mail
+address is eff@eff.org which can be reached from WWIVNet via one of the 
+Internet gateways. 
+
+The EFF sponsors a USENET newsgroup comp.org.eff.talk which has, in the past,
+been gated to WWIVNet, although I am not sure if it being done presently.
+EFF-Austin, an independent non-profit group, can be reached by mailing me at my
+WWIVNet address, by mailing eff-austin-directors@tic.com, or by reading their
+USENET newsgroup austin.eff. Both groups are prepared to help sysops and users
+with legal problems in Cyberspace.
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+               ³                 TechNOTES                   ³
+               ³       Compiled by the WWIVNews Staff        ³
+               ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+...This word just in: In the wake of Dell Computer Corp's announcement of the
+restructuring of its notebook division, and the shocking announcement of
+significantly lower first-quarter earnings for 1993, as many as 11 lawsuits 
+have been filed in Federal court against Michael Dell and his top assistants 
+by angered stockholders.
+
+...On May 27th, eleven major stockholders announced they had filed suit in US
+District Court in Austin, Tx, claiming that Dell violated federal securities
+rules by failing to disclose relevant information regarding the problems with
+the notebook division, and that Dell withheld the information to help
+artificially inflate the price of company stock. Dell stock fell over $7 a 
+share to just under $25 a share following the announcement of the company's 
+$20 million bath in discontinued laptop and notebook projects. Share price has
+stabilized since the announcement, and was on the rise slightly despite the
+lawsuit announcements.
+
+...The suit also charges that Dell was aware of the problems with the notebook
+division well in advance of the scheduled first quarter earnings announcement,
+and withheld the information to prevent possible loss of over 276,000 shares in
+March of this year. The stock sale netted over $10 million, which was just
+slightly higher than Dell's reported earnings for the first quarter.
+
+...Dell spokesman Roger Rydell, answering the charges in an official statement,
+denied having received any notice of lawsuit as of Memorial Day, but was aware
+of the allegations and considered them "groundless", and did not believe that
+they would "have any material affect on the financial condition of the 
+company." Rydell also noted that the problems with the notebook division were 
+not discovered by upper management until just prior to the earnings 
+announcement, and the situation could not have had any effect upon stock sale
+decisions made prior to the revelation.
+
+...Terrell Oxford, a Dallas attorney representing several of the stockholders
+who have filed suit, pointed out that "there [are] a lot of irate stockholders
+out there," and said that there would probably be additional lawsuits filed in
+the coming week, and that all would probably be consolidated into one class
+action suit within the next few weeks. No damages have been specified as of 
+this writing.
+
+...From the Fred Sanford department: On the other side of town from Dell,
+CompuAdd has finally found something to do with all that old, unsold 
+merchandise from its 110 now-closed retail outlets. Simply put, the infamous
+"Back Dock Outlet" will be resurrected in July, and will offer anywhere from 
+20-70% off of all CompuAdd merchandise that was still in stock when all but 
+one of the company's retail stores were closed nationwide in March. The store 
+will only be open on Saturdays, and will be used as an employee training 
+center as part of their company summer jobs program.
+
+...Those not from Austin may not know of the "Back Dock" sales CompuAdd used 
+to hold at their manufacturing facility in years past, and how they gained 
+a reputation as being "the one computer junk sale where you had an 80% chance 
+of NOT buying a lemon if you got there early!" The response to these sales 
+convinced CompuAdd to briefly open a "Back Dock" store for several months to 
+clear out the majority of older, pre-386 non-slimline units for seriously low 
+prices. Six months after it was opened, the store was closed when the majority 
+of backstock was cleared.
+
+...Windows for Workgroups users take nOTE: Word through the trade rags is that
+an upgrade to the basic package is on the way which will go one step beyond 
+your average bug-fix release. Wingroups v3.11 will work only in Extended mode, 
+and heralds the abandonment of Standard mode by Microsoft for future releases 
+of Windows.
+
+...In addition to squashing networking bugs and the dumping of Standard mode,
+the Wingroups upgrade will reportedly feature some minor enhancements to File
+Manager and Program Manager, as well as a few other "unspecified bells and
+whistles," and is expected to be officially announced by Microsoft later this
+month.
+
+...It's official: Steve Jobs has stopped production of the NeXT workstation, 
+and is concentrating efforts on producing a new version of the NeXTStep 
+operating system geared towards the 486 market. As a result, over 150 
+employees associated with the hardware side of NeXT were given their walking 
+papers, and the remainder were reassigned to assist the software development 
+team.
+
+...Dubbed NeXTStep-486, the new version will reportedly be priced to compete
+directly with Windows NT, which is scheduled for release this summer. It is
+designed to be a stand-alone OS, as opposed to NeXTStep 3.0's use of Windows 
+3.1 as a base platform. The initial memory requirements, tho, are a bit 
+staggering: in addition to a 486DX-33, at least 12 megs of RAM and 140Mb of 
+hard drive space is required just to load the OS! And you thought NT and OS/2 
+were resource hogs!
+
+...So you bought Microsoft Video for Windows, eh? Have you managed to import
+anything into it yet? If not, you probably don't have a proper video capture
+board, or you're not a practicioner of RTFM.
+
+...In any case, there are several really good boards out there that work really
+well with VFW that should be looked at. The prices range from $349 to $1295
+MSRP, which means that you can either spend a little or spend a lot, depending
+on the quality and speed of playback you require.
+
+...Low-end of the cost totem is Media Vision's ProMovie Spectrum at $349, which
+skirts the bare minimum VFW requirements for a capture board: 15 frames per
+second in a 160x120 window. Images are compressed on the fly using a 
+proprietary algorithm, and the .AVI files can only be played back in VFW - none
+of the third-party viewers have access to the proprietary decompression codec 
+yet. There are others that meet the bare minimum, but this particular board is 
+the best of the cheap ones.
+
+...Midrange lies the Video Blaster and the VideoSpigot for Windows. $499 MSRP
+for either of these cards, but the VB boasts three-channel input and easy
+interfacing with the Sound Blaster line of sound cards. The VideoSpigot, on the
+other hand, boasts single channel input, and uses a proprietary codec similar
+to that of the ProMovie Spectrum. The difference comes from the VB's inability
+to handle speeds greater than 15fps playback in a window above 160x120, whereas
+the Spigot can run 15fps just fine in 320x240.
+
+...On the high end, JEV International offers the ProMotion Multimedia Engine,
+which promises a wide selection of frame sizes, up to and including 1024x768.
+Playback speeds are still only 15fps, although an upgrade has been announced to
+allow for 24fps in windows up to 320x240. New Media Graphics Super VideoWindows
+comes in next at $899 MSRP, although street prices have been seen as low as the
+MSRP for the Video Blaster when bought in conjunction with complete systems.
+Both cards handle the minimum requirements, but the SVW contains stereo audio
+features on the same card.
+
+...Finally, there's Intel's RT Video Developer's kit coming in at $1295. This
+is the board that Microsoft would prefer that you use with VFW, and at that
+price Intel wishes you would too. Images can be played back at 30fps - standard
+video full-motion speed - in a 320x240 frame, and on a 486DX-66 with a serious
+caching disk controller 24fps is possible in a 640x480 window.
+
+...Again, the prime difference between these boards is not just cost, its
+quality of image capture. At 160x120 and 15fps, these boards are essentially
+equal. The dividing line comes with .AVI files above 320x240 in size at 15fps
+or faster. If you need serious multimedia, then consider splurging for Intel's
+RT kit. Otherwise, the Video Spigot may be the better purchase unless you need 
+the 3-channel input the Video Blaster provides.
+
+...Going the other direction is the $895 VGA2TV Pro, which allows you to 
+display your 640x480 graphics on a TV and/or send them to a VCR for recording.
+In addition, the card allows for video input from any NTSC or PAL source, and
+lets you overlay your own text and graphics over the signal before sending it
+out to your TV or VCR. This little baby is a Genoa product, which as many of 
+you may recall was one of the best EGA card manufacturers back during that
+standard's brief heyday. Expect good quality output from this card as well.
+
+...From the Buck Godot department: Just when you thought Atari was dead, the
+pioneer in game machines tosses another bottle into the ocean in hopes of 
+making the company float again. Dubbed the Falcon030, Atari's new 68030-based
+system marks a major departure for a non-IBM-based machine - it can use a
+standard VGA monitor without any extra cables! In addition, you can plug in 
+any audio or video device that uses an RCA jack for I/O. This includes a TV, a
+VCR, a Video Camera, a CD player (audio-only), a microphone, a MIDI keyboard 
+or analog converter (standard MIDI ports are included as well), or even a
+guitar!
+
+...The key to the Falcon's capabilities is the Motorola 56001 Digital Signal
+Processor. Running at 32MHz in the background, this particular DSP supports
+eight 16-bit parallel DMA channels, which allows for simultaneous playback and
+record. Until recently, the only machines you could find DSP's integrated into
+the motherboard were the NeXT boxes. However, the prices for DSP's have dropped
+to the point that both IBM and Apple are promising them in their planned next
+wave of Multimedia computers.
+
+...In addition to the A/V plug-n-play capabilities of the Falcon, the unit also
+boasts a Mac LocalTalk port for Atari-Mac networking, and a SCSI-][ port with
+its own DMA channel. This port will work with any SCSI-][ capable drive or
+device, which comes in handy considering the Falcon's optional 65Mb internal
+hard drive doesn't go very far with today's Multimedia requirements.
+
+...MSRP for the Falcon with 1Mb of RAM, a 1.44" drive, and all the frills 
+listed above is $799. With 4Mb and the optional 65Mb HD, the price jumps to 
+$1299, which is still a decent price for a MIDI workstation when you get right
+to it.
+
+...From the I *NEED* Space department: OCEAN Microsystems has released a new
+version of their Vista Magneto-Optical drive subsystem. The V256 stores 254Mb
+of data on a single 3.5" M-O cartridge, and boasts an access time of 35ms. 
+While this doesn't make the Vista a viable replacement for a regular hard 
+drive with a 19ms access time, the size and durabiltiy of the cartridge make 
+it an acceptable media for storing large graphic images or for making entire 
+drive backups with one or two disks.
+
+...OCEAN still produces the Vista V128, which stores 128Mb per disk at a
+slightly slower access time. Prices for the smaller cartridges are around $68,
+with the higher capacity carts going for only about $20 more. The M-O drives
+themselves MSRP at $1750 for the V256, and about $1400 for the V128.
+
+...CD-ROM prices continue to drop as demand increases. Oddly enough, this
+doesn't mean that the drives are 800ms drives either. Mitsumi internal CD-ROM
+drives with access times of 350ms have been seen in the trade rags for as low
+as $210, including interface card and cable! Texel's 265ms drives have been 
+seen as low as $100 below their $499 MSRP, and their previous 380ms drives 
+have been seen in the $250 range through mail order.
+
+...Based on the history of the audio CD-ROM, expect to see prices start to 
+drop on the carousel players once the 300ms-range drives stabilize in the $175 
+range. Sysops will no doubt benefit from the fact that they will be able to 
+have several dozen gigs online without having to worry about downloading all 
+those files themselves!
+
+...Speaking of downloading files, Philips has finally released the CDD512DW. 
+For those not aware, this $7999 jewel is the first CD-ROM recorder to be 
+priced under $10,000, and produces 600Mb recordings. To run this unit, you'll 
+need at least a 386-25 and a BIG 19ms Hard Drive. It's not an amateur playtoy, 
+but if you're serious about slapping all those .GIFs and .WAV files on 
+something that won't get purged, and that you can possibly use for a 
+commercial venture, then this machine may be what you need to take out a loan 
+for.
+
+...Of course, if 600Mb of permanent storage isn't good enough for you, Sony's
+apparently been listening to you. Sony's Japanese labs have been working on
+reducing the cost of a blue-beam CD-ROM unit that promises over twice that
+amount of storage for about the same cost as today's red-beam units.
+
+...Since the wavelength of a blue laser beam is shorter than the red standard,
+it can be used to read data bits recorded in smaller lengths. The end result is
+a CD that can hold about 1.7Gb of data, or about 3 hours of audio data.
+
+...Don't expect to see this sort of drive in your PC anytime soon. To produce
+the beam, the drive uses a semiconductor that's cooled to -196 degrees Celsius
+in liquid nitrogen. Then again, if Intel can't get the Pentium temperature down
+far enough to prevent chip burnout, Sony might make a killing by combining 
+their cooling system with Pentium boxes!
+
+...Side note: Those of you who've bought those Shareware CD-ROM collections, or
+have been thinking about producing your own, should know that the majority of
+those companies use a Philips unit. The disks themselves run around $40 a pop
+when bought in quantities below a thousand, but prices drop sharply above that
+level to around $12 each.
+
+...Who needs MS-DOS 6.0? To counter the pseudo-opposition, IBM released its
+version of DOS 5.0 to direct market with a surprise bundle including Qualitas
+386-Max and Stacker 2.0. The addition of these two utilities was seen by most
+industry experts as a rather bold move for IBM, considering the less-than-cult
+status of 386-Max and the difficulties between Stac and Microsoft over 
+DBLSPACE. In fact, the inclusion of Stacker was seen as a deliberate stab at 
+Microsoft from what used to be its staunchest ally.
+
+...The package MSRP'd for $135, but street prices for upgrades were last seen
+as low as that of the upgrade to MS-DOS 6.0. Also included with the package is
+an offer for an upgrade to Stacker 3.0 for $49. Those running on older AT
+systems or XT systems with serious XMS added should consider this package if
+you're only just now upgrading from DOS 3.3 or below.
+
+...Texas Instruments has released a new 4Mb VRAM chip that may become the new
+industry standard for inclusion in most future video cards. Considering that
+SVGA has a maximum standard of 1024x768 pixels, and requires 1Mb to achieve
+that, 4Mb will allow for a wider acceptance of IBM's XGA standard - 1280x1024
+- with at least 256 colors available on screen.
+
+...Although development samples are only being produced at this time, expect 
+the first functional cards to be on display at the Fall '93 Comdex, with mass
+produced units avalable around 1st Quarter 1994.
+
+...Own a big EISA file server? Hate backups with a passion? Hate them bad 
+enough to consider a RAID array? UltraStor offers the Ultra 124F for lazy 
+people like us..er..you. This EISA to SCSI disk array controller supports up 
+to 8 logical arrays, each of which can be structured for its own RAID level. 
+The card can control up to a whopping *35* different SCSI drives, including 
+Fast SCSI-][ devices.
+
+...the basic 124F goes for $1995, and supports three channels out of the box.
+The additional 5 channels are gained by purchasing one of three different
+daughterboards ranging from 2 channels for $375, or 5 channels for $425.
+
+...From the Sharper Image Rejects department: Those of you who're a bit fumble
+fingered should take nOTE of Audio File's Disclift. This $4.99 tool allows you
+to pick up your CD-ROM disks by the edges or from the center, and move them
+between player and storage case with a firm grip and without getting
+fingerprints on the surface. Those of you who are seriously paranoid about disk
+scratch should take a gander at this one, eh?
+
+...Corporate Goons take nOTE: Cyrix wants to do some serious business with you
+if you're stuck with a lot of 16 and 20-MHz 386DX's. Cyrix will sell their
+Cx486DRu2 for $399 to anyone who can purchase at least 500 units. Individual
+prices were not announced, as the target market for these chips consists of
+those corporations who bought the majority of 16 and 20MHz DX's of this class
+of processor when it first came out. When the 386 became available for non-
+corporate buyers, the minimum acceptable speed was 25MHz, with 33MHz becoming
+the standard. 
+
+...Since most corporate MIS teams were stuck with slower machines which 
+are considered impractical for Windows use, the Cyrix chip may become a 
+major blessing for those large businesses and agencies whose environments are 
+becoming more Windows-oriented as time passes.
+
+...From the Caveat Emptor department: If you're buying a motherboard with one
+of those light blue Intel ZIF upgrade sockets under the belief that you'll be
+able to easily upgrade to a Pentium/P5/586 when they finally get cheap, be 
+aware that there are not one, but *two* official versions of this socket.
+
+...one socket has 238 pins, which will take the DX2 and OverDrive chips, as 
+well as the P24T (the 32-bit version of the Pentium, jokingly referred to as 
+the P-Two-and-a-half). The other is a 169-pin version that's intended for the
+OverDrive chips used with 486SX and slower 486DX systems, and will not handle
+the P24T even if you drilled the extra holes!
+
+...Intel has been taken to task in the trade rags for not making the smaller-
+pinout version a different color, but as of this writing Intel has all but
+ignored any suggestions along these lines. Some companies, such as Gateway and
+Zeos, intend to avoid the 169-pin version altogether in their future machines.
+But until Intel decides to make things easier for those not in the know, make
+sure your board will take the P24T by checking to see if the ZIF has 238 pins
+or not!
+
+...From the Holodeck department: Sematech's holographic drive array finally has
+a name and a marketing company! The drive, dubbed the "ratpack", is expected to
+ship in late 1994 from Tamarack Storage Devices, the marketing spin-off company
+who'll be distributing the drives.
+
+...Since the initial announcement of the drive, some specifications have been
+made available. The drive uses a red-beam laser to perform I/O on holographic
+film mounted in a 35mm slide format. Each slide will hold a gigabyte of data,
+and will run about $100 a slide in bulk. Two versions of the drive are planned
+initially - one with a removable holder for single-slide usage, the other a 10-
+slide array. Drive arrays of up to 50 slides -or pages, as Tamarack refers to
+them - have been achieved in tests, and arrays as high as 250 slides are
+expected to appear by the end of 1995 for use in major file servers.
+
+...Although no official price has been announced, speculation has been both
+extremely high and unbelievably cheap. Pessimists in the industry claim the
+drive with go the standard route of first to buy, first to reimburse the 
+company for R&D, and charge as high as $15,000 for a single-slide drive, and 
+3-5 times that for the 10-slide version. Optimists claim that Tamarack will 
+realize the logic in getting the new format into the mass market cheaply, and 
+will introduce the single-slide drive for as low as $700 with one slide 
+included.
+
+...Of course, someone will figure out a way to Stacker the damn thing and 
+double the space, just to be cheap and avoid having to buy an extra slide :-)
+
+...From the Cut Off One Head department: Canon has jumped on the Hydra 
+bandwagon with their CJ-10. The complete unit is a combination 400 DPI color
+bubble-jet printer, flatbed scanner, and digital color copier all rolled into 
+one. Printouts can be made on coated paper or transparencies, while lables are
+allowable provided they're also of special paper.
+
+...The price of this unit is a bit steep: $6995, provided you don't want to
+print what you scan. If you want the print option, its an additional $2700!
+Other options include an editor add-on that allows you to edit and crop your
+copies prior to print, and an additional feeder tray for Legal-size paper.
+
+...One caveat to mention: this unit, like most Canon bubble-jet printers, uses
+non-permanent ink. Avoid excessive humidity at all costs when dealing with
+printouts from this or any other Canon machine!
+
+...From the Ricky Nelson Memorial department: All you Travelling Men - and
+Women, for that matter - who need their nightly modem fix but can't hook their
+laptops into the local motel phone jacks should consider the Unlimited Systems
+Corp's Konexx Kit. The $169 kit contains practically everything you'd need to
+establish a hookup between your modem and the phone lines at speeds up to
+9600bd, including an accoustical coupler, gator clips, split adapter, and even
+a screwdriver!
+
+...From the Lazy Bum's department: sick of replacing that clock battery every
+year or so? For $49, MicroApps offers people like you the Permanent Power Pack.
+Just replace your clock battery with this little jewel, plug in a spare power
+connector, and the IC-based regulator keeps the CMOS from vanishing for the 
+life of your PC. Perfect for people who're scared to go under the hood of 
+their PC, or simply can't find enough time once a year to replace the battery 
+before the CMOS gets wiped!
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+               ³         Playing Ping-Pong with 1@1          ³
+               ³       Inside the Sub Pinging System         ³
+               ³          by Star Gazer (1@3101)             ³
+               ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+This is a basic overview of the method to have your sub listed in SUBS.LST
+on WWIVNet. I have posted such instructions several times, and will send
+it to any who request them. Reasons for writing this include that I have
+written a network coordination package, and that I am Group 8 SUBS.LST person
+for WWIVNet Group 8 (ie., I create and distribute to members of the group a
+list specifically of Group 8 subs, sorted (reasonably well) by topic.)
+
+These instructions are 4.22 specific. Instructions for prior versions of WWIV
+are available, please email me (1@3101) or someone else like Filo. I believe
+that instructions similar to these will be included in the Net33 docs, but.. ;)
+
+[Editor's Note: If you're not running 4.22, the improvements Wayne has made to
+the network management sections make the effort involved in upgrading more than
+worth it!]
+
+  A. Name       : WWIV New Sysop's Forum
+  B. Filename   : NEWSYS
+  C. Key        : None
+  D. Read SL    : 60
+  E. Post SL    : 60
+  F. Anony      : No.
+  G. Min. Age   : 0
+  H. Max Msgs   : 50
+  I. AR         : C
+  J. Net Info   :
+         Network     Type   Host    Flags
+      a) WWIVNet     5253   5252
+  K. Storage typ: 2
+  L. NetValidate:  No
+  M. Require Ansi:  No
+  N. Disable Tag:  No
+  O. Description:  WWIV New Sysop's Forum for Help & Advice on WWIV
+
+
+The Sub Ping sent out by someone on the net (usually, but not always the
+SUBS.LST Coordinator.)  The ping gathers information from your boardedit
+entries (like the one above) concerning the subs you host on that particular
+network. In WWIV 4.22, this is made much easier because everything the sysop
+has to do is in Boardedit, and not in the SUBS.PUB file used earlier.
+
+Options of interest to the Network:
+
+A) This is the local sub name. This is retrieved by the ping IF (and only
+   if) the "O" option for description is empty. Otherwise, it gets the sub
+   title from the description.
+
+J) When you choose to host a sub, it asks you for the following information:
+    SubType   (This is the reference index for your sub, determined by whatever
+               a particular net uses...)
+
+    Host      (Yourself, automatically filled in by the BOARDEDIT routines)
+
+    Auto-Req  (You probably know what this does, so I'll just say that if the
+               sub ping finds this set to true, it adds the "R" modifier in
+               SUBS.LST for your sub)
+
+    Auto-Info (This is a toggle - if false, the sub ping will NOT detect the
+               sub and put it in SUBS.LST. If it is true, the sub WILL be
+               listed. For Ethical reasons, it is best to list your sub even
+               if it is private, and just have autoreq turned off)
+
+N) This toggles the "T" modifier in SUBS.LST - telling the subscriber to turn
+   on tagline restriction or not. 
+
+O) This is the title of the sub as listed in SUBS.LST. *Warning* - Net32 and
+   below truncate the field to 40 characters, this will be fixed in Net33.
+
+Obviously this is not too complicated ;). I've probably forgotten something,
+but I don't think so. ;). Some networks use additional modifiers not stored
+in boardedit, such as Gating, WWIVServe, etc. Those are traditionally entered
+manually, which is not suggested on a network of this size ;). Some other
+networks compile the whole list manually - just because it works automatically
+on WWIVNet doesn't mean it will work elsewhere.
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+Now time for a shameless plug for my own software. If a net, that you are
+currently a member of, does not use auto subs.lst compilation, or auto-updates,
+encourage that network to invest in network coordination software. It tends
+towards a more stable network, an easier time on sysops, and the prices on
+such software drop on a regular basis. I offer a package of my own, currently
+in beta-test, that does not have a snappy interface, but performs functions
+such as subs pinging, subs.lst distribution, updating net data files, sending
+source verified email, etc. This software will probably have a registration
+cost of $15 per network. (ie., the coordinator gets a copy of the EN part,
+and all boards on the net get the DE part. All for $15 ;).
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+               ³          Filo's Mod of the Month            ³
+               ³              by Filo (1@2050)               ³
+               ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+The Mod-of-The-Month Selection represents my choice of what appears to be a 
+useful, practical mod to WWIV. It does not mean it is the best mod posted or
+even that it works as I may not have tested it. Given the limitations of this
+media, uuencoded mods are NOT eligible for selection as mod-of-the-month.
+
+This month's selection is another contribution from Frank Reid (1@870), 
+in Spain.
+
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³ Mod Name: FR025.MOD          Mod Author: Frank Reid 1@870                 ³
+³ Difficulty: Novice Modder       Date: April 30, 1993                      ³
+³ WWIV Version: 4.22                                                        ³
+³ Files Affected: NEWUSER.C FCNS.H                                          ³
+³ Description: New User enhancement to automagically append the "-" or "/"  ³
+³ delimiter when a user inputs birthdate, voice phone or dataphone.         ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+1. Getting back into the swing of things!  Still rebuilding v4.22 (probably 
+in time for v4.23's release!), but as I do, I will release any mods that might 
+be useful to others.
+
+2. Please back up your source. I take NO responsibility for ill effects of 
+this or any of my mods. However, I'd be happy to help you get a mod working. 
+I have tested this on virgin v4.22 source.
+
+3. Description: This was requested today on Mod Talk.  What it does is put 
+the appropriate, function-specific delimiter (separator) when a user reaches 
+the logical place in an input field for fixed-field functions, such as birth 
+date, phone number, etc. If you have installed my set New Files Scan date 
+mod, you already have the "getfld(..)" function somewhere in your source.
+
+4. Credits: The function is primarily Jester's, who really is an excellent 
+programmer and I wish he'd release more mods!  
+
+5. Mechanics: You'll find the function "void getfld(..)" generic enough to 
+use in several areas of the BBS, but the most logical are the newuser input 
+routines and the input new files scan date prompts, both of which I've 
+addressed in FRxxx.MODs. However, I've left Jester's original comments/ 
+header in the function in case you want to port it somewhere else.
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+Okay, it's not a tough mod, so here goes...
+
+The following notations are used:
+
+==  Existing 
+=+  Modified 
+++  Added 
+--  Deleted
+
+
+** Step One **
+
+Back up your source code!  Although this is a short mod, it may not work on   
+your system and you'll regret not having a backup!
+
+
+** Step Two **
+
+Open <NEWUSER.C>
+
+At the top, add the following function before "int check_name(char *nn)" :
+
+/* ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿ */
+/* ³ Function: void getfld(char *str, int *format, char *delims,      ³ */
+/* ³                       int *abort)                                ³ */
+/* ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´ */
+/* ³ Description: Gets input as a formatted string. Enter is assumed  ³ */
+/* ³              at the end of the string.                           ³ */
+/* ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´ */
+/* ³ Paramters:   char *str     - String to return input.             ³ */
+/* ³              int  *format  - An array that tells how the input   ³ */
+/* ³                              fields are to accepted.             ³ */
+/* ³                              format[0] = Total number of input   ³ */
+/* ³                                          fields.                 ³ */
+/* ³                              format[1] = Length of first field.  ³ */
+/* ³                                .                                 ³ */
+/* ³                                .                                 ³ */
+/* ³                                .                                 ³ */
+/* ³                              format[n] = Total input length.     ³ */
+/* ³              char *delims  - Delimeters to use between fields.   ³ */
+/* ³              int  *abort   - Set true if user aborted the field. ³ */
+/* ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´ */
+/* ³ Notes:                                                           ³ */
+/* ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´ */
+/* ³ Returns: Void.                                                   ³ */
+/* ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ */
+
+void getfld(char *str, int *format, char *delims, int *abort)
+{
+  int             count,        /* Current input field.       */
+                  fields,       /* Total input fields to get. */
+                  sub,          /* Current number of characters. */
+                  counter;      /* Current offset in string.  */
+  unsigned char   ch;           /* Character Inputed.         */
+  fields = format[0];           /* How many fields there are. */
+
+  sub = counter = 0;            /* Zero variables.            */
+  count = 1;
+
+  while (!hangup && !(*abort)) {
+    if (counter == format[fields + 1])
+      break;
+
+    if (format[count] == sub && delims[count - 1]) {
+      str[counter++] = delims[count - 1];
+      outchr(delims[count++ - 1]);
+      sub = 0;
+    }
+    ch = getkey();
+
+    if (ch == 8 && counter) {
+      --counter;
+      --sub;
+
+      if (str[counter] == delims[count - 2]) {
+     --count;
+        --counter;
+        backspace();
+      }
+      if (sub < 0)
+     sub = format[count] - 1;
+
+      backspace();
+    } else if (ch == 13 && (counter != format[fields + 1]))
+      *abort = 1;
+    else if (ch > 31) {
+      if (ch != delims[count - 2]) {
+     str[counter] = ch;
+        outchr(str[counter++]);
+        sub++;
+      }
+    }
+  }
+  str[counter] = '\0';
+
+  if (hangup)
+    str[0] = '\0';
+}
+
+Search for "void input_phone(void)" and make yours look like this:
+
+void input_phone(void)
+{
+  int             ok, i, abort;
+  char            delims[3];
+  static int      fields[5] =
+  {
+    3, 3, 3, 4, 12
+  };
+
+  abort = 0;
+
+  strcpy(delims, "--");
+
+  do {
+    nl();
+    ansic(3);
+    pl(get_string(527));
+    ansic(3);
+    pl(get_string(493));
+    prt(2, ":");
+    mpl(12);
+    getfld(thisuser.phone, fields, delims, &abort);
+
+    ok = valid_phone(thisuser.phone);
+    if (!ok) {
+      nl();
+      ansic(6);
+      pl(get_string(528));
+      ansic(6);
+      pl(get_string(529));
+    }
+    nl();
+  } while ((!ok) && (!hangup));
+}
+
+/* Hop down to "void input_dataphone(void)" and make it look like this: */
+
+void input_dataphone(void)
+{
+  int             ok, i, abort;
+  char            delims[3];
+  static int      fields[5] =
+  {
+    3, 3, 3, 4, 12
+  };
+
+  strcpy(delims, "--");
+
+  abort = 0;
+
+  do {
+    nl();
+    ansic(3);
+    pl(get_string(540));
+    ansic(3);
+    pl(get_string(493));
+    prt(2, ":");
+    mpl(12);
+    getfld(thisuser.dataphone, fields, delims, &abort);
+
+    ok = valid_phone(thisuser.dataphone);
+    if (!ok) {
+      nl();
+      ansic(6);
+      pl(get_string(528));
+      ansic(6);
+      pl(get_string(529));
+    }
+    nl();
+  } while ((!ok) && (!hangup));
+}
+
+/* Hop down to "void input_age(userrec *u)" and make yours look like this: */
+
+void input_age(userrec * u)
+{
+  int             a, ok, y, m, d, abort;
+  char            ag[10];
+  static int      fields[5] =
+  {
+    3, 2, 2, 2, 8
+  };
+  char            delims[3];
+
+  strcpy(delims, "//");
+
+  do {
+    nl();
+    do {
+      nl();
+      ansic(2);
+      pl("Input your birthdate in the form:");
+      ansic(0);
+      pl(" MM/DD/YY");
+      outstr(":");
+      mpl(8);
+      abort = 0;
+      getfld(ag, fields, delims, &abort);
+
+      sscanf(ag, "%02d/%02d/%02d", &m, &d, &y);
+      nl();
+    } while ((!hangup) && ((m > 12) || (m < 1) || (d > 31) ||
+                           (d < 1) || (y > 85) || (y < 30)));
+    ok = 1;
+    if (((m == 2) || (m == 9) || (m == 4) || (m == 6) ||
+         (m == 11)) && (d == 31))
+      ok = 0;
+    if ((m == 2) && (((y % 4 != 0) && (d == 29)) || (d == 30)))
+      ok = 0;
+    if (!ok) {
+      nl();
+      ansic(6);
+      pl(get_string(546));
+    }
+  } while ((!ok) && (!hangup));
+  u->month = (unsigned char) m;
+  u->day = (unsigned char) d;
+  u->year = (unsigned char) y;
+  u->age = years_old(u->month, u->day, u->year);
+  nl();
+}
+
+Save <NEWUSER.C>
+
+
+*** Step Three ***
+
+This is not necessary if you can/do use 'MAKE FCNS' from the command line.
+
+Open <FCNS.H>
+
+Search for "/* File: newuser.c */" and add the new function at the top:
+
+== /* File: newuser.c */
+
+++ void getfld(char *str, int *format, char *delims, int *abort);
+== int check_name(char *nn);
+== void input_name(void);
+
+Save <FCNS.H>
+
+Told ya it was an easy mod!  Recompile and you're done. 
+
+Drop me a note to say "Hi!" if you use this mod. (And drop one to Jester 
+@3362 to tell him to write more neat stuff!)
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+               ³         WWIV on Internet and Usenet         ³
+               ³            by Jay Walker (1@7659)           ³
+               ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+On Internet, there is currently a Call For Votes for the formation of
+comp.bbs.wwiv, a newsgroup dedicated to talking about our favorite software. 
+
+The official CFV has already been posted on Usenet, as well as several of the
+WWIVNet Sysop Subs, but I will summarize here:
+
+We are trying to make a newsgroup for WWIV in order to draw some attention to 
+WWIV and to dispell some of the negative feelings that many Internetters seem 
+to have for WWIV. It will also assist those interested in connecting their 
+WWIV board to Internet or their Internet board to a WWIV net.
+
+Internet is an incomprehensibly complex network. It began as an
+electronic link between North Carolina University and Duke and has quickly
+grown to tens of thousands of sites and tens of millions of users at colleges,
+universities, businesses, government agencies, and BBSes in North America,
+Northern and Western Europe, Australia, New Zealand, and Eastern Asia. Usenet
+is a part of Internet and carries newgroups - Usenet-speak for message bases.
+
+Where does WWIV fit into this? It plays a very small part. It is one of
+many BBS softwares that occasionally gets mentioned in BBS newsgroups. But,
+it is possible to hook up your BBS into Internet using the Waffle BBS program.
+Making WWIV Internet-compatible in future versions is a likely (if not
+already planned) addition.
+
+Anyone who is on a non-WWIV network such as FidoNet or Internet or who
+reads BBS magazines knows that WWIV does not get a lot of respect. Because
+the recognition that Wayne Bell and WWIV rightly deserve is lacking, it is up
+to we WWIV SysOps to extol the virtues to people unfamiliar with WWIV.
+
+Currently on Usenet, there is a movement to create a newsgroup dedicated
+to WWIV. Right now, the voting period is going on and ends June 18. YOU can
+vote, and your voice deserves to be heard. Even if you don't have an account
+on Internet, you may likely have one soon. Freenets are appearing in many
+cities and most of the commercial services offer some type of communication
+link with Internet and Usenet.
+
+The voting period is May 19th to June 18th.
+
+To vote, please use the official ballot included below and send it to:
+fsspr@camelot.acf-lab.alaska.edu.
+
+You must include your Last name, First name and E-Mail address.
+
+On WWIVNet, @506 and @511 have agreed to allow votes to pass through their
+gateway, so send mail to fsspr#camelot.acf-lab.alaska.edu@<506 or 511>
+
+The following is taken from the official Call For Votes:
+
+Official Ballot for new comp.bbs.* additions (May - June 1993)
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+ 
+Please vote yes or no (or you may abstain) on the following proposals:
+ 
+Create comp.bbs.development?      Yes/No/Abstain
+Create comp.bbs.searchlight?      Yes/No/Abstain
+Create comp.bbs.wanted?           Yes/No/Abstain
+Create comp.bbs.wwiv?             Yes/No/Abstain
+  
+
+Voting Rules
+ÄÄÄÄÄÄÄÄÄÄÄÄ
+
+Votes posted to any newsgroup will not be counted.
+ 
+Votes E-Mailed to any address other than the one designated for voting
+will not be counted. You may contact me at either of the addresses
+found in my .sig if you have problems in getting E-Mail delivered to
+the voting address, and I will try to help you out. But I will not
+accept votes at any address other than the one designated above for
+voting.
+ 
+Votes must be unambiguous expressions of your choice for each
+individual newsgroup proposal. Statements such as "I will vote for
+xxx if..." will not be accepted. The time for discussion on these has
+passed; you are voting on the individual charters, as outlined at the
+end of this article. Blanket votes, such as "I vote for all of them"
+or "I vote against all of them" will likewise be rejected.
+ 
+Only one vote per individual will be permitted. In the event that
+more than one ballot is submitted from an individual, only the most
+recent ballot will be counted. Votes must be sent by the individual
+voting. Forwarded votes will not be counted. Votes mailed through
+anonymous services will likewise not be counted.
+ 
+
+B. - THE BALLOT
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+ 
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ Cut Here ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+Official Ballot for new comp.bbs.* additions (May - June 1993)
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+Please vote yes or no (or you may abstain) on the following proposals:
+ 
+Create comp.bbs.development?      Yes/No/Abstain
+Create comp.bbs.searchlight?      Yes/No/Abstain
+Create comp.bbs.wanted?           Yes/No/Abstain
+Create comp.bbs.wwiv?             Yes/No/Abstain
+ 
+    Last Name, First Name (email address)
+ 
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ Cut Here ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+ 
+C. - NEWSGROUP CHARTERS
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+ 
+[Editor's note: due to space limitations, only the comp.bbs.wwiv section of
+the list of proposed charters is reprinted here. For a complete charter list,
+please contact the author via E-Mail.]
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+PROPOSAL #4 - Create comp.bbs.wwiv 
+
+PURPOSE - The newsgroup comp.bbs.wwiv would be for general discussion related
+to the WWIV (World War 4) BBS software, the current/future interfacing of WWIV
+to the Internet and/or Usenet, and to a lesser extent, the networking
+capabilities of WWIV and the WWIV-based networks that are currently available.
+
+RATIONALE - Many of the things said about comp.bbs.searchlight applyhere. A 
+WWIV newsgroup was proposed to alt.config back in November.It generated a
+pretty substantial amount of discussion, but nothingever came of it. I feel 
+that the issue does need to be resolved.Speaking of the software itself, I 
+have noticed quite a bit of cross-interest between WWIV users and Usenet users.
+WWIVNet has hosted several networked discussion areas about the Internet and
+Usenet for many years. Gating began in earnest last year with the development
+ofthe WWCP gateware package. Gating is still in its infancy (i.e. it is nowhere
+near the size and scope which exists in Fidonet), but a newsgroup could help to
+further interest in gating. For instance, there was talk about porting WWCP to
+[Unix-based] platforms. Plus, the software itself has made great strides in 
+recent months, and could very well become a major force on the BBS scene in the 
+years to come. 
+
+CONTENT - Appropriate topics for comp.bbs.wwiv would include:         
+
+Questions and answers on where to obtain the software    
+
+Setting up the software
+
+Configuring doors and utilities;  this would include discussion on the 
+compatibility of doors with WWIV   
+
+Networking issues related to WWIV, with particular emphasis on connectivity 
+issues related to Usenet/the Internet and WWIV-based networks.   
+
+The future development of the software, either as envisioned by the readers of
+the newsgroup or by Wayne Bell   
+
+Lists of BBSes running the software; ads for individual BBSes should be highly
+discouraged, though.
+
+Discussion and debate on items which are WWIV "hot topics," such as the merits
+of millions of different WWIV-based networks, or the use of color and ANSI, 
+will be tolerated, provided that such discussions don't degenerate to meta-
+discussions and/or flame wars.
+
+Discussion about VBBS will be tolerated as well, provided such discussion is 
+limited to the relationship of VBBS to WWIV and/or WWIV networks, and WWIV 
+network connectivity issues under VBBS.
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+Your vote for the WWIV newsgroup will help even if you don't plan on being
+a part of Internet. With increased exposure, more SysOps will become
+interested in WWIV and WWIV nets and will join them and make the net you are
+in a better one.
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+               ³                Type 0 Forum                 ³
+               ³         Edited by Omega Man (1@5282)        ³
+               ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+
+The Type 0 Forum is WWIVnews' "Letters To The Editor" section. Comments,
+criticisms, questions, and suggestions can be sent to WWIVnews c/o 1@5282.
+WWIVnews reserves the right to edit any submissions for either clarity,
+punctuation, or spelling, but will endeavor to maintain the content integrity
+as close to that originally submitted as possible.
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+Dear Editor:          
+
+I have been running a WWIV based bbs since 10/10/92 in a small rural community
+in North Carolina. My Board Now has 60 subs 20+games and over 500 good files.
+My question is after all is said and done, what is the best way to get users to
+use the network. I have tried everything sort of closing the transfer section,
+to get people to use the subs, yet if they use them at all, all they do is read
+them. I have rebuilt the user base in this town that has diminished over the
+last few years due to the younger users, going of to college, etc. and have
+managed to find older users who I know have opinions of what is going on in the
+world, yet I cant seem to stress to them the benefits of using the network on
+a regular bases.
+
+I am writing to you, in the hopes that you have run into this sort of thing
+before, and have written, or posted an article in WWIVnews, about increasing 
+sub usage, and can mail me a copy of it, or at least, open a debate about it 
+in your forum where all of us can reap the benefits of what tends to be the 
+most costly aspect of being a sysop.
+
+                                                        Lord Agar (1@29950)
+
+
+Editor's Reply:
+
+Lord Agar's query echoes the one common dilemma that has plagued the majority
+of sysops since Ward Christiansen first implemented Xmodem: How to keep one's
+BBS from deteriorating into a haven for file leeches.
+
+As most of us have come to realize by now, there doesn't seem to be any 
+real answer to this problem. This is due primarily to the fact that while most 
+sysops agree the problem exists, there are differences of opinion as to just 
+how serious this problem really is. 
+
+Some sysops see file sections as being deadly to a BBS. When a file is 
+downloaded, the board's availability for message traffic and other functions is
+reduced. As a result, the message traffic slows to a crawl in both directions,
+which is anathema for any message-oriented BBS. These sysops usually close 
+their file sections to all users, but in turn find that their user base begins
+to dwindle in size unless the message bases are of a nature that promotes 
+continue dusage.
+
+Some other sysops see file sections as a necessary evil, and find a common
+ground by granting the message readers more time on the system per call, and
+enforcing upload/download ratios to at least ensure that the system gets in as
+much as it gets out. This compromise tends to work in most cases, and its 
+degree of success appears to depend upon the nature and content of the file 
+areas.
+
+Still more sysops could care less about the message bases, and have their BBS's
+set up for file transfers only. However, virtually all of them have at least 
+one message base which they use to post system news and bulletins. Getting the
+users to newscan this sub can be the same as pulling teeth without implementing
+one of the several mods designed to force a newscan of a particular sub.
+
+So, as you can see, there's really no clear cut solution to the problem. The
+suggestion I make to most people is to take the compromise position. Making a
+file leech use the subs is the same as leading a waterlogged horse to water and
+trying to make him drink against his will. Strict enforcement of file ratios
+tends to chase most leeches off for other leeching grounds, which in turn gives
+your posters and not-so-leechers a bit more time to use the board to its
+fullest.
+
+I invite everyone to send in their comments on this problem, as its effects 
+help determine whether a BBS is successful or not.
+
+
+Dear Editor:
+
+Everyone, no matter what our age, likes to be recognized for our achievements.
+But once we have gotten the recognition we so painlessly strived for, is it the
+type we wished, or the bad kind, the recognition that under all our flash and
+BS, lies code that is difficult to read, or code that is incomplete or just
+doesn't work.
+
+Everyone makes mistakes, and its easy to miss a piece of code that needs
+to be added, but its how many mistakes on how many mods that separates the C
+programmers from the C wannabees.
+
+I received an email from a BBS'er who used one of my mods, and what little
+he/she said, was music to my ears. The mail said, "I installed you JRFCLR2.MOD,
+and it worked great and was easy to install!" And with that, he/she signed
+their handle.
+
+While there is really no set format or style for sending out mods, with the
+exception of the header suggested by Filo, their are some standard conventions
+for posting mods that should be used.
+
+Step one: remind the modder to back up their source. While that would seem to
+be a basic thing, we are constantly getting new users who might not even know
+the basics and need the reminding. I have even seen people give the commands for
+doing the backups. I feel this is a useless gesture though, as if they need that
+much help, your going to have to go to their home anyway, just to show them
+where their compiler is.
+
+Step two: show the what and the where of how to implement your mod. The only
+difference between a hard mod to install and an easy one is how well the coder
+documented the procedure. The instructions you include with your mod should be
+clear and concise, and nothing should be left to chance or second guessing. For
+example, a search for <this line> is fine, but if <this line> occurs in more
+than one place, be sure to specify which one. And if adding a string to a *.str
+file is needed, or modification of an add on utility or whatever is required,
+document that, as that is part of the mod, believe it or not!
+
+Step three: Proper credits. In C and C++, code reuseablity is an important part
+of the language assets. The ability to use existing procedures and routines, in
+whole or part, makes us all more productive programmers. As a result we need to
+make certain that we share the credit with those who have shared their code.
+
+Many may disagree, but I feel all else is a waste of time and or "paper". The
+need to inform everyone of one's lack of responsibility for their code that you
+use, or the fact that the code was your first or fiftieth, is really irrelevant
+in the end. Same goes for your family history, I might add.
+
+So long as I can keep my code clean, my mods easy to install and bug free, I
+won't have to worry, as the end product speaks for itself.
+
+                                                           Rebel 1 (1@2620)
+
+
+Editor's Reply:
+
+Rebel 1's commentary here echoes - albeit in a more sedate tone - most of the
+points I made in a previous editorial concerning the debugging and 
+documentation of mods sent over the Modnet. All of us who've worked with 
+Wayne's code and implementing Modnet submissions have experienced at least 
+once in our efforts a mod whose author either didn't document a needed change 
+to something in COM.C or CONIO.C, or failed to mention the need to include a 
+variable or two in a procedure header, or even included undocumented calls to 
+a procedure that wasn't part of stock WWIV source in the first place, and can't
+be found in any of the Modnet collections.
+
+On the other side of the fence, of course, is the issue of proper accredation
+of source material. Nobody likes to see someone else get credit for hard work
+they didn't perform, and the same goes triple for programmers. As a result, at
+least twice a month there can be heard the cries of "PLAGIARISM!!" on the 
+Modnet Discussion sub - usually over someone's total duplication of a sublist
+(void) or dirlist(void) replacement - and brief flames erupt until Filo steps 
+in to put them out.
+
+What's really funny about this, in a morbid sort of way, is that quite a few of
+these mods tend to be preceded with "This is my *first* mod"...
+
+However, proper credit is a two-edged sword. Some modders, in a near-zealous
+attempt to give due credits, have been known to make their acknowledgements and
+kudos longer than the mod itself! In some cases it's even obvious that the
+modder spent more time "thanking the academy" than he did cleaning up the mod
+and documenting the installation procedures. A suggestion to all modders,
+whether experienced or novice, is to follow Filo's guideline for submissions to
+the Modnet, and use the standard mod header. An example of this header appears
+every issue in Filo's Mod of the Month column, and can be expanded slightly to
+allow for proper credits to be given to previous mods. For example, an expanded
+header would look like this:
+
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³ Mod Name: OMEGA_1.MOD                 Mod Author: Omega Man 1@5282        ³
+³ Difficulty: Pet Rock IQ Req'd         Date: May 31,1993                   ³
+³ WWIV Version: 4.22                                                        ³
+³ Files Affected: All                                                       ³
+³ Description: Upgrades all versions of TAG, Telegard and Renegade to the   ³
+³ latest version of WWIV in the only ethical way possible.                  ³
+³ Credits: Martin Pollard, Eric Oman, et al, for Telegard.                  ³
+³          Whassisname, for Tag                                             ³
+³          Whassisothername, for Renegade                                   ³
+³          1@1, for WWIV                                                    ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+Again, Rebel 1 speaks quite a bit of proper philosophy here regarding the
+posting of mods. Mods need to be documented properly, and appropriate credit
+given where said credit is due.
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+               ³      @506 Usenet Gateway Policy Changes     ³
+               ³            by Zaphod Beeblebrox             ³
+               ³    (1@6250, 1@506, bryen@tfsquad.mn.org)    ³
+               ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+Editor's Note: In light of a rise in abuses of gateway privledges on several
+of the @5xx gateways, 1@506 has requested that the following bulletin be
+included in WWIVNews. In the interests of helping insure some semblance of 
+smooth internetworking between WWIVNet and Usenet, and to help prevent further
+cases of gateway abuse, here is Zaph's bulletin, printed in its entirety
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+Over the past few weeks I have noticed an alarming increase in disallowed 
+traffic through the WWIVNet <-> Usenet gateway located at @506, WWIVNet. For
+technical and traffic reasons, certain items are NOT allowed to pass through
+this system. Such items are listed in the information file for the gateway,
+available by sending email to faq-request#tfsquad @506.
+
+It has come to my attention that a number of people are using the gateway
+without first obtaining this file. It is important that you are aware of the
+policies regarding the use of the gateway at @506, because unintentional misuse
+of the gateway by even ten people can wreak traffic havoc on this end.
+
+So, for those of you who have not obtained this file and are using the gateway,
+here is a quick overview of the policies related to gateway usage at tfsquad:
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+- NO mailing list subscriptions are allowed without prior approval. If you do
+  not know what this is, then don't worry; if you do want to take a mailing 
+  list through the gateway, ASK FIRST. Failure to do so will more than likely
+  result in your being banned from gateway usage.
+
+- NO ftpmail is allowed, period. Again, if you do not know what this is, then
+  don't worry.
+
+- Please keep in mind the 32k limit on messages imposed by WWIVNet. Usenet is
+  not limited in such a manner, so anytime you ask for a file or something that
+  may be greater than 32k in length, chances are it will come through my 
+  gateway larger than 32k and be bounced back to the sender.
+
+- Please obtain prior approval from 1 @506 before attempting to receive 
+  anything larger than 30k.
+
+- Please keep your usage of the gateway down to around 15k/day unless you have
+  approval for more traffic.
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+These rules only apply specifically to @506. However, most of the other 5xx
+gateways have similar, if not more strict, rules in place. Please be polite
+and mail 1 @5xx before attempting to use their gateway.
+
+There are actually reasons for these rules other than my "egotism," as I've
+been accused of. Traffic which comes through @506 must be received by me from
+my Usenet connection, processed, and then sent back out via the WWIVNet
+transport mechanism. Please keep in mind that because of the way WWIVNet
+operates, traffic must often pass through three, four, maybe more systems when
+moving from my system to yours, costing the systems in between here and there
+valuable long distance dollars.
+
+I believe that my gateway serves a valid and useful purpose within the WWIVNet
+community, and so long as it's used properly, it can and probably will continue
+to operate for some time. However, there is no better way to shut down a
+service than by intentionally misusing it.
+
+Also, please make your users aware of these rules. A significant amount of the
+traffic that comes through here is from non #1 accounts who will probably not
+read this.
+
+As usual, any questions/comments/concerns should be addressed to 1 @506.
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+               ³        WWIV-Compatible Networks List        ³
+               ³            (April Final Edition)            ³
+               ³            37 Networks Included             ³
+               ³            by Red Dwarf (1@6264)            ³
+               ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+        Contains updated entries for M.A.G.Net, TeenNet, and DarkNET.
+        Contains new entries for TARDISNet, ZNET, NOVAnet, OgdenNet, 
+                          SnotLink, and Chess_Net.
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+Sample Network Entry:
+
+Name [Content] (Nodes) (Date)
+Primary Netaddress, Other Address, ...
+Hosting BBS - Phone Number
+Description Line One
+Description Line Two
+Handles, Application, Updates
+
+Name         : Network's Name
+Nodes, Date  : Number of nodes on <date>
+Hosting BBS, : You may wish to call here for network support
+Phone Number    and/or setup files. 
+Desription   : Sent to me by the network coordinator
+Handles      : 'Handles' will appear if this net allows aliases, 'Real Names'
+                will appear if aliases are not allowed.
+Application  : Is this network's application in the master application file?
+Updates      : Does this network use automated update software?
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+To submit an entry, use the application included at the end of this file.
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+APEX                            
+WWIVNet @13600, WWIVLink @13600
+Purgatory BBS - 306-665-0274
+Handles, No, No
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+CaffNet
+WWIVNet @3101
+Star-Lit BBS - 301-229-2957
+Handles, No, No
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+CHAOSnet
+WWIVNet @9404
+Handles, No, No
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+Chess_Net [Specific] (5) (4-4-93)
+WWIVNet @5915
+The Duke of Earl - 509-291-3760
+Handles, No, No
+Dedicated to the philosophy of chess.
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+C/NET
+WWIVNet @6956, IceNET @6956
+Cold Fusion - 619-434-1482
+Handles, Yes, Yes
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+DarkNET
+IceNET @5805
+Storm Blade - 508-368-7971
+Handles, No, No
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+DeathNet [] () ()
+WWIVNet @19982
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+DEEPnet
+WWIVNet @7405, IceNET @7405, WWIVLink @17405
+Deep Space 8 - 704-553-0780
+Handles, No, Yes
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+DragNET
+WWIVNet @2936, IceNET @2913
+Toon Town - 209-323-9412
+Handles, No, No
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+DragonNET
+WWIVNet @7670
+Cool World - 716-681-7341
+Handles, No, No
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+DragonsNet [Specific] () ()
+WWIVNet @6263
+Unlimited Enterprises - 612-871-7625
+Handles, No, Yes
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+EliteNET [General] (29) (2-17-93)
+IceNET @2462
+Alley Closed BBS - 214-238-8121
+Handles, Yes, Yes
+"The No-Nonsense Network"  Totally democratic network using all
+members' opinions and votes. Close and friendly network.
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+ExpressNET
+WWIVNet @6754
+Data Express - 617-247-3383
+Handles, No, Yes
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+EagleNet [General] (12) (2-18-93)
+IceNET @7676
+Berek's Homeland - 716-826-4698
+Handles, No, No
+EagleNet was set up so that users and sysops could order things that
+they use everyday and have it sent to their doorstep.
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+FIITAnet
+WWIVNet @9957
+Baxter BBS - 919-878-0054
+Handles, No, No
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+FILEnet [] () (1-28-93)
+WWIVNet @8306
+Pocket Universe - 803-552-8654
+Handles, No, Yes
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+GayNet [Specific] (28) (2-1-93)
+WWIVNet @15283, WWIVLink @25283
+Handles, Yes, Yes
+Alternate Lifestyles- don't have to be gay, lesbian, or bi to join. No gay
+bashing allowed.
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+IceNET [General] (706) (4-29-93)
+IceNET @1, WWIVNet @7663, WWIVLink @17652
+The Great White North - 716-837-0044
+Handles, Yes, Yes
+Full featured network, fast updates, hundreds of message bases to choose 
+from. A friendly place to be. Highly rated, one of the best.
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+InfiNet [Specific]
+WWIVNet @3082, WWIVLink @13051
+The Dead Beat Club - 310-599-0479
+Handles, Yes, Yes
+An exclusively Southern California network. We specialize in regional
+topics and making the local BBS scene better.
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+InsanityNet
+WWIVNet @8355, IceNET @8385
+Handles, No, Yes
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+M.A.G.Net [General] (10) (4-29-93)
+WWIVNet @7107
+Psycho BBS - 701-780-9168
+Handles, No, No
+M.A.G.Net was created to give newer BBSes a way to share information
+with other BBSes and help them in getting their BBS going.
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+NorthStarNET [] () ()
+WWIVNet @6259, IceNET @6259, WWIVLink @16259 
+AeroTech BBS - 612-935-3505
+Handles, Yes, Yes
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+NOVAnet [General] (3) (4-2-93)
+IceNET @2351
+? - 213-294-5387
+Handles, No, No
+NOVAnet is a Programmers Club as well as a general discussions
+ranging from the Entertainment Industry to Electronics.
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+NukeNet
+WWIVLink @14063
+The White House - 410-760-0712
+Handles, No, No
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+OgdenNet [General] (6) (3-2-93)
+WWIVNet @8135, IceNET @8135
+? - 801-774-5574
+Handles, No, No
+Local chit-chat, DHS (local computer group).
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+SnotLink [Specific] (8) (4-4-93)
+WWIVLink @18262
+Insomnia - 812-466-4222
+Handles, No, Yes
+For Terre Haute region BBS' ONLY. A true local network with
+a slant towards the silly!
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+SOLARnet
+WWIVNet @3484, IceNET @3454, WWIVLink @13495 
+Rap City [GSA] - 314-963-7960         
+Handles, Yes, Yes
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+StarNet [Specific] (5) (4-1-93)
+WWIVNet @3956, IceNET @3956  
+Diamond's BBS - 319-277-0166
+Handles, No, No
+Local network of teenage boards to facilitate the transfer of files and
+e-mail, to take the load off of the local WWIVNet/IceNET server.
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+SuperNET
+IceNET @3402
+The Empire - 304-465-5223
+Handles, No, No
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+TeenNet [General] (21) (4-5-93)
+WWIVNet @4075, IceNET @4053, WWIVLink @14064
+Central Station - 410-315-9854
+Handles, No, No
+TeenNet is made so that all younger sysops in the world can get
+a chance at networking. The network is open to all people.
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+TerraNET
+WWIVNet @8861, IceNET @8857
+Blue Thunder - 818-848-4101
+Handles, Yes, Yes
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+TestNet
+WWIVNet @19960, IceNET @9994           
+Test Site BBS - 919-760-4811
+Handles, No, Yes
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+TLCnet [] () (1-28-93)
+WWIVNet @8306
+Pocket Universe - 803-552-8654
+Handles, No, Yes
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+WEB [General] (10) (2-13-93)
+IceNET @5802, WWIVNet @5813
+Sanctuary - 508-892-8529
+Handles, Yes, Yes
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+WWIVNet [General] (1400) (1-24-93)
+WWIVNet @1
+Amber - 310-798-9993
+Handles, Yes, Yes
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+ZNET [General] (20) (4-1-93)
+No other connections.
+The Ethereal Plane - 609-435-5991
+Handles, No, No
+ZNET was designed in 1990 as an alternative for WWIVNet. We are
+looking for BBSes in other area codes for area coordinator positions.
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+*.Net
+IceNET @2459, WWIVLink @16976
+Reynard's Keep - 214-406-1264
+Handles, No, No
+ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ
+Send application to Red Dwarf:
+
+1@6264  WWIVNet
+1@6256  IceNET
+ICENET 1 AT 6256 @16259 (WWIVLink address coming soon)
+
+The File Pile BBS [ASV]:
+(612) 351-0144       300/1200/2400 Baud
+Auto-Sysop Validation, Netlist Account
+
+To use netlist account:
+
+Download the NETWORKS.LST and net applications file with the "NETLIST"
+account. Password is "NETLIST" and last four digits are "0000"  Sorry,
+but uploads and updates from this account cannot be accepted. If you
+wish to make an account on the File Pile, you can use the ASV.
+ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ
+
+Unless I get a flood of new corrections or new entries, the next release
+of the list will be on:  May 8, 1993
+
+Network coordinators are responsible for checking their network's
+information and reporting any errors or incomplete entries to me.
+
+If you do not see this after your network: [gen/spec] (nodes) (date)
+(with information in all of them), please send an application so you can
+have the new information in it. Please indicate that this is an update
+after the network's name. Thank you.
+
+When submitting your networks application, please use the form below.
+
+ÉÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ»
+º                        NETWORKS.LST                                   º
+º                                                                       º
+º  The following information is compiled as a service to BBS operators  º
+º  and has not been verified for accuracy. Attempts are made to keep    º
+º  the material current and usable. If you are aware of changes that    º
+º  should be made, additions, or deletions, please send them to me      º
+º  Information for this listing should only be submitted by the contact º 
+º  person for each network.                                             º
+º                                                                       º
+º  Information should appear in the following format for inclusion      º
+º  in the listing. You should also inform me of any changes to be       º
+º  made.                                                                º
+º                                                                       º
+º  Network Name   :                                                     º
+º  Contact Person Information :                                         º
+º     a) BBS Data Phone Number :                                        º
+º     b) Primary contact point: WWIVNet, WWIVlink, IceNET: _________    º
+º        Select ONLY ONE above as primary contact point.                º
+º                                                                       º
+º        Answer all that apply:                                         º
+º        WWIVNet Node  :_____________________                           º
+º        WWIVlink Node :_____________________                           º
+º        IceNET Node   :_____________________                           º
+º     c) Do you allow handles in the network:                           º
+º  Net Type (General or Specific, chose one):                           º
+º  If specific, identify topic specialty (two lines maximum)            º
+º                                                                       º
+º                                                                       º
+º  If general, give a brief network description (two lines maximum)     º
+º                                                                       º
+º                                                                       º
+º  Do you have automatic update software?                               º
+º  If you wish, you also may send me an application for the master file.º
+º                                                                       º
+º  Date and Number of Nodes :                                           º
+ÈÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+               ³             Dateline: @#$*()#!              ³
+               ³ Editorial Commentary by Omega Man (1@5282)  ³
+               ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+As most of us are aware of by now, Steve Jackson won his suit against the 
+United States Secret Service over the March 1990 raid on Jackson's business.
+While the impact upon the BBS world hasn't been quite as dramatically positive
+as we would have like to have seen, as detailed in this issue's article by
+Polekat on the trial and its outcome, the fact that there is a precedent in a
+court of law in favor of the BBS operator and his/her/its users in the event of
+questionable tactics by law enforcement officials. While this does little to
+grant a "get out of jail free" card to those using BBS' for illegal purposes,
+it does give those of us running legitimate systems a bit of relief from any
+fears that our systems will be shut down merely on the whim of some Luddite
+behind an overpriced desk in Washington D.C.
+
+However, as with any other struggle over rights and privledges, unless one is
+willing to use and protect these freedoms odds are fairly good that someone 
+will eventually take them away just to spite you. Government agencies don't 
+like to be shown up by those they're appointed to oversee, and especially 
+don't like it when it happens in front of the press. The BATF found out the 
+latter part of this at Mount Carmel a month ago, and the USSS both parts a
+month prior to that. While the highly-visible BATF will have quite a task 
+ahead of them trying to live down their negative exposure, the somewhat-
+camouflaged USSS can simply shrug it off and lie low as is the nature of their
+organization. Once the furor has died down, they can simply return to "business
+as usual".
+
+But the Secret Service isn't the only government threat BBS operators and users
+have to face. Other agencies, such as the FBI and the FCC, as well as the local
+Public Utility Commissions, pose similar threats to those posed by the USSS. 
+The FBI was involved in the recent - and well-publicized - anti-piracy raid on
+Rusty & Edie's BBS in April of this year, while the FCC has, from time to time,
+entertained the notion of slapping modem users with a license requirement or
+sysops with a mandatory surcharge to their monthly phone rates. The PUC's, of
+course, regulate utility rates, and have on occasion attempted to increase 
+phone line rates for BBS lines in certain areas "to offset the costs to the
+regional phone system caused by increased line usage."
+
+These threats, in reality, have their roots in the private sector, where 
+certain elements of the software and telecommunications contingents see
+independent BBS operators a threat to their potential profits, regardless of 
+how big or how small a BBS is. 
+
+The software industry, for the most part, has shown that it sees unregulated
+BBS' as a major threat to their profits. This has been best demonstrated in the
+aforementioned case of the FBI raid on Rusty & Edie's BBS. While it was simply
+an easy bust of a major multi-node BBS that wasn't being run as tightly a ship
+as possible with regards to user uploads, the Software Publisher's Association
+took the matter and blew it far out of proportion to further their cause. The
+SPA has also reportedly gone on record as saying "this sort of piracy is only
+the tip of the iceberg!", and some off-the-record comments to reporters have
+promised future busts. 
+
+The R&E bust demonstrates just how jumpy the SPA and the FBI have become over
+the merest hint of an illegal BBS. Someone uploaded copyrighted - read: pirated
+- software to R&E's, saw that neither their account nor the software had been
+immediately deleted by the sysops, and then called the Software Publishers
+Association's anti-piracy hotline and blew the whistle. The SPA called the FBI,
+and the rest was history. Of course, the fact that R&E had made quite a few
+enemies in the .GIF world by editing the BBS advertisements off of .GIFs from
+other image processing BBS' and replaced them with their own ads didn't help
+matters one iota. It's speculated that this may have led to what was obviously
+a "sting" operation, albeit one not staged by a legal or professional
+organization. A similar bust was recently carried out by the SPA and Nintendo
+after a similar "hot tip" was received, although in this case the BBS in
+question was reportedly considered by BBSers in the region to be "the biggest
+pirate board in this state!"
+
+The bad part about busts of this nature is that regardless of whether the
+board(s) in question were guilty or not, it helps out another private sector
+threat to BBS's: the phone company. Ever since the breakup of the Bell system,
+the "Baby Bells" have been trying to come up with ways to break into the
+information service market. While one would naturally expect commercial
+information services such as Compu$erve, Genie, BIX, and America Online to be
+the primary targets of any sort of competitive heavy-handedness, the actions
+against BBS operators in Texas, Florida and Oklahoma, as well as other states,
+only shows that the perceived threat is the small independent BBS operator and
+not the big commercial systems. The fact that Southwestern Bell attempted to
+shut down the majority of BBS' in Texas through higher rates just prior to
+starting their own text information service - which bombed within 90 days, by
+the way - is perhaps the best example of this sort of monopolistic tactic.
+
+Where direct pressure on the sysops hasn't worked, indirect pressure has been
+applied on the Federal Communications Commission through lobbying. The desired
+result is to use the FCC's authority over the use of phone lines to help 
+inhibit the expansion of the independent BBS operator population, and to
+eventually reduce that population through taxation and regulation. Once the
+competition is eliminated through inability to conform to law, the Bell Systems
+will then push for control of information services on the grounds that they a)
+can conform to regulation, and b) are already set up for it within
+specifications.
+
+However, Uncle Charlie still recalls the days of CB Radio, and how difficult it
+was to police 20,000,000 mostly-mobile jaw-jockeys on a budget that had been
+neutered so badly by the Ford and Carter administrations that the 11-Meter band
+was effectively deregulated to reduce the need for constant policing. As a
+result, the FCC is very reluctant to jump in and start to regulate at least
+twice as many people even though the majority of modem users aren't mobile. 
+
+This reluctance was further compounded by the negative response to that one
+serious proposal, which most of us have seen reposted on the networked subs at
+least once every six months. The resulting outcries from the BBS populace upon
+sight of this document usually reach a zealous pitch, and the original date of
+the document  - 1986 - is ignored. In most cases, letters are actually sent to
+the FCC denouncing the bill, the bill's authors, and their entire family trees,
+and similar letters are sent to congressmen and senators in hopes of stopping
+this already-dead proposal. This continues until either one of the sub hosts
+explains the truth about the document, or someone gets one of the FCC's
+specially prepared form letters telling them the proposal was circular filed in
+1988, and the FCC has no plans to resurrect it or any other modem control plan
+anytime in the foreseeable future.
+
+While modem surcharges have been circumvented - if not made politically 
+suicidal to implement - the side effect of all this is the FCC's reluctance to
+give valued Common Carrier status to Computer Bulletin Boards. Pressure from
+both the private sector and other government agencies have helped to convince
+those involved in the FCC's decision-making process that while regulating 
+modems would not be financially or politically feasible, CC status would grant
+systems dealing with matters and material deemed illegal rights and protections
+from improper search and seizure that they don't currently benefit from.
+
+After looking at all the evidence, one thing becomes rather clear: the primary
+tactic used by all parties involved in the effort to eradicate BBS' now appears
+to be "if the government can't tax them out of existence, the private sector 
+can at least scare them away as best as possible with higher phone rates and
+sting operations".
+
+The dangerous thing is, unless we keep an eye on things, this tactic just might
+succeed.
+
+At the end of Polekat's article, the addresses of the Electronic Frontier
+Foundation can be found. Take note of these addresses, and even if you're not
+the activist type, take a moment to look into the EFF and its activities. 
+Better still, become a member!  As demonstrated in the Steve Jackson trial, the
+EFF has proven that it can be an effective representational force for computer
+telecommunication users everywhere. 
+
+The NRA for example, has for decades been an effective lobbying force in favor
+of their own special interests. When one asks for a primary example of just how
+influential lobby groups can be if properly administrated, the NRA is usually
+the first one mentioned. The EFF has demonstrated it can be as effective as the
+NRA, even with its smaller membership. If such progress can be made with 
+limited resources, imagine what could happen if membership was equal to that of
+the NRA?
+
+(Then again, imagine where their membership would be if the basic membership
+package also included an true, actually autographed group shot of the Grateful
+Dead! If the NRA can send stickers and samples of WD-40, who says that John
+Perry Barlowe can't twist Bob & Jerry's arms a bit for a good cause? :-))
+
+Again, if you're truly concerned about your rights as a modem user, regardless
+of which side of the wire you're plugged in, inquire and join. Vigilance is
+necessary where our rights are concerned, and if we're not willing to defend
+them then we shouldn't complain when they're taken away.
+
+"You'll take away my computer and my modem when you pry my smoking keyboard 
+away from my cold, dead hands!"
+
+See you in a few weeks, eh?
+
+ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ
+
+Next Month in WWIVNews:
+
+The debate over UUEncoded file transmissions over the nets has been raging for
+several months now, with flames and logics being volleyed across both sides of
+the dividing line. WWIVNews takes a look at the issues with editorials from 
+both sides, and looks at what might be the possible solution to the matter.
+
+
+Coming soon in WWIVNews:
+
+MS-DOS 6.0 is upon us at last. However, unlike MS-DOS 5.0, the Gates Boys'
+latest upgrade to the industry standard for PC operating systems is reportedly
+not as stable as its predecessor. WWIVNews takes a look at the pros and cons of
+DOS 6.0, and takes a look into alternatives to MS-DOS as well. WWIV under
+Windows 3.1, OS/2 2.xx, and DesqView will be explored as well.
+
+ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+³                             Closing Credits                               ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ WWIVnews is an independent newsletter NORMALLY published monthly as a     ³
+³ service to the WWIV community of sysops and users. The opinions & reviews ³
+³ expressed herein are the expressed views of the respective writers, & do  ³
+³ not necessarily reflect those of the WWIVnews staff. Reproduction in whole³
+³ or in part is allowed provided credits are given. All rights reserved by  ³
+³ WWIVNews, and all articles are copyright of their respective authors.     ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³ The source site for WWIVnews is the Klingon Empire BBS (512-459-1088),    ³
+³ WWIVNet node @5282. Requests for information regarding articles and other ³
+³ editorial submissions, as well as back issue requests and the WWIVnews    ³
+³ Writer's Guide, can be sent in e-mail to the WWIVnews editor, c/o 1@5282. ³
+ÃÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´
+³            WWIV and WWIVNet, copyright 1986,1990 by Wayne Bell            ³
+³  Any product or company mentioned or reviewed herein are copyrighted of   ³
+³  their respective owners, creators, and other corporate pseudoentities.   ³
+ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
